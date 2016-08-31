@@ -18,6 +18,7 @@ INCLUDE_DIRECTORIES(
 # page of the documentation.
 SET(TARGET_SRC
   source/qc/core.cc
+  source/atom/atom.cc
   )
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.8)
