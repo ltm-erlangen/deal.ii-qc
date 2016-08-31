@@ -82,6 +82,8 @@ namespace dealiiqc
     // the clusters plus those in the cut-off:
     std::vector<Point<dim>> points;
     std::vector<double> weights_per_atom;
+    const unsigned int dofs_per_cell = fe.dofs_per_cell;
+    std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
 
     for (auto cell = dof_handler.begin_active(); cell != dof_handler.end(); cell++)
       {
@@ -119,6 +121,13 @@ namespace dealiiqc
         data.fe_values->reinit(cell);
 
         data.displacements.resize(points.size());
+
+        // store global DoF -> local DoF map:
+        cell->get_dof_indices(local_dof_indices);
+
+        data.global_to_local_dof.clear();
+        for (unsigned int i = 0; i < local_dof_indices.size(); i++)
+          data.global_to_local_dof[local_dof_indices[i]] = i;
       }
   }
 
@@ -127,6 +136,7 @@ namespace dealiiqc
                                             vector_t &gradient) const
   {
     double res = 0.;
+    gradient = 0.;
 
     // First, loop over all cells and evaluate displacement field at quadrature
     // points. This is needed irrespectively of energy or gradient calculations.
@@ -141,14 +151,22 @@ namespace dealiiqc
                                                                    it->second.displacements);
       }
 
+    const unsigned int dofs_per_cell = fe.dofs_per_cell;
+    std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+    Vector<double> local_gradient(dofs_per_cell);
+
+
     // TODO: parallelize using multithreading by dropping i>j and doing 1/2 ?
     // We can't really enforce that two threads won't try to simultaneously
     // calculate E_{ij} and E_{ji} where i and j belong to neighboring cells.
     for (auto cell = dof_handler.begin_active(); cell != dof_handler.end(); cell++)
       {
+        local_gradient = 0.;
         const auto it = cells_to_data.find(cell);
         Assert (it != cells_to_data.end(),
                 ExcInternalError());
+
+        cell->get_dof_indices (local_dof_indices);
 
         // for each cell, go trhough all atoms we care about in energy calculation
         for (unsigned int a = 0; a < it->second.energy_atoms.size(); a++)
@@ -157,10 +175,6 @@ namespace dealiiqc
             const unsigned int  I = it->second.energy_atoms[a];
             const auto qI_it = it->second.quadrature_atoms.find(I);
             const unsigned int qI = qI_it->second;
-
-            // shape function of k-th DoF evaluated at I-th atom:
-            const unsigned int k = 0;
-            const Tensor<1,dim> shape_k = it->second.fe_values->operator[](u_fe).value(k, qI);
 
             // Current position of atom:
             const Point<dim> xI = atoms[I].position + it->second.displacements[qI];
@@ -189,19 +203,50 @@ namespace dealiiqc
                 // current position of atom J
                 const Point<dim> xJ = atoms[J].position + n_data->second.displacements[qJ];
 
-                const double r = xI.distance(xJ);
+                // distance vector
+                const Tensor<1,dim> rIJ = xI - xJ;
 
-                // Finally, calculate energy:
+                const double r = rIJ.norm();
+
+                // Now we can calculate energy:
                 // TODO: generalized, energy depends on a 2-points potential
                 // used for atoms I and J. Could be different for any combination
                 // of atoms.
-                res +=    1.2345 *Utilities::fixed_power<2>(xI.distance(xJ) - 0.25);
-              }
+                const double energy = 0.5 * Utilities::fixed_power<2>(r - 0.25);
+                const double deriv  = r - 0.25;
 
-          }
+                // Finally, we evaluated local contribution to the gradient of
+                // energy. Here we need to distinguish between two cases:
+                // 1. N_k(X_j) is non-zero on (possibly) neihboring cell
+                // 2. N_k(X_j) is zero, i.e. X_j does not belong to the support
+                // of N_k.
+                for (unsigned int k = 0; k < dofs_per_cell; ++k)
+                  {
+                    const auto k_neigh = n_data->second.global_to_local_dof.find(local_dof_indices[k]);
+                    if (k_neigh == n_data->second.global_to_local_dof.end())
+                      {
+                        local_gradient[k] += (deriv / r) * rIJ *
+                                              it->second.fe_values->operator[](u_fe).value(k, qI);
+                      }
+                    else
+                      {
+                        local_gradient[k] += (deriv / r) * rIJ *
+                                             (it->second.fe_values->operator[](u_fe).value(k, qI) -
+                                              n_data->second.fe_values->operator[](u_fe).value(k_neigh->second, qJ));
+                      }
+                  }
 
-      }
+                res += energy;
+              } // end of the loop over all neighbours
 
+          } // end of the loop over all atoms
+
+        // distribute gradient to the RHS:
+        constraints.distribute_local_to_global(local_gradient,
+                                               local_dof_indices,
+                                               gradient);
+
+      } // end of the loop over all cells
 
     return res;
   }

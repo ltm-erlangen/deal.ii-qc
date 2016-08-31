@@ -198,11 +198,17 @@ namespace dealiiqc
        */
       std::vector<unsigned int> energy_atoms;
 
-
       /**
        * A vector to store displacements evaluated at quadrature points
        */
       mutable std::vector<Tensor<1,dim>> displacements;
+
+      /**
+       * A map for each cell to related global degree-of-freedom, to those
+       * defined on the cell. Essentially, the reverse of
+       * cell->get_dof_indices().
+       */
+      std::map<unsigned int, unsigned int> global_to_local_dof;
 
     };
 
