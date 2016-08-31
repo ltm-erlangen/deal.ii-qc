@@ -66,6 +66,9 @@ namespace dealiiqc
                                               constraints);
     */
     constraints.close ();
+
+    displacement.reinit(dof_handler.locally_owned_dofs(), mpi_communicator);
+    locally_relevant_displacement.reinit(locally_relevant_set, mpi_communicator);
   }
 
 

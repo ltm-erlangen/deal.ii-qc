@@ -91,6 +91,17 @@ namespace dealiiqc
      */
     void associate_atoms_with_cells();
 
+
+    /**
+     * Given cells and dof handler, for each cell set-up FEValues object with
+     * quadrature made of those atoms, which we are interested in. Namely
+     * atoms within clusters and also atoms within a cut-off radios of each
+     * cluster (one sphere within another).
+     *
+     * TODO: implement the logic above. For now just use all atoms.
+     */
+    void setup_fe_values_objects();
+
     /**
      * MPI communicator
      */
@@ -131,6 +142,28 @@ namespace dealiiqc
      */
     ConstraintMatrix     constraints;
 
+
+    vector_t displacement;
+
+    vector_t locally_relevant_displacement;
+
+    /**
+     * Auxiliary class with all the information needed per cell for
+     * calculation of energy and forces in quasi-continuum method.
+     *
+     * Since ther initial positions of atoms is generally random in each
+     * element, we have to have a separate FEValues object for each cell.
+     */
+    struct AssemblyData
+    {
+      std::shared_ptr<FEValues<dim>> fe_values;
+
+    };
+
+    /**
+     * Map of cells to data.
+     */
+    std::map<typename DoFHandler<dim>::active_cell_iterator, AssemblyData> cells_to_data;
 
     /**
      * A vector of atoms in the system.
