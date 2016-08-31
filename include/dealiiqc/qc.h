@@ -143,8 +143,19 @@ namespace dealiiqc
     ConstraintMatrix     constraints;
 
 
+    /**
+     * Unknown displacement field.
+     */
     vector_t displacement;
 
+    /**
+     * Gradient of the energy (a scalar) w.r.t. to the displacement field.
+     */
+    vector_t gradient;
+
+    /**
+     * Locally relevant displacement filed
+     */
     vector_t locally_relevant_displacement;
 
     /**

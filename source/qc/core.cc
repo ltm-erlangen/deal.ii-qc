@@ -69,12 +69,14 @@ namespace dealiiqc
 
     displacement.reinit(dof_handler.locally_owned_dofs(), mpi_communicator);
     locally_relevant_displacement.reinit(locally_relevant_set, mpi_communicator);
+
+    displacement = 0.;
+    locally_relevant_displacement = displacement;
   }
 
   template <int dim>
   void QC<dim>::setup_fe_values_objects ()
   {
-
     // vector of atoms we care about for calculation, i.e. those within
     // the clusters plus those in the cut-off:
     std::vector<Point<dim>> points;
@@ -112,6 +114,15 @@ namespace dealiiqc
       }
   }
 
+  template <int dim>
+  double QC<dim>::calculate_energy_gradient(const vector_t &locally_relevant_displacement,
+                                            vector_t &gradient) const
+  {
+
+
+    return 0.;
+  }
+
 
   template <int dim>
   void QC<dim>::run ()
@@ -125,6 +136,9 @@ namespace dealiiqc
     setup_system();
     associate_atoms_with_cells();
     setup_fe_values_objects();
+
+    const double e = calculate_energy_gradient(locally_relevant_displacement,
+                                               gradient);
   }
 
 
