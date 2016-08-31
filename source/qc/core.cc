@@ -153,13 +153,6 @@ namespace dealiiqc
         Assert (it != cells_to_data.end(),
                 ExcInternalError());
 
-//        displacements_cell.resize(it->second.quadrature_atoms.size());
-//
-//        // get displacement field on all quadrature points of this object
-//        it->second.fe_values->operator[](u_fe).get_function_values(locally_relevant_displacement,
-//                                                                   displacements_cell);
-//
-
         // for each cell, go trhough all atoms we care about in energy calculation
         for (unsigned int a = 0; a < it->second.energy_atoms.size(); a++)
           {
@@ -171,13 +164,12 @@ namespace dealiiqc
             // Current position of atom:
             const Point<dim> xI = atoms[I].position + it->second.displacements[qI];
 
-            // fe_values_ref[u_fe].value(k, i_quadrature_point)
-
             // loop over all neighbours and disregard J<I
             // TODO: implement ^^^^
             // for now there is always one neighbour only: I+1
-            for (unsigned int J = I+1; J < atoms.size(); J++)
+            if (I+1 < atoms.size())
               {
+                const unsigned int J = I+1;
                 // get Data for neighbour atom
                 // TODO: check if the atom is in this cell also to save some time.
                 const auto n_data = cells_to_data.find(atoms[J].parent_cell);
@@ -191,6 +183,8 @@ namespace dealiiqc
 
                 // current position of atom J
                 const Point<dim> xJ = atoms[J].position + n_data->second.displacements[qJ];
+
+                const double r = xI.distance(xJ);
 
                 // Finally, calculate energy:
                 // TODO: generalized, energy depends on a 2-points potential
@@ -246,6 +240,7 @@ namespace dealiiqc
   }
 
   // instantiations:
+  // TODO: move to insta.in
   template void QC<1>::run ();
   template void QC<2>::run ();
   template void QC<3>::run ();
@@ -264,4 +259,6 @@ namespace dealiiqc
   template void QC<1>::setup_fe_values_objects ();
   template void QC<2>::setup_fe_values_objects ();
   template void QC<3>::setup_fe_values_objects ();
+  template double QC<1>::calculate_energy_gradient(TrilinosWrappers::MPI::Vector const&, TrilinosWrappers::MPI::Vector&) const;
+
 }
