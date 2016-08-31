@@ -30,6 +30,7 @@ void Problem<dim>::run()
   QC<dim>::pcout << QC<dim>::calculate_energy_gradient(QC<dim>::locally_relevant_displacement,
                                                        QC<dim>::gradient);
   QC<dim>::pcout << std::endl;
+  QC<dim>::pcout << QC<dim>::gradient.linfty_norm() << std::endl;
 }
 
 
