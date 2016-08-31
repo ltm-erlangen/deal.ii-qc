@@ -158,6 +158,11 @@ namespace dealiiqc
     {
       std::shared_ptr<FEValues<dim>> fe_values;
 
+      /**
+       * All atoms attributed to this cell.
+       */
+      std::vector<unsigned int> all_atoms;
+
     };
 
     /**
