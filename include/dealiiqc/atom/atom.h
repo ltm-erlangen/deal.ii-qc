@@ -2,6 +2,9 @@
 #define __dealii_qc_atom_h
 
 #include <deal.II/base/point.h>
+#include <deal.II/dofs/dof_accessor.h>
+#include <deal.II/dofs/dof_handler.h>
+
 
 namespace dealiiqc
 {
@@ -30,9 +33,9 @@ namespace dealiiqc
     Point<dim> reference_position;
 
     /**
-     * Cell id which owns this atom.
+     * Iterator to a cell which owns this atom.
      */
-    unsigned int parent_cell;
+    typename DoFHandler<dim>::active_cell_iterator parent_cell;
 
   };
 
