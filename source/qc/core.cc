@@ -128,9 +128,6 @@ namespace dealiiqc
   {
     double res = 0.;
 
-    std::vector<Tensor<1, dim>> displacements_cell;
-    std::vector<Tensor<1, dim>> displacements_neighbor_cell;
-
     // First, loop over all cells and evaluate displacement field at quadrature
     // points. This is needed irrespectively of energy or gradient calculations.
     for (auto cell = dof_handler.begin_active(); cell != dof_handler.end(); cell++)
@@ -161,6 +158,10 @@ namespace dealiiqc
             const auto qI_it = it->second.quadrature_atoms.find(I);
             const unsigned int qI = qI_it->second;
 
+            // shape function of k-th DoF evaluated at I-th atom:
+            const unsigned int k = 0;
+            const Tensor<1,dim> shape_k = it->second.fe_values->operator[](u_fe).value(k, qI);
+
             // Current position of atom:
             const Point<dim> xI = atoms[I].position + it->second.displacements[qI];
 
@@ -180,6 +181,10 @@ namespace dealiiqc
                 Assert (qJ_it != n_data->second.quadrature_atoms.end(),
                         ExcInternalError());
                 const unsigned int qJ = qJ_it->second;
+
+                // shape function of l-th DoF evaluated at J-th atom:
+                const unsigned int l = 0;
+                const Tensor<1,dim> shape_k = n_data->second.fe_values->operator[](u_fe).value(l, qJ);
 
                 // current position of atom J
                 const Point<dim> xJ = atoms[J].position + n_data->second.displacements[qJ];

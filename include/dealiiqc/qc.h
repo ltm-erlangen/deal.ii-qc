@@ -175,10 +175,16 @@ namespace dealiiqc
      */
     struct AssemblyData
     {
+      /**
+       * FEValues object to evaluate fields and shape function values at
+       * quadrature points.
+       */
       std::shared_ptr<FEValues<dim>> fe_values;
 
       /**
        * All atoms attributed to this cell.
+       *
+       * TOOD: move away from this struct? Do-once-and-forget.
        */
       std::vector<unsigned int> cell_atoms;
 
