@@ -22,7 +22,8 @@ namespace dealiiqc
     triangulation (mpi_communicator,
                    // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
                    Triangulation<dim>::limit_level_difference_at_vertices),
-    fe    (FE_Q<dim>(1),dim),
+    fe (FE_Q<dim>(1),dim),
+    u_fe (0),
     dof_handler    (triangulation),
     computing_timer (mpi_communicator,
                      pcout,
@@ -98,6 +99,7 @@ namespace dealiiqc
             points.push_back(atoms[aid].reference_position);
             weights_per_atom.push_back(1.0); // TODO: put cluster weights here and 0. for those outside of clusters.
             data.quadrature_atoms[aid] = q;
+            data.energy_atoms.push_back(aid);
           }
 
         Assert (points.size() == weights_per_atom.size(),
@@ -111,6 +113,12 @@ namespace dealiiqc
         data.fe_values = std::make_shared<FEValues<dim>>(mapping, fe,
                                                          Quadrature<dim>(points, weights_per_atom),
                                                          update_values);
+
+        // finally reinit FEValues so that it's ready to provide all required
+        // information:
+        data.fe_values->reinit(cell);
+
+        data.displacements.resize(points.size());
       }
   }
 
@@ -118,9 +126,85 @@ namespace dealiiqc
   double QC<dim>::calculate_energy_gradient(const vector_t &locally_relevant_displacement,
                                             vector_t &gradient) const
   {
+    double res = 0.;
+
+    std::vector<Tensor<1, dim>> displacements_cell;
+    std::vector<Tensor<1, dim>> displacements_neighbor_cell;
+
+    // First, loop over all cells and evaluate displacement field at quadrature
+    // points. This is needed irrespectively of energy or gradient calculations.
+    for (auto cell = dof_handler.begin_active(); cell != dof_handler.end(); cell++)
+      {
+        const auto it = cells_to_data.find(cell);
+        Assert (it != cells_to_data.end(),
+                ExcInternalError());
+
+        // get displacement field on all quadrature points of this object
+        it->second.fe_values->operator[](u_fe).get_function_values(locally_relevant_displacement,
+                                                                   it->second.displacements);
+      }
+
+    // TODO: parallelize using multithreading by dropping i>j and doing 1/2 ?
+    // We can't really enforce that two threads won't try to simultaneously
+    // calculate E_{ij} and E_{ji} where i and j belong to neighboring cells.
+    for (auto cell = dof_handler.begin_active(); cell != dof_handler.end(); cell++)
+      {
+        const auto it = cells_to_data.find(cell);
+        Assert (it != cells_to_data.end(),
+                ExcInternalError());
+
+//        displacements_cell.resize(it->second.quadrature_atoms.size());
+//
+//        // get displacement field on all quadrature points of this object
+//        it->second.fe_values->operator[](u_fe).get_function_values(locally_relevant_displacement,
+//                                                                   displacements_cell);
+//
+
+        // for each cell, go trhough all atoms we care about in energy calculation
+        for (unsigned int a = 0; a < it->second.energy_atoms.size(); a++)
+          {
+            // global id of current atom:
+            const unsigned int  I = it->second.energy_atoms[a];
+            const auto qI_it = it->second.quadrature_atoms.find(I);
+            const unsigned int qI = qI_it->second;
+
+            // Current position of atom:
+            const Point<dim> xI = atoms[I].position + it->second.displacements[qI];
+
+            // fe_values_ref[u_fe].value(k, i_quadrature_point)
+
+            // loop over all neighbours and disregard J<I
+            // TODO: implement ^^^^
+            // for now there is always one neighbour only: I+1
+            for (unsigned int J = I+1; J < atoms.size(); J++)
+              {
+                // get Data for neighbour atom
+                // TODO: check if the atom is in this cell also to save some time.
+                const auto n_data = cells_to_data.find(atoms[J].parent_cell);
+
+                // now we need to know what is the quadrature point number
+                // associated with the atom J
+                const auto qJ_it = n_data->second.quadrature_atoms.find(J);
+                Assert (qJ_it != n_data->second.quadrature_atoms.end(),
+                        ExcInternalError());
+                const unsigned int qJ = qJ_it->second;
+
+                // current position of atom J
+                const Point<dim> xJ = atoms[J].position + n_data->second.displacements[qJ];
+
+                // Finally, calculate energy:
+                // TODO: generalized, energy depends on a 2-points potential
+                // used for atoms I and J. Could be different for any combination
+                // of atoms.
+                res +=    1.2345 *Utilities::fixed_power<2>(xI.distance(xJ) - 0.25);
+              }
+
+          }
+
+      }
 
 
-    return 0.;
+    return res;
   }
 
 

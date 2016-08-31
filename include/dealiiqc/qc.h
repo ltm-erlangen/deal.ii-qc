@@ -122,6 +122,8 @@ namespace dealiiqc
      */
     FESystem<dim>        fe;
 
+    const FEValuesExtractors::Vector u_fe;
+
     /**
      * Linear mapping.
      */
@@ -184,6 +186,17 @@ namespace dealiiqc
        * A map of global atom IDs to quadrature point (local id of at atom)
        */
       std::map<unsigned int, unsigned int> quadrature_atoms;
+
+      /**
+       * IDs of all atoms which are needed for energy calculation.
+       */
+      std::vector<unsigned int> energy_atoms;
+
+
+      /**
+       * A vector to store displacements evaluated at quadrature points
+       */
+      mutable std::vector<Tensor<1,dim>> displacements;
 
     };
 
