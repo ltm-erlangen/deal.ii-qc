@@ -151,8 +151,14 @@ namespace dealiiqc
      * Auxiliary class with all the information needed per cell for
      * calculation of energy and forces in quasi-continuum method.
      *
-     * Since ther initial positions of atoms is generally random in each
+     * Since initial positions of atoms is generally random in each
      * element, we have to have a separate FEValues object for each cell.
+     *
+     * The most tricky part in non-local methods like molecular mechanics
+     * within the FE approach is to get the following association link:
+     *
+     * cell -> atom_id -> neighbour_id -> neighbour_cell -> local_neighbour_id
+     *
      */
     struct AssemblyData
     {
@@ -161,7 +167,12 @@ namespace dealiiqc
       /**
        * All atoms attributed to this cell.
        */
-      std::vector<unsigned int> all_atoms;
+      std::vector<unsigned int> cell_atoms;
+
+      /**
+       * A map of global atom IDs to quadrature point (local id of at atom)
+       */
+      std::map<unsigned int, unsigned int> quadrature_atoms;
 
     };
 

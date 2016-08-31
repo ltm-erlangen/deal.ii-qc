@@ -75,14 +75,47 @@ namespace dealiiqc
   void QC<dim>::setup_fe_values_objects ()
   {
 
+    // vector of atoms we care about for calculation, i.e. those within
+    // the clusters plus those in the cut-off:
+    std::vector<Point<dim>> points;
+    std::vector<double> weights_per_atom;
+
+    for (auto cell = dof_handler.begin_active(); cell != dof_handler.end(); cell++)
+      {
+        // vector of atoms we care about for calculation, i.e. those within
+        // the clusters plus those in the cut-off:
+        points.resize(0);
+        weights_per_atom.resize(0);
+
+        AssemblyData &data = cells_to_data[cell];
+
+        // for now take all points as relevant:
+        for (unsigned int q = 0; q < data.cell_atoms.size(); q++)
+          {
+            const unsigned int aid = data.cell_atoms[q];
+            points.push_back(atoms[aid].reference_position);
+            weights_per_atom.push_back(1.0); // TODO: put cluster weights here and 0. for those outside of clusters.
+            data.quadrature_atoms[aid] = q;
+          }
+
+        Assert (points.size() == weights_per_atom.size(),
+                ExcDimensionMismatch(points.size(), weights_per_atom.size()));
+
+        Assert (points.size() > 0,
+                ExcMessage("Cell does not have any atoms at which fields and "
+                           "shape functions are to be evaluated."));
+
+        // Now we are ready to initialize FEValues object.
+        data.fe_values = std::make_shared<FEValues<dim>>(mapping, fe,
+                                                         Quadrature<dim>(points, weights_per_atom),
+                                                         update_values);
+      }
   }
 
 
   template <int dim>
   void QC<dim>::run ()
   {
-    pcout << "Quasic-continuum simulations in " << dim <<"D." << std::endl;
-
     // TODO: read .gmsh file
     {
       GridGenerator::hyper_cube (triangulation);
@@ -91,8 +124,7 @@ namespace dealiiqc
 
     setup_system();
     associate_atoms_with_cells();
-
-    computing_timer.print_summary();
+    setup_fe_values_objects();
   }
 
 
@@ -111,7 +143,7 @@ namespace dealiiqc
         a.parent_cell = my_pair.first;
 
         // add this atom to cell
-        cells_to_data[a.parent_cell].all_atoms.push_back(i);
+        cells_to_data[a.parent_cell].cell_atoms.push_back(i);
       }
   }
 

@@ -26,14 +26,7 @@ Problem<dim>::Problem ()
 template <int dim>
 void Problem<dim>::run()
 {
-  {
-    GridGenerator::hyper_cube (QC<dim>::triangulation);
-    QC<dim>::triangulation.refine_global(1);
-  }
-
-  QC<dim>::setup_system();
-  QC<dim>::associate_atoms_with_cells();
-
+  QC<dim>::run ();
 
   for (auto a = QC<dim>::atoms.begin(); a != QC<dim>::atoms.end(); ++a)
     {
