@@ -1,0 +1,5 @@
+x =0; ref =0; cell=0.25
+x =0.25; ref =0.5; cell=0.25
+x =0.5; ref =1; cell=0.25
+x =0.75; ref =0.5; cell=0.75
+x =1; ref =1; cell=0.75

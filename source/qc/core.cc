@@ -1,5 +1,6 @@
 // a source file which contains definition of core functions of QC class
 #include <dealiiqc/qc.h>
+#include <deal.II/grid/grid_tools.h>
 
 namespace dealiiqc
 {
@@ -28,6 +29,16 @@ namespace dealiiqc
                      TimerOutput::never,
                      TimerOutput::wall_times)
   {
+    // TODO: read from input file
+    const unsigned int N = 4;
+    atoms.resize(N+1);
+    const double L = 1.;
+    for (unsigned int i = 0; i <= N; i++)
+      {
+        Point<dim> p;
+        p[0] = (L*i)/N;
+        atoms[i].position = p;
+      }
   }
 
   template <int dim>
@@ -70,8 +81,25 @@ namespace dealiiqc
     }
 
     setup_system();
+    associate_atoms_with_cells();
 
     computing_timer.print_summary();
+  }
+
+
+  template <int dim>
+  void QC<dim>::associate_atoms_with_cells ()
+  {
+    TimerOutput::Scope t (computing_timer, "Associate atoms with cells");
+
+    for (auto a = atoms.begin(); a != atoms.end(); ++a)
+      {
+        const std::pair<typename DoFHandler<dim>::active_cell_iterator, Point<dim>>
+        my_pair = GridTools::find_active_cell_around_point(mapping, dof_handler, a->position);
+
+        a->reference_position = GeometryInfo<dim>::project_to_unit_cell(my_pair.second);
+        a->parent_cell = my_pair.first;
+      }
   }
 
   // instantiations:
@@ -87,5 +115,7 @@ namespace dealiiqc
   template QC<1>::QC ();
   template QC<2>::QC ();
   template QC<3>::QC ();
-
+  template void QC<1>::associate_atoms_with_cells ();
+  template void QC<2>::associate_atoms_with_cells ();
+  template void QC<3>::associate_atoms_with_cells ();
 }

@@ -100,7 +100,8 @@ ENABLE_TESTING()
 # default 600sec is not enough for some tests, increase:
 SET (TEST_TIME_LIMIT 900)
 #
-# ADD_SUBDIRECTORY(tests/...)
+# tests for core functionality
+ADD_SUBDIRECTORY(tests/core)
 #
 # installation target.
 # use with -DCMAKE_INSTALL_PREFIX=/path/to/

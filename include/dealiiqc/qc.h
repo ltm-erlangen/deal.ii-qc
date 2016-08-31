@@ -48,6 +48,8 @@ namespace LA
 #endif
 }
 
+#include <dealiiqc/atom/atom.h>
+
 namespace dealiiqc
 {
   using namespace dealii;
@@ -80,6 +82,14 @@ namespace dealiiqc
      */
     double calculate_energy_gradient(const vector_t &locally_relevant_displacement,
                                      vector_t &gradient) const;
+
+
+    /**
+     * Run through all atoms and find a cells to which they belong.
+     *
+     * TODO: move to a utility function
+     */
+    void associate_atoms_with_cells();
 
     /**
      * MPI communicator
@@ -120,6 +130,12 @@ namespace dealiiqc
      * All constraints (hanging nodes + BC).
      */
     ConstraintMatrix     constraints;
+
+
+    /**
+     * A vector of atoms in the system.
+     */
+    std::vector<Atom<dim>> atoms;
 
     /**
      * A time object
