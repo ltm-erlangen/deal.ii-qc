@@ -103,6 +103,16 @@ where $\gz N_i (\gz x)$ are vector-valued shape functions.
     \label{fig:mesh_clusters}
 \end{figure}
 
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[angle=90,width=0.98\textwidth]{mesh_clusters_mpi.001.png.ps}
+    \caption{
+        An example of partition of elements and DoFs among processors. Background colour for each DoF indicate which processor owns it.
+    }
+    \label{fig:mesh_mpi}
+\end{figure}
+
+
 Gradient of the total energy with respect to the unknown DoFs will require the following
 \begin{align}
 \frac{\partial \msf r^{\alpha \beta}}{\partial u_i} = \frac{\partial \msf r^{\alpha \beta}}{\partial \bsf r^{\alpha\beta}} \cdot \frac{\partial \bsf r^{\alpha\beta}}{\partial u_i} = \frac{\bsf r^{\alpha\beta}}{r^{\alpha\beta}} \cdot \frac{\partial \bsf r^{\alpha\beta}}{\partial u_i}
