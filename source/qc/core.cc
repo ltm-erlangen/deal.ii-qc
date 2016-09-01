@@ -237,7 +237,7 @@ namespace dealiiqc
                     if (k_neigh == n_data->second.global_to_local_dof.end())
                       {
                         local_gradient[k] += (deriv / r) * rIJ *
-                                              it->second.fe_values->operator[](u_fe).value(k, qI);
+                                             it->second.fe_values->operator[](u_fe).value(k, qI);
                       }
                     else
                       {
@@ -290,7 +290,7 @@ namespace dealiiqc
       {
         Atom<dim> &a = atoms[i];
         const std::pair<typename DoFHandler<dim>::active_cell_iterator, Point<dim>>
-        my_pair = GridTools::find_active_cell_around_point(mapping, dof_handler, a.position);
+            my_pair = GridTools::find_active_cell_around_point(mapping, dof_handler, a.position);
 
         a.reference_position = GeometryInfo<dim>::project_to_unit_cell(my_pair.second);
         a.parent_cell = my_pair.first;
@@ -320,6 +320,6 @@ namespace dealiiqc
   template void QC<1>::setup_fe_values_objects ();
   template void QC<2>::setup_fe_values_objects ();
   template void QC<3>::setup_fe_values_objects ();
-  template double QC<1>::calculate_energy_gradient(TrilinosWrappers::MPI::Vector const&, TrilinosWrappers::MPI::Vector&) const;
+  template double QC<1>::calculate_energy_gradient(TrilinosWrappers::MPI::Vector const &, TrilinosWrappers::MPI::Vector &) const;
 
 }
