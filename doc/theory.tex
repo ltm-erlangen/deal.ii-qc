@@ -80,9 +80,11 @@ The position vector for particle $\alpha$ in Euclidean space with origin $\bsf x
 
 In case of pair-potentials only, the total energy of the non-local quasi-continuum method is then defined as
 \begin{align}
+\begin{split}
 \msf E &= \sum_{A \in \mcl C} n_A \msf E_A \\
            &= \sum_{A \in \mcl C} n_A \sum_{\alpha \in \mcl C_A} \msf E^\alpha \\
            &= \sum_{A \in \mcl C} n_A \sum_{\alpha \in \mcl C_A} \sum_{\beta \in \mcl N_\alpha} \frac{1}{2} \msf E^{\alpha \beta} (\msf r^{\alpha\beta}),
+\end{split}
 \end{align}
 where $\mcl C$ is the set of all clusters, $\mcl C_A$ is the set of atoms attributed to the cluster $A$, $\mcl N_\alpha$ is the set of atoms which interact with atom $\alpha$,
 $\msf E^{\alpha \beta}$ is the energy of the interaction between particles $\alpha$ and $\beta$, which depends on the distance between the two particles $\msf r^{\alpha\beta}$.
@@ -148,6 +150,42 @@ Some of the energies $\msf E^{\alpha\beta}$ will be evaluated twice. To circumve
 where $N_\alpha^C$ is a set of all atoms interacting with atom $\alpha$ and attributed to some cluster, whereas
 $N_\alpha^G$ is a set of all ``ghost'' atoms, which are not attributed to any cluster.
 $N_\alpha^G \cup N_\alpha^C = N_\alpha$ and $N_\alpha^G \cap N_\alpha^C =  0$.
+
+\subsection{Hanging nodes}
+
+The last issue to be discussed is hanging nodes constraints (see \reffig{mesh_clusters}). The position of hanging nodes are restricted to
+be on center of faces. Thereby we can not guarantee with appropriate mesh-motion teqchniques (see Sec. ...) that there will be an atom
+located at the hanging node. Consequently, no clusters are assigned to hanging nodes.
+
+The presence of hanging nodes does not impose difficulties in calculation of energies as one only need to evaluate a displacement field on each atom /quadrature point to be able to evaluated interparticle distance in deformed configuration. However, certain care should be taken in calculation of gradients of energy. 
+
+The constraints to produce a $C^0$ continuous displacement field can be written as
+\begin{align}
+u_j = \sum_{i \in \mcl N_{u}} c_{ji} u_i, \qquad   j \in \mcl N_{c} ,
+\end{align}
+where  $\mcl N_{u}$ is the set of all unconstrained dofs and $\mcl N_c$ is the set of constrained DoFs,
+whose support point is a hanging node. The total set of DoFs is $\mcl N = \mcl N_c \cup \mcl N_u$ and $\mcl N_c \cap \mcl N_u = 0$.
+
+For example the FE space illustrated on \reffig{mesh_clusters} will have the following constraint
+\begin{align}
+u_3 = \frac{1}{2} u_2 + \frac{1}{2} u_4,
+\end{align}
+among others. 
+In local methods (such as small strain linear elasticity), incorporation of either of these constraints is trivial.
+
+
+\begin{align}
+\begin{split}
+\forall u_i \in \mcl N_{u} \,: \quad 
+\frac{\partial \msf E }{\partial u_i} 
+= \sum_{j \in \mcl N} \frac{\partial \msf E }{\partial u_j} \frac{\partial u_j }{\partial u_i}  
+= \frac{\partial \msf E }{\partial u_i} + \frac{\partial \msf E }{\partial u_k} c_{ki} .
+\end{split}
+\end{align}
+Thus, similar to the local methods, one can perform local cell assembly without distinguishing between constrained and un-constrained DoFs.
+The hanging nodes constrains are accounted only at the local contribution to the (gradient) vector is distributed to the global vector.
+
+\subsection{Parallelization}
 
 
 {\color{red}TODO}: discuss parallelization via MPI + TBB within locally owned cells. Also discuss why distributed triangulation can't be used and why each MPI core needs to know the whole geometry.
