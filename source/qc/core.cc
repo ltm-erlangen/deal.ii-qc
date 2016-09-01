@@ -208,6 +208,17 @@ namespace dealiiqc
 
                 const double r = rIJ.norm();
 
+                // If atoms I and J interact with each other while belonging
+                // different clusters. In this case, we need to account for
+                // different weights associated with the clusters by
+                // scaling E_{IJ} with (n_I + n_J)/2, which is exactly how
+                // this contribution would be added had we followed assembly
+                // from clusters perspective.
+                // Here we need to distinguish between two cases: both atoms
+                // belong to clusters (weight is as above), or
+                // only the main atom belongs to a claster (weight is n_I/2)
+
+
                 // Now we can calculate energy:
                 // TODO: generalized, energy depends on a 2-points potential
                 // used for atoms I and J. Could be different for any combination
