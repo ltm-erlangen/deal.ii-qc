@@ -109,4 +109,25 @@ Note the non-local nature of the assembly. The contribution to the gradient vect
 \end{align}
 
 
+Rewrite the total energy in the equivalent form
+\begin{align}
+\msf E &= \sum_{e \in \Omega} \sum_{\alpha \in \Omega_e} \sum_{\beta \in \mcl N_\alpha} \frac{1}{2} \left[n^\alpha + n^\beta\right] \msf E^{\alpha \beta} (\msf r^{\alpha\beta}),
+\end{align}
+where $\Omega$ is the set of all elements, $\Omega_e$ is the set of all atoms attributed to possibly different clusters within the element $e$ and $n^\alpha$ and $n^\beta$ are weights of atoms. Atoms not associated with any clusters have weights zero.
+
+
+Some of the energies $\msf E^{\alpha\beta}$ will be evaluated twice. To circumvent this, we rewrite the energy as
+\begin{align}
+\msf E &= \sum_{e \in \Omega} \sum_{\alpha \in \Omega_e}
+\left[
+\sum_{\alpha < \beta \in \mcl N_\alpha^C} \left[n^\alpha + n^\beta\right] \msf E^{\alpha \beta} (\msf r^{\alpha\beta})
++
+\sum_{\beta \in \mcl N_\alpha^G} \frac{1}{2} n^\alpha \msf E^{\alpha \beta} (\msf r^{\alpha\beta})
+\right],
+\end{align}
+where $N_\alpha^C$ is a set of all atoms interacting with atom $\alpha$ and attributed to some cluster, whereas
+$N_\alpha^G$ is a set of all ``ghost'' atoms, which are not attributed to any cluster.
+$N_\alpha^G \cup N_\alpha^C = N_\alpha$ and $N_\alpha^G \cap N_\alpha^C =  0$.
+
+
 \end{document}
