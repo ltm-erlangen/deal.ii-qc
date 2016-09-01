@@ -1,0 +1,18 @@
+# Eclipse
+.cproject
+.project
+
+# temporary folders like _build
+/_*
+
+# Latex
+*.log
+*.aux
+*.dvi
+*.pdf
+*.ps
+*.gz
+
+# Visit
+*.session
+*.session.gui
