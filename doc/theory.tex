@@ -42,10 +42,11 @@
 \newcommand*{\QEDA}{\hfill\ensuremath{\blacksquare}}%
 \newcommand*{\QEDB}{\hfill\ensuremath{\square}}%
 
+%%%%%
 \DeclareMathAlphabet{\mathpzc}{OT1}{pzc}{m}{it}
 
-\def\gz  #1{           \mbox{$\mathbf{#1}$}}
-%\def\gz  #1{           \mbox{\boldmath $\mit #1$}}
+%\def\gz  #1{           \mbox{$\mathbf{#1}$}}
+\def\gz  #1{           \mbox{\boldmath $\mit #1$}}
 %\def\gzb #1{\overline {\mbox{\boldmath $\mit #1$}}}
 \DeclareMathAlphabet{\bsf}{OT1}{cmss}{bx}{n}
 \def\msf  #1{           \mbox{\!\!      $\sf #1$}}
@@ -63,6 +64,7 @@
 \def\mcl  #1{               {\cal #1}}
 \def\bcl  #1{\mbox{\boldmath$\cal #1$}}
 \def\cc #1{\,{\mathbbm #1}}
+\def\set #1{\mbox{I$\!$#1}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % document:
@@ -75,7 +77,7 @@
 \section{Derivation of energy and forces}
 The position vector for particle $\alpha$ in Euclidean space with origin $\bsf x = \gz 0$ is denoted by
 \begin{align}
-\bsf x^\alpha \in  E^3.
+\bsf x^\alpha \in  \cc E^3.
 \end{align}
 
 In case of pair-potentials only, the total energy of the non-local quasi-continuum method is then defined as
