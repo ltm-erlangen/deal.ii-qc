@@ -73,6 +73,15 @@ namespace dealiiqc
 
     displacement = 0.;
     locally_relevant_displacement = displacement;
+
+
+    // create cell data objects:
+    cells_to_data.clear();
+    for (auto cell = dof_handler.begin_active(); cell != dof_handler.end(); cell++)\
+      {
+	cells_to_data[cell] = AssemblyData();
+      }
+
   }
 
   template <int dim>
@@ -92,7 +101,10 @@ namespace dealiiqc
         points.resize(0);
         weights_per_atom.resize(0);
 
-        AssemblyData &data = cells_to_data[cell];
+        auto data_i = cells_to_data.find(cell);
+        Assert (data_i != cells_to_data.end(),
+		ExcInternalError());
+        AssemblyData &data = data_i->second;
 
         // for now take all points as relevant:
         for (unsigned int q = 0; q < data.cell_atoms.size(); q++)
@@ -188,6 +200,8 @@ namespace dealiiqc
                 // get Data for neighbour atom
                 // TODO: check if the atom is in this cell also to save some time.
                 const auto n_data = cells_to_data.find(atoms[J].parent_cell);
+                Assert (n_data != cells_to_data.end(),
+			ExcInternalError());
 
                 // now we need to know what is the quadrature point number
                 // associated with the atom J
@@ -292,7 +306,11 @@ namespace dealiiqc
         a.parent_cell = my_pair.first;
 
         // add this atom to cell
-        cells_to_data[a.parent_cell].cell_atoms.push_back(i);
+        auto data = cells_to_data.find(a.parent_cell);
+        Assert (data != cells_to_data.end(),
+		ExcInternalError());
+
+        data->second.cell_atoms.push_back(i);
       }
   }
 

@@ -173,8 +173,15 @@ namespace dealiiqc
      * cell -> atom_id -> neighbour_id -> neighbour_cell -> local_neighbour_id
      *
      */
-    struct AssemblyData
+    class AssemblyData
     {
+    public:
+      AssemblyData()
+      :
+	fe_values(NULL)
+      {
+      }
+
       /**
        * FEValues object to evaluate fields and shape function values at
        * quadrature points.
