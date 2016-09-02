@@ -175,6 +175,16 @@ namespace dealiiqc
      */
     struct AssemblyData
     {
+      AssemblyData()
+      {
+      };
+
+      ~AssemblyData()
+      {
+        Assert(fe_values.use_count() < 2,
+               ExcMessage("use count: " + std::to_string(fe_values.use_count())));
+      }
+
       /**
        * FEValues object to evaluate fields and shape function values at
        * quadrature points.

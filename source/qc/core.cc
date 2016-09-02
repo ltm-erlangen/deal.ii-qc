@@ -73,6 +73,10 @@ namespace dealiiqc
 
     displacement = 0.;
     locally_relevant_displacement = displacement;
+
+    cells_to_data.clear();
+    for (auto cell = dof_handler.begin_active(); cell != dof_handler.end(); cell++)
+      cells_to_data.insert(std::make_pair(cell,AssemblyData()));
   }
 
   template <int dim>
@@ -110,6 +114,9 @@ namespace dealiiqc
         Assert (points.size() > 0,
                 ExcMessage("Cell does not have any atoms at which fields and "
                            "shape functions are to be evaluated."));
+
+        Assert (data.fe_values.use_count() ==0,
+                ExcInternalError());
 
         // Now we are ready to initialize FEValues object.
         data.fe_values = std::make_shared<FEValues<dim>>(mapping, fe,
@@ -296,7 +303,10 @@ namespace dealiiqc
         a.parent_cell = my_pair.first;
 
         // add this atom to cell
-        cells_to_data[a.parent_cell].cell_atoms.push_back(i);
+        auto data = cells_to_data.find(a.parent_cell);
+        Assert (data != cells_to_data.end(),
+                ExcInternalError());
+        data->second.cell_atoms.push_back(i);
       }
   }
 
