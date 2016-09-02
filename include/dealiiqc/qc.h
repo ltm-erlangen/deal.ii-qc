@@ -38,6 +38,7 @@
 #include <deal.II/distributed/shared_tria.h>
 
 #include <deal.II/lac/generic_linear_algebra.h>
+#include <memory>
 
 namespace LA
 {
@@ -62,13 +63,76 @@ namespace dealiiqc
   {
   public:
     QC (/*const Parameters<dim> &parameters*/);
-    ~QC ();
+    virtual ~QC ();
     void run ();
 
     // keep it in protected so that we can write unit tests with derived classes
   protected:
     typedef LA::MPI::SparseMatrix matrix_t;
     typedef LA::MPI::Vector vector_t;
+
+    /**
+     * Auxiliary class with all the information needed per cell for
+     * calculation of energy and forces in quasi-continuum method.
+     *
+     * Since initial positions of atoms is generally random in each
+     * element, we have to have a separate FEValues object for each cell.
+     *
+     * The most tricky part in non-local methods like molecular mechanics
+     * within the FE approach is to get the following association link:
+     *
+     * cell -> atom_id -> neighbour_id -> neighbour_cell -> local_neighbour_id
+     *
+     */
+    class AssemblyData
+    {
+    public:
+      AssemblyData()
+      {
+      }
+
+      ~AssemblyData()
+      {
+	fe_values.reset();
+      }
+
+      /**
+       * FEValues object to evaluate fields and shape function values at
+       * quadrature points.
+       */
+      std::unique_ptr<FEValues<dim>> fe_values;
+
+      /**
+       * All atoms attributed to this cell.
+       *
+       * TOOD: move away from this struct? Do-once-and-forget.
+       */
+      std::vector<unsigned int> cell_atoms;
+
+      /**
+       * A map of global atom IDs to quadrature point (local id of at atom)
+       */
+      std::map<unsigned int, unsigned int> quadrature_atoms;
+
+      /**
+       * IDs of all atoms which are needed for energy calculation.
+       */
+      std::vector<unsigned int> energy_atoms;
+
+      /**
+       * A vector to store displacements evaluated at quadrature points
+       */
+      mutable std::vector<Tensor<1,dim>> displacements;
+
+      /**
+       * A map for each cell to related global degree-of-freedom, to those
+       * defined on the cell. Essentially, the reverse of
+       * cell->get_dof_indices().
+       */
+      std::map<unsigned int, unsigned int> global_to_local_dof;
+
+    };
+
 
     /**
      * Distribute degrees-of-freedom and initialise matrices and vectors.
@@ -101,6 +165,12 @@ namespace dealiiqc
      * TODO: implement the logic above. For now just use all atoms.
      */
     void setup_fe_values_objects();
+
+    /**
+     * Map of cells to data.
+     */
+    std::map<typename DoFHandler<dim>::active_cell_iterator, std::unique_ptr<AssemblyData>> cells_to_data;
+
 
     /**
      * MPI communicator
@@ -159,63 +229,6 @@ namespace dealiiqc
      * Locally relevant displacement filed
      */
     vector_t locally_relevant_displacement;
-
-    /**
-     * Auxiliary class with all the information needed per cell for
-     * calculation of energy and forces in quasi-continuum method.
-     *
-     * Since initial positions of atoms is generally random in each
-     * element, we have to have a separate FEValues object for each cell.
-     *
-     * The most tricky part in non-local methods like molecular mechanics
-     * within the FE approach is to get the following association link:
-     *
-     * cell -> atom_id -> neighbour_id -> neighbour_cell -> local_neighbour_id
-     *
-     */
-    struct AssemblyData
-    {
-      /**
-       * FEValues object to evaluate fields and shape function values at
-       * quadrature points.
-       */
-      std::shared_ptr<FEValues<dim>> fe_values;
-
-      /**
-       * All atoms attributed to this cell.
-       *
-       * TOOD: move away from this struct? Do-once-and-forget.
-       */
-      std::vector<unsigned int> cell_atoms;
-
-      /**
-       * A map of global atom IDs to quadrature point (local id of at atom)
-       */
-      std::map<unsigned int, unsigned int> quadrature_atoms;
-
-      /**
-       * IDs of all atoms which are needed for energy calculation.
-       */
-      std::vector<unsigned int> energy_atoms;
-
-      /**
-       * A vector to store displacements evaluated at quadrature points
-       */
-      mutable std::vector<Tensor<1,dim>> displacements;
-
-      /**
-       * A map for each cell to related global degree-of-freedom, to those
-       * defined on the cell. Essentially, the reverse of
-       * cell->get_dof_indices().
-       */
-      std::map<unsigned int, unsigned int> global_to_local_dof;
-
-    };
-
-    /**
-     * Map of cells to data.
-     */
-    std::map<typename DoFHandler<dim>::active_cell_iterator, AssemblyData> cells_to_data;
 
     /**
      * A vector of atoms in the system.
