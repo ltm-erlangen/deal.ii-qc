@@ -9,6 +9,7 @@ namespace dealiiqc
   template <int dim>
   QC<dim>::~QC ()
   {
+    cells_to_data.clear();
     dof_handler.clear();
   }
 
@@ -73,6 +74,13 @@ namespace dealiiqc
 
     displacement = 0.;
     locally_relevant_displacement = displacement;
+
+
+    // create cell data objects:
+    cells_to_data.clear();
+    for (auto cell = dof_handler.begin_active(); cell != dof_handler.end(); cell++)
+      cells_to_data.insert(std::make_pair(cell,std::unique_ptr<AssemblyData>(new AssemblyData())));
+
   }
 
   template <int dim>
@@ -92,16 +100,18 @@ namespace dealiiqc
         points.resize(0);
         weights_per_atom.resize(0);
 
-        AssemblyData &data = cells_to_data[cell];
+        auto data = cells_to_data.find(cell);
+        Assert (data != cells_to_data.end(),
+		ExcInternalError());
 
         // for now take all points as relevant:
-        for (unsigned int q = 0; q < data.cell_atoms.size(); q++)
+        for (unsigned int q = 0; q < data->second->cell_atoms.size(); q++)
           {
-            const unsigned int aid = data.cell_atoms[q];
+            const unsigned int aid = data->second->cell_atoms[q];
             points.push_back(atoms[aid].reference_position);
             weights_per_atom.push_back(1.0); // TODO: put cluster weights here and 0. for those outside of clusters.
-            data.quadrature_atoms[aid] = q;
-            data.energy_atoms.push_back(aid);
+            data->second->quadrature_atoms[aid] = q;
+            data->second->energy_atoms.push_back(aid);
           }
 
         Assert (points.size() == weights_per_atom.size(),
@@ -112,22 +122,22 @@ namespace dealiiqc
                            "shape functions are to be evaluated."));
 
         // Now we are ready to initialize FEValues object.
-        data.fe_values = std::make_shared<FEValues<dim>>(mapping, fe,
-                                                         Quadrature<dim>(points, weights_per_atom),
-                                                         update_values);
+        data->second->fe_values = std::unique_ptr<FEValues<dim>>(new FEValues<dim>(mapping, fe,
+										   Quadrature<dim>(points, weights_per_atom),
+										   update_values));
 
         // finally reinit FEValues so that it's ready to provide all required
         // information:
-        data.fe_values->reinit(cell);
+        data->second->fe_values->reinit(cell);
 
-        data.displacements.resize(points.size());
+        data->second->displacements.resize(points.size());
 
         // store global DoF -> local DoF map:
         cell->get_dof_indices(local_dof_indices);
 
-        data.global_to_local_dof.clear();
+        data->second->global_to_local_dof.clear();
         for (unsigned int i = 0; i < local_dof_indices.size(); i++)
-          data.global_to_local_dof[local_dof_indices[i]] = i;
+          data->second->global_to_local_dof[local_dof_indices[i]] = i;
       }
   }
 
@@ -147,8 +157,8 @@ namespace dealiiqc
                 ExcInternalError());
 
         // get displacement field on all quadrature points of this object
-        it->second.fe_values->operator[](u_fe).get_function_values(locally_relevant_displacement,
-                                                                   it->second.displacements);
+        it->second->fe_values->operator[](u_fe).get_function_values(locally_relevant_displacement,
+                                                                    it->second->displacements);
       }
 
     const unsigned int dofs_per_cell = fe.dofs_per_cell;
@@ -169,15 +179,15 @@ namespace dealiiqc
         cell->get_dof_indices (local_dof_indices);
 
         // for each cell, go trhough all atoms we care about in energy calculation
-        for (unsigned int a = 0; a < it->second.energy_atoms.size(); a++)
+        for (unsigned int a = 0; a < it->second->energy_atoms.size(); a++)
           {
             // global id of current atom:
-            const unsigned int  I = it->second.energy_atoms[a];
-            const auto qI_it = it->second.quadrature_atoms.find(I);
+            const unsigned int  I = it->second->energy_atoms[a];
+            const auto qI_it = it->second->quadrature_atoms.find(I);
             const unsigned int qI = qI_it->second;
 
             // Current position of atom:
-            const Point<dim> xI = atoms[I].position + it->second.displacements[qI];
+            const Point<dim> xI = atoms[I].position + it->second->displacements[qI];
 
             // loop over all neighbours and disregard J<I
             // TODO: implement ^^^^
@@ -188,20 +198,18 @@ namespace dealiiqc
                 // get Data for neighbour atom
                 // TODO: check if the atom is in this cell also to save some time.
                 const auto n_data = cells_to_data.find(atoms[J].parent_cell);
+                Assert (n_data != cells_to_data.end(),
+			ExcInternalError());
 
                 // now we need to know what is the quadrature point number
                 // associated with the atom J
-                const auto qJ_it = n_data->second.quadrature_atoms.find(J);
-                Assert (qJ_it != n_data->second.quadrature_atoms.end(),
+                const auto qJ_it = n_data->second->quadrature_atoms.find(J);
+                Assert (qJ_it != n_data->second->quadrature_atoms.end(),
                         ExcInternalError());
                 const unsigned int qJ = qJ_it->second;
 
-                // shape function of l-th DoF evaluated at J-th atom:
-                const unsigned int l = 0;
-                const Tensor<1,dim> shape_k = n_data->second.fe_values->operator[](u_fe).value(l, qJ);
-
                 // current position of atom J
-                const Point<dim> xJ = atoms[J].position + n_data->second.displacements[qJ];
+                const Point<dim> xJ = atoms[J].position + n_data->second->displacements[qJ];
 
                 // distance vector
                 const Tensor<1,dim> rIJ = xI - xJ;
@@ -233,17 +241,17 @@ namespace dealiiqc
                 // of N_k.
                 for (unsigned int k = 0; k < dofs_per_cell; ++k)
                   {
-                    const auto k_neigh = n_data->second.global_to_local_dof.find(local_dof_indices[k]);
-                    if (k_neigh == n_data->second.global_to_local_dof.end())
+                    const auto k_neigh = n_data->second->global_to_local_dof.find(local_dof_indices[k]);
+                    if (k_neigh == n_data->second->global_to_local_dof.end())
                       {
                         local_gradient[k] += (deriv / r) * rIJ *
-                                             it->second.fe_values->operator[](u_fe).value(k, qI);
+                                             it->second->fe_values->operator[](u_fe).value(k, qI);
                       }
                     else
                       {
                         local_gradient[k] += (deriv / r) * rIJ *
-                                             (it->second.fe_values->operator[](u_fe).value(k, qI) -
-                                              n_data->second.fe_values->operator[](u_fe).value(k_neigh->second, qJ));
+                                             (it->second->fe_values->operator[](u_fe).value(k, qI) -
+                                              n_data->second->fe_values->operator[](u_fe).value(k_neigh->second, qJ));
                       }
                   }
 
@@ -296,7 +304,11 @@ namespace dealiiqc
         a.parent_cell = my_pair.first;
 
         // add this atom to cell
-        cells_to_data[a.parent_cell].cell_atoms.push_back(i);
+        auto data = cells_to_data.find(a.parent_cell);
+        Assert (data != cells_to_data.end(),
+		ExcInternalError());
+
+        data->second->cell_atoms.push_back(i);
       }
   }
 
