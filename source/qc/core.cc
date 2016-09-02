@@ -203,10 +203,6 @@ namespace dealiiqc
                         ExcInternalError());
                 const unsigned int qJ = qJ_it->second;
 
-                // shape function of l-th DoF evaluated at J-th atom:
-                const unsigned int l = 0;
-                const Tensor<1,dim> shape_k = n_data->second.fe_values->operator[](u_fe).value(l, qJ);
-
                 // current position of atom J
                 const Point<dim> xJ = atoms[J].position + n_data->second.displacements[qJ];
 
