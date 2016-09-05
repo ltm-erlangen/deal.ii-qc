@@ -54,19 +54,6 @@ ADD_EXECUTABLE(${TARGET}
     source/main.cc
   )
 
-# A note on RPath:
-# -DCMAKE_INSTALL_RPATH=xyz ...
-#
-# results in "xyz" appearing as the RPATH in the final binaries *after*
-# the installation, i.e. during "make install", executables and shared
-# libraries are relinked, so the CMAKE_INSTALL_RPATH is finally included
-# in the installed binaries. If you want to have the CMAKE_INSTALL_RPATH
-# already available right after building, e.g. to test your software from
-# within CMAKE_BINARY_DIR, you should set CMAKE_BUILD_WITH_INSTALL_RPATH
-# to TRUE.
-SET (CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-SET (CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
 # DEAL_II_SETUP_TARGET will set up all necessary include paths,
 # preprocessor definitions and the link interface:
 #
