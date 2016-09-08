@@ -1,5 +1,5 @@
 // a source file which contains definition of core functions of QC class
-#include <dealiiqc/qc.h>
+#include <dealiiqc/atom/atom.h>
 
 namespace dealiiqc
 {

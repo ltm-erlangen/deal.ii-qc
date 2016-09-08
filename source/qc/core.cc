@@ -1,6 +1,8 @@
 // a source file which contains definition of core functions of QC class
 #include <dealiiqc/qc.h>
 #include <deal.II/grid/grid_tools.h>
+#include <deal.II/grid/grid_generator.h>
+#include <deal.II/dofs/dof_tools.h>
 
 namespace dealiiqc
 {
