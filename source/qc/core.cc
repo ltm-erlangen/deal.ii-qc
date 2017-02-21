@@ -1,5 +1,7 @@
 // a source file which contains definition of core functions of QC class
 #include <dealiiqc/qc.h>
+#include <deal.II/grid/grid_in.h>
+#include <deal.II/grid/grid_out.h>
 #include <deal.II/grid/grid_tools.h>
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/dofs/dof_tools.h>
@@ -14,13 +16,15 @@ namespace dealiiqc
     dof_handler.clear();
   }
 
+
   template <int dim>
-  QC<dim>::QC (/*const Parameters<dim> &parameters*/)
+  QC<dim>::QC ( /*const Parameters<dim> &parameters*/ )
     :
     mpi_communicator(MPI_COMM_WORLD),
     pcout (std::cout,
            (dealii::Utilities::MPI::this_mpi_process(mpi_communicator)
             == 0)),
+    config(),
     triangulation (mpi_communicator,
                    // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
                    Triangulation<dim>::limit_level_difference_at_vertices),
@@ -42,6 +46,80 @@ namespace dealiiqc
         p[0] = (L*i)/N;
         atoms[i].position = p;
       }
+  }
+
+  template <int dim>
+  QC<dim>::QC ( const std::string &filename )
+    :
+    mpi_communicator(MPI_COMM_WORLD),
+    pcout (std::cout,
+           (dealii::Utilities::MPI::this_mpi_process(mpi_communicator)
+            == 0)),
+    config( filename ),
+    triangulation (mpi_communicator,
+                   // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
+                   Triangulation<dim>::limit_level_difference_at_vertices),
+    fe (FE_Q<dim>(1),dim),
+    u_fe (0),
+    dof_handler    (triangulation),
+    computing_timer (mpi_communicator,
+                     pcout,
+                     TimerOutput::never,
+                     TimerOutput::wall_times)
+  {
+    // TODO: read from input file
+    const unsigned int N = 4;
+    atoms.resize(N+1);
+    const double L = 1.;
+    for (unsigned int i = 0; i <= N; i++)
+      {
+        Point<dim> p;
+        p[0] = (L*i)/N;
+        atoms[i].position = p;
+      }
+  }
+
+  template <int dim>
+  void QC<dim>::load_mesh()
+  {
+    std::string meshfile = config.get_mesh();
+    if( !meshfile.empty() )
+    {
+      deallog << std::endl << "The qc input file provided contains mesh file name: "
+	      << meshfile  << std::endl;
+      try
+      {
+	GridIn<dim> gridin;
+	gridin.attach_triangulation( triangulation );
+	std::ifstream fin( meshfile );
+	gridin.read_msh(fin);
+      }
+      catch (std::exception &exc)
+      {
+	std::cerr << std::endl << std::endl
+		  << "----------------------------------------------------"
+		  << std::endl;
+	std::cerr << "Check if mesh file is not present in the directory ! "
+		  << exc.what() << std::endl
+		  << "Aborting!" << std::endl
+		  << "----------------------------------------------------"
+		  << std::endl;
+      }
+    }
+  }
+
+  template <int dim>
+  void QC<dim>::write_mesh( const std::string & fileout, const std::string & type )
+  {
+    std::stringstream ss; ss << fileout;
+    std::ofstream fout ( ss.str());
+    GridOut grid_out;
+    if ( !type.compare("eps")  )
+      grid_out.write_eps (triangulation, fout);
+    else if ( !type.compare("msh") )
+      grid_out.write_msh (triangulation, fout);
+    else
+      std::cerr << "Not implemented in dealiiqc! ";
   }
 
   template <int dim>
@@ -271,11 +349,9 @@ namespace dealiiqc
   template <int dim>
   void QC<dim>::run ()
   {
-    // TODO: read .gmsh file
-    {
-      GridGenerator::hyper_cube (triangulation);
-      triangulation.refine_global(1);
-    }
+    // Read from msh file
+    load_mesh();
+    //triangulation.refine_global(1);
 
     setup_system();
     associate_atoms_with_cells();
@@ -322,6 +398,15 @@ namespace dealiiqc
   template QC<1>::QC ();
   template QC<2>::QC ();
   template QC<3>::QC ();
+  template QC<1>::QC (const std::string &filename);
+  template QC<2>::QC (const std::string &filename);
+  template QC<3>::QC (const std::string &filename);
+  template void QC<1>::load_mesh();
+  template void QC<2>::load_mesh();
+  template void QC<3>::load_mesh();
+  template void QC<1>::write_mesh( const std::string &, const std::string & );
+  template void QC<2>::write_mesh( const std::string &, const std::string & );
+  template void QC<3>::write_mesh( const std::string &, const std::string & );
   template void QC<1>::associate_atoms_with_cells ();
   template void QC<2>::associate_atoms_with_cells ();
   template void QC<3>::associate_atoms_with_cells ();

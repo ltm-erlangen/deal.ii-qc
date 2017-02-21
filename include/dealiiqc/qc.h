@@ -27,6 +27,7 @@ namespace LA
 }
 
 #include <dealiiqc/atom/atom.h>
+#include <dealiiqc/io/configure_qc.h>
 
 namespace dealiiqc
 {
@@ -40,6 +41,7 @@ namespace dealiiqc
   {
   public:
     QC (/*const Parameters<dim> &parameters*/);
+    QC ( const std::string & filename );
     ~QC ();
     void run ();
 
@@ -47,6 +49,17 @@ namespace dealiiqc
   protected:
     typedef LA::MPI::SparseMatrix matrix_t;
     typedef LA::MPI::Vector vector_t;
+
+    /**
+     * Load mesh file and attach it to triangulation
+     */
+    void load_mesh();
+
+    /**
+     * Write mesh file into filename with first argument.
+     * The type of file should be passed as second argument (eps, msh etc)
+     */
+    void write_mesh(const std::string&, const std::string&);
 
     /**
      * Distribute degrees-of-freedom and initialise matrices and vectors.
@@ -89,6 +102,11 @@ namespace dealiiqc
      * Conditional terminal output (root MPI core).
      */
     ConditionalOStream   pcout;
+
+    /**
+     * Read input filename and configure mesh, atoms, etc
+     */
+    ConfigureQC<dim> config;
 
     /**
      * A parallel shared triangulation.
