@@ -51,7 +51,7 @@ namespace dealiiqc
     typedef LA::MPI::Vector vector_t;
 
     /**
-     * Load mesh file and attach it to triangulation
+     * Load initial mesh from a mesh file and attach it to triangulation
      */
     void load_mesh();
 

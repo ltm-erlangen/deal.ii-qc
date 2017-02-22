@@ -42,7 +42,7 @@ int main (int argc, char *argv[])
 {
   try
     {
-      std::string filename = "in.qc";
+      std::string filename(SOURCE_DIR "/mesh_01/in.qc");
       Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv,
                                                           numbers::invalid_unsigned_int);
 

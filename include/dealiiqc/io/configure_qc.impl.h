@@ -4,9 +4,15 @@ namespace dealiiqc
   using namespace dealii;
 
   template< int dim>
+  ConfigureQC<dim>::ConfigureQC(  )
+  :
+  prm(), mesh_file(std::string()), do_refinement(false), n_cycles(0)
+  {}
+
+  template< int dim>
   ConfigureQC<dim>::ConfigureQC( const std::string &filename )
   :
-  prm(), mesh_file(""), do_refinement(false), n_cycles(0)
+  prm(), mesh_file(std::string()), do_refinement(false), n_cycles(0)
   {
     configure_qc( filename );
   }
@@ -20,7 +26,10 @@ namespace dealiiqc
   template<int dim>
   std::string ConfigureQC<dim>::get_mesh()
   {
-    return mesh_file;
+    if( ! mesh_file.empty() )
+      return mesh_file;
+    else
+      return std::string();
   }
 
   template<int dim>
@@ -31,7 +40,7 @@ namespace dealiiqc
 
     prm.enter_subsection ("Configure mesh");
     {
-      prm.declare_entry("mesh file", "hex_01.msh",
+      prm.declare_entry("mesh file", "",
 		      Patterns::Anything (),
 		      "Name of the mesh file "
 		      "with dealii compatible mesh files");

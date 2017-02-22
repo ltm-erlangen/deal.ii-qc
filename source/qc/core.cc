@@ -83,28 +83,25 @@ namespace dealiiqc
   void QC<dim>::load_mesh()
   {
     std::string meshfile = config.get_mesh();
-    if( !meshfile.empty() )
+    deallog << std::endl << "The qc input file provided contains mesh file name: "
+	    << meshfile  << std::endl;
+    try
     {
-      deallog << std::endl << "The qc input file provided contains mesh file name: "
-	      << meshfile  << std::endl;
-      try
-      {
-	GridIn<dim> gridin;
-	gridin.attach_triangulation( triangulation );
-	std::ifstream fin( meshfile );
-	gridin.read_msh(fin);
-      }
-      catch (std::exception &exc)
-      {
-	std::cerr << std::endl << std::endl
-		  << "----------------------------------------------------"
-		  << std::endl;
-	std::cerr << "Check if mesh file is not present in the directory ! "
-		  << exc.what() << std::endl
-		  << "Aborting!" << std::endl
-		  << "----------------------------------------------------"
-		  << std::endl;
-      }
+      GridIn<dim> gridin;
+      gridin.attach_triangulation( triangulation );
+      std::ifstream fin( meshfile );
+      gridin.read_msh(fin);
+    }
+    catch (std::exception &exc)
+    {
+      std::cerr << std::endl << std::endl
+		<< "----------------------------------------------------"
+		<< std::endl;
+      std::cerr << "Check if mesh file is not present in the directory ! "
+		<< exc.what() << std::endl
+		<< "Aborting!" << std::endl
+		<< "----------------------------------------------------"
+		<< std::endl;
     }
   }
 
@@ -350,7 +347,15 @@ namespace dealiiqc
   void QC<dim>::run ()
   {
     // Read from msh file
-    load_mesh();
+    if(!(config.get_mesh()).empty() )
+    {
+      load_mesh();
+    }
+    else
+    {
+      GridGenerator::hyper_cube (triangulation);
+      triangulation.refine_global(1);
+    }
     //triangulation.refine_global(1);
 
     setup_system();

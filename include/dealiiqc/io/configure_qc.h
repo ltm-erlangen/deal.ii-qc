@@ -23,8 +23,17 @@ namespace dealiiqc
   class ConfigureQC
   {
   public:
+
+    /**
+     * Default constructor
+     */
     ConfigureQC ( /*const Parameters<dim> &parameters*/ );
+
+    /**
+     * Constructor with input file name as the argument
+     */
     ConfigureQC ( const std::string &filename );
+
     //~ConfigureQC();
 
     /**
@@ -39,6 +48,10 @@ namespace dealiiqc
 
   private:
     void configure_qc( const std::string &filename );
+
+    /**
+     * ParameterHandler to parse inputfile
+     */
     ParameterHandler prm;
 
     /**
@@ -56,13 +69,9 @@ namespace dealiiqc
      */
     unsigned int n_cycles;
 
-  };
+    // TODO: parse atom data
 
-  template< int dim>
-  ConfigureQC<dim>::ConfigureQC(  )
-  :
-  prm(), mesh_file(""), do_refinement(false), n_cycles(0)
-  {}
+  };
 
 }
 
