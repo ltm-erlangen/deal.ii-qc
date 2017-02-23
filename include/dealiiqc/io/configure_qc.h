@@ -1,8 +1,6 @@
+
 #ifndef __dealii_qc_configure_qc_h
 #define __dealii_qc_configure_qc_h
-
-#include <iostream>
-#include <string>
 
 #include <deal.II/base/subscriptor.h>
 #include <deal.II/base/parameter_handler.h>
@@ -32,22 +30,20 @@ namespace dealiiqc
     /**
      * Constructor with input file name as the argument
      */
-    ConfigureQC ( const std::string &filename );
-
-    //~ConfigureQC();
+    ConfigureQC ( const std::istringstream &iss );
 
     /**
-     * Get mesh file name by assigning mesh_file name to the argument
+     * Get current mesh file
      */
-    void get_mesh( std::string &);
+    std::string get_mesh_file();
 
     /**
-     * Get mesh file
+     * Get number of initial grid refinement cycles
      */
-    std::string get_mesh();
+    unsigned int get_n_initial_global_refinements();
 
   private:
-    void configure_qc( const std::string &filename );
+    void configure_qc( const std::istringstream &iss );
 
     /**
      * ParameterHandler to parse inputfile
@@ -60,14 +56,9 @@ namespace dealiiqc
     std::string mesh_file;
 
     /**
-     * Whether or not to perform initial refinement
-     */
-    bool do_refinement;
-
-    /**
      * Number of cycles of initial global refinement
      */
-    unsigned int n_cycles;
+    unsigned int n_initial_global_refinements;
 
     // TODO: parse atom data
 
@@ -75,6 +66,6 @@ namespace dealiiqc
 
 }
 
-#include "configure_qc.impl.h"
+#include "../../../source/io/configure_qc.cc"
 
 #endif // __dealii_qc_configure_qc_h

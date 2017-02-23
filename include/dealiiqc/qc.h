@@ -41,7 +41,7 @@ namespace dealiiqc
   {
   public:
     QC (/*const Parameters<dim> &parameters*/);
-    QC ( const std::string & filename );
+    QC ( const std::istringstream & iss );
     ~QC ();
     void run ();
 
@@ -51,9 +51,9 @@ namespace dealiiqc
     typedef LA::MPI::Vector vector_t;
 
     /**
-     * Load initial mesh from a mesh file and attach it to triangulation
+     * Setup triangulation
      */
-    void load_mesh();
+    void setup_triangulation();
 
     /**
      * Write mesh file into filename with first argument.

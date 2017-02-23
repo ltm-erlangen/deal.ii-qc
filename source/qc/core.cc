@@ -49,13 +49,13 @@ namespace dealiiqc
   }
 
   template <int dim>
-  QC<dim>::QC ( const std::string &filename )
+  QC<dim>::QC ( const std::istringstream &iss )
     :
     mpi_communicator(MPI_COMM_WORLD),
     pcout (std::cout,
            (dealii::Utilities::MPI::this_mpi_process(mpi_communicator)
             == 0)),
-    config( filename ),
+    config( iss ),
     triangulation (mpi_communicator,
                    // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
                    Triangulation<dim>::limit_level_difference_at_vertices),
@@ -80,28 +80,24 @@ namespace dealiiqc
   }
 
   template <int dim>
-  void QC<dim>::load_mesh()
+  void QC<dim>::setup_triangulation()
   {
-    std::string meshfile = config.get_mesh();
-    deallog << std::endl << "The qc input file provided contains mesh file name: "
-	    << meshfile  << std::endl;
-    try
+    if(!(config.get_mesh_file()).empty() )
     {
+      std::string meshfile = config.get_mesh_file();
+      // TODO: write the name of the mesh file to log file or to the screen
       GridIn<dim> gridin;
       gridin.attach_triangulation( triangulation );
       std::ifstream fin( meshfile );
       gridin.read_msh(fin);
+      if ( config.get_n_initial_global_refinements() )
+	triangulation.refine_global(config.get_n_initial_global_refinements());
     }
-    catch (std::exception &exc)
+    else
     {
-      std::cerr << std::endl << std::endl
-		<< "----------------------------------------------------"
-		<< std::endl;
-      std::cerr << "Check if mesh file is not present in the directory ! "
-		<< exc.what() << std::endl
-		<< "Aborting!" << std::endl
-		<< "----------------------------------------------------"
-		<< std::endl;
+      GridGenerator::hyper_cube (triangulation);
+      if ( config.get_n_initial_global_refinements() )
+      	triangulation.refine_global(config.get_n_initial_global_refinements());
     }
   }
 
@@ -346,18 +342,11 @@ namespace dealiiqc
   template <int dim>
   void QC<dim>::run ()
   {
-    // Read from msh file
-    if(!(config.get_mesh()).empty() )
-    {
-      load_mesh();
-    }
-    else
-    {
-      GridGenerator::hyper_cube (triangulation);
-      triangulation.refine_global(1);
-    }
-    //triangulation.refine_global(1);
+    // Load the mesh by reading from mesh file
+    setup_triangulation();
 
+    // Load atoms
+    // TODO: Read atoms from (LAMMPS) atom data file
     setup_system();
     associate_atoms_with_cells();
     setup_fe_values_objects();
@@ -403,12 +392,12 @@ namespace dealiiqc
   template QC<1>::QC ();
   template QC<2>::QC ();
   template QC<3>::QC ();
-  template QC<1>::QC (const std::string &filename);
-  template QC<2>::QC (const std::string &filename);
-  template QC<3>::QC (const std::string &filename);
-  template void QC<1>::load_mesh();
-  template void QC<2>::load_mesh();
-  template void QC<3>::load_mesh();
+  template QC<1>::QC (const std::istringstream &filename);
+  template QC<2>::QC (const std::istringstream &filename);
+  template QC<3>::QC (const std::istringstream &filename);
+  template void QC<1>::setup_triangulation();
+  template void QC<2>::setup_triangulation();
+  template void QC<3>::setup_triangulation();
   template void QC<1>::write_mesh( const std::string &, const std::string & );
   template void QC<2>::write_mesh( const std::string &, const std::string & );
   template void QC<3>::write_mesh( const std::string &, const std::string & );

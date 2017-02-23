@@ -16,14 +16,14 @@ template <int dim>
 class Problem : public QC<dim>
 {
 public:
-  Problem ( const std::string &filename);
+  Problem ( const std::istringstream &filename);
   void run ();
 };
 
 template <int dim>
-Problem<dim>::Problem ( const std::string &filename)
+Problem<dim>::Problem ( const std::istringstream &iss)
   :
-  QC<dim>(filename)
+  QC<dim>(iss)
 {}
 
 template <int dim>
@@ -42,11 +42,13 @@ int main (int argc, char *argv[])
 {
   try
     {
-      std::string filename(SOURCE_DIR "/mesh_01/in.qc");
       Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv,
-                                                          numbers::invalid_unsigned_int);
+                                                                numbers::invalid_unsigned_int);
+      std::string filename("qc.prm"),
+	          abs_path (SOURCE_DIR "/mesh_01/");
+      std::istringstream iss( abs_path + " " + filename);
 
-      Problem<3>problem( filename );
+      Problem<3>problem( iss );
       problem.run ();
     }
   catch (std::exception &exc)
