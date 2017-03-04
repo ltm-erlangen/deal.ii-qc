@@ -6,49 +6,49 @@
 #include <deal.II/base/parameter_handler.h>
 #include <deal.II/base/logstream.h>
 
+#include <fstream>
+
 namespace dealiiqc
 {
   using namespace dealii;
 
   /**
-   * A class to read qc input file.
-   * The input file should contain the following information:
+   * A class to read qc input parameter file.
+   * The input parameter file should contain the following information:
    * - Initial mesh information
-   * - Atoms and atoms attributes
-   * - Type of operations
+   * - Atoms attributes
+   * - Problem dependent operations
    */
-  template <int dim>
   class ConfigureQC
   {
   public:
 
     /**
-     * Default constructor
+     * Constructor with parameter filename as the argument
      */
-    ConfigureQC ( /*const Parameters<dim> &parameters*/ );
-
-    /**
-     * Constructor with input file name as the argument
-     */
-    ConfigureQC ( const std::istringstream &iss );
+     ConfigureQC ( const std::string & );
 
     /**
      * Get current mesh file
      */
-    std::string get_mesh_file();
+    std::string get_mesh_file() const;
 
     /**
      * Get number of initial grid refinement cycles
      */
-    unsigned int get_n_initial_global_refinements();
+    unsigned int get_n_initial_global_refinements() const;
+
+    /*
+     * Declare parameters to configure qc
+     */
+    static void declare_parameters( ParameterHandler &prm );
+
+    /*
+     * Parse parameters
+     */
+    void parse_parameters( ParameterHandler &prm );
 
   private:
-    void configure_qc( const std::istringstream &iss );
-
-    /**
-     * ParameterHandler to parse inputfile
-     */
-    ParameterHandler prm;
 
     /**
      * Name of the mesh file for initial qc setup
@@ -65,7 +65,5 @@ namespace dealiiqc
   };
 
 }
-
-#include "../../../source/io/configure_qc.cc"
 
 #endif // __dealii_qc_configure_qc_h

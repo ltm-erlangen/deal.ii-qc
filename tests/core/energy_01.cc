@@ -13,14 +13,14 @@ template <int dim>
 class Problem : public QC<dim>
 {
 public:
-  Problem ();
+  Problem (const std::string &);
   void run ();
 };
 
 template <int dim>
-Problem<dim>::Problem ()
+Problem<dim>::Problem (const std::string &parameter_filename)
   :
-  QC<dim>()
+  QC<dim>(parameter_filename)
 {}
 
 template <int dim>
@@ -41,7 +41,16 @@ int main (int argc, char *argv[])
       Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv,
                                                           numbers::invalid_unsigned_int);
 
-      Problem<1> problem;
+      std::string parameter_filename="qc.prm";
+      std::ofstream parameter_out;
+      parameter_out.open(parameter_filename.c_str(), std::ofstream::trunc);
+      // Allow the restriction that user must provide Dimension of the problem
+      const unsigned int dim = 1;
+      parameter_out << "set Dimension = " << dim << std::endl;
+      parameter_out.close();
+
+      // Define Problem
+      Problem<dim> problem(parameter_filename);
       problem.run ();
     }
   catch (std::exception &exc)

@@ -40,10 +40,18 @@ namespace dealiiqc
   class QC
   {
   public:
-    QC (/*const Parameters<dim> &parameters*/);
-    QC ( const std::istringstream & iss );
+    QC ( const std::string & );
     ~QC ();
+
     void run ();
+
+    /**
+     * Write mesh file into some sort of ostream object
+     * (passed as the first argument).
+     * The type of file should be passed as second argument (eps, msh etc)
+     */
+    template<typename T>
+    void write_mesh(T&, const std::string&);
 
     // keep it in protected so that we can write unit tests with derived classes
   protected:
@@ -54,12 +62,6 @@ namespace dealiiqc
      * Setup triangulation
      */
     void setup_triangulation();
-
-    /**
-     * Write mesh file into filename with first argument.
-     * The type of file should be passed as second argument (eps, msh etc)
-     */
-    void write_mesh(const std::string&, const std::string&);
 
     /**
      * Distribute degrees-of-freedom and initialise matrices and vectors.
@@ -106,7 +108,7 @@ namespace dealiiqc
     /**
      * Read input filename and configure mesh, atoms, etc
      */
-    ConfigureQC<dim> config;
+    ConfigureQC configure_qc;
 
     /**
      * A parallel shared triangulation.

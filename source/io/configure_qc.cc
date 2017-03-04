@@ -5,39 +5,51 @@ namespace dealiiqc
 {
   using namespace dealii;
 
-  template< int dim>
-  ConfigureQC<dim>::ConfigureQC(  )
+  ConfigureQC::ConfigureQC( const std::string & parameter_filename)
   :
-  prm(), mesh_file(std::string()), n_initial_global_refinements(1)
-  {}source/io/configure_qc.cc
-
-  template< int dim>
-  ConfigureQC<dim>::ConfigureQC( const std::istringstream &iss )
-  :
-  ConfigureQC<dim>()
+  mesh_file(std::string()), n_initial_global_refinements(1)
   {
-    configure_qc( iss );
+    ParameterHandler prm;
+    declare_parameters (prm);
+    std::ifstream parameter_file (parameter_filename.c_str());
+    if (!parameter_file)
+    {
+      parameter_file.close ();
+      std::ostringstream message;
+      message << "Input parameter file <"
+	      << parameter_filename << "> not found."
+	      << std::endl
+	      << "Creating a template file of the same name."
+	      << std::endl;
+      std::ofstream parameter_out (parameter_filename.c_str());
+      prm.print_parameters (parameter_out,
+			    ParameterHandler::Text);
+      AssertThrow (false, ExcMessage (message.str().c_str()));
+    }
+    const bool success = prm.read_input (parameter_file);
+    AssertThrow (success, ExcMessage ("\nInvalid input parameter file.\n"));
+    parse_parameters (prm);
   }
 
-  template<int dim>
-  std::string ConfigureQC<dim>::get_mesh_file()
+  std::string ConfigureQC::get_mesh_file () const
   {
     return mesh_file;
   }
 
-  template<int dim>
-  unsigned int ConfigureQC<dim>::get_n_initial_global_refinements()
+  unsigned int ConfigureQC::get_n_initial_global_refinements() const
   {
     return n_initial_global_refinements;
   }
 
-  template<int dim>
-  void ConfigureQC<dim>::configure_qc( const std::istringstream &iss )
+  void ConfigureQC::declare_parameters( ParameterHandler &prm )
   {
     // TODO: Write intput file name to the screen
     //deallog << std::endl << "Parsing qc input file " << filename << std::endl
     //	      << "for a " << dim << " dimensional simulation. " << std::endl;
 
+    prm.declare_entry("Dimension", "2",
+    		      Patterns::Integer(0),
+    		      "Dimensionality of the problem ");
     prm.enter_subsection ("Configure mesh");
     {
       prm.declare_entry("Mesh file", "",
@@ -62,21 +74,18 @@ namespace dealiiqc
     }
     prm.leave_subsection ();
     */
-    std::stringstream ess (iss.str());
-    std::string abs_path, filename;
-    ess >> abs_path; ess >> filename;
 
-    prm.read_input("/home/ken/Documents/Git-repos/deal.ii-qc/tests/io/mesh_01/qc.prm");
+  }
+
+  void ConfigureQC::parse_parameters( ParameterHandler &prm )
+  {
+    //const unsigned int dimension = prm.get_integer("Dimension");
     prm.enter_subsection("Configure mesh");
     {
       mesh_file                    = prm.get("Mesh file");
       n_initial_global_refinements = prm.get_integer("Number of initial global refinements");
     }
-    mesh_file.insert(0, abs_path);
     prm.leave_subsection();
-
   }
-
-  //#include "configure_qc.inst"
 
 }

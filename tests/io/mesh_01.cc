@@ -1,6 +1,6 @@
 /**
- * Short test to check if QC class accepts a file as input.
- * This test is a clone from energy_01.
+ * Short test to check if QC class accepts an input parameter file.
+ * Writes out a mesh in eps file format
  */
 
 #include <iostream>
@@ -12,44 +12,32 @@
 using namespace dealii;
 using namespace dealiiqc;
 
-template <int dim>
-class Problem : public QC<dim>
-{
-public:
-  Problem ( const std::istringstream &filename);
-  void run ();
-};
-
-template <int dim>
-Problem<dim>::Problem ( const std::istringstream &iss)
-  :
-  QC<dim>(iss)
-{}
-
-template <int dim>
-void Problem<dim>::run()
-{
-  QC<dim>::run ();
-  QC<dim>::write_mesh("meshout","eps");
-  QC<dim>::pcout << QC<dim>::calculate_energy_gradient(QC<dim>::locally_relevant_displacement,
-                                                       QC<dim>::gradient);
-  QC<dim>::pcout << std::endl;
-  QC<dim>::pcout << QC<dim>::gradient.linfty_norm() << std::endl;
-}
-
-
 int main (int argc, char *argv[])
 {
   try
     {
       Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv,
                                                                 numbers::invalid_unsigned_int);
-      std::string filename("qc.prm"),
-	          abs_path (SOURCE_DIR "/mesh_01/");
-      std::istringstream iss( abs_path + " " + filename);
 
-      Problem<3>problem( iss );
+      std::string parameter_filename="qc.prm";
+      const unsigned int dim = 3;
+      std::ofstream parameter_out;
+      parameter_out.open( parameter_filename.c_str(),
+			  std::ofstream::trunc        );
+
+      parameter_out
+          << "set Dimension = "          << dim               << std::endl
+          << "subsection Configure mesh"                      << std::endl
+	  << "  set Mesh file = "        << SOURCE_DIR
+	  << "/mesh_01/hex_01.msh"                            << std::endl
+	  << "  set Number of initial global refinements = 1" << std::endl
+	  << "end" << std::endl;
+      parameter_out.close();
+
+      QC<dim> problem( parameter_filename );
       problem.run ();
+      std::ofstream out ("output", std::ofstream::trunc);
+      problem.write_mesh(out,"eps");
     }
   catch (std::exception &exc)
     {
