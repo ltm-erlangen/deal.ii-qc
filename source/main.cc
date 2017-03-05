@@ -20,13 +20,9 @@ int main (int argc, char *argv[])
       AssertThrow(argc > 1,ExcMessage("Parameter file is required as an input argument"));
 
       std::string parameter_filename = argv[1];
-      //ParameterHandler prm;
-      //ConfigureQC::declare_parameters(prm);
-      //prm.read_input(parameter_filename,"dummy");
-
-      const unsigned int dim = 2;
-
       ConfigureQC config(parameter_filename);
+      const unsigned int dim = config.get_dimension();
+
       if (dim == 2)
         {
           QC<2> problem(config);

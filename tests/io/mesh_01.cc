@@ -34,27 +34,9 @@ int main (int argc, char *argv[])
       const unsigned int dim = config.get_dimension();
       std::ofstream out ("output", std::ofstream::trunc);
 
-      std::cout << "Dimension of problem " << dim << std::endl;
-      if (dim == 2)
-        {
-          QC<2> problem( config );
-          problem.run ();
-          problem.write_mesh(out,"eps");
-        }
-      else if (dim == 3)
-        {
-          QC<3> problem( config );
-          problem.run ();
-          problem.write_mesh(out,"eps");
-        }
-      else if (dim ==1)
-        {
-          QC<1> problem( config );
-          problem.run ();
-          problem.write_mesh(out,"eps");
-        }
-      else
-        Assert(false, ExcNotImplemented());
+      QC<3> problem( config );
+      problem.run ();
+      problem.write_mesh(out,"msh");
     }
   catch (std::exception &exc)
     {
