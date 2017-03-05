@@ -1,5 +1,7 @@
 // a source file which contains definition of core functions of QC class
 #include <dealiiqc/qc.h>
+#include <deal.II/grid/grid_in.h>
+#include <deal.II/grid/grid_out.h>
 #include <deal.II/grid/grid_tools.h>
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/dofs/dof_tools.h>
@@ -15,12 +17,13 @@ namespace dealiiqc
   }
 
   template <int dim>
-  QC<dim>::QC (/*const Parameters<dim> &parameters*/)
+  QC<dim>::QC ( const ConfigureQC & config )
     :
     mpi_communicator(MPI_COMM_WORLD),
     pcout (std::cout,
            (dealii::Utilities::MPI::this_mpi_process(mpi_communicator)
             == 0)),
+    configure_qc( config ),
     triangulation (mpi_communicator,
                    // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
                    Triangulation<dim>::limit_level_difference_at_vertices),
@@ -32,6 +35,7 @@ namespace dealiiqc
                      TimerOutput::never,
                      TimerOutput::wall_times)
   {
+    Assert( dim==configure_qc.get_dimension(), ExcInternalError());
     // TODO: read from input file
     const unsigned int N = 4;
     atoms.resize(N+1);
@@ -42,6 +46,39 @@ namespace dealiiqc
         p[0] = (L*i)/N;
         atoms[i].position = p;
       }
+  }
+
+  template <int dim>
+  void QC<dim>::setup_triangulation()
+  {
+    if(!(configure_qc.get_mesh_file()).empty() )
+    {
+      std::string meshfile = configure_qc.get_mesh_file();
+      // TODO: write the name of the mesh file to log file or to the screen
+      GridIn<dim> gridin;
+      gridin.attach_triangulation( triangulation );
+      std::ifstream fin( meshfile );
+      gridin.read_msh(fin);
+    }
+    else
+    {
+      GridGenerator::hyper_cube (triangulation);
+    }
+    if ( configure_qc.get_n_initial_global_refinements() )
+      triangulation.refine_global(configure_qc.get_n_initial_global_refinements());
+  }
+
+  template <int dim>
+  template<typename T>
+  void QC<dim>::write_mesh( T & os, const std::string & type )
+  {
+    GridOut grid_out;
+    if ( !type.compare("eps")  )
+      grid_out.write_eps (triangulation, os);
+    else if ( !type.compare("msh") )
+      grid_out.write_msh (triangulation, os);
+    else
+      AssertThrow(false, ExcNotImplemented());
   }
 
   template <int dim>
@@ -271,12 +308,11 @@ namespace dealiiqc
   template <int dim>
   void QC<dim>::run ()
   {
-    // TODO: read .gmsh file
-    {
-      GridGenerator::hyper_cube (triangulation);
-      triangulation.refine_global(1);
-    }
+    // Load the mesh by reading from mesh file
+    setup_triangulation();
 
+    // Load atoms
+    // TODO: Read atoms from (LAMMPS) atom data file
     setup_system();
     associate_atoms_with_cells();
     setup_fe_values_objects();
@@ -319,9 +355,15 @@ namespace dealiiqc
   template QC<1>::~QC ();
   template QC<2>::~QC ();
   template QC<3>::~QC ();
-  template QC<1>::QC ();
-  template QC<2>::QC ();
-  template QC<3>::QC ();
+  template QC<1>::QC (const ConfigureQC &);
+  template QC<2>::QC (const ConfigureQC &);
+  template QC<3>::QC (const ConfigureQC &);
+  template void QC<1>::setup_triangulation();
+  template void QC<2>::setup_triangulation();
+  template void QC<3>::setup_triangulation();
+  template void QC<1>::write_mesh<std::ofstream>( std::ofstream &, const std::string & );
+  template void QC<2>::write_mesh<std::ofstream>( std::ofstream &, const std::string & );
+  template void QC<3>::write_mesh<std::ofstream>( std::ofstream &, const std::string & );
   template void QC<1>::associate_atoms_with_cells ();
   template void QC<2>::associate_atoms_with_cells ();
   template void QC<3>::associate_atoms_with_cells ();

@@ -19,6 +19,7 @@ INCLUDE_DIRECTORIES(
 SET(TARGET_SRC
   source/qc/core.cc
   source/atom/atom.cc
+  source/io/configure_qc.cc
   )
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.8)
@@ -89,6 +90,7 @@ SET (TEST_TIME_LIMIT 900)
 #
 # tests for core functionality
 ADD_SUBDIRECTORY(tests/core)
+ADD_SUBDIRECTORY(tests/io)
 #
 # installation target.
 # use with -DCMAKE_INSTALL_PREFIX=/path/to/

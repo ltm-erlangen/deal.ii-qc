@@ -1,4 +1,7 @@
-// print out atom-to-cell association
+/**
+ * Short test to check if QC class accepts an input parameter file.
+ * Writes out a mesh in eps file format
+ */
 
 #include <iostream>
 #include <fstream>
@@ -9,48 +12,31 @@
 using namespace dealii;
 using namespace dealiiqc;
 
-template <int dim>
-class Problem : public QC<dim>
-{
-public:
-  Problem (const ConfigureQC &);
-  void run ();
-};
-
-template <int dim>
-Problem<dim>::Problem (const ConfigureQC &config)
-  :
-  QC<dim>(config)
-{}
-
-template <int dim>
-void Problem<dim>::run()
-{
-  QC<dim>::run ();
-  QC<dim>::pcout << QC<dim>::calculate_energy_gradient(QC<dim>::locally_relevant_displacement,
-                                                       QC<dim>::gradient);
-  QC<dim>::pcout << std::endl;
-  QC<dim>::pcout << QC<dim>::gradient.linfty_norm() << std::endl;
-}
-
-
 int main (int argc, char *argv[])
 {
   try
     {
       Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv,
-                                                          numbers::invalid_unsigned_int);
+                                                                numbers::invalid_unsigned_int);
 
-      // Allow the restriction that user must provide Dimension of the problem
-      const unsigned int dim = 1;
       std::ostringstream oss;
-      oss << "set Dimension = " << dim << std::endl;
+      oss
+          << "set Dimension = 3"                              << std::endl
+          << "subsection Configure mesh"                      << std::endl
+	  << "  set Mesh file = "        << SOURCE_DIR
+	  << "/mesh_01/hex_01.msh"                            << std::endl
+	  << "  set Number of initial global refinements = 1" << std::endl
+	  << "end" << std::endl;
+
       std::istringstream prm_stream (oss.str().c_str());
       ConfigureQC config( prm_stream );
+      // Allow the restriction that user must provide Dimension of the problem
+      const unsigned int dim = config.get_dimension();
+      std::ofstream out ("output", std::ofstream::trunc);
 
-      // Define Problem
-      Problem<dim> problem(config);
+      QC<3> problem( config );
       problem.run ();
+      problem.write_mesh(out,"msh");
     }
   catch (std::exception &exc)
     {
