@@ -24,9 +24,19 @@ namespace dealiiqc
   public:
 
     /**
+     * Constructor with istream object
+     */
+    ConfigureQC( std::istream &);
+
+    /**
      * Constructor with parameter filename as the argument
      */
-     ConfigureQC ( const std::string & );
+    ConfigureQC ( const std::string & );
+
+    /**
+     * Get dimensionality of the problem
+     */
+    unsigned int get_dimension() const;
 
     /**
      * Get current mesh file
@@ -38,6 +48,8 @@ namespace dealiiqc
      */
     unsigned int get_n_initial_global_refinements() const;
 
+  private:
+
     /*
      * Declare parameters to configure qc
      */
@@ -48,7 +60,10 @@ namespace dealiiqc
      */
     void parse_parameters( ParameterHandler &prm );
 
-  private:
+    /**
+     * Dimensionality of the problem
+     */
+    unsigned int dimension;
 
     /**
      * Name of the mesh file for initial qc setup

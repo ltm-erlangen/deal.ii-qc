@@ -40,7 +40,7 @@ namespace dealiiqc
   class QC
   {
   public:
-    QC ( const std::string & );
+    QC ( const ConfigureQC & );
     ~QC ();
 
     void run ();

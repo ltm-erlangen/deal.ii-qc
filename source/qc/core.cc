@@ -17,13 +17,13 @@ namespace dealiiqc
   }
 
   template <int dim>
-  QC<dim>::QC ( const std::string & parameter_filename )
+  QC<dim>::QC ( const ConfigureQC & config )
     :
     mpi_communicator(MPI_COMM_WORLD),
     pcout (std::cout,
            (dealii::Utilities::MPI::this_mpi_process(mpi_communicator)
             == 0)),
-    configure_qc( parameter_filename ),
+    configure_qc( config ),
     triangulation (mpi_communicator,
                    // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
                    Triangulation<dim>::limit_level_difference_at_vertices),
@@ -35,6 +35,7 @@ namespace dealiiqc
                      TimerOutput::never,
                      TimerOutput::wall_times)
   {
+    Assert( dim==configure_qc.get_dimension(), ExcInternalError());
     // TODO: read from input file
     const unsigned int N = 4;
     atoms.resize(N+1);
@@ -77,7 +78,7 @@ namespace dealiiqc
     else if ( !type.compare("msh") )
       grid_out.write_msh (triangulation, os);
     else
-      std::cerr << "Not implemented in dealiiqc! ";
+      AssertThrow(false, ExcNotImplemented());
   }
 
   template <int dim>
@@ -354,9 +355,9 @@ namespace dealiiqc
   template QC<1>::~QC ();
   template QC<2>::~QC ();
   template QC<3>::~QC ();
-  template QC<1>::QC (const std::string &);
-  template QC<2>::QC (const std::string &);
-  template QC<3>::QC (const std::string &);
+  template QC<1>::QC (const ConfigureQC &);
+  template QC<2>::QC (const ConfigureQC &);
+  template QC<3>::QC (const ConfigureQC &);
   template void QC<1>::setup_triangulation();
   template void QC<2>::setup_triangulation();
   template void QC<3>::setup_triangulation();
