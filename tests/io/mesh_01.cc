@@ -18,7 +18,7 @@ int main (int argc, char *argv[])
     {
       Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv,
                                                                 numbers::invalid_unsigned_int);
-
+      MPI_Comm mpi_communicator(MPI_COMM_WORLD);
       std::ostringstream oss;
       oss
           << "set Dimension = 3"                              << std::endl
@@ -36,7 +36,8 @@ int main (int argc, char *argv[])
 
       QC<3> problem( config );
       problem.run ();
-      problem.write_mesh(out,"msh");
+      if( Utilities::MPI::this_mpi_process(mpi_communicator) == 0 )
+	problem.write_mesh(out,"msh");
     }
   catch (std::exception &exc)
     {

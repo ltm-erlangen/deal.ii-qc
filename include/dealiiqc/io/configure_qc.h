@@ -8,6 +8,8 @@
 
 #include <fstream>
 
+#include <dealiiqc/utility.h>
+
 namespace dealiiqc
 {
   using namespace dealii;
@@ -44,6 +46,16 @@ namespace dealiiqc
     std::string get_mesh_file() const;
 
     /**
+     * Get atom data file
+     */
+    std::string get_atom_data_file() const;
+
+    /**
+     * Get total number of atoms
+     */
+    uint_t get_n_atoms() const;
+
+    /**
      * Get number of initial grid refinement cycles
      */
     unsigned int get_n_initial_global_refinements() const;
@@ -75,7 +87,12 @@ namespace dealiiqc
      */
     unsigned int n_initial_global_refinements;
 
+    /**
+     * Name of the atom data file
+     */
+    std::string atom_data_file;
     // TODO: parse atom data
+
 
   };
 

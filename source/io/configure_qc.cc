@@ -37,6 +37,11 @@ namespace dealiiqc
     return mesh_file;
   }
 
+  std::string ConfigureQC::get_atom_data_file () const
+  {
+    return atom_data_file;
+  }
+
   unsigned int ConfigureQC::get_n_initial_global_refinements() const
   {
     return n_initial_global_refinements;
@@ -64,21 +69,19 @@ namespace dealiiqc
     }
     prm.leave_subsection ();
 
-    /* // TODO: Declare atom information
-       // Use LAMMPS like atom data file
+    // TODO: Declare atom information
+    // Use LAMMPS like atom data file
     prm.enter_subsection ("Configure atoms");
     {
-      // N atoms
-      // a atom types
-      //
-      // Atoms
-      // Atom_ID Atom_Type Atom_Charge Atom_X Atom_Y Atom_Z
+      prm.declare_entry("Atom data file", "",
+			Patterns::Anything(),
+			"Name of the atom data file "
+			"that is compatible with LAMMPS");
+      // TODO: Declare interaction potential style (Pair style)
+      // TODO: Declare interaction potential coefficients (Pair coeff)
     }
     prm.leave_subsection ();
-    */
 
-    // TODO: Declare interaction potential style (Pair style)
-    // TODO: Declare interaction potential coefficients (Pair coeff)
     // TODO: Declare Run 0
     //       Compute energy and force at the initial configuration.
 
@@ -91,6 +94,11 @@ namespace dealiiqc
     {
       mesh_file                    = prm.get("Mesh file");
       n_initial_global_refinements = prm.get_integer("Number of initial global refinements");
+    }
+    prm.leave_subsection();
+    prm.enter_subsection("Configure atoms");
+    {
+      atom_data_file                    = prm.get("Atom data file");
     }
     prm.leave_subsection();
   }

@@ -64,6 +64,11 @@ namespace dealiiqc
     void setup_triangulation();
 
     /**
+     * Setup atoms
+     */
+    void setup_atoms();
+
+    /**
      * Distribute degrees-of-freedom and initialise matrices and vectors.
      */
     void setup_system ();

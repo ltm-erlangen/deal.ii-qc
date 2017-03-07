@@ -36,16 +36,7 @@ namespace dealiiqc
                      TimerOutput::wall_times)
   {
     Assert( dim==configure_qc.get_dimension(), ExcInternalError());
-    // TODO: read from input file
-    const unsigned int N = 4;
-    atoms.resize(N+1);
-    const double L = 1.;
-    for (unsigned int i = 0; i <= N; i++)
-      {
-        Point<dim> p;
-        p[0] = (L*i)/N;
-        atoms[i].position = p;
-      }
+
   }
 
   template <int dim>
@@ -53,8 +44,8 @@ namespace dealiiqc
   {
     if(!(configure_qc.get_mesh_file()).empty() )
     {
-      std::string meshfile = configure_qc.get_mesh_file();
-      // TODO: write the name of the mesh file to log file or to the screen
+      const std::string meshfile = configure_qc.get_mesh_file();
+      //pcout << "Reading mesh file <" << meshfile << ">" << std::endl;
       GridIn<dim> gridin;
       gridin.attach_triangulation( triangulation );
       std::ifstream fin( meshfile );
@@ -66,6 +57,29 @@ namespace dealiiqc
     }
     if ( configure_qc.get_n_initial_global_refinements() )
       triangulation.refine_global(configure_qc.get_n_initial_global_refinements());
+  }
+
+  template <int dim>
+  void QC<dim>::setup_atoms()
+  {
+    if(!(configure_qc.get_mesh_file()).empty() )
+      {
+	const std::string atom_data_file = configure_qc.get_atom_data_file();
+	//pcout << "Reading atom data file <" << atom_data_file << ">" << std::endl;
+	// TODO: store atom data
+      }
+    else
+      { // TODO: some dummy code to make atom_to_cells_01 and energy_01 tests to work
+	const unsigned int N = 4;
+	atoms.resize(N+1);
+	const double L = 1.;
+	for (unsigned int i = 0; i <= N; i++)
+	  {
+	    Point<dim> p;
+	    p[0] = (L*i)/N;
+	    atoms[i].position = p;
+	  }
+      }
   }
 
   template <int dim>
@@ -197,6 +211,10 @@ namespace dealiiqc
                                                                    it->second.displacements);
       }
 
+    // TODO: Update neighbour lists
+    // if( (iter_count % neigh_modify_delay)==0 || (max_abs_displacement > neigh_skin)   )
+    //   update_neighbour_lists();
+
     const unsigned int dofs_per_cell = fe.dofs_per_cell;
     std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
     Vector<double> local_gradient(dofs_per_cell);
@@ -311,8 +329,9 @@ namespace dealiiqc
     // Load the mesh by reading from mesh file
     setup_triangulation();
 
-    // Load atoms
-    // TODO: Read atoms from (LAMMPS) atom data file
+    // Read atom data file and initialize atoms
+    setup_atoms();
+
     setup_system();
     associate_atoms_with_cells();
     setup_fe_values_objects();
