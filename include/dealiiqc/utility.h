@@ -8,7 +8,7 @@
 
 // When the number of atoms is large and exceeds maximum value
 // allowed with an `unsgined int` (system dependent limit)
-typedef unsigned long int uint_t;
+//typedef unsigned long int uint_t;
 
 // TODO: Use of correct charge units; Use charge_t for book keeping
 // for now just use float (float takes less time to compute)
