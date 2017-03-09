@@ -4,6 +4,7 @@
 #include <deal.II/base/quadrature_lib.h>
 #include <deal.II/base/conditional_ostream.h>
 #include <deal.II/base/timer.h>
+#include <deal.II/base/utilities.h>
 
 #include <deal.II/lac/constraint_matrix.h>
 
@@ -17,6 +18,8 @@
 
 #include <deal.II/lac/generic_linear_algebra.h>
 
+#include <dealiiqc/utility.h>
+
 namespace LA
 {
 #ifdef USE_PETSC_LA
@@ -28,6 +31,7 @@ namespace LA
 
 #include <dealiiqc/atom/atom.h>
 #include <dealiiqc/io/configure_qc.h>
+#include <dealiiqc/io/parse_atom_data.h>
 
 namespace dealiiqc
 {

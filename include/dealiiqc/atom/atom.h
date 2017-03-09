@@ -5,6 +5,7 @@
 #include <deal.II/dofs/dof_accessor.h>
 #include <deal.II/dofs/dof_handler.h>
 
+#include <dealiiqc/utility.h>
 
 namespace dealiiqc
 {
@@ -26,6 +27,11 @@ namespace dealiiqc
      * Position in real space
      */
     Point<dim> position;
+
+    /**
+     * Charge of the atom
+     */
+    charge_t q;
 
     /**
      * Position of the atom in reference coordinates of a cell it belongs to.

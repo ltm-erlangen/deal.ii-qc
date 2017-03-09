@@ -21,7 +21,7 @@ namespace dealiiqc
     :
     mpi_communicator(MPI_COMM_WORLD),
     pcout (std::cout,
-           (dealii::Utilities::MPI::this_mpi_process(mpi_communicator)
+           (Utilities::MPI::this_mpi_process(mpi_communicator)
             == 0)),
     configure_qc( config ),
     triangulation (mpi_communicator,
@@ -45,7 +45,6 @@ namespace dealiiqc
     if(!(configure_qc.get_mesh_file()).empty() )
     {
       const std::string meshfile = configure_qc.get_mesh_file();
-      //pcout << "Reading mesh file <" << meshfile << ">" << std::endl;
       GridIn<dim> gridin;
       gridin.attach_triangulation( triangulation );
       std::ifstream fin( meshfile );
@@ -62,11 +61,15 @@ namespace dealiiqc
   template <int dim>
   void QC<dim>::setup_atoms()
   {
-    if(!(configure_qc.get_mesh_file()).empty() )
+    if(!(configure_qc.get_atom_data_file()).empty() )
       {
 	const std::string atom_data_file = configure_qc.get_atom_data_file();
-	//pcout << "Reading atom data file <" << atom_data_file << ">" << std::endl;
-	// TODO: store atom data
+	std::stringstream ss;
+	std::fstream fin(atom_data_file, std::fstream::in );
+	ss << fin.rdbuf();
+	fin.close();
+	ParseAtomData<dim> r;
+	r.parse(ss, atoms);
       }
     else
       { // TODO: some dummy code to make atom_to_cells_01 and energy_01 tests to work
@@ -361,6 +364,13 @@ namespace dealiiqc
                 ExcInternalError());
         data->second.cell_atoms.push_back(i);
       }
+    // Check if all atoms are associated
+    size_t atom_count =0;
+    for (auto cell = dof_handler.begin_active(); cell != dof_handler.end(); cell++)
+      atom_count += cells_to_data[cell].cell_atoms.size();
+
+    Assert( atom_count==atoms.size(), ExcInternalError() );
+
   }
 
   // instantiations:
