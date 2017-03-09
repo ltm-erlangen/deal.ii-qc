@@ -51,11 +51,6 @@ namespace dealiiqc
     std::string get_atom_data_file() const;
 
     /**
-     * Get total number of atoms
-     */
-    uint_t get_n_atoms() const;
-
-    /**
      * Get number of initial grid refinement cycles
      */
     unsigned int get_n_initial_global_refinements() const;
