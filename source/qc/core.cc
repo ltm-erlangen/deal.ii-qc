@@ -17,11 +17,11 @@ namespace dealiiqc
   }
 
   template <int dim>
-  QC<dim>::QC ( const ConfigureQC & config )
+  QC<dim>::QC ( const ConfigureQC &config )
     :
     mpi_communicator(MPI_COMM_WORLD),
     pcout (std::cout,
-           (Utilities::MPI::this_mpi_process(mpi_communicator)
+           (dealii::Utilities::MPI::this_mpi_process(mpi_communicator)
             == 0)),
     configure_qc( config ),
     triangulation (mpi_communicator,
@@ -42,18 +42,18 @@ namespace dealiiqc
   template <int dim>
   void QC<dim>::setup_triangulation()
   {
-    if(!(configure_qc.get_mesh_file()).empty() )
-    {
-      const std::string meshfile = configure_qc.get_mesh_file();
-      GridIn<dim> gridin;
-      gridin.attach_triangulation( triangulation );
-      std::ifstream fin( meshfile );
-      gridin.read_msh(fin);
-    }
+    if (!(configure_qc.get_mesh_file()).empty() )
+      {
+        const std::string meshfile = configure_qc.get_mesh_file();
+        GridIn<dim> gridin;
+        gridin.attach_triangulation( triangulation );
+        std::ifstream fin( meshfile );
+        gridin.read_msh(fin);
+      }
     else
-    {
-      GridGenerator::hyper_cube (triangulation);
-    }
+      {
+        GridGenerator::hyper_cube (triangulation);
+      }
     if ( configure_qc.get_n_initial_global_refinements() )
       triangulation.refine_global(configure_qc.get_n_initial_global_refinements());
   }
@@ -61,33 +61,34 @@ namespace dealiiqc
   template <int dim>
   void QC<dim>::setup_atoms()
   {
-    if(!(configure_qc.get_atom_data_file()).empty() )
+    if (!(configure_qc.get_atom_data_file()).empty() )
       {
-	const std::string atom_data_file = configure_qc.get_atom_data_file();
-	std::stringstream ss;
-	std::fstream fin(atom_data_file, std::fstream::in );
-	ss << fin.rdbuf();
-	fin.close();
-	ParseAtomData<dim> r;
-	r.parse(ss, atoms);
+        const std::string atom_data_file = configure_qc.get_atom_data_file();
+        std::stringstream ss;
+        std::fstream fin(atom_data_file, std::fstream::in );
+        ss << fin.rdbuf();
+        fin.close();
+        ParseAtomData<dim> r;
+        atoms = r.parse(ss);
       }
     else
-      { // TODO: some dummy code to make atom_to_cells_01 and energy_01 tests to work
-	const unsigned int N = 4;
-	atoms.resize(N+1);
-	const double L = 1.;
-	for (unsigned int i = 0; i <= N; i++)
-	  {
-	    Point<dim> p;
-	    p[0] = (L*i)/N;
-	    atoms[i].position = p;
-	  }
+      {
+        // TODO: some dummy code to make atom_to_cells_01 and energy_01 tests to work
+        const unsigned int N = 4;
+        atoms.resize(N+1);
+        const double L = 1.;
+        for (unsigned int i = 0; i <= N; i++)
+          {
+            Point<dim> p;
+            p[0] = (L*i)/N;
+            atoms[i].position = p;
+          }
       }
   }
 
   template <int dim>
   template<typename T>
-  void QC<dim>::write_mesh( T & os, const std::string & type )
+  void QC<dim>::write_mesh( T &os, const std::string &type )
   {
     GridOut grid_out;
     if ( !type.compare("eps")  )
@@ -390,9 +391,9 @@ namespace dealiiqc
   template void QC<1>::setup_triangulation();
   template void QC<2>::setup_triangulation();
   template void QC<3>::setup_triangulation();
-  template void QC<1>::write_mesh<std::ofstream>( std::ofstream &, const std::string & );
-  template void QC<2>::write_mesh<std::ofstream>( std::ofstream &, const std::string & );
-  template void QC<3>::write_mesh<std::ofstream>( std::ofstream &, const std::string & );
+  template void QC<1>::write_mesh<std::ofstream>( std::ofstream &, const std::string &);
+  template void QC<2>::write_mesh<std::ofstream>( std::ofstream &, const std::string &);
+  template void QC<3>::write_mesh<std::ofstream>( std::ofstream &, const std::string &);
   template void QC<1>::associate_atoms_with_cells ();
   template void QC<2>::associate_atoms_with_cells ();
   template void QC<3>::associate_atoms_with_cells ();

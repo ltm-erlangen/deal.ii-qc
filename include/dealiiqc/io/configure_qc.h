@@ -33,7 +33,7 @@ namespace dealiiqc
     /**
      * Constructor with parameter filename as the argument
      */
-    ConfigureQC ( const std::string & );
+    ConfigureQC ( const std::string &);
 
     /**
      * Get dimensionality of the problem
@@ -86,7 +86,6 @@ namespace dealiiqc
      * Name of the atom data file
      */
     std::string atom_data_file;
-    // TODO: parse atom data
 
 
   };

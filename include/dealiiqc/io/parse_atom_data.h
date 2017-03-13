@@ -4,6 +4,7 @@
 
 #include <istream>
 #include <vector>
+#include <climits>
 
 #include <deal.II/base/point.h>
 
@@ -29,55 +30,55 @@ namespace dealiiqc
     ParseAtomData();
 
     DeclException1( ExcIrrelevant,
-		    unsigned int,
-		    << "Input atom data stream contains atom attributes "
-		    << "at line number: " << arg1 << " "
-		    << "which are either not supported within QC formulation "
-		    << "or not yet implemented");
+                    unsigned int,
+                    << "Input atom data stream contains atom attributes "
+                    << "at line number: " << arg1 << " "
+                    << "which are either not supported within QC formulation "
+                    << "or not yet implemented");
 
     DeclException1( ExcReadFailed,
-		   unsigned int,
-		   << "Could not read atom data stream "
-		   << "at line number: " << arg1 << " "
-		   << "Either end of stream reached unexpectedly or "
-		   << "important atom attributes are not mentioned!");
+                    unsigned int,
+                    << "Could not read atom data stream "
+                    << "at line number: " << arg1 << " "
+                    << "Either end of stream reached unexpectedly or "
+                    << "important atom attributes are not mentioned!");
 
     DeclException2( ExcInvalidValue,
-		   unsigned int,
-    		   std::string,
-		   << "Could not read " << arg2 << " or"
-    		   << "invalid  " << arg2 << " read "
-		   << "at line number: " << arg1 );
+                    unsigned int,
+                    std::string,
+                    << "Could not parse " << arg2 << " or "
+                    << "invalid " << arg2 << " read "
+                    << "at line number: " << arg1 );
 
     /**
      * Parse input stream
      */
-    void parse( std::istream &,  std::vector<Atom<dim>>& );
+    std::vector<Atom<dim>> parse( std::istream &);
 
   private:
 
     /**
-     * Skip empty lines and return the latest non-empty line
-     * return true for end of stream
+     * Skip empty lines, read the latest non-empty line and
+     * return false if end of stream is reached
      */
-    inline bool skip_read( std::istream &, std::string & );
+    inline bool skip_read( std::istream &, std::string &);
 
     /**
      * Parse atoms
-     * return true if end of stream is reached
+     * return a vector of Atom
      */
-    bool parse_atoms( std::istream &, std::vector<Atom<dim>>& );
+    std::vector<Atom<dim>> parse_atoms( std::istream &, std::string &);
 
     /**
      * Parse masses of different atom types
-     * return true if end of stream is reached
+     * return vector of masses of different atom types
      */
-    bool parse_masses( std::istream &);
+    std::vector<double> parse_masses( std::istream &, std::string &);
 
     /**
      * Number of atoms read from the LAMMPS atom data file
      */
-    unsigned int n_atoms;
+    typedefs::global_atom_index n_atoms;
 
     /**
      * Number of atom types

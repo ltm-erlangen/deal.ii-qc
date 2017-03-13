@@ -17,16 +17,16 @@ int main (int argc, char *argv[])
   try
     {
       Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv,
-                                                                numbers::invalid_unsigned_int);
+                                                          numbers::invalid_unsigned_int);
       MPI_Comm mpi_communicator(MPI_COMM_WORLD);
       std::ostringstream oss;
       oss
           << "set Dimension = 3"                              << std::endl
           << "subsection Configure mesh"                      << std::endl
-	  << "  set Mesh file = "        << SOURCE_DIR
-	  << "/mesh_01/hex_01.msh"                            << std::endl
-	  << "  set Number of initial global refinements = 1" << std::endl
-	  << "end" << std::endl;
+          << "  set Mesh file = "        << SOURCE_DIR
+          << "/mesh_01/hex_01.msh"                            << std::endl
+          << "  set Number of initial global refinements = 1" << std::endl
+          << "end" << std::endl;
 
       std::istringstream prm_stream (oss.str().c_str());
       ConfigureQC config( prm_stream );
@@ -36,8 +36,8 @@ int main (int argc, char *argv[])
 
       QC<3> problem( config );
       problem.run ();
-      if( Utilities::MPI::this_mpi_process(mpi_communicator) == 0 )
-	problem.write_mesh(out,"msh");
+      if ( Utilities::MPI::this_mpi_process(mpi_communicator) == 0 )
+        problem.write_mesh(out,"msh");
     }
   catch (std::exception &exc)
     {
