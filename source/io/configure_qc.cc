@@ -7,32 +7,21 @@ namespace dealiiqc
 
   // Initialize dimension to a default unusable value
   // Imposes user to `set Dimension`
-  ConfigureQC::ConfigureQC( std::istream &input_stream)
+  ConfigureQC::ConfigureQC( std::shared_ptr<std::istream> is)
     :
     dimension(0),mesh_file(std::string()), n_initial_global_refinements(1),
-    input_post_eop_section("")
+    input_stream(is)
   {
+    AssertThrow( *input_stream, ExcIO() );
     ParameterHandler prm;
     declare_parameters(prm);
-    prm.parse_input (input_stream,"dummy","#end-of-parameter-section");
+    prm.parse_input (*input_stream,"dummy","#end-of-parameter-section");
     parse_parameters(prm);
-    if (!input_stream.eof())
-      {
-        std::ostringstream oss;
-        oss << input_stream.rdbuf();
-        input_post_eop_section = oss.str();
-      }
   }
 
-  ConfigureQC::ConfigureQC( const std::string &parameter_filename)
-    :
-    dimension(0),mesh_file(std::string()), n_initial_global_refinements(1),
-    input_post_eop_section("")
+  std::shared_ptr<std::istream> ConfigureQC::get_stream() const
   {
-    ParameterHandler prm;
-    declare_parameters (prm);
-    prm.parse_input (parameter_filename,"#end-of-parameter-section");
-    parse_parameters (prm);
+    return input_stream;
   }
 
   unsigned int ConfigureQC::get_dimension() const
@@ -53,11 +42,6 @@ namespace dealiiqc
   unsigned int ConfigureQC::get_n_initial_global_refinements() const
   {
     return n_initial_global_refinements;
-  }
-
-  std::string ConfigureQC::get_input_post_eop_section()
-  {
-    return input_post_eop_section;
   }
 
   void ConfigureQC::declare_parameters( ParameterHandler &prm )

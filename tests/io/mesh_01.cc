@@ -28,7 +28,9 @@ int main (int argc, char *argv[])
           << "  set Number of initial global refinements = 1" << std::endl
           << "end" << std::endl;
 
-      std::istringstream prm_stream (oss.str().c_str());
+      std::shared_ptr<std::istream> prm_stream =
+        std::make_shared<std::istringstream>(oss.str().c_str());
+
       ConfigureQC config( prm_stream );
       // Allow the restriction that user must provide Dimension of the problem
       const unsigned int dim = config.get_dimension();

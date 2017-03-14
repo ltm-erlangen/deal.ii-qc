@@ -27,13 +27,14 @@ int main( int argc, char **argv)
           << "/parse_atom_data_01/atom.data"                  << std::endl
           << "end" << std::endl;
 
-      std::istringstream prm_stream (oss.str().c_str());
+      std::shared_ptr<std::istream> prm_stream =
+        std::make_shared<std::istringstream>(oss.str().c_str());
+
       ConfigureQC config( prm_stream );
       // Allow the restriction that user must provide Dimension of the problem
       const unsigned int dim = config.get_dimension();
 
       QC<3> problem( config );
-      problem.run ();
     }
   catch (std::exception &exc)
     {

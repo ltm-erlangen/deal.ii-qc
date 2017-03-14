@@ -37,6 +37,15 @@ namespace dealiiqc
   {
     Assert( dim==configure_qc.get_dimension(), ExcInternalError());
 
+    // Load the mesh by reading from mesh file
+    setup_triangulation();
+
+    // Read atom data file and initialize atoms
+    setup_atoms();
+
+    setup_system();
+    associate_atoms_with_cells();
+
   }
 
   template <int dim>
@@ -69,14 +78,20 @@ namespace dealiiqc
         ss << fin.rdbuf();
         fin.close();
         ParseAtomData<dim> atom_parser;
-        atoms = atom_parser.parse(ss);
+        // TODO: Use atom types to initialize neighbor lists faster
+        // TODO: Use masses of different types of atom for FIRE minimization scheme?
+        std::map<unsigned int, types::global_atom_index> atom_types;
+        std::vector<double> masses;
+        atom_parser.parse( ss, atoms, masses, atom_types);
       }
-    else if ( !(configure_qc.get_input_post_eop_section()).empty() )
+    else if ( !(* configure_qc.get_stream()).eof() )
       {
-        std::istringstream iss;
-        iss.str(configure_qc.get_input_post_eop_section());
         ParseAtomData<dim> atom_parser;
-        atoms = atom_parser.parse( iss );
+        // TODO: Use atom types to initialize neighbor lists faster
+        // TODO: Use masses of different types of atom for FIRE minimization scheme?
+        std::map<unsigned int, types::global_atom_index> atom_types;
+        std::vector<double> masses;
+        atom_parser.parse( *configure_qc.get_stream(), atoms, masses, atom_types);
       }
     else
       Assert(false, ExcMessage("None of the atom attributes set!"));
@@ -140,7 +155,7 @@ namespace dealiiqc
     std::vector<Point<dim>> points;
     std::vector<double> weights_per_atom;
     const unsigned int dofs_per_cell = fe.dofs_per_cell;
-    std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+    std::vector<dealii::types::global_dof_index> local_dof_indices(dofs_per_cell);
 
     for (auto cell = dof_handler.begin_active(); cell != dof_handler.end(); cell++)
       {
@@ -216,7 +231,7 @@ namespace dealiiqc
     //   update_neighbour_lists();
 
     const unsigned int dofs_per_cell = fe.dofs_per_cell;
-    std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+    std::vector<dealii::types::global_dof_index> local_dof_indices(dofs_per_cell);
     Vector<double> local_gradient(dofs_per_cell);
 
 
@@ -326,14 +341,6 @@ namespace dealiiqc
   template <int dim>
   void QC<dim>::run ()
   {
-    // Load the mesh by reading from mesh file
-    setup_triangulation();
-
-    // Read atom data file and initialize atoms
-    setup_atoms();
-
-    setup_system();
-    associate_atoms_with_cells();
     setup_fe_values_objects();
 
     const double e = calculate_energy_gradient(locally_relevant_displacement,

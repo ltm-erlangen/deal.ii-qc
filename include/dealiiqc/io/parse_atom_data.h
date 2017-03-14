@@ -16,8 +16,7 @@ namespace dealiiqc
   using namespace dealii;
 
   /**
-   * A class to parse atom data file.
-   * Stores atom attributes
+   * A class to parse atom data stream.
    */
   template< int dim>
   class ParseAtomData
@@ -51,43 +50,57 @@ namespace dealiiqc
                     << "at line number: " << arg1 );
 
     /**
-     * Parse input stream
+     * Parse input stream and initialize all the atom attributes.
+     * @param is input stream
+     * @param atoms container to store atom attributes
+     * @param masses container to store masses of different atom types
+     * @param atom_types atom and atom type association
      */
-    std::vector<Atom<dim>> parse( std::istream &);
+    void parse( std::istream &, std::vector<Atom<dim>> &,
+                std::vector<double> &,
+                std::map<unsigned int,types::global_atom_index> &);
 
   private:
 
     /**
-     * Skip empty lines, read the latest non-empty line and
-     * return false if end of stream is reached
+     * Return a string with all comments (content after #) and
+     * all standard whitespace characters
+     * (including * '<tt>\\t</tt>', '<tt>\\n</tt>', and '<tt>\\r</tt>') at
+     * the beginning and end of @p input removed.
      */
-    inline bool skip_read( std::istream &, std::string &);
+    std::string strip( const std::string &input );
 
     /**
-     * Parse atoms
-     * return a vector of Atom
+     * Parse atoms data.
+     * @return a vector of Atom class objects
+     * We let the input stream contain multiple `Atoms` keyword
+     * sections. The old atom attributes will be overwritten.
      */
-    std::vector<Atom<dim>> parse_atoms( std::istream &, std::string &);
+    void parse_atoms( std::istream &, std::vector<Atom<dim>> &,
+                      std::map<unsigned int, types::global_atom_index> &);
 
     /**
-     * Parse masses of different atom types
-     * return vector of masses of different atom types
+     * Return @param masses, a vector of masses of different atom types
+     * read upon parsing mass entries under Masses keyword section of
+     * the @param is.
+     * We let the input stream contain multiple `Masses` keyword
+     * sections.
      */
-    std::vector<double> parse_masses( std::istream &, std::string &);
+    void parse_masses( std::istream &is, std::vector<double> &);
 
     /**
-     * Number of atoms read from the LAMMPS atom data file
+     * Number of atoms read from the input stream.
      */
-    typedefs::global_atom_index n_atoms;
+    types::global_atom_index n_atoms;
 
     /**
-     * Number of atom types
+     * Number of atom types read from the input stream.
      */
     unsigned int n_atom_types;
 
     /**
-     * Stream line number
-     * Used to inform the user at which line number reading failed
+     * Line number of the input stream as it is read.
+     * Used to inform the user at which line number reading failed.
      */
     unsigned int line_no;
 

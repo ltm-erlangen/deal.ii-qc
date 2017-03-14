@@ -31,7 +31,7 @@ namespace dealiiqc
     /**
      * Charge of the atom
      */
-    typedefs::charge_t q;
+    types::charge q;
 
     /**
      * Position of the atom in reference coordinates of a cell it belongs to.

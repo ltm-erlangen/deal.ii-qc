@@ -58,7 +58,9 @@ int main (int argc, char *argv[])
           << "4 4 1 1.0 0.75 0. 0." << std::endl
           << "5 5 1 1.0 1.00 0. 0." << std::endl;
 
-      std::istringstream prm_stream (oss.str().c_str());
+      std::shared_ptr<std::istream> prm_stream =
+        std::make_shared<std::istringstream>(oss.str().c_str());
+
       ConfigureQC config( prm_stream );
 
       // Define problem

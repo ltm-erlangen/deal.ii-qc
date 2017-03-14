@@ -6,7 +6,7 @@
 
 namespace dealiiqc
 {
-  namespace typedefs
+  namespace types
   {
     // typedefs
 
@@ -18,23 +18,11 @@ namespace dealiiqc
     // TODO: Use of correct charge units; Use charge_t for book keeping.
     // For now just use float (float takes less time to compute)
     // (charge of atoms doesn't need high precision)
-    typedef float charge_t;
+    typedef float charge;
 
   } //typedefs
 
-  // Some utility functions
-
-  /**
-   *  Check if a container's first few elements are exactly
-   *  the same as another container
-   */
-  template<class Container>
-  bool begins_with(const Container &input, const Container &match)
-  {
-    return input.size() >= match.size()
-           && std::equal(match.begin(), match.end(), input.begin());
-  }
-
+  // Placeholder for some utility functions
 
 }
 
