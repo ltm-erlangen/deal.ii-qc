@@ -31,7 +31,6 @@ namespace LA
 
 #include <dealiiqc/atom/atom.h>
 #include <dealiiqc/io/configure_qc.h>
-#include <dealiiqc/io/parse_atom_data.h>
 
 namespace dealiiqc
 {

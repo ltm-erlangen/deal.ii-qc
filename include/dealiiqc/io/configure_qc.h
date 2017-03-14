@@ -7,7 +7,10 @@
 #include <deal.II/base/logstream.h>
 
 #include <fstream>
+#include <sstream>
+#include <utility>
 
+#include <dealiiqc/io/parse_atom_data.h>
 #include <dealiiqc/utility.h>
 
 namespace dealiiqc
@@ -55,6 +58,12 @@ namespace dealiiqc
      */
     unsigned int get_n_initial_global_refinements() const;
 
+
+    /**
+     * Get parse post parameter section bool
+     */
+    std::string get_input_post_eop_section();
+
   private:
 
     /*
@@ -87,6 +96,14 @@ namespace dealiiqc
      */
     std::string atom_data_file;
 
+    /**
+     * Parse QC configuration file post
+     */
+    // Not using std::istringstream because in
+    // the constructor std::move hits a compiler bug (<gcc 5.0)
+    // tried with gcc 5.4.0 error persists
+
+    std::string input_post_eop_section;
 
   };
 

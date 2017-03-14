@@ -9,21 +9,29 @@ namespace dealiiqc
   // Imposes user to `set Dimension`
   ConfigureQC::ConfigureQC( std::istream &input_stream)
     :
-    dimension(0),mesh_file(std::string()), n_initial_global_refinements(1)
+    dimension(0),mesh_file(std::string()), n_initial_global_refinements(1),
+    input_post_eop_section("")
   {
     ParameterHandler prm;
     declare_parameters(prm);
-    prm.parse_input (input_stream,"dummy",""/*"#end-of-parameter-section"*/);
+    prm.parse_input (input_stream,"dummy","#end-of-parameter-section");
     parse_parameters(prm);
+    if (!input_stream.eof())
+      {
+        std::ostringstream oss;
+        oss << input_stream.rdbuf();
+        input_post_eop_section = oss.str();
+      }
   }
 
   ConfigureQC::ConfigureQC( const std::string &parameter_filename)
     :
-    dimension(0),mesh_file(std::string()), n_initial_global_refinements(1)
+    dimension(0),mesh_file(std::string()), n_initial_global_refinements(1),
+    input_post_eop_section("")
   {
     ParameterHandler prm;
     declare_parameters (prm);
-    prm.parse_input (parameter_filename,""/*"#end-of-parameter-section"*/);
+    prm.parse_input (parameter_filename,"#end-of-parameter-section");
     parse_parameters (prm);
   }
 
@@ -45,6 +53,11 @@ namespace dealiiqc
   unsigned int ConfigureQC::get_n_initial_global_refinements() const
   {
     return n_initial_global_refinements;
+  }
+
+  std::string ConfigureQC::get_input_post_eop_section()
+  {
+    return input_post_eop_section;
   }
 
   void ConfigureQC::declare_parameters( ParameterHandler &prm )
@@ -98,7 +111,7 @@ namespace dealiiqc
     prm.leave_subsection();
     prm.enter_subsection("Configure atoms");
     {
-      atom_data_file                    = prm.get("Atom data file");
+      atom_data_file = prm.get("Atom data file");
     }
     prm.leave_subsection();
   }

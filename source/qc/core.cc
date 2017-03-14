@@ -68,22 +68,18 @@ namespace dealiiqc
         std::fstream fin(atom_data_file, std::fstream::in );
         ss << fin.rdbuf();
         fin.close();
-        ParseAtomData<dim> r;
-        atoms = r.parse(ss);
+        ParseAtomData<dim> atom_parser;
+        atoms = atom_parser.parse(ss);
+      }
+    else if ( !(configure_qc.get_input_post_eop_section()).empty() )
+      {
+        std::istringstream iss;
+        iss.str(configure_qc.get_input_post_eop_section());
+        ParseAtomData<dim> atom_parser;
+        atoms = atom_parser.parse( iss );
       }
     else
-      {
-        // TODO: some dummy code to make atom_to_cells_01 and energy_01 tests to work
-        const unsigned int N = 4;
-        atoms.resize(N+1);
-        const double L = 1.;
-        for (unsigned int i = 0; i <= N; i++)
-          {
-            Point<dim> p;
-            p[0] = (L*i)/N;
-            atoms[i].position = p;
-          }
-      }
+      Assert(false, ExcMessage("None of the atom attributes set!"));
   }
 
   template <int dim>
