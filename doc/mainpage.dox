@@ -1,0 +1,12 @@
+/**
+\mainpage QC-dealii Documentation
+
+This is the documentation of QC-dealii, the implementation of the Quasi-Continuum
+method using deal.II library.
+
+You may want to look at
+
+- page of the dealiiqc::QC class for the main class of this program
+that drives the overall algorithm.
+
+*/

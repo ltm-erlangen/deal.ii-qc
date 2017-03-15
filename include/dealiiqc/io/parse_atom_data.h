@@ -81,7 +81,7 @@ namespace dealiiqc
      * @param[out] atomtype_to_atoms atom type and atoms association
      */
     void parse_atoms( std::istream &is,
-                      std::vector<Atom<dim>> &,
+                      std::vector<Atom<dim>> &atoms,
                       std::multimap<unsigned int, types::global_atom_index> &atomtype_to_atoms);
 
     /**
