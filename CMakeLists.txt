@@ -83,6 +83,34 @@ COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all
 COMMENT "Switch CMAKE_BUILD_TYPE to Release"
 )
 
+#
+# Doxygen
+#
+find_package(Doxygen)
+IF(NOT DOXYGEN_FOUND)
+    MESSAGE("-- Doxygen was not found. Documentation will not be available.")
+ENDIF()
+if(DOXYGEN_FOUND)
+  SET( doxyfile_in          ${CMAKE_CURRENT_SOURCE_DIR}/doc/options.dox.in    )
+  SET( doxyfile             ${CMAKE_CURRENT_BINARY_DIR}/options.dox           )
+  SET( doxy_input           ${CMAKE_CURRENT_SOURCE_DIR}/include               ) # Pasted into ${doxyfile_in} in INPUT
+  SET( doxy_input_root      ${CMAKE_CURRENT_SOURCE_DIR}/doc                   ) # Posted into ${doxyfile_in}
+  SET( doxy_extra_files     "${CMAKE_CURRENT_SOURCE_DIR}/doc/mainpage.dox"    ) # Pasted into ${doxyfile_in} in INPUT; separate with spaces
+  SET( doxy_output_root     ${CMAKE_CURRENT_BINARY_DIR}/doc/realgemdft        ) # Pasted into ${doxyfile_in} as HTML_OUTPUT
+  SET( doxy_project_name    "")
+
+  #-- Configure the Template Doxyfile for our specific project
+  configure_file(${doxyfile_in} ${doxyfile} @ONLY)
+  #-- Add a custom target to run Doxygen when ever the project is built
+  #-- First command creates a directory in current build folder.
+  #   Second command runs Doxygen.
+  add_custom_target (doc ${CMAKE_COMMAND} -E make_directory doc
+                     COMMAND ${DOXYGEN_EXECUTABLE} ${doxyfile}
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                     COMMENT "Generating API documentation with Doxygen" VERBATIM
+                     )
+endif(DOXYGEN_FOUND)
+
 
 # Enable testing and descent into tests/ subdirectory:
 ENABLE_TESTING()
