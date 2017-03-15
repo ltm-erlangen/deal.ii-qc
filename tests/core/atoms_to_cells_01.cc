@@ -47,8 +47,20 @@ int main (int argc, char *argv[])
       // Allow the restriction that user must provide Dimension of the problem
       const unsigned int dim = 1;
       std::ostringstream oss;
-      oss << "set Dimension = " << dim << std::endl;
-      std::istringstream prm_stream (oss.str().c_str());
+      oss << "set Dimension = " << dim << std::endl
+          << "#end-of-parameter-section" << std::endl
+          << "LAMMPS Description" << std::endl << std::endl
+          << "5 atoms"            << std::endl << std::endl
+          << "Atoms #"        << std::endl << std::endl
+          << "1 1 1 1.0 0.00 0. 0." << std::endl
+          << "2 2 1 1.0 0.25 0. 0." << std::endl
+          << "3 3 1 1.0 0.50 0. 0." << std::endl
+          << "4 4 1 1.0 0.75 0. 0." << std::endl
+          << "5 5 1 1.0 1.00 0. 0." << std::endl;
+
+      std::shared_ptr<std::istream> prm_stream =
+        std::make_shared<std::istringstream>(oss.str().c_str());
+
       ConfigureQC config( prm_stream );
 
       // Define problem

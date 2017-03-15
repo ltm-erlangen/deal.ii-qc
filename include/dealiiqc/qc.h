@@ -4,6 +4,7 @@
 #include <deal.II/base/quadrature_lib.h>
 #include <deal.II/base/conditional_ostream.h>
 #include <deal.II/base/timer.h>
+#include <deal.II/base/utilities.h>
 
 #include <deal.II/lac/constraint_matrix.h>
 
@@ -16,6 +17,8 @@
 #include <deal.II/distributed/shared_tria.h>
 
 #include <deal.II/lac/generic_linear_algebra.h>
+
+#include <dealiiqc/utility.h>
 
 namespace LA
 {
@@ -40,7 +43,7 @@ namespace dealiiqc
   class QC
   {
   public:
-    QC ( const ConfigureQC & );
+    QC ( const ConfigureQC &);
     ~QC ();
 
     void run ();
@@ -51,7 +54,7 @@ namespace dealiiqc
      * The type of file should be passed as second argument (eps, msh etc)
      */
     template<typename T>
-    void write_mesh(T&, const std::string&);
+    void write_mesh(T &, const std::string &);
 
     // keep it in protected so that we can write unit tests with derived classes
   protected:
@@ -62,6 +65,11 @@ namespace dealiiqc
      * Setup triangulation
      */
     void setup_triangulation();
+
+    /**
+     * Setup atoms
+     */
+    void setup_atoms();
 
     /**
      * Distribute degrees-of-freedom and initialise matrices and vectors.

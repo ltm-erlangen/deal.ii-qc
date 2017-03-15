@@ -17,7 +17,7 @@ namespace dealiiqc
   }
 
   template <int dim>
-  QC<dim>::QC ( const ConfigureQC & config )
+  QC<dim>::QC ( const ConfigureQC &config )
     :
     mpi_communicator(MPI_COMM_WORLD),
     pcout (std::cout,
@@ -36,41 +36,69 @@ namespace dealiiqc
                      TimerOutput::wall_times)
   {
     Assert( dim==configure_qc.get_dimension(), ExcInternalError());
-    // TODO: read from input file
-    const unsigned int N = 4;
-    atoms.resize(N+1);
-    const double L = 1.;
-    for (unsigned int i = 0; i <= N; i++)
-      {
-        Point<dim> p;
-        p[0] = (L*i)/N;
-        atoms[i].position = p;
-      }
+
+    // Load the mesh by reading from mesh file
+    setup_triangulation();
+
+    // Read atom data file and initialize atoms
+    setup_atoms();
+
+    setup_system();
+    associate_atoms_with_cells();
+
   }
 
   template <int dim>
   void QC<dim>::setup_triangulation()
   {
-    if(!(configure_qc.get_mesh_file()).empty() )
-    {
-      std::string meshfile = configure_qc.get_mesh_file();
-      // TODO: write the name of the mesh file to log file or to the screen
-      GridIn<dim> gridin;
-      gridin.attach_triangulation( triangulation );
-      std::ifstream fin( meshfile );
-      gridin.read_msh(fin);
-    }
+    if (!(configure_qc.get_mesh_file()).empty() )
+      {
+        const std::string meshfile = configure_qc.get_mesh_file();
+        GridIn<dim> gridin;
+        gridin.attach_triangulation( triangulation );
+        std::ifstream fin( meshfile );
+        gridin.read_msh(fin);
+      }
     else
-    {
-      GridGenerator::hyper_cube (triangulation);
-    }
+      {
+        GridGenerator::hyper_cube (triangulation);
+      }
     if ( configure_qc.get_n_initial_global_refinements() )
       triangulation.refine_global(configure_qc.get_n_initial_global_refinements());
   }
 
   template <int dim>
+  void QC<dim>::setup_atoms()
+  {
+    if (!(configure_qc.get_atom_data_file()).empty() )
+      {
+        const std::string atom_data_file = configure_qc.get_atom_data_file();
+        std::fstream fin(atom_data_file, std::fstream::in );
+        ParseAtomData<dim> atom_parser;
+        // TODO: Use atom types to initialize neighbor lists faster
+        // TODO: Use masses of different types of atom for FIRE minimization scheme?
+        std::multimap<unsigned int, types::global_atom_index> atom_types;
+        std::vector<double> masses;
+        atom_parser.parse( fin, atoms, masses, atom_types);
+      }
+    else if ( !(* configure_qc.get_stream()).eof() )
+      {
+        ParseAtomData<dim> atom_parser;
+        // TODO: Use atom types to initialize neighbor lists faster
+        // TODO: Use masses of different types of atom for FIRE minimization scheme?
+        std::multimap<unsigned int, types::global_atom_index> atom_types;
+        std::vector<double> masses;
+        atom_parser.parse( *configure_qc.get_stream(), atoms, masses, atom_types);
+      }
+    else
+      AssertThrow(false,
+                  ExcMessage("Atom data was not provided neither as an auxiliary "
+                             "data file nor at the end of the parameter file!"));
+  }
+
+  template <int dim>
   template<typename T>
-  void QC<dim>::write_mesh( T & os, const std::string & type )
+  void QC<dim>::write_mesh( T &os, const std::string &type )
   {
     GridOut grid_out;
     if ( !type.compare("eps")  )
@@ -126,7 +154,7 @@ namespace dealiiqc
     std::vector<Point<dim>> points;
     std::vector<double> weights_per_atom;
     const unsigned int dofs_per_cell = fe.dofs_per_cell;
-    std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+    std::vector<dealii::types::global_dof_index> local_dof_indices(dofs_per_cell);
 
     for (auto cell = dof_handler.begin_active(); cell != dof_handler.end(); cell++)
       {
@@ -197,8 +225,12 @@ namespace dealiiqc
                                                                    it->second.displacements);
       }
 
+    // TODO: Update neighbour lists
+    // if( (iter_count % neigh_modify_delay)==0 || (max_abs_displacement > neigh_skin)   )
+    //   update_neighbour_lists();
+
     const unsigned int dofs_per_cell = fe.dofs_per_cell;
-    std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+    std::vector<dealii::types::global_dof_index> local_dof_indices(dofs_per_cell);
     Vector<double> local_gradient(dofs_per_cell);
 
 
@@ -308,13 +340,6 @@ namespace dealiiqc
   template <int dim>
   void QC<dim>::run ()
   {
-    // Load the mesh by reading from mesh file
-    setup_triangulation();
-
-    // Load atoms
-    // TODO: Read atoms from (LAMMPS) atom data file
-    setup_system();
-    associate_atoms_with_cells();
     setup_fe_values_objects();
 
     const double e = calculate_energy_gradient(locally_relevant_displacement,
@@ -342,6 +367,13 @@ namespace dealiiqc
                 ExcInternalError());
         data->second.cell_atoms.push_back(i);
       }
+    // Check if all atoms are associated
+    size_t atom_count =0;
+    for (auto cell = dof_handler.begin_active(); cell != dof_handler.end(); cell++)
+      atom_count += cells_to_data[cell].cell_atoms.size();
+
+    Assert( atom_count==atoms.size(), ExcInternalError() );
+
   }
 
   // instantiations:
@@ -361,9 +393,9 @@ namespace dealiiqc
   template void QC<1>::setup_triangulation();
   template void QC<2>::setup_triangulation();
   template void QC<3>::setup_triangulation();
-  template void QC<1>::write_mesh<std::ofstream>( std::ofstream &, const std::string & );
-  template void QC<2>::write_mesh<std::ofstream>( std::ofstream &, const std::string & );
-  template void QC<3>::write_mesh<std::ofstream>( std::ofstream &, const std::string & );
+  template void QC<1>::write_mesh<std::ofstream>( std::ofstream &, const std::string &);
+  template void QC<2>::write_mesh<std::ofstream>( std::ofstream &, const std::string &);
+  template void QC<3>::write_mesh<std::ofstream>( std::ofstream &, const std::string &);
   template void QC<1>::associate_atoms_with_cells ();
   template void QC<2>::associate_atoms_with_cells ();
   template void QC<3>::associate_atoms_with_cells ();

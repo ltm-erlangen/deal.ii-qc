@@ -1,31 +1,30 @@
-/**
- * Short test to check if QC class accepts an input parameter file.
- * Writes out a mesh in eps file format
- */
 
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <deal.II/base/conditional_ostream.h>
 
 #include <dealiiqc/qc.h>
 
 using namespace dealii;
 using namespace dealiiqc;
 
-int main (int argc, char *argv[])
+int main( int argc, char **argv)
 {
   try
     {
-      Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv,
-                                                          numbers::invalid_unsigned_int);
-      MPI_Comm mpi_communicator(MPI_COMM_WORLD);
+      Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, numbers::invalid_unsigned_int);
       std::ostringstream oss;
       oss
           << "set Dimension = 3"                              << std::endl
           << "subsection Configure mesh"                      << std::endl
           << "  set Mesh file = "        << SOURCE_DIR
-          << "/mesh_01/hex_01.msh"                            << std::endl
+          << "/parse_atom_data_01/refined_cube.msh"           << std::endl
           << "  set Number of initial global refinements = 1" << std::endl
+          << "end" << std::endl
+          << "subsection Configure atoms"                     << std::endl
+          << "  set Atom data file = "        << SOURCE_DIR
+          << "/parse_atom_data_01/atom.data"                  << std::endl
           << "end" << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
@@ -34,12 +33,8 @@ int main (int argc, char *argv[])
       ConfigureQC config( prm_stream );
       // Allow the restriction that user must provide Dimension of the problem
       const unsigned int dim = config.get_dimension();
-      std::ofstream out ("output", std::ofstream::trunc);
 
       QC<3> problem( config );
-      problem.run ();
-      if ( Utilities::MPI::this_mpi_process(mpi_communicator) == 0 )
-        problem.write_mesh(out,"msh");
     }
   catch (std::exception &exc)
     {

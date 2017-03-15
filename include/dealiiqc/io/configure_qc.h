@@ -7,6 +7,12 @@
 #include <deal.II/base/logstream.h>
 
 #include <fstream>
+#include <sstream>
+#include <utility>
+#include <memory>
+
+#include <dealiiqc/io/parse_atom_data.h>
+#include <dealiiqc/utility.h>
 
 namespace dealiiqc
 {
@@ -26,12 +32,7 @@ namespace dealiiqc
     /**
      * Constructor with istream object
      */
-    ConfigureQC( std::istream &);
-
-    /**
-     * Constructor with parameter filename as the argument
-     */
-    ConfigureQC ( const std::string & );
+    ConfigureQC( std::shared_ptr<std::istream> );
 
     /**
      * Get dimensionality of the problem
@@ -44,9 +45,20 @@ namespace dealiiqc
     std::string get_mesh_file() const;
 
     /**
+     * Get atom data file
+     */
+    std::string get_atom_data_file() const;
+
+    /**
      * Get number of initial grid refinement cycles
      */
     unsigned int get_n_initial_global_refinements() const;
+
+
+    /**
+     * Get input stream
+     */
+    std::shared_ptr<std::istream> get_stream() const;
 
   private:
 
@@ -66,7 +78,7 @@ namespace dealiiqc
     unsigned int dimension;
 
     /**
-     * Name of the mesh file for initial qc setup
+     * Path to the mesh file for initial qc setup.
      */
     std::string mesh_file;
 
@@ -75,7 +87,16 @@ namespace dealiiqc
      */
     unsigned int n_initial_global_refinements;
 
-    // TODO: parse atom data
+    /**
+     * Path to the atom data file.
+     */
+    std::string atom_data_file;
+
+    /**
+     * Shared pointer to the input stream passed in to the
+     * constructor @see ConfigureQC().
+     */
+    mutable std::shared_ptr<std::istream> input_stream;
 
   };
 
