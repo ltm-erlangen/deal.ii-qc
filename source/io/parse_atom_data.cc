@@ -63,9 +63,10 @@ namespace dealiiqc
             if ( n_atoms_tmp <= UINT_MAX )
               n_atoms = static_cast<types::global_atom_index>(n_atoms_tmp);
             else
-              AssertThrow( false, ExcMessage("The number of atoms specified "
-                                        "is more than what `typedefs::global_atom_index` can work with "
-                                        "try building deal.II with 64bit index space"))
+              AssertThrow( false,
+                           ExcMessage("The number of atoms specified "
+                                      "is more than what `typedefs::global_atom_index` can work with "
+                                      "try building deal.II with 64bit index space"))
             }
         else if (line.find("bonds") != std::string::npos)
           {
