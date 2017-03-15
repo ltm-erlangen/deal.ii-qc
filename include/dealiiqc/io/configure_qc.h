@@ -32,12 +32,7 @@ namespace dealiiqc
     /**
      * Constructor with istream object
      */
-    ConfigureQC( std::shared_ptr<std::istream>);
-
-    /**
-     * Constructor with parameter filename as the argument
-     */
-    ConfigureQC ( const std::string &);
+    ConfigureQC( std::shared_ptr<std::istream> );
 
     /**
      * Get dimensionality of the problem
@@ -59,11 +54,6 @@ namespace dealiiqc
      */
     unsigned int get_n_initial_global_refinements() const;
 
-
-    /**
-     * Get parse post parameter section bool
-     */
-    std::string get_input_post_eop_section();
 
     /**
      * Get input stream
@@ -88,7 +78,7 @@ namespace dealiiqc
     unsigned int dimension;
 
     /**
-     * Name of the mesh file for initial qc setup
+     * Name of the mesh file for initial qc setup.
      */
     std::string mesh_file;
 
@@ -98,12 +88,13 @@ namespace dealiiqc
     unsigned int n_initial_global_refinements;
 
     /**
-     * Name of the atom data file
+     * Path to the atom data file.
      */
     std::string atom_data_file;
 
     /**
-     *
+     * Shared pointer to the input stream passed in to the
+     * constructor @see ConfigureQC().
      */
     mutable std::shared_ptr<std::istream> input_stream;
 

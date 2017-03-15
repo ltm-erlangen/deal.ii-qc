@@ -9,7 +9,9 @@ namespace dealiiqc
   // Imposes user to `set Dimension`
   ConfigureQC::ConfigureQC( std::shared_ptr<std::istream> is)
     :
-    dimension(0),mesh_file(std::string()), n_initial_global_refinements(1),
+    dimension(0),
+    mesh_file(std::string()),
+    n_initial_global_refinements(1),
     input_stream(is)
   {
     AssertThrow( *input_stream, ExcIO() );
@@ -17,11 +19,6 @@ namespace dealiiqc
     declare_parameters(prm);
     prm.parse_input (*input_stream,"dummy","#end-of-parameter-section");
     parse_parameters(prm);
-  }
-
-  std::shared_ptr<std::istream> ConfigureQC::get_stream() const
-  {
-    return input_stream;
   }
 
   unsigned int ConfigureQC::get_dimension() const
@@ -42,6 +39,11 @@ namespace dealiiqc
   unsigned int ConfigureQC::get_n_initial_global_refinements() const
   {
     return n_initial_global_refinements;
+  }
+
+  std::shared_ptr<std::istream> ConfigureQC::get_stream() const
+  {
+    return input_stream;
   }
 
   void ConfigureQC::declare_parameters( ParameterHandler &prm )

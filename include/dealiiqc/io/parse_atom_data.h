@@ -50,43 +50,46 @@ namespace dealiiqc
                     << "at line number: " << arg1 );
 
     /**
-     * Parse input stream and initialize all the atom attributes.
-     * @param is input stream
-     * @param atoms container to store atom attributes
-     * @param masses container to store masses of different atom types
-     * @param atom_types atom and atom type association
+     * Parse @p is input stream and initialize all the atom attributes.
+     * The input stream is allowed to have multiple Masses and Atoms
+     * keyword section. In such cases the old atom attributes will be overwritten.
+     * @param[in] is input stream
+     * @param[out] atoms container to store atom attributes
+     * @param[out] masses container to store masses of different atom types
+     * @param[out] atomtype_to_atoms atom type and atoms association
      */
-    void parse( std::istream &, std::vector<Atom<dim>> &,
-                std::vector<double> &,
-                std::map<unsigned int,types::global_atom_index> &);
+    void parse( std::istream &is,
+                std::vector<Atom<dim>> &atoms,
+                std::vector<double> &masses,
+                std::multimap<unsigned int,types::global_atom_index> &atomtype_to_atoms);
 
   private:
 
     /**
-     * Return a string with all comments (content after #) and
-     * all standard whitespace characters
-     * (including * '<tt>\\t</tt>', '<tt>\\n</tt>', and '<tt>\\r</tt>') at
-     * the beginning and end of @p input removed.
+     * Remove from @p input string all comments (content after #) and
+     * all standard whitespace characters (including * '<tt>\\t</tt>',
+     * '<tt>\\n</tt>', and '<tt>\\r</tt>') at the beginning, and at the end
+     * and return the resulting string.
      */
     std::string strip( const std::string &input );
 
     /**
-     * Parse atoms data.
-     * @return a vector of Atom class objects
-     * We let the input stream contain multiple `Atoms` keyword
-     * sections. The old atom attributes will be overwritten.
+     * Parse atoms data from @p is input stream under Atoms keyword section.
+     * The input stream should be at the line after the keyword Masses.
+     * @param[in] is input stream
+     * @param[out] atoms container to store atom attributes
+     * @param[out] atomtype_to_atoms atom type and atoms association
      */
-    void parse_atoms( std::istream &, std::vector<Atom<dim>> &,
-                      std::map<unsigned int, types::global_atom_index> &);
+    void parse_atoms( std::istream &is,
+                      std::vector<Atom<dim>> &,
+                      std::multimap<unsigned int, types::global_atom_index> &atomtype_to_atoms);
 
     /**
-     * Return @param masses, a vector of masses of different atom types
-     * read upon parsing mass entries under Masses keyword section of
-     * the @param is.
-     * We let the input stream contain multiple `Masses` keyword
-     * sections.
+     * Parse @p is input stream for mass entries under Masses keyword section
+     * to obtain @p masses, a vector of masses of different atom types  and write the result into @p masses.
+     * The input stream should be at the line after the keyword Masses
      */
-    void parse_masses( std::istream &is, std::vector<double> &);
+    void parse_masses( std::istream &is, std::vector<double> &masses);
 
     /**
      * Number of atoms read from the input stream.
@@ -96,7 +99,7 @@ namespace dealiiqc
     /**
      * Number of atom types read from the input stream.
      */
-    unsigned int n_atom_types;
+    size_t n_atom_types;
 
     /**
      * Line number of the input stream as it is read.

@@ -73,28 +73,27 @@ namespace dealiiqc
     if (!(configure_qc.get_atom_data_file()).empty() )
       {
         const std::string atom_data_file = configure_qc.get_atom_data_file();
-        std::stringstream ss;
         std::fstream fin(atom_data_file, std::fstream::in );
-        ss << fin.rdbuf();
-        fin.close();
         ParseAtomData<dim> atom_parser;
         // TODO: Use atom types to initialize neighbor lists faster
         // TODO: Use masses of different types of atom for FIRE minimization scheme?
-        std::map<unsigned int, types::global_atom_index> atom_types;
+        std::multimap<unsigned int, types::global_atom_index> atom_types;
         std::vector<double> masses;
-        atom_parser.parse( ss, atoms, masses, atom_types);
+        atom_parser.parse( fin, atoms, masses, atom_types);
       }
     else if ( !(* configure_qc.get_stream()).eof() )
       {
         ParseAtomData<dim> atom_parser;
         // TODO: Use atom types to initialize neighbor lists faster
         // TODO: Use masses of different types of atom for FIRE minimization scheme?
-        std::map<unsigned int, types::global_atom_index> atom_types;
+        std::multimap<unsigned int, types::global_atom_index> atom_types;
         std::vector<double> masses;
         atom_parser.parse( *configure_qc.get_stream(), atoms, masses, atom_types);
       }
     else
-      Assert(false, ExcMessage("None of the atom attributes set!"));
+      AssertThrow(false,
+                  ExcMessage("Atom data was not provided neither as an auxiliary "
+                             "data file nor at the end of the parameter file!"));
   }
 
   template <int dim>

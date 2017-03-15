@@ -20,9 +20,10 @@ int main (int argc, char *argv[])
       AssertThrow(argc > 1,ExcMessage("Parameter file is required as an input argument"));
 
       std::string parameter_filename = argv[1];
-      std::ifstream ifs(parameter_filename);
-      AssertThrow( ifs, ExcIO() );
-
+      {
+        std::ifstream ifs(parameter_filename);
+        AssertThrow( ifs, ExcIO() );
+      }
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::ifstream>( parameter_filename );
 

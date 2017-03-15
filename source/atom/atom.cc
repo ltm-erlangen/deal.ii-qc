@@ -7,11 +7,7 @@ namespace dealiiqc
 
   template <int dim>
   Atom<dim>::Atom ()
-  {
-    // initialize Points to clearly unusable values:
-
-    // TODO: init parent_cell
-  }
+  {}
 
   // instantiations:
   template class Atom<1>;

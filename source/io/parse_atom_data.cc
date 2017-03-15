@@ -8,13 +8,16 @@ namespace dealiiqc
   template<int dim>
   ParseAtomData<dim>::ParseAtomData()
     :
-    n_atoms(0),n_atom_types(0), line_no(0)
+    n_atoms(0),
+    n_atom_types(0),
+    line_no(0)
   {}
 
   template<int dim>
-  void ParseAtomData<dim>::parse( std::istream &is, std::vector<Atom<dim>> &atoms,
+  void ParseAtomData<dim>::parse( std::istream &is,
+                                  std::vector<Atom<dim>> &atoms,
                                   std::vector<double> &masses,
-                                  std::map<unsigned int,types::global_atom_index> &atom_types)
+                                  std::multimap<unsigned int,types::global_atom_index> &atomtype_to_atoms)
   {
     AssertThrow (is, ExcIO());
 
@@ -44,23 +47,23 @@ namespace dealiiqc
       {
         line_no++;
 
-        // Skip empty lines
-        if ( line.find_first_not_of(" \t\n\r") == std::string::npos)
-          continue;
-
         // strip all the comments and all white characters
         line = strip(line);
+
+        // Skip empty lines
+        if ( line.size()==0)
+          continue;
 
         // Read and store n_atoms, nbonds, ...
         if (line.find("atoms") != std::string::npos)
           {
             unsigned long long int n_atoms_tmp;
             if (sscanf(line.c_str(), "%llu", &n_atoms_tmp) != 1)
-              Assert( false, ExcInvalidValue(line_no,"atoms"));
+              AssertThrow( false, ExcInvalidValue(line_no,"atoms"));
             if ( n_atoms_tmp <= UINT_MAX )
               n_atoms = static_cast<types::global_atom_index>(n_atoms_tmp);
             else
-              Assert( false, ExcMessage("The number of atoms specified "
+              AssertThrow( false, ExcMessage("The number of atoms specified "
                                         "is more than what `typedefs::global_atom_index` can work with "
                                         "try building deal.II with 64bit index space"))
             }
@@ -90,7 +93,7 @@ namespace dealiiqc
           }
         else if (line.find("atom types") != std::string::npos)
           {
-            if (sscanf(line.c_str(), "%u", &n_atom_types) != 1)
+            if (sscanf(line.c_str(), "%zu", &n_atom_types) != 1)
               Assert( false , ExcInvalidValue(line_no,"number of atom types"));
           }
         else if (line.find("xlo xhi") != std::string::npos)
@@ -130,11 +133,13 @@ namespace dealiiqc
         // For now ignoring other keyword headings // TODO?
         if ( dealii::Utilities::match_at_string_start(line, "Masses") )
           {
+            // parse_masses is allowed to be executed multiple times.
             parse_masses(is, masses);
           }
         else if ( dealii::Utilities::match_at_string_start(line,"Atoms"))
           {
-            parse_atoms(is, atoms, atom_types);
+            // parse_atoms is allowed to be executed multiple times.
+            parse_atoms(is, atoms, atomtype_to_atoms);
           }
         ++line_no;
       }
@@ -145,13 +150,18 @@ namespace dealiiqc
 
   template< int dim>
   void ParseAtomData<dim>::parse_atoms( std::istream &is,
-                                        std::vector<Atom<dim>> &atoms, std::map<unsigned int,types::global_atom_index> &atom_types)
+                                        std::vector<Atom<dim>> &atoms,
+                                        std::multimap<unsigned int,types::global_atom_index> &atomtype_to_atoms)
   {
     atoms.resize(n_atoms);
     std::string line;
 
-    // TODO: Don't know if size_t can handle large unsigned integer values
-    std::size_t  i_atom_index;
+    unsigned long long int  i_atom_index;
+    std::size_t i_atom;
+    // size_t i_atom = i_atom_index-1
+    // atom data counts atoms starting from 1 and
+    // the vector container with 0
+
     unsigned int i_atom_type;
     double i_q, i_x, i_y, i_z;
 
@@ -161,68 +171,83 @@ namespace dealiiqc
       {
         ++line_no;
         line = strip(line);
-        if ( line.find_first_not_of(" \t\n\r") == std::string::npos)
+        if ( line.size()==0)
           continue;
 
         // Not reading molecular_id
-        if (sscanf(line.c_str(), "%zu %*u %u %lf %lf %lf %lf",
+        if (sscanf(line.c_str(), "%llu %*u %u %lf %lf %lf %lf",
                    &i_atom_index, &i_atom_type, &i_q, &i_x, &i_y, &i_z ) !=6)
-          Assert( false, ExcInvalidValue(line_no, "atom attributes under Atom keyword section"));
+          AssertThrow( false,
+                       ExcInvalidValue( line_no,
+                                        "atom attributes under Atom keyword section"));
+        Assert( i_atom_index<=n_atoms && i_atom_index>0,
+                ExcInvalidValue( line_no,
+                                 "atom index (> number of atoms or <=0"));
 
-        atom_types[i_atom_type]   = static_cast<types::global_atom_index> (i_atom_index);
-        atoms[i_atom_index-1].q    = static_cast<types::charge>(i_q);
+        i_atom = static_cast<std::size_t>(i_atom_index) -1;
+        atomtype_to_atoms.insert( std::pair<unsigned int,types::global_atom_index>
+                                  ( i_atom_type, static_cast<types::global_atom_index> (i_atom_index-1)) );
+
+        atoms[i_atom].q    = static_cast<types::charge>(i_q);
 
         // TODO: 1 and 2 dim cases could be potentially incorrect
         // Possible way to correct this is to ask user axes dimensionality
         if (dim==1)
-          atoms[i_atom_index-1].position[0] = i_x;
+          atoms[i_atom].position[0] = i_x;
         else if (dim==2)
           {
-            atoms[i_atom_index-1].position[0] = i_x;
-            atoms[i_atom_index-1].position[1] = i_y;
+            atoms[i_atom].position[0] = i_x;
+            atoms[i_atom].position[1] = i_y;
           }
         else if (dim==3)
           {
-            atoms[i_atom_index-1].position[0] = i_x;
-            atoms[i_atom_index-1].position[1] = i_y;
-            atoms[i_atom_index-1].position[2] = i_z;
+            atoms[i_atom].position[0] = i_x;
+            atoms[i_atom].position[1] = i_y;
+            atoms[i_atom].position[2] = i_z;
           }
         ++i;
       }
-    Assert( i==atoms.size(), ExcMessage("The number of atoms "
-                                        "do not match the number of entries "
-                                        "under Atoms keyword section"));
+    Assert( i==atoms.size(),
+            ExcMessage("The number of atoms "
+                       "do not match the number of entries "
+                       "under Atoms keyword section"));
     return;
   }
 
   template< int dim>
-  void ParseAtomData<dim>::parse_masses( std::istream &is, std::vector<double> &masses )
+  void ParseAtomData<dim>::parse_masses( std::istream &is,
+                                         std::vector<double> &masses )
   {
     masses.resize(n_atom_types, 0.);
     std::string line;
     size_t i_atom_type;
     double i_mass;
 
-    unsigned int i=0;
+    size_t i=0;
     // Store atom masses for different atom types
     while ( std::getline(is,line) && i<n_atom_types)
       {
         ++line_no;
         line = strip(line);
-        if ( line.find_first_not_of(" \t\n\r") == std::string::npos)
+        if ( line.size()==0)
           continue;
 
         if (sscanf(line.c_str(), "%zu %lf", &i_atom_type, &i_mass) !=2)
-          Assert( false, ExcInvalidValue(line_no,"Mass"));
+          AssertThrow( false, ExcInvalidValue(line_no,"Mass"));
+
+        Assert( i_atom_type <= n_atom_types && i_atom_type>0,
+                ExcInvalidValue( line_no, "atom type index (> number of atom types "
+                                 "or <= 0)"));
 
         // Copy masses for all atom types
-        masses[i_atom_type] = i_mass;
+        masses[i_atom_type-1] = i_mass;
         ++i;
       }
     line_no++;
-    Assert( i==masses.size(), ExcMessage("The number of different atom types "
-                                         "do not match the number of entries "
-                                         "under Masses keyword section") );
+    Assert( i==masses.size(),
+            ExcMessage("The number of different atom types "
+                       "do not match the number of entries "
+                       "under Masses keyword section") );
     return;
   }
 
@@ -239,36 +264,13 @@ namespace dealiiqc
       line.resize( trim_pos );
 
     // Trim line from left and right with " \t\n\r"
-    line = Utilities::trim(line);
+    line = dealii::Utilities::trim(line);
 
     return line;
   }
 
-  template             ParseAtomData<1>::ParseAtomData();
-  template             ParseAtomData<2>::ParseAtomData();
-  template             ParseAtomData<3>::ParseAtomData();
-
-  template std::string ParseAtomData<1>::strip( const std::string &);
-  template std::string ParseAtomData<2>::strip( const std::string &);
-  template std::string ParseAtomData<3>::strip( const std::string &);
-
-  template void ParseAtomData<1>::parse_masses(std::istream &, std::vector<double> &);
-  template void ParseAtomData<2>::parse_masses(std::istream &, std::vector<double> &);
-  template void ParseAtomData<3>::parse_masses(std::istream &, std::vector<double> &);
-
-  template void ParseAtomData<1>::parse_atoms(std::istream &, std::vector<Atom<1>> &,
-                                              std::map<unsigned int, types::global_atom_index> &);
-  template void ParseAtomData<2>::parse_atoms(std::istream &, std::vector<Atom<2>> &,
-                                              std::map<unsigned int, types::global_atom_index> &);
-  template void ParseAtomData<3>::parse_atoms(std::istream &, std::vector<Atom<3>> &,
-                                              std::map<unsigned int, types::global_atom_index> &);
-
-  template void ParseAtomData<1>::parse(std::istream &, std::vector<Atom<1>> &atoms, std::vector<double> &,
-                                        std::map<unsigned int,types::global_atom_index> &);
-  template void ParseAtomData<2>::parse(std::istream &, std::vector<Atom<2>> &atoms, std::vector<double> &,
-                                        std::map<unsigned int,types::global_atom_index> &);
-  template void ParseAtomData<3>::parse(std::istream &, std::vector<Atom<3>> &atoms, std::vector<double> &,
-                                        std::map<unsigned int,types::global_atom_index> &);
-
+  template class ParseAtomData<1>;
+  template class ParseAtomData<2>;
+  template class ParseAtomData<3>;
 
 } /* namespace dealiiqc */
