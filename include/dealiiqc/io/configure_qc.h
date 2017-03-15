@@ -78,7 +78,7 @@ namespace dealiiqc
     unsigned int dimension;
 
     /**
-     * Name of the mesh file for initial qc setup.
+     * Path to the mesh file for initial qc setup.
      */
     std::string mesh_file;
 
