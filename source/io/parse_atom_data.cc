@@ -16,8 +16,8 @@ namespace dealiiqc
   template<int dim>
   void ParseAtomData<dim>::parse( std::istream &is,
                                   std::vector<Atom<dim>> &atoms,
-                                  std::vector<double> &masses,
-                                  std::multimap<unsigned int,types::global_atom_index> &atomtype_to_atoms)
+                                  std::vector<types::charge>& charges,
+                                  std::vector<double> &masses)
   {
     AssertThrow (is, ExcIO());
 
@@ -140,7 +140,7 @@ namespace dealiiqc
         else if ( dealii::Utilities::match_at_string_start(line,"Atoms"))
           {
             // parse_atoms is allowed to be executed multiple times.
-            parse_atoms(is, atoms, atomtype_to_atoms);
+            parse_atoms(is, atoms, charges);
           }
         ++line_no;
       }
@@ -152,18 +152,27 @@ namespace dealiiqc
   template< int dim>
   void ParseAtomData<dim>::parse_atoms( std::istream &is,
                                         std::vector<Atom<dim>> &atoms,
-                                        std::multimap<unsigned int,types::global_atom_index> &atomtype_to_atoms)
+                                        std::vector<types::charge>& charges)
   {
-    atoms.resize(n_atoms);
     std::string line;
 
-    unsigned long long int  i_atom_index;
-    std::size_t i_atom;
-    // size_t i_atom = i_atom_index-1
+    atoms.resize(n_atoms);
+    charges.resize(n_atom_types);
+
+    // i_atom = i_atom_index-1
     // atom data counts atoms starting from 1 and
     // the vector container with 0
+    unsigned long long int  i_atom_index;
+    types::global_atom_index i_atom;
 
-    unsigned int i_atom_type;
+    unsigned int molecule_id;
+
+    unsigned char i_atom_type;
+    types::atom_type tmp_type;
+
+    // temporary variable to count number of atom types
+    std::vector<types::atom_type> unique_types;
+
     double i_q, i_x, i_y, i_z;
 
     // Store atom attributes and positions
@@ -176,8 +185,8 @@ namespace dealiiqc
           continue;
 
         // Not reading molecular_id
-        if (sscanf(line.c_str(), "%llu %*u %u %lf %lf %lf %lf",
-                   &i_atom_index, &i_atom_type, &i_q, &i_x, &i_y, &i_z ) !=6)
+        if (sscanf(line.c_str(), "%llu  %u " UC_SCANF_STR " %lf %lf %lf %lf",
+                   &i_atom_index, &molecule_id, &i_atom_type, &i_q, &i_x, &i_y, &i_z ) !=7)
           AssertThrow( false,
                        ExcInvalidValue( line_no,
                                         "atom attributes under Atom keyword section"));
@@ -185,11 +194,25 @@ namespace dealiiqc
                 ExcInvalidValue( line_no,
                                  "atom index (> number of atoms or <=0"));
 
-        i_atom = static_cast<std::size_t>(i_atom_index) -1;
-        atomtype_to_atoms.insert( std::pair<unsigned int,types::global_atom_index>
-                                  ( i_atom_type, static_cast<types::global_atom_index> (i_atom_index-1)) );
+        i_atom = static_cast<types::global_atom_index>(i_atom_index) -1;
 
-        atoms[i_atom].q    = static_cast<types::charge>(i_q);
+        atoms[i_atom].id = i_atom;
+
+        tmp_type = static_cast<types::atom_type> (i_atom_type) -1;
+
+        Assert(tmp_type>=0 && tmp_type < 256,
+               ExcInvalidValue(line_no, "atom type attribute"));
+
+        atoms[i_atom].type = tmp_type;
+
+        if (std::find(unique_types.begin(), unique_types.end(), tmp_type) == unique_types.end())
+          {
+            unique_types.push_back( tmp_type);
+            charges[tmp_type] = static_cast<types::charge>(i_q);
+          }
+        else
+          Assert( charges[tmp_type]==static_cast<types::charge>(i_q),
+                  ExcInvalidValue(line_no,"charge attribute"));
 
         // TODO: 1 and 2 dim cases could be potentially incorrect
         // Possible way to correct this is to ask user axes dimensionality
@@ -208,6 +231,8 @@ namespace dealiiqc
           }
         ++i;
       }
+    Assert( unique_types.size()==n_atom_types,
+            ExcInternalError());
     Assert( i==atoms.size(),
             ExcMessage("The number of atoms "
                        "do not match the number of entries "

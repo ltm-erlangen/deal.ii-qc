@@ -18,7 +18,6 @@ INCLUDE_DIRECTORIES(
 # page of the documentation.
 SET(TARGET_SRC
   source/qc/core.cc
-  source/atom/atom.cc
   source/io/configure_qc.cc
   source/io/parse_atom_data.cc
   )

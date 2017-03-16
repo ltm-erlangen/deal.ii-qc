@@ -77,18 +77,20 @@ namespace dealiiqc
         ParseAtomData<dim> atom_parser;
         // TODO: Use atom types to initialize neighbor lists faster
         // TODO: Use masses of different types of atom for FIRE minimization scheme?
-        std::multimap<unsigned int, types::global_atom_index> atom_types;
+
+        std::vector<types::charge> charges;
         std::vector<double> masses;
-        atom_parser.parse( fin, atoms, masses, atom_types);
+        atom_parser.parse( fin, atoms, charges, masses);
       }
     else if ( !(* configure_qc.get_stream()).eof() )
       {
         ParseAtomData<dim> atom_parser;
         // TODO: Use atom types to initialize neighbor lists faster
         // TODO: Use masses of different types of atom for FIRE minimization scheme?
-        std::multimap<unsigned int, types::global_atom_index> atom_types;
+
+        std::vector<types::charge> charges;
         std::vector<double> masses;
-        atom_parser.parse( *configure_qc.get_stream(), atoms, masses, atom_types);
+        atom_parser.parse( *configure_qc.get_stream(), atoms, charges, masses);
       }
     else
       AssertThrow(false,

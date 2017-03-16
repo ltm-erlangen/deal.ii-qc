@@ -5,6 +5,7 @@
 #include <istream>
 #include <vector>
 #include <climits>
+#include <algorithm>
 
 #include <deal.II/base/point.h>
 
@@ -55,13 +56,13 @@ namespace dealiiqc
      * keyword section. In such cases the old atom attributes will be overwritten.
      * @param[in] is input stream
      * @param[out] atoms container to store atom attributes
-     * @param[out] masses container to store masses of different atom types
-     * @param[out] atomtype_to_atoms atom type and atoms association
+     * @param[out] charges container to charges of different atom species
+     * @param[out] masses container to store masses of different atom species
      */
     void parse( std::istream &is,
                 std::vector<Atom<dim>> &atoms,
-                std::vector<double> &masses,
-                std::multimap<unsigned int,types::global_atom_index> &atomtype_to_atoms);
+                std::vector<types::charge>& charges,
+                std::vector<double> &masses);
 
   private:
 
@@ -78,11 +79,11 @@ namespace dealiiqc
      * The input stream should be at the line after the keyword Masses.
      * @param[in] is input stream
      * @param[out] atoms container to store atom attributes
-     * @param[out] atomtype_to_atoms atom type and atoms association
+     * @param[out] charges container to charges of different atom species
      */
     void parse_atoms( std::istream &is,
                       std::vector<Atom<dim>> &atoms,
-                      std::multimap<unsigned int, types::global_atom_index> &atomtype_to_atoms);
+                      std::vector<types::charge>& charges);
 
     /**
      * Parse @p is input stream for mass entries under Masses keyword section

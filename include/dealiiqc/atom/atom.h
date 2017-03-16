@@ -15,23 +15,28 @@ namespace dealiiqc
    * A class for atoms associated with FEM.
    */
   template <int dim>
-  class Atom
+  struct Atom
   {
-  public:
+
     /**
-     * Default constructor.
+     * Global atom index of this atom.
      */
-    Atom();
+    types::global_atom_index id;
+
+    /**
+     * Atom species type.
+     */
+    types::atom_type type;
+
+    /**
+     * Contribution to energy calculations in terms of cluster weight
+     */
+    double cluster_weight;
 
     /**
      * Position in real space
      */
     Point<dim> position;
-
-    /**
-     * Charge of the atom
-     */
-    types::charge q;
 
     /**
      * Position of the atom in reference coordinates of a cell it belongs to.

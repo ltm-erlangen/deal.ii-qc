@@ -205,6 +205,20 @@ namespace dealiiqc
       std::vector<unsigned int> cell_atoms;
 
       /**
+       * Any atom contributing to (QC) energy of the system is in @see energy_atoms.
+       * An atom contributes to (QC) energy computations if it happens to be
+       * located within a distance of @see cluster_radius + @see cutoff_radius
+       * to any vertex.
+       */
+      //std::vector<Atom<dim>> energy_atoms;
+
+      /**
+       * Any atom that is located inside a cluster is in @see cluster_atoms.
+       * An atom is in a cluster if it's within a distance of @see cluster_radius
+       * to any vertex.
+       */
+
+      /**
        * A map of global atom IDs to quadrature point (local id of at atom)
        */
       std::map<unsigned int, unsigned int> quadrature_atoms;
@@ -234,7 +248,9 @@ namespace dealiiqc
     std::map<typename DoFHandler<dim>::active_cell_iterator, AssemblyData> cells_to_data;
 
     /**
-     * A vector of atoms in the system.
+     * A vector of atoms in the system. The vector is used only for
+     * initializing cell based data structures that would actually be
+     * used for computations.
      */
     std::vector<Atom<dim>> atoms;
 
