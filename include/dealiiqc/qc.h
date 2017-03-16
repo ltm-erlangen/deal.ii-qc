@@ -77,9 +77,9 @@ namespace dealiiqc
     void setup_system ();
 
     /**
-     * Main function to calculate radient of the enrgy function
+     * Main function to calculate gradient of the energy function
      * (written to @p gradient) and it's value (returned) for a given input
-     * @p locally_relevant_displacement.
+     * @p locally_relevant_displacement finite element field.
      */
     double calculate_energy_gradient(const vector_t &locally_relevant_displacement,
                                      vector_t &gradient) const;
