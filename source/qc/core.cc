@@ -225,7 +225,7 @@ namespace dealiiqc
                                                                    it->second.displacements);
       }
 
-    // TODO: Update neighbour lists
+    // TODO: Update neighbor lists
     // if( (iter_count % neigh_modify_delay)==0 || (max_abs_displacement > neigh_skin)   )
     //   update_neighbour_lists();
 
@@ -246,7 +246,7 @@ namespace dealiiqc
 
         cell->get_dof_indices (local_dof_indices);
 
-        // for each cell, go trhough all atoms we care about in energy calculation
+        // for each cell, go through all atoms we care about in energy calculation
         for (unsigned int a = 0; a < it->second.energy_atoms.size(); a++)
           {
             // global id of current atom:
@@ -257,13 +257,13 @@ namespace dealiiqc
             // Current position of atom:
             const Point<dim> xI = atoms[I].position + it->second.displacements[qI];
 
-            // loop over all neighbours and disregard J<I
+            // loop over all neighbors and disregard J<I
             // TODO: implement ^^^^
-            // for now there is always one neighbour only: I+1
+            // for now there is always one neighbor only: I+1
             if (I+1 < atoms.size())
               {
                 const unsigned int J = I+1;
-                // get Data for neighbour atom
+                // get Data for neighbor atom
                 // TODO: check if the atom is in this cell also to save some time.
                 const auto n_data = cells_to_data.find(atoms[J].parent_cell);
 
@@ -282,7 +282,7 @@ namespace dealiiqc
 
                 const double r = rIJ.norm();
 
-                // If atoms I and J interact with each other while belonging
+                // If atoms I and J interact with each other while belonging to
                 // different clusters. In this case, we need to account for
                 // different weights associated with the clusters by
                 // scaling E_{IJ} with (n_I + n_J)/2, which is exactly how
@@ -290,11 +290,11 @@ namespace dealiiqc
                 // from clusters perspective.
                 // Here we need to distinguish between two cases: both atoms
                 // belong to clusters (weight is as above), or
-                // only the main atom belongs to a claster (weight is n_I/2)
+                // only the main atom belongs to a cluster (weight is n_I/2)
 
 
                 // Now we can calculate energy:
-                // TODO: generalized, energy depends on a 2-points potential
+                // TODO: generalize, energy depends on a 2-points potential
                 // used for atoms I and J. Could be different for any combination
                 // of atoms.
                 const double energy = 0.5 * Utilities::fixed_power<2>(r - 0.25);
@@ -302,9 +302,11 @@ namespace dealiiqc
 
                 // Finally, we evaluated local contribution to the gradient of
                 // energy. Here we need to distinguish between two cases:
-                // 1. N_k(X_j) is non-zero on (possibly) neihboring cell
+                // 1. N_k(X_j) is non-zero on (possibly) neighboring cell
                 // 2. N_k(X_j) is zero, i.e. X_j does not belong to the support
                 // of N_k.
+                // Here k is the index of local shape function on the cell
+                // where atom I belongs.
                 for (unsigned int k = 0; k < dofs_per_cell; ++k)
                   {
                     const auto k_neigh = n_data->second.global_to_local_dof.find(local_dof_indices[k]);
@@ -322,7 +324,7 @@ namespace dealiiqc
                   }
 
                 res += energy;
-              } // end of the loop over all neighbours
+              } // end of the loop over all neighbors
 
           } // end of the loop over all atoms
 
