@@ -51,6 +51,7 @@ int main (int argc, char *argv[])
           << "#end-of-parameter-section" << std::endl
           << "LAMMPS Description" << std::endl << std::endl
           << "5 atoms"            << std::endl << std::endl
+          << "1  atom types"     << std::endl << std::endl
           << "Atoms #"        << std::endl << std::endl
           << "1 1 1 1.0 0.00 0. 0." << std::endl
           << "2 2 1 1.0 0.25 0. 0." << std::endl

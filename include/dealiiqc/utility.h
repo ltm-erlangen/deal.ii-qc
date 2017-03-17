@@ -26,7 +26,19 @@ namespace dealiiqc
      */
     typedef float charge;
 
+    /**
+     * The type used for identifying atom types. The enumeration starts
+     * from 0.
+     */
+    typedef unsigned char atom_type;
+
   } //typedefs
+
+/**
+ * Make sure that sscanf doesn't pickup spaces as unsigned char
+ * while parsing atom data stream.
+ */
+#define UC_SCANF_STR "%hhu"
 
 }
 
