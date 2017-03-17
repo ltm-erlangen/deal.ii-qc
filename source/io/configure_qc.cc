@@ -46,6 +46,16 @@ namespace dealiiqc
     return input_stream;
   }
 
+  std::string ConfigureQC::get_pair_style() const
+  {
+    return pair_style;
+  }
+
+  double ConfigureQC::get_max_search_radius() const
+  {
+    return max_search_radius;
+  }
+
   void ConfigureQC::declare_parameters( ParameterHandler &prm )
   {
     // TODO: Write intput file name to the screen
@@ -76,8 +86,19 @@ namespace dealiiqc
                         Patterns::Anything(),
                         "Name of the atom data file "
                         "that is compatible with LAMMPS");
-      // TODO: Declare interaction potential style (Pair style)
-      // TODO: Declare interaction potential coefficients (Pair coeff)
+      prm.declare_entry("Pair style", "coul/wolf 0.8 4.0",
+                        Patterns::Anything(),
+                        "Pairwise interactions style "
+                        "potential energy function");
+      prm.declare_entry("Pair coeff", "* *",
+                        Patterns::Anything(),
+                        "Coefficients for pair potential "
+                        "and interaction between atom types");
+      prm.declare_entry("Max search radius", "10.0",
+                        Patterns::Double(0),
+                        "Maximum of all the cutoff radii "
+                        "used to designate the ghost layers "
+                        "of each sub-domain");
     }
     prm.leave_subsection ();
 
@@ -98,6 +119,8 @@ namespace dealiiqc
     prm.enter_subsection("Configure atoms");
     {
       atom_data_file = prm.get("Atom data file");
+      pair_style = prm.get("Pair style");
+      max_search_radius = prm.get_double("Max search radius");
     }
     prm.leave_subsection();
   }

@@ -60,6 +60,16 @@ namespace dealiiqc
      */
     std::shared_ptr<std::istream> get_stream() const;
 
+    /*
+     * Get pair style
+     */
+    std::string get_pair_style() const;
+
+    /**
+     * Get max search radius
+     */
+    double get_max_search_radius() const;
+
   private:
 
     /*
@@ -97,6 +107,16 @@ namespace dealiiqc
      * constructor @see ConfigureQC().
      */
     mutable std::shared_ptr<std::istream> input_stream;
+
+    /**
+     * Pair style
+     */
+    std::string pair_style;
+
+    /**
+     * Maximum search radius to identify ghost layer of subdomains
+     */
+    double max_search_radius;
 
   };
 
