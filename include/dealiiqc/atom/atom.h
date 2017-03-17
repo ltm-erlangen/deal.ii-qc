@@ -21,7 +21,7 @@ namespace dealiiqc
     /**
      * Global atom index of this atom.
      */
-    types::global_atom_index id;
+    types::global_atom_index global_index;
 
     /**
      * Atom species type.

@@ -196,7 +196,7 @@ namespace dealiiqc
 
         i_atom = static_cast<types::global_atom_index>(i_atom_index) -1;
 
-        atoms[i_atom].id = i_atom;
+        atoms[i_atom].global_index = i_atom;
 
         tmp_type = static_cast<types::atom_type> (i_atom_type) -1;
 
