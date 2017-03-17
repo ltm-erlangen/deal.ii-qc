@@ -4,14 +4,14 @@ namespace dealiiqc
 {
 
   template<int dim>
-  AtomHandler<dim>::AtomHandler( const ConfigureQC & configure_qc)
-  :
-  configure_qc(configure_qc)
+  AtomHandler<dim>::AtomHandler( const ConfigureQC &configure_qc)
+    :
+    configure_qc(configure_qc)
   {
   }
 
   template<int dim>
-  void AtomHandler<dim>::parse_atoms_and_assign_to_cells( const parallel::shared::Triangulation<dim>& tria)
+  void AtomHandler<dim>::parse_atoms_and_assign_to_cells( const parallel::shared::Triangulation<dim> &tria)
   {
     std::vector<Atom<dim>> vector_atoms;
     ParseAtomData<dim> atom_parser;
@@ -34,17 +34,7 @@ namespace dealiiqc
     // TODO: Use atom types to initialize neighbor lists faster
     // TODO: Use masses of different types of atom for FIRE minimization scheme?
 
-    associate_atoms_with_cells( vector_atoms, tria);
-  }
-
-  template< int dim>
-  template< template <int> class MeshType>
-  void AtomHandler<dim>::associate_atoms_with_cells ( const std::vector<Atom<dim>> &vector_atoms,
-                                                      const MeshType<dim> & mesh)
-  {
-    // TODO: Optimization technique for associating atoms with cells
-    // check if the atom is inside a certain bounding box of this processor
-
+    // TODO: Associate atoms with cells
   }
 
   template class AtomHandler<1>;

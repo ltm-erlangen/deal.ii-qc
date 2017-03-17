@@ -16,7 +16,7 @@ namespace dealiiqc
   template<int dim>
   void ParseAtomData<dim>::parse( std::istream &is,
                                   std::vector<Atom<dim>> &atoms,
-                                  std::vector<types::charge>& charges,
+                                  std::vector<types::charge> &charges,
                                   std::vector<double> &masses)
   {
     AssertThrow (is, ExcIO());
@@ -152,7 +152,7 @@ namespace dealiiqc
   template< int dim>
   void ParseAtomData<dim>::parse_atoms( std::istream &is,
                                         std::vector<Atom<dim>> &atoms,
-                                        std::vector<types::charge>& charges)
+                                        std::vector<types::charge> &charges)
   {
     std::string line;
 

@@ -210,13 +210,7 @@ namespace dealiiqc
        * located within a distance of @see cluster_radius + @see cutoff_radius
        * to any vertex.
        */
-      //std::vector<Atom<dim>> energy_atoms;
-
-      /**
-       * Any atom that is located inside a cluster is in @see cluster_atoms.
-       * An atom is in a cluster if it's within a distance of @see cluster_radius
-       * to any vertex.
-       */
+      //std::multimap< CellIterator, Atom<dim>> energy_atoms;
 
       /**
        * A map of global atom IDs to quadrature point (local id of at atom)

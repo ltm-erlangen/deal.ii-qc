@@ -29,7 +29,11 @@ namespace dealiiqc
     types::atom_type type;
 
     /**
-     * Contribution to energy calculations in terms of cluster weight
+     * Contribution to energy calculations in terms of cluster weight.
+     * All the cluster_atoms have non-zero @p cluster_weight.
+     * Any atom that is located inside a cluster is a cluster_atom i.e.,
+     * an atom is in a cluster if it's within a distance of @see cluster_radius
+     * to any vertex.
      */
     double cluster_weight;
 

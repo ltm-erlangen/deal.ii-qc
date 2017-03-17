@@ -61,7 +61,7 @@ namespace dealiiqc
      */
     void parse( std::istream &is,
                 std::vector<Atom<dim>> &atoms,
-                std::vector<types::charge>& charges,
+                std::vector<types::charge> &charges,
                 std::vector<double> &masses);
 
   private:
@@ -83,7 +83,7 @@ namespace dealiiqc
      */
     void parse_atoms( std::istream &is,
                       std::vector<Atom<dim>> &atoms,
-                      std::vector<types::charge>& charges);
+                      std::vector<types::charge> &charges);
 
     /**
      * Parse @p is input stream for mass entries under Masses keyword section
