@@ -51,6 +51,11 @@ namespace dealiiqc
     return pair_style;
   }
 
+  double ConfigureQC::get_cluster_radius() const
+  {
+    return cluster_radius;
+  }
+
   double ConfigureQC::get_max_search_radius() const
   {
     return max_search_radius;
@@ -94,11 +99,20 @@ namespace dealiiqc
                         Patterns::Anything(),
                         "Coefficients for pair potential "
                         "and interaction between atom types");
-      prm.declare_entry("Max search radius", "10.0",
+    }
+    prm.leave_subsection ();
+    prm.enter_subsection ("Configure qc");
+    {
+      prm.declare_entry("Cluster radius", "2.0",
+                        Patterns::Double(0),
+                        "Cluster radius of each cluster "
+                        "used to identify cluster atoms "
+                        "for energy and force computations");
+      prm.declare_entry("Max search radius", "6.0",
                         Patterns::Double(0),
                         "Maximum of all the cutoff radii "
-                        "used to designate the ghost layers "
-                        "of each sub-domain");
+                        "used to identify the ghost cells "
+                        "of each MPI process");
     }
     prm.leave_subsection ();
 
@@ -120,7 +134,12 @@ namespace dealiiqc
     {
       atom_data_file = prm.get("Atom data file");
       pair_style = prm.get("Pair style");
-      max_search_radius = prm.get_double("Max search radius");
+    }
+    prm.leave_subsection();
+    prm.enter_subsection("Configure qc");
+    {
+      cluster_radius    = prm.get_double("Cluster radius");
+      max_search_radius = prm.get_double("Max energy radius");
     }
     prm.leave_subsection();
   }
