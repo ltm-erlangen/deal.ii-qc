@@ -299,7 +299,7 @@ namespace dealiiqc
                 // TODO: generalize, energy depends on a 2-points potential
                 // used for atoms I and J. Could be different for any combination
                 // of atoms.
-                const double energy = 0.5 * Utilities::fixed_power<2>(r - 0.25);
+                const double energy = 0.5 * dealii::Utilities::fixed_power<2>(r - 0.25);
                 const double deriv  = r - 0.25;
 
                 // Finally, we evaluated local contribution to the gradient of

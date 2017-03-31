@@ -40,6 +40,35 @@ namespace dealiiqc
    */
 #define UC_SCANF_STR "%hhu"
 
+  namespace Utilities
+  {
+    using namespace dealii;
+
+    /**
+     * Utility function that returns true if a point @p p is outside a bounding box.
+     * The box is specified by two points @p minp and @p maxp (the order of
+     * specifying points is important).
+     */
+    template<int dim>
+    bool
+    is_outside_bounding_box( const Point<dim> &minp,
+                             const Point<dim> &maxp,
+                             const Point<dim> &p)
+    {
+      bool outside = false;
+      for (unsigned int d=0; d<dim; ++d)
+        if ( (minp[d] > p[d]) || (p[d] > maxp[d]) )
+          {
+            outside = true;
+            break;
+          }
+
+      return outside;
+    }
+
+
+  } // Utilities
+
 }
 
 #endif /* __dealii_qc_utility_h */

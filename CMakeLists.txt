@@ -119,6 +119,7 @@ SET (TEST_TIME_LIMIT 900)
 # tests for core functionality
 ADD_SUBDIRECTORY(tests/core)
 ADD_SUBDIRECTORY(tests/io)
+ADD_SUBDIRECTORY(tests/utilities)
 #
 # installation target.
 # use with -DCMAKE_INSTALL_PREFIX=/path/to/
