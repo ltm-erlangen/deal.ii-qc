@@ -60,6 +60,21 @@ namespace dealiiqc
      */
     std::shared_ptr<std::istream> get_stream() const;
 
+    /*
+     * Get pair style
+     */
+    std::string get_pair_style() const;
+
+    /**
+     * Get cluster radius
+     */
+    double get_cluster_radius() const;
+
+    /**
+     * Get max search radius
+     */
+    double get_max_search_radius() const;
+
   private:
 
     /*
@@ -97,6 +112,34 @@ namespace dealiiqc
      * constructor @see ConfigureQC().
      */
     mutable std::shared_ptr<std::istream> input_stream;
+
+    /**
+     * Pair style
+     */
+    std::string pair_style;
+
+    /**
+     * Cluster radius of the clusters. An atom is identified as a cluster atom
+     * if it is within @p cluster_radius distance from any vertex of active
+     * cells. Scaling the energy of the cluster atoms with appropriate weights
+     * gives a QC approximation of the energy of the system.
+     */
+    double cluster_radius;
+
+    /**
+     * Maximum search distance from any of the vertices of locally owned cells
+     * to an atom, to identify whether the atom contributes to the
+     * QC energy computations.
+     *
+     * @p max_search_radius is also used to identify ghost cells of a
+     * current MPI process. If any of a cell's vertices are within a
+     * @p max_search_radius distance from any of locally owned cell's vertices,
+     * then the cell is a ghost cell of a current MPI process.
+     *
+     * @note @p max_search_radius should not be less than the sum of cluster
+     * radius and (max) cutoff radius.
+     */
+    double max_search_radius;
 
   };
 
