@@ -50,20 +50,19 @@ namespace dealiiqc
      * specifying points is important).
      */
     template<int dim>
+    inline
     bool
     is_outside_bounding_box( const Point<dim> &minp,
                              const Point<dim> &maxp,
                              const Point<dim> &p)
     {
-      bool outside = false;
       for (unsigned int d=0; d<dim; ++d)
         if ( (minp[d] > p[d]) || (p[d] > maxp[d]) )
           {
-            outside = true;
-            break;
+            return true;
           }
 
-      return outside;
+      return false;
     }
 
 

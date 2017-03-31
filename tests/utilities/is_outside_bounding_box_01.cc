@@ -45,4 +45,6 @@ int main()
   // If the point is on the boundary, the point is not outside
   AssertThrow( !dealiiqc::Utilities::is_outside_bounding_box( minxyz, maxxyz, bxyz ),
                ExcMessage("Test Fails"));
+
+  std::cout << "OK" << std::endl;
 }
