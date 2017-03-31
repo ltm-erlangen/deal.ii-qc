@@ -13,19 +13,19 @@ int main( int argc, char **argv)
 {
   try
     {
-      Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, numbers::invalid_unsigned_int);
+      dealii::Utilities::MPI::MPI_InitFinalize mpi_initialization( argc, argv, numbers::invalid_unsigned_int);
       std::ostringstream oss;
       oss
           << "set Dimension = 3"                              << std::endl
           << "subsection Configure mesh"                      << std::endl
-          << "  set Mesh file = "        << SOURCE_DIR
-          << "/parse_atom_data_01/refined_cube.msh"           << std::endl
+          << "  set Mesh file = "                             << SOURCE_DIR
+          << "/../data/refined_cube.msh"                      << std::endl
           << "  set Number of initial global refinements = 1" << std::endl
-          << "end" << std::endl
+          << "end"                                            << std::endl
           << "subsection Configure atoms"                     << std::endl
-          << "  set Atom data file = "        << SOURCE_DIR
-          << "/parse_atom_data_01/atom.data"                  << std::endl
-          << "end" << std::endl;
+          << "  set Atom data file = "                        << SOURCE_DIR
+          << "/../data/16_NaCl_atom.data"                     << std::endl
+          << "end"                                            << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());
