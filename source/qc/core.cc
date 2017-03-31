@@ -44,7 +44,7 @@ namespace dealiiqc
     setup_atoms();
 
     setup_system();
-    associate_atoms_with_cells();
+
 
   }
 
@@ -344,6 +344,8 @@ namespace dealiiqc
   template <int dim>
   void QC<dim>::run ()
   {
+    associate_atoms_with_cells();
+
     setup_fe_values_objects();
 
     const double e = calculate_energy_gradient(locally_relevant_displacement,

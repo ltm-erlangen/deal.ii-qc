@@ -24,9 +24,11 @@ int main (int argc, char *argv[])
           << "set Dimension = 3"                              << std::endl
           << "subsection Configure mesh"                      << std::endl
           << "  set Mesh file = "        << SOURCE_DIR
-          << "/mesh_01/hex_01.msh"                            << std::endl
+          << "/../data/hex_01.msh"                            << std::endl
           << "  set Number of initial global refinements = 1" << std::endl
-          << "end" << std::endl;
+          << "end" << std::endl
+          << "#end-of-parameter-section"
+          << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());
@@ -37,8 +39,8 @@ int main (int argc, char *argv[])
       std::ofstream out ("output", std::ofstream::trunc);
 
       QC<3> problem( config );
-      problem.run ();
-      if ( Utilities::MPI::this_mpi_process(mpi_communicator) == 0 )
+
+      if ( dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == 0 )
         problem.write_mesh(out,"msh");
     }
   catch (std::exception &exc)

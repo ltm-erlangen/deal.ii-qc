@@ -139,7 +139,7 @@ namespace dealiiqc
     prm.enter_subsection("Configure qc");
     {
       cluster_radius    = prm.get_double("Cluster radius");
-      max_search_radius = prm.get_double("Max energy radius");
+      max_search_radius = prm.get_double("Max search radius");
     }
     prm.leave_subsection();
   }

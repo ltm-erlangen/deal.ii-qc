@@ -1,6 +1,9 @@
 #ifndef __dealii_qc_atom_handler_h
 #define __dealii_qc_atom_handler_h
 
+#include <deal.II/base/mpi.h>
+#include <deal.II/base/utilities.h>
+#include <deal.II/dofs/dof_handler.h>
 #include <deal.II/grid/grid_tools.h>
 
 #include <dealiiqc/atom/atom.h>
@@ -27,13 +30,39 @@ namespace dealiiqc
      */
     AtomHandler( const ConfigureQC &configure_qc);
 
+    /**
+     * A typedef for mesh.
+     */
+    using MeshType = dealii::DoFHandler<dim>;
+
+    /**
+     * A typedef for active_cell_iterator for ease of use
+     */
+    using CellIterator = typename MeshType::active_cell_iterator;
+
+    /**
+     * A typedef for cell and atom associations
+     */
+    using CellAtoms = typename std::multimap< CellIterator, Atom<dim>>;
+
+    /**
+     * A typedef for iterating over @see CellAtoms
+     */
+    using CellAtomsIterator = typename std::multimap< CellIterator, Atom<dim>>::iterator;
+
+    /**
+     * A typedef for iterating over @see energy_atoms
+     */
+    using ClusterAtomsIterator = typename std::multimap< CellIterator, CellAtomsIterator>;
+
     // TODO: Rework in the future to not have a vector of atoms data
     /**
      * setup atom attributes namely:
      * @see atoms, @see masses and @see atomtype_to_atoms
      * Run through all atoms and find cells to which they belong.
      */
-    void parse_atoms_and_assign_to_cells( const parallel::shared::Triangulation<dim> &tria);
+    void parse_atoms_and_assign_to_cells( const MeshType &mesh,
+                                          const MPI_Comm &comm);
 
     /**
      * Initialize or update neighbor lists of the @see energy_atoms.
@@ -42,16 +71,39 @@ namespace dealiiqc
     void update_neighbor_lists();
 
     /**
-     * A typedef for active_cell_iterator for ease of use
+     * Write out the information of number of atoms, number of energy atoms
+     * and number of cluster atoms per cell.
+     * TODO: Extend this to output more cell data?
+     * TODO: Make the function MPI compliant!
      */
-    typedef typename parallel::shared::Triangulation<dim>::active_cell_iterator CellIterator;
-
-    /**
-     * A typedef for iterating over atoms
-     */
-    typename std::multimap< CellIterator, Atom<dim>>::const_iterator CellAtomIterator;
+    void write_cell_data(const MeshType &mesh,
+                         std::ostream &out);
 
   protected:
+
+    /**
+     * Return true of an atom is cluster atom.
+     * Should be used only after updating atom parent cell attribute.
+     */
+    inline
+    bool is_cluster_atom( const Atom<dim> &a);
+
+    /**
+     * Return true of an atom is energy atom.
+     * Should be used only after updating atom parent cell attribute.
+     */
+    inline
+    bool is_energy_atom( const Atom<dim> &a);
+
+    /**
+     * Update energy atoms
+     */
+    void update_energy_atoms();
+
+    /**
+     * Update cluster weights
+     */
+    void update_cluster_weights();
 
     /**
      * ConfigureQC object for initializing @see atoms, @see charges, @see masses
@@ -83,12 +135,30 @@ namespace dealiiqc
     std::multimap< CellIterator, Atom<dim>> atoms;
 
     /**
+     * A multimap container to store atoms that contribute towards energy
+     * computations for the current MPI core. Each energy atom is stored in the
+     * container along with its cell.
+     */
+    CellAtoms energy_atoms;
+
+    /**
+     * A multimap container to store atoms that are inside clusters.
+     */
+    ClusterAtomsIterator cluster_atoms_iterator;
+
+    /**
+     * Neighbor lists for cells.
+     */
+    std::multimap<CellIterator, CellIterator> cell_neighbor_lists;
+
+    /**
      * Neighbor lists using cell approach.
      * For each cell loop over all nearby relevant cells only once
      * and loop over all interacting atoms between the two cells.
      */
-    std::multimap<CellIterator,
-        std::multimap<CellIterator, std::pair<CellAtomIterator, CellAtomIterator>>> neighbor_lists;
+    typename
+    std::multimap< std::pair< CellIterator, CellIterator>,
+        std::pair< CellAtomsIterator, CellAtomsIterator> > atom_neighbor_lists;
 
   };
 
