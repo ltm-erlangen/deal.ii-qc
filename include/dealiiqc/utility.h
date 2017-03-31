@@ -34,10 +34,10 @@ namespace dealiiqc
 
   } //typedefs
 
-/**
- * Make sure that sscanf doesn't pickup spaces as unsigned char
- * while parsing atom data stream.
- */
+  /**
+   * Make sure that sscanf doesn't pickup spaces as unsigned char
+   * while parsing atom data stream.
+   */
 #define UC_SCANF_STR "%hhu"
 
 }
