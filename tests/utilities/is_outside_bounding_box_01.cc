@@ -46,5 +46,5 @@ int main()
   AssertThrow( !dealiiqc::Utilities::is_outside_bounding_box( minxyz, maxxyz, bxyz ),
                ExcMessage("Test Fails"));
 
-  std::cout << "OK" << std::endl;
+  std::cout << "OK\n" << std::endl;
 }

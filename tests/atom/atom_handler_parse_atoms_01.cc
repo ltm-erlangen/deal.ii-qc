@@ -72,7 +72,7 @@ int main (int argc, char **argv)
       TestAtomHandler<3> problem (config);
       problem.run();
 
-      std::cout << "OK" << std::endl;
+      std::cout << "OK\n" << std::endl;
 
     }
   catch (std::exception &exc)

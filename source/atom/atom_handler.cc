@@ -89,10 +89,9 @@ namespace dealiiqc
     //  for this MPI process energy computation)
     typename std::vector<Atom<dim>> thrown_atoms;
 
-    bool found_cell = false;
     for ( auto atom : vector_atoms )
       {
-        found_cell = false;
+        bool atom_associated_to_cell = false;
         try
           {
             std::pair<typename MeshType::active_cell_iterator, Point<dim> >
@@ -103,8 +102,11 @@ namespace dealiiqc
 
             atom.reference_position = GeometryInfo<dim>::project_to_unit_cell(my_pair.second);
             atom.parent_cell = my_pair.first;
-            found_cell = true;
-            atoms.insert( std::make_pair( my_pair.first, atom ));
+            if ( atom::is_within_distance_from_vertices( atom, configure_qc.get_maximum_search_radius() ))
+              {
+                atom_associated_to_cell = true;
+                atoms.insert( std::make_pair( my_pair.first, atom ));
+              }
           }
         catch ( dealii::GridTools::ExcPointNotFound<dim> &)
           {
@@ -112,7 +114,7 @@ namespace dealiiqc
             // to this MPI process. Ensuring quiet execution.
           }
 
-        if ( !found_cell )
+        if ( !atom_associated_to_cell )
           thrown_atoms.push_back(atom);
       }
 
