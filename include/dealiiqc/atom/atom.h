@@ -55,41 +55,6 @@ namespace dealiiqc
   };
 
 
-  /**
-   * A namespace for auxiliary functions that are
-   */
-  namespace atom
-  {
-
-    /**
-     * Function to check if the atom is a within a certain distance
-     * @p distance from the vertices of it's parent cell.
-     *
-     * If the parent cell is not initialized
-     * the function throws an exception.
-     *
-     * This function is not included in the Atom struct to
-     * make the Atom struct lighter.
-     */
-    template<int dim>
-    inline
-    bool
-    is_within_distance_from_vertices( const Atom<dim> &atom, const double &distance)
-    {
-      // Throw exception if the parent_cell is not set or is not in a valid
-      // cell iterator state.
-      AssertThrow( atom.parent_cell->state() == IteratorState::valid,
-                   ExcMessage( "Either parent_cell of the atom is not initialized or"
-                               "the parent_cell iterator points past the end"));
-
-      for (unsigned int v=0; v<GeometryInfo<dim>::vertices_per_cell; ++v)
-        if (  (atom.parent_cell->vertex(v)- atom.position).norm_square()
-              < dealii::Utilities::fixed_power<2>( distance ) )
-          return true;
-      return false;
-    }
-  } // Atoms namespace
-
 }
 
 #endif // __dealii_qc_qc_h

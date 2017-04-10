@@ -66,13 +66,10 @@ int main (int argc, char **argv)
 
       ConfigureQC config( prm_stream );
 
-      // Allow the restriction that user must provide Dimension of the problem
-      const unsigned int dim = config.get_dimension();
-
       TestAtomHandler<3> problem (config);
       problem.run();
 
-      std::cout << "OK\n" << std::endl;
+      std::cout << "OK" << std::endl;
 
     }
   catch (std::exception &exc)

@@ -36,58 +36,42 @@ namespace dealiiqc
                   ExcMessage("Atom data was not provided neither as an auxiliary "
                              "data file nor at the end of the parameter file!"));
 
-    // Construct a vector of bools that correspond
-    // to vertices of locally owned cells
+    // In order to speed-up finding an active cell around atoms through
+    // find_active_cell_around_point(), we will need to construct a
+    // mask for vertices of locally owned cells and ghost cells
     std::vector<bool> locally_active_vertices( mesh.get_triangulation().n_vertices(),
                                                false);
 
+    // Mark (true) all the vertices of the locally owned cells
     for ( typename MeshType::active_cell_iterator
           cell = mesh.begin_active();
           cell != mesh.end(); ++cell)
-      {
-        // Mark (true) all the vertices of the locally owned cell
-        if ( cell->is_locally_owned () )
-          for (unsigned int v=0; v<GeometryInfo<dim>::vertices_per_cell; ++v)
-            locally_active_vertices[cell->vertex_index(v)] = true;
-      }
-
-    // We need a consistent MPI_Comm through parallel::shared::Triangulation.
-    // With the consistent MPI_Comm, we check the number of MPI processes.
-    unsigned int n_mpi_processes = 1;
-
-    if ( dynamic_cast<const parallel::Triangulation<dim> *> (&mesh.get_triangulation()) != 0 )
-      n_mpi_processes = dealii::Utilities::MPI::n_mpi_processes (dynamic_cast<const parallel::Triangulation<dim> *>
-                                                                 (&mesh.get_triangulation())->get_communicator());
-    else
-      AssertThrow( false,
-                   ExcMessage("Need consistent MPI_Comm through parallel::shared::Triangulation"));
+      if ( cell->is_locally_owned())
+        for (unsigned int v=0; v<GeometryInfo<dim>::vertices_per_cell; ++v)
+          locally_active_vertices[cell->vertex_index(v)] = true;
 
     // This MPI process also needs to know certain active ghost cells
     // within a certain distance from locally owned cells.
     // This MPI process will also keep copy of atoms associated to
     // such active ghost cells.
     // ghost_cells vector will contain all such active ghost cells.
-    std::vector<typename MeshType::active_cell_iterator> ghost_cells;
+    // If the total number of MPI processes is just one,
+    // the size of ghost_cells vector is zero.
+    std::vector<typename MeshType::active_cell_iterator> ghost_cells =
+      GridTools::compute_ghost_cell_layer_within_distance( mesh,
+                                                           configure_qc.get_maximum_search_radius());
 
-    // If number of MPI processes is just one, we do not need to check
-    // for ghost cells as all the active cells of the mesh are owned by
-    // this MPI process.
-    if ( n_mpi_processes !=1)
-      {
-        ghost_cells = GridTools::compute_ghost_cell_layer_within_distance( mesh,
-                      configure_qc.get_maximum_search_radius());
+    // Mark (true) all the vertices of the active ghost cells within
+    // a maximum search radius.
+    for ( auto cell : ghost_cells)
+      for (unsigned int v=0; v<GeometryInfo<dim>::vertices_per_cell; ++v)
+        locally_active_vertices[cell->vertex_index(v)] = true;
 
-        // Mark (true) all the vertices of the active ghost cells within
-        // a maximum search radius.
-        for ( auto cell : ghost_cells)
-          for (unsigned int v=0; v<GeometryInfo<dim>::vertices_per_cell; ++v)
-            locally_active_vertices[cell->vertex_index(v)] = true;
-      }
-
-    // Collect all non-relevant atoms
+    // TODO: If/when required collect all non-relevant atoms
     // (those that are not within a maximum search radius
     //  for this MPI process energy computation)
-    typename std::vector<Atom<dim>> thrown_atoms;
+    // For now just add the number of atoms being thrown.
+    types::global_atom_index n_thrown_atoms=0;
 
     for ( auto atom : vector_atoms )
       {
@@ -101,8 +85,9 @@ namespace dealiiqc
                                                                 locally_active_vertices);
 
             atom.reference_position = GeometryInfo<dim>::project_to_unit_cell(my_pair.second);
+            // TODO: Remove parent_cell
             atom.parent_cell = my_pair.first;
-            if ( atom::is_within_distance_from_vertices( atom, configure_qc.get_maximum_search_radius() ))
+            if ( Utilities::is_point_within_distance_from_cell_vertices( atom.position, my_pair.first, configure_qc.get_maximum_search_radius() ))
               {
                 atom_associated_to_cell = true;
                 atoms.insert( std::make_pair( my_pair.first, atom ));
@@ -115,10 +100,10 @@ namespace dealiiqc
           }
 
         if ( !atom_associated_to_cell )
-          thrown_atoms.push_back(atom);
+          n_thrown_atoms++;
       }
 
-    Assert( atoms.size()+thrown_atoms.size()==vector_atoms.size(),
+    Assert( atoms.size()+n_thrown_atoms==vector_atoms.size(),
             ExcInternalError());
 
   }

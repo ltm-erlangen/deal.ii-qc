@@ -35,17 +35,17 @@ namespace dealiiqc
     /**
      * A typedef for active_cell_iterator for ease of use
      */
-    using CellIterator = typename MeshType::active_cell_iterator;
+    using CellIteratorType = typename MeshType::active_cell_iterator;
 
     /**
      * A typedef for cell and atom associations
      */
-    using CellAtoms = typename std::multimap< CellIterator, Atom<dim>>;
+    using CellAtomContainerType = typename std::multimap< CellIteratorType, Atom<dim>>;
 
     /**
      * A typedef for iterating over @see CellAtoms
      */
-    using CellAtomsIterator = typename std::multimap< CellIterator, Atom<dim>>::iterator;
+    using CellAtomIteratorType = typename std::multimap< CellIteratorType, Atom<dim>>::iterator;
 
     // TODO: Write write_vtk function for testing the function visually.
     /**
@@ -92,15 +92,15 @@ namespace dealiiqc
      * current processor's set of locally owned cells. The bounding box needs to be extended
      * with @see cluster_radius + @see cutoff_radius.
      */
-    std::multimap< CellIterator, Atom<dim>> atoms;
+    std::multimap< CellIteratorType, Atom<dim>> atoms;
 
     /**
      * Neighbor lists using cell approach.
      * For each cell loop over all nearby relevant cells only once
      * and loop over all interacting atoms between the two cells.
      */
-    std::multimap<CellIterator,
-        std::multimap<CellIterator, std::pair<CellAtomsIterator, CellAtomsIterator>>> neighbor_lists;
+    std::multimap<CellIteratorType,
+        std::multimap<CellIteratorType, std::pair<CellAtomIteratorType, CellAtomIteratorType> > > neighbor_lists;
 
   };
 
