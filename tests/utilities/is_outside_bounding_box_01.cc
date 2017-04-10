@@ -1,7 +1,7 @@
 
 #include <deal.II/base/point.h>
 
-#include <dealiiqc/utility.h>
+#include <dealiiqc/utilities.h>
 
 using namespace dealii;
 // Short test to check correctness of

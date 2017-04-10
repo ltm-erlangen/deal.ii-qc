@@ -5,7 +5,7 @@
 #include <deal.II/dofs/dof_accessor.h>
 #include <deal.II/dofs/dof_handler.h>
 
-#include <dealiiqc/utility.h>
+#include <dealiiqc/utilities.h>
 
 namespace dealiiqc
 {
