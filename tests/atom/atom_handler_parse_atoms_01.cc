@@ -6,7 +6,7 @@
 
 #include <dealiiqc/atom/atom_handler.h>
 #include <dealiiqc/io/configure_qc.h>
-#include <dealiiqc/utility.h>
+#include <dealiiqc/utilities.h>
 
 using namespace dealii;
 using namespace dealiiqc;

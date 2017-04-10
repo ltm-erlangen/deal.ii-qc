@@ -18,7 +18,7 @@
 
 #include <deal.II/lac/generic_linear_algebra.h>
 
-#include <dealiiqc/utility.h>
+#include <dealiiqc/utilities.h>
 
 namespace LA
 {
