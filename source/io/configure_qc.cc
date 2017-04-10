@@ -46,6 +46,11 @@ namespace dealiiqc
     return input_stream;
   }
 
+  double ConfigureQC::get_maximum_search_radius() const
+  {
+    return maximum_search_radius;
+  }
+
   void ConfigureQC::declare_parameters( ParameterHandler &prm )
   {
     // TODO: Write intput file name to the screen
@@ -80,6 +85,15 @@ namespace dealiiqc
       // TODO: Declare interaction potential coefficients (Pair coeff)
     }
     prm.leave_subsection ();
+    prm.enter_subsection ("Configure QC");
+    {
+      prm.declare_entry("Max search radius", "6.0",
+                        Patterns::Double(0),
+                        "Maximum of all the cutoff radii "
+                        "used to identify the ghost cells "
+                        "of each MPI process");
+    }
+    prm.leave_subsection ();
 
     // TODO: Declare Run 0
     //       Compute energy and force at the initial configuration.
@@ -98,6 +112,11 @@ namespace dealiiqc
     prm.enter_subsection("Configure atoms");
     {
       atom_data_file = prm.get("Atom data file");
+    }
+    prm.leave_subsection();
+    prm.enter_subsection("Configure QC");
+    {
+      maximum_search_radius = prm.get_double("Max search radius");
     }
     prm.leave_subsection();
   }

@@ -60,6 +60,11 @@ namespace dealiiqc
      */
     std::shared_ptr<std::istream> get_stream() const;
 
+    /**
+     * Get maximum search radius
+     */
+    double get_maximum_search_radius() const;
+
   private:
 
     /*
@@ -97,6 +102,21 @@ namespace dealiiqc
      * constructor @see ConfigureQC().
      */
     mutable std::shared_ptr<std::istream> input_stream;
+
+    /**
+     * Maximum search distance from any of the vertices of locally owned cells
+     * to an atom, to identify whether the atom contributes to the
+     * QC energy computations.
+     *
+     * @p maximum_search_radius is also used to identify ghost cells of a
+     * current MPI process. If any of a cell's vertices are within a
+     * @p maximum_search_radius distance from any of locally owned cell's vertices,
+     * then the cell is a ghost cell of a current MPI process.
+     *
+     * @note @p maximum_search_radius should not be less than the sum of cluster
+     * radius and (maximum) cutoff radius.
+     */
+    double maximum_search_radius;
 
   };
 

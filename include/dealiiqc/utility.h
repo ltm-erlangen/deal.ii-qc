@@ -4,6 +4,9 @@
 
 #include <algorithm>
 
+#include <deal.II/grid/tria_iterator.h>
+#include <deal.II/grid/tria_accessor.h>
+
 namespace dealiiqc
 {
   /**
@@ -43,6 +46,29 @@ namespace dealiiqc
   namespace Utilities
   {
     using namespace dealii;
+
+    /**
+     * Function to check if a Point @p p is a within a certain
+     * @p distance from the vertices of a given parent cell.
+     */
+    template<int dim>
+    inline
+    bool
+    is_point_within_distance_from_cell_vertices( const Point<dim> &p,
+                                                 const typename Triangulation<dim>::cell_iterator cell,
+                                                 const double &distance)
+    {
+      // Throw exception if the given cell is is not in a valid
+      // cell iterator state.
+      AssertThrow( cell->state() == IteratorState::valid,
+                   ExcMessage( "The given cell iterator is not in a valid iterator state"));
+
+      for (unsigned int v=0; v<GeometryInfo<dim>::vertices_per_cell; ++v)
+        if (  (cell->vertex(v)- p).norm_square()
+              < dealii::Utilities::fixed_power<2>( distance ) )
+          return true;
+      return false;
+    }
 
     /**
      * Utility function that returns true if a point @p p is outside a bounding box.

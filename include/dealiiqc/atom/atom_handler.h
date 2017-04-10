@@ -27,13 +27,34 @@ namespace dealiiqc
      */
     AtomHandler( const ConfigureQC &configure_qc);
 
-    // TODO: Rework in the future to not have a vector of atoms data
+    /**
+     * A typedef for mesh.
+     */
+    using MeshType = dealii::DoFHandler<dim>;
+
+    /**
+     * A typedef for active_cell_iterator for ease of use
+     */
+    using CellIteratorType = typename MeshType::active_cell_iterator;
+
+    /**
+     * A typedef for cell and atom associations
+     */
+    using CellAtomContainerType = typename std::multimap< CellIteratorType, Atom<dim>>;
+
+    /**
+     * A typedef for iterating over @see CellAtoms
+     */
+    using CellAtomIteratorType = typename std::multimap< CellIteratorType, Atom<dim>>::iterator;
+
+    // TODO: Write write_vtk function for testing the function visually.
     /**
      * setup atom attributes namely:
      * @see atoms, @see masses and @see atomtype_to_atoms
-     * Run through all atoms and find cells to which they belong.
+     * For each atom in the system, find the cell of the @p mesh to which
+     * it belongs and assign it to the cell.
      */
-    void parse_atoms_and_assign_to_cells( const parallel::shared::Triangulation<dim> &tria);
+    void parse_atoms_and_assign_to_cells( const MeshType &mesh);
 
     /**
      * Initialize or update neighbor lists of the @see energy_atoms.
@@ -41,15 +62,6 @@ namespace dealiiqc
      */
     void update_neighbor_lists();
 
-    /**
-     * A typedef for active_cell_iterator for ease of use
-     */
-    typedef typename parallel::shared::Triangulation<dim>::active_cell_iterator CellIterator;
-
-    /**
-     * A typedef for iterating over atoms
-     */
-    typename std::multimap< CellIterator, Atom<dim>>::const_iterator CellAtomIterator;
 
   protected:
 
@@ -80,15 +92,15 @@ namespace dealiiqc
      * current processor's set of locally owned cells. The bounding box needs to be extended
      * with @see cluster_radius + @see cutoff_radius.
      */
-    std::multimap< CellIterator, Atom<dim>> atoms;
+    std::multimap< CellIteratorType, Atom<dim>> atoms;
 
     /**
      * Neighbor lists using cell approach.
      * For each cell loop over all nearby relevant cells only once
      * and loop over all interacting atoms between the two cells.
      */
-    std::multimap<CellIterator,
-        std::multimap<CellIterator, std::pair<CellAtomIterator, CellAtomIterator>>> neighbor_lists;
+    std::multimap<CellIteratorType,
+        std::multimap<CellIteratorType, std::pair<CellAtomIteratorType, CellAtomIteratorType> > > neighbor_lists;
 
   };
 
