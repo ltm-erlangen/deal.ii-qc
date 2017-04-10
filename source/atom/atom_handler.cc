@@ -57,7 +57,7 @@ namespace dealiiqc
     // ghost_cells vector will contain all such active ghost cells.
     // If the total number of MPI processes is just one,
     // the size of ghost_cells vector is zero.
-    std::vector<typename MeshType::active_cell_iterator> ghost_cells =
+    const std::vector<typename MeshType::active_cell_iterator> ghost_cells =
       GridTools::compute_ghost_cell_layer_within_distance( mesh,
                                                            configure_qc.get_maximum_search_radius());
 

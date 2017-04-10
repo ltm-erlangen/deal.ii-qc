@@ -58,11 +58,10 @@ namespace dealiiqc
                                                  const typename Triangulation<dim>::cell_iterator cell,
                                                  const double &distance)
     {
-      // Throw exception if the parent_cell is not set or is not in a valid
+      // Throw exception if the given cell is is not in a valid
       // cell iterator state.
       AssertThrow( cell->state() == IteratorState::valid,
-                   ExcMessage( "Either parent_cell of the atom is not initialized or"
-                               "the parent_cell iterator points past the end"));
+                   ExcMessage( "The given cell iterator is not in a valid iterator state"));
 
       for (unsigned int v=0; v<GeometryInfo<dim>::vertices_per_cell; ++v)
         if (  (cell->vertex(v)- p).norm_square()
