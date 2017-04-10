@@ -19,6 +19,8 @@ INCLUDE_DIRECTORIES(
 SET(TARGET_SRC
   source/atom/atom_handler.cc
   source/io/configure_qc.cc
+  source/io/data_out_atom_data.cc
+  source/io/data_out_base.cc
   source/io/parse_atom_data.cc
   source/qc/core.cc
   )
