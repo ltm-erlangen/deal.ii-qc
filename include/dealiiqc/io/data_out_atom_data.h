@@ -38,7 +38,7 @@ namespace dealiiqc
                      std::ostream &out);
 
     /**
-     * In order to tell Paraview to group together multiple
+     * Write a pvtp file in order to tell Paraview to group together multiple
      * vtp files that each describe a portion of the data
      * to parallelize visualization.
      */
