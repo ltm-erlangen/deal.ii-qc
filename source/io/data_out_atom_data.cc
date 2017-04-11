@@ -91,7 +91,7 @@ namespace dealiiqc
     void
     VtpStream::write_point( const Point<dim> &p)
     {
-#if !defined(DEAL_II_WITH_ZLIB)
+#ifndef DEAL_II_WITH_ZLIB
       // write out coordinates
       stream << p;
       // fill with zeroes
@@ -112,7 +112,7 @@ namespace dealiiqc
     void
     VtpStream::write_scalar( const double d)
     {
-#if !defined(DEAL_II_WITH_ZLIB)
+#ifndef DEAL_II_WITH_ZLIB
       // write out coordinates
       stream << d << '\n';
 #else
