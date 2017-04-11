@@ -3,6 +3,7 @@
 
 #include <deal.II/distributed/shared_tria.h>
 #include <deal.II/grid/grid_generator.h>
+#include <deal.II/grid/grid_out.h>
 
 #include <dealiiqc/atom/atom_handler.h>
 #include <dealiiqc/io/data_out_atom_data.h>
@@ -13,6 +14,9 @@ using namespace dealii;
 using namespace dealiiqc;
 
 // Short test to check write_vtp() function of DataOutAtomData
+
+// Comment below line to skip writing atom data in vtp file format
+#define WRITE_ATOM_DATA
 
 template<int dim>
 class TestAtomHandler : public AtomHandler<dim>
@@ -32,23 +36,34 @@ public:
   void run()
   {
     GridGenerator::hyper_cube( triangulation, 0., 16., true );
-    triangulation.refine_global (2);
+    triangulation.refine_global (3);
     AtomHandler<dim>::parse_atoms_and_assign_to_cells( dof_handler);
     write_output();
   }
 
   void write_output()
   {
-    DataOutAtomData<dim> atom_data_out;
+
     unsigned int n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_communicator)),
              this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_communicator));
 
+    for (unsigned int p = 0; p < n_mpi_processes; p++)
+      {
+        MPI_Barrier(mpi_communicator);
+         if (p == this_mpi_process)
+           std::cout << "Process number: " << p << " has "
+                     << AtomHandler<dim>::atoms.size() << " atoms"
+                     << std::endl;
+      }
+#ifdef WRITE_ATOM_DATA
     std::string vtp_file_name = "atoms-" + dealii::Utilities::int_to_string(this_mpi_process,3) + ".vtp";
 
     std::ofstream vtp_file;
     vtp_file.open (vtp_file_name.c_str(), std::ofstream::out | std::ofstream::trunc);
 
     dealii::DataOutBase::VtkFlags flags;
+
+    DataOutAtomData<dim> atom_data_out;
     atom_data_out.write_vtp( AtomHandler<dim>::atoms,
                              flags,
                              vtp_file);
@@ -63,9 +78,11 @@ public:
         atom_data_out.write_pvtp_record( vtp_file_names, flags, pvtp_file );
         pvtp_file.close();
 
-        std::cout << "OK" << std::endl;
+        GridOut gridout;
+        std::ofstream f("tria.vtk");
+        gridout.write_vtk(triangulation, f);
       }
-
+#endif
   }
 
 private:
@@ -90,7 +107,7 @@ int main (int argc, char **argv)
           << SOURCE_DIR "/../data/16_NaCl_atom.data"          << std::endl
           << "end" << std::endl
           << "subsection Configure QC"                        << std::endl
-          << "  set Max search radius = 1.9"                  << std::endl
+          << "  set Max search radius = 1.1"                  << std::endl
           << "end" << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
