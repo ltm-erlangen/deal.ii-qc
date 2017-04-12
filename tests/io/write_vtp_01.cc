@@ -47,21 +47,15 @@ public:
     unsigned int n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_communicator)),
              this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_communicator));
 
-    for (unsigned int p = 0; p < n_mpi_processes; p++)
-      {
-        MPI_Barrier(mpi_communicator);
-         if (p == this_mpi_process)
-           std::cout << "Process number: " << p << " has "
-                     << AtomHandler<dim>::atoms.size() << " atoms"
-                     << std::endl;
-      }
+    dealii::DataOutBase::VtkFlags flags( std::numeric_limits<double>::min(),
+                                         std::numeric_limits<unsigned int>::min(),
+                                         false);
+
 #ifdef WRITE_ATOM_DATA
     std::string vtp_file_name = "atoms-" + dealii::Utilities::int_to_string(this_mpi_process,3) + ".vtp";
 
     std::ofstream vtp_file;
     vtp_file.open (vtp_file_name.c_str(), std::ofstream::out | std::ofstream::trunc);
-
-    dealii::DataOutBase::VtkFlags flags;
 
     DataOutAtomData<dim> atom_data_out;
     atom_data_out.write_vtp( AtomHandler<dim>::atoms,
@@ -83,6 +77,15 @@ public:
         gridout.write_vtk(triangulation, f);
       }
 #endif
+
+    for (unsigned int p = 0; p < n_mpi_processes; p++)
+      {
+        MPI_Barrier(mpi_communicator);
+         if (p == this_mpi_process)
+           atom_data_out.write_vtp( AtomHandler<dim>::atoms,
+                                    flags,
+                                    std::cout);
+      }
   }
 
 private:

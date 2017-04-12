@@ -32,6 +32,10 @@ namespace dealiiqc
      * The function writes out atoms as Points in the vtp format.
      * All the atom attributes are appended to the vtk file as Scalars
      * or Vectors.
+     *
+     * Each process only writes out the atom data of atoms that are
+     * associated to it's locally owned cells. In doing so, each
+     * process writes out disjoint sets of atom data.
      */
     void write_vtp ( const CellAtomContainerType &cell_atom_container,
                      const dealii::DataOutBase::VtkFlags &flags,
