@@ -91,6 +91,11 @@ namespace dealiiqc
       return false;
     }
 
+    /**
+     * Return radius of a given @p cell.
+     * The radius of the cell is defined as the distance from
+     * center of the cell to the farthest vertex.
+     */
     template <int dim, typename Cell>
     inline
     double calculate_cell_radius(const Cell &cell)

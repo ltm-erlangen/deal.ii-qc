@@ -176,7 +176,7 @@ namespace dealiiqc
                   const Atom<dim> &atom_J = cell_atom_J->second;
 
                   // TODO: Once functions updating cluster weights of atoms is implemented
-                  bool atom_J_is_cluster_atom =
+                  const bool atom_J_is_cluster_atom =
                     Utilities::is_point_within_distance_from_cell_vertices( atom_J.position, cell_J, cluster_radius );
 
                   // If atom_J is not cluster atom,
@@ -217,13 +217,13 @@ namespace dealiiqc
     for ( auto cell_atom_I : atoms )
       if ( cell_atom_I.first->is_locally_owned() )
         {
-          const Atom<dim> atom_I = cell_atom_I.second;
+          const Atom<dim> &atom_I = cell_atom_I.second;
           for ( auto cell_atom_J : atoms )
             {
-              const Atom<dim> atom_J = cell_atom_J.second;
+              const Atom<dim> &atom_J = cell_atom_J.second;
               // TODO: Once functions updating cluster weights of atoms is implemented
               // use is_cluster() member function in atom struct.
-              bool atom_J_is_cluster_atom =
+              const bool atom_J_is_cluster_atom =
                 Utilities::is_point_within_distance_from_cell_vertices( atom_J.position, cell_atom_J.first, cluster_radius );
               if ( ( atom_J_is_cluster_atom && (atom_I.global_index > atom_J.global_index))
                    ||
