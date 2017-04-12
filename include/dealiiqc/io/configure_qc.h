@@ -65,6 +65,18 @@ namespace dealiiqc
      */
     double get_maximum_search_radius() const;
 
+    // TODO: take maximum_energy_radius from pair potential cutoff radii?
+    // maximum_energy_radius= max{ cutoff_radii } + skin?
+    /**
+     * Get maximum energy radius
+     */
+    double get_maximum_energy_radius() const;
+
+    /**
+     * Get cluster radius
+     */
+    double get_cluster_radius() const;
+
   private:
 
     /*
@@ -117,6 +129,23 @@ namespace dealiiqc
      * radius and (maximum) cutoff radius.
      */
     double maximum_search_radius;
+
+    /**
+     * @p maximum_energy_radius is the maximum of all the cutoff radii
+     * of the pair potentials. It is used to update neighbor lists of
+     * atoms.
+     *
+     * @note @p maximum_search_radius is different from
+     * @p maximum_energy_radius. The former is used to identify ghost cells
+     * of a current MPI process, while the latter is used to update
+     * neighbor lists of atoms.
+     */
+    double maximum_energy_radius;
+
+    /**
+     * @p cluster_radius is the cluster radius used in QC
+     */
+    double cluster_radius;
 
   };
 

@@ -81,10 +81,10 @@ public:
     for (unsigned int p = 0; p < n_mpi_processes; p++)
       {
         MPI_Barrier(mpi_communicator);
-         if (p == this_mpi_process)
-           atom_data_out.write_vtp( AtomHandler<dim>::atoms,
-                                    flags,
-                                    std::cout);
+        if (p == this_mpi_process)
+          atom_data_out.write_vtp( AtomHandler<dim>::atoms,
+                                   flags,
+                                   std::cout);
       }
   }
 

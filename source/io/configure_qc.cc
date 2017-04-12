@@ -51,6 +51,16 @@ namespace dealiiqc
     return maximum_search_radius;
   }
 
+  double ConfigureQC::get_maximum_energy_radius() const
+  {
+    return maximum_energy_radius;
+  }
+
+  double ConfigureQC::get_cluster_radius() const
+  {
+    return cluster_radius;
+  }
+
   void ConfigureQC::declare_parameters( ParameterHandler &prm )
   {
     // TODO: Write intput file name to the screen
@@ -81,17 +91,28 @@ namespace dealiiqc
                         Patterns::Anything(),
                         "Name of the atom data file "
                         "that is compatible with LAMMPS");
+      prm.declare_entry("Maximum energy radius", "6.0",
+                        Patterns::Double(0),
+                        "Maximum of all the cutoff radii "
+                        "plus a skin thickness "
+                        "used to update the neighbor lists "
+                        "of atoms");
       // TODO: Declare interaction potential style (Pair style)
       // TODO: Declare interaction potential coefficients (Pair coeff)
     }
     prm.leave_subsection ();
     prm.enter_subsection ("Configure QC");
     {
+      //TODO: Max->Maximum
       prm.declare_entry("Max search radius", "6.0",
                         Patterns::Double(0),
                         "Maximum of all the cutoff radii "
                         "used to identify the ghost cells "
                         "of each MPI process");
+      prm.declare_entry("Cluster radius", "2.0",
+                        Patterns::Double(0),
+                        "Cluster radius used in "
+                        "QC simulation");
     }
     prm.leave_subsection ();
 
@@ -112,11 +133,14 @@ namespace dealiiqc
     prm.enter_subsection("Configure atoms");
     {
       atom_data_file = prm.get("Atom data file");
+      maximum_energy_radius = prm.get_double("Maximum energy radius");
     }
     prm.leave_subsection();
     prm.enter_subsection("Configure QC");
     {
+      //TODO: Max->Maximum
       maximum_search_radius = prm.get_double("Max search radius");
+      cluster_radius = prm.get_double( "Cluster radius");
     }
     prm.leave_subsection();
   }
