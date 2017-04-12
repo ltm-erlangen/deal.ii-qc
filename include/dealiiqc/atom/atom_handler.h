@@ -99,9 +99,7 @@ namespace dealiiqc
      * For each cell loop over all nearby relevant cells only once
      * and loop over all interacting atoms between the two cells.
      */
-    std::multimap<
-    std::pair<CellIteratorType,     CellIteratorType>,
-        std::pair<CellAtomIteratorType, CellAtomIteratorType> > neighbor_lists;
+    std::multimap< std::pair<CellIteratorType, CellIteratorType>, std::pair<CellAtomIteratorType, CellAtomIteratorType> > neighbor_lists;
 
   };
 
