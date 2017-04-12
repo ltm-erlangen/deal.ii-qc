@@ -224,7 +224,7 @@ namespace dealiiqc
               // TODO: Once functions updating cluster weights of atoms is implemented
               // use is_cluster() member function in atom struct.
               bool atom_J_is_cluster_atom =
-                  Utilities::is_point_within_distance_from_cell_vertices( atom_J.position, cell_atom_J.first, cluster_radius );
+                Utilities::is_point_within_distance_from_cell_vertices( atom_J.position, cell_atom_J.first, cluster_radius );
               if ( ( atom_J_is_cluster_atom && (atom_I.global_index > atom_J.global_index))
                    ||
                    !atom_J_is_cluster_atom )
