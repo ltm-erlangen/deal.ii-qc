@@ -91,6 +91,16 @@ namespace dealiiqc
       return false;
     }
 
+    template <int dim, typename Cell>
+    inline
+    double calculate_cell_radius(const Cell &cell)
+    {
+      double res = 0.;
+      for (unsigned int v=0; v<GeometryInfo<dim>::vertices_per_cell; ++v)
+        res = std::max(res, ( cell->vertex(v)).distance(cell->center()) );
+      return res;
+    }
+
 
   } // Utilities
 
