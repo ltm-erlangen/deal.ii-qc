@@ -94,6 +94,7 @@ namespace dealiiqc
       prm.declare_entry("Maximum energy radius", "6.0",
                         Patterns::Double(0),
                         "Maximum of all the cutoff radii "
+                        "plus a skin thickness "
                         "used to update the neighbor lists "
                         "of atoms");
       // TODO: Declare interaction potential style (Pair style)
@@ -102,7 +103,8 @@ namespace dealiiqc
     prm.leave_subsection ();
     prm.enter_subsection ("Configure QC");
     {
-      prm.declare_entry("Maximum search radius", "6.0",
+      //TODO: Max->Maximum
+      prm.declare_entry("Max search radius", "6.0",
                         Patterns::Double(0),
                         "Maximum of all the cutoff radii "
                         "used to identify the ghost cells "
@@ -136,7 +138,8 @@ namespace dealiiqc
     prm.leave_subsection();
     prm.enter_subsection("Configure QC");
     {
-      maximum_search_radius = prm.get_double("Maximum search radius");
+      //TODO: Max->Maximum
+      maximum_search_radius = prm.get_double("Max search radius");
       cluster_radius = prm.get_double( "Cluster radius");
     }
     prm.leave_subsection();

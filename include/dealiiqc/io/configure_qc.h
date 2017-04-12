@@ -65,6 +65,8 @@ namespace dealiiqc
      */
     double get_maximum_search_radius() const;
 
+    // TODO: take maximum_energy_radius from pair potential cutoff radii?
+    // maximum_energy_radius= max{ cutoff_radii } + skin?
     /**
      * Get maximum energy radius
      */

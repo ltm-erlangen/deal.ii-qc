@@ -111,30 +111,39 @@ namespace dealiiqc
   template<int dim>
   void AtomHandler<dim>::update_neighbor_lists()
   {
+    neighbor_lists.clear();
+
     // cell_neighbor_lists contains all the pairs of cell
     // whose atoms interact with each other.
     std::list< std::pair< CellIteratorType, CellIteratorType> > cell_neighbor_lists;
 
-    // TODO: take maximum_energy_radius from pair potential cutoff radii?
-    double cutoff_radius = configure_qc.get_maximum_energy_radius();
+    const double cutoff_radius = configure_qc.get_maximum_energy_radius();
+    const double cluster_radius = configure_qc.get_cluster_radius();
 
-    double cluster_radius = configure_qc.get_cluster_radius();
-
-    // TODO: optimize loop over unique keys ( mulitmap::upper_bound()'s complexity is O(nlogn) )
     // For each locally owned cell, identify all the cells
-    // whose associated atoms interact.
+    // whose associated atoms may interact.At this point we do not
+    // check if there are indeed some interacting atoms,
+    // i.e. those within the cut-off radius. This is done to speedup
+    // building of the neighbor list.
+    // TODO: this approach strictly holds in the reference
+    // (undeformed) configuration only.
+    // It may still be ok for small deformations,
+    // but for large deformations we may need to
+    // use something like MappingQEulerian to work
+    // with the deformed mesh.
+    // TODO: optimize loop over unique keys ( mulitmap::upper_bound()'s complexity is O(nlogn) )
     for ( auto unique_I = atoms.cbegin(); unique_I != atoms.cend(); unique_I = atoms.upper_bound(unique_I->first))
       // Only locally owned cells have cell neighbors
-      if ( unique_I.first->is_locally_owned()  )
+      if ( unique_I->first->is_locally_owned()  )
         {
-          const auto cell_I = unique_I.first;
+          const auto cell_I = unique_I->first;
+          const double radius_I = cutoff_radius + Utilities::calculate_cell_radius<dim>(cell_I);
           for ( auto unique_J = atoms.cbegin(); unique_J != atoms.cend(); unique_J = atoms.upper_bound(unique_J->first))
             {
-              const auto cell_J = unique_J.first;
+              const auto cell_J = unique_J->first;
               if ( (cell_I->center()-cell_J->center()).norm_square() <
-                   dealii::Utilities::fixed_power<2>( Utilities::calculate_cell_radius(cell_I) +
-                                                      Utilities::calculate_cell_radius(cell_J) +
-                                                      cutoff_radius )                            )
+                   dealii::Utilities::fixed_power<2>( radius_I +
+                                                      Utilities::calculate_cell_radius<dim>(cell_J)) )
                 cell_neighbor_lists.push_back( std::make_pair(cell_I, cell_J) );
             }
         }
@@ -149,31 +158,83 @@ namespace dealiiqc
 
         // for each atom associated to locally owned cell_I
         for ( auto cell_atom_I = range_of_cell_I.first; cell_atom_I != range_of_cell_I.second; ++cell_atom_I)
-          // Check if the atom_I is cluster atom,
-          // only cluster atoms get to have neighbor lists
-          if ( Utilities::is_point_within_distance_from_cell_vertices( (cell_atom_I->second).position, cell_I, cluster_radius) )
-            for ( auto cell_atom_J = range_of_cell_J.first; cell_atom_J != range_of_cell_J.second; ++cell_atom_J )
-              {
-                bool atom_J_is_cluster_atom =
-                  Utilities::is_point_within_distance_from_cell_vertices( (cell_atom_J->second).position, cell_J, cluster_radius );
+          {
+            const Atom<dim> &atom_I = cell_atom_I->second;
 
-                // If atom_J is not cluster atom,
-                // then add atom_J to atom_i's neighbor list.
+            // TODO: Once functions updating cluster weights of atoms is implemented
+            // add
+            // bool is_cluster() const
+            // {
+            //    return cluster_weigth != 0.;
+            // }
+            // to the atom struct and use it here !!!
+            // Check if the atom_I is cluster atom,
+            // only cluster atoms get to have neighbor lists
+            if ( Utilities::is_point_within_distance_from_cell_vertices( atom_I.position, cell_I, cluster_radius) )
+              for ( auto cell_atom_J = range_of_cell_J.first; cell_atom_J != range_of_cell_J.second; ++cell_atom_J )
+                {
+                  const Atom<dim> &atom_J = cell_atom_J->second;
 
-                // If atom_J is also a cluster atom,
-                // then atom_J is only added to atom_I's neighbor list
-                // when atom_I's index is smaller. This ensures
-                // that there is no double counting of energy
-                // contribution due to cluster atoms - atom_I and atom_J
+                  // TODO: Once functions updating cluster weights of atoms is implemented
+                  bool atom_J_is_cluster_atom =
+                    Utilities::is_point_within_distance_from_cell_vertices( atom_J.position, cell_J, cluster_radius );
 
-                if ( ( atom_J_is_cluster_atom && (cell_atom_I->second).global_index > (cell_atom_J->second).global_index)
-                     ||
-                     ~atom_J_is_cluster_atom )
-                  if ( ((cell_atom_I->second).position - (cell_atom_J->second)).norm_sqaure() < cutoff_radius*cutoff_radius)
-                    neighbor_lists.insert( cell_pair_IJ, std::make_pair( cell_atom_I, cell_atom_J ) );
-              }
+                  // If atom_J is not cluster atom,
+                  // then add atom_J to atom_i's neighbor list.
+
+                  // If atom_J is also a cluster atom,
+                  // then atom_J is only added to atom_I's neighbor list
+                  // when atom_I's index is smaller. This ensures
+                  // that there is no double counting of energy
+                  // contribution due to cluster atoms - atom_I and atom_J
+
+                  if ( ( atom_J_is_cluster_atom && (atom_I.global_index > atom_J.global_index))
+                       ||
+                       !atom_J_is_cluster_atom )
+                    if ( (atom_I.position - atom_J.position).norm_square() < cutoff_radius*cutoff_radius)
+                      neighbor_lists.insert( std::make_pair( cell_pair_IJ, std::make_pair( cell_atom_I, cell_atom_J)) );
+                }
+          }
+
 
       }
+
+#ifdef DEBUG
+    // For large deformations the cells might
+    // distort leading to incorrect neighbor_list
+    // using the above hierarchical procedure of
+    // updating neighbor lists.
+    // In debug mode, check if the number
+    // of interactions is the same as computed
+    // by the following.
+    unsigned int total_number_of_interactions = 0;
+
+    // loop over all atoms
+    //   if locally owned cell
+    //     loop over all atoms
+    //       if within distance
+    //         total_number_of_interactions++;
+    for ( auto cell_atom_I : atoms )
+      if ( cell_atom_I.first->is_locally_owned() )
+        {
+          const Atom<dim> atom_I = cell_atom_I.second;
+          for ( auto cell_atom_J : atoms )
+            {
+              const Atom<dim> atom_J = cell_atom_J.second;
+              // TODO: Once functions updating cluster weights of atoms is implemented
+              // use is_cluster() member function in atom struct.
+              bool atom_J_is_cluster_atom =
+                  Utilities::is_point_within_distance_from_cell_vertices( atom_J.position, cell_atom_J.first, cluster_radius );
+              if ( ( atom_J_is_cluster_atom && (atom_I.global_index > atom_J.global_index))
+                   ||
+                   !atom_J_is_cluster_atom )
+                if ( (atom_I.position - atom_J.position).norm_square() < cutoff_radius*cutoff_radius)
+                  total_number_of_interactions++;
+            }
+        }
+    Assert( total_number_of_interactions == neighbor_lists.size(),
+            ExcMessage("Some of the interactions are not accounted while updating neighbor lists"));
+#endif
 
   }
 
