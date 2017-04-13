@@ -22,8 +22,9 @@ namespace dealiiqc
   public:
 
     /**
-     * Constructor takes in @p configure_qc object to initialize atom
-     * attributes namely: @see atoms, @see masses and @see atomtype_to_atoms.
+     * Constructor takes in @p configure_qc object
+     * to initialize atom attributes through the class's
+     * member function parse_atoms_and_assign_to_cells().
      */
     AtomHandler( const ConfigureQC &configure_qc);
 
@@ -47,12 +48,29 @@ namespace dealiiqc
      */
     using CellAtomIteratorType = typename std::multimap< CellIteratorType, Atom<dim>>::iterator;
 
-    // TODO: Write write_vtk function for testing the function visually.
     /**
-     * setup atom attributes namely:
-     * @see atoms, @see masses and @see atomtype_to_atoms
-     * For each atom in the system, find the cell of the @p mesh to which
-     * it belongs and assign it to the cell.
+     * Setup atom attributes namely:
+     * @see energy_atoms, @see masses and @see atomtype_to_atoms
+     *
+     * For each and every atom in the system, find the locally relevant cell
+     * of the @p mesh which surrounds it. If the atom doesn't belong to
+     * any of the locally relevant cells, it is thrown. In the case when
+     * a locally relevant cell is found, and if the atom is energy atom it is
+     * inserted into @see energy_atoms.
+     *
+     * A locally relevant cell is one which is either a locally owned cell or
+     * a ghost cell within a certain distance(determined by cluster radius and
+     * interaction radius). A ghost cell could contain atoms whose positions are
+     * relevant for computing energy or forces on locally relevant
+     * cluster atoms. An MPI process computes energy and forces only of it's
+     * locally relevant cluster atoms.
+     *
+     * All the atoms which are not locally relevant energy_atoms
+     * are thrown away. However, a count of the number of (locally relevant)
+     * non-energy atoms (i.e., for which a locally relevant cell is found
+     * but are not energy atoms) is kept using @see n_thrown_atoms_per_cell
+     * for the sake of updating cluster weights.
+     *
      */
     void parse_atoms_and_assign_to_cells( const MeshType &mesh);
 
@@ -66,7 +84,7 @@ namespace dealiiqc
   protected:
 
     /**
-     * ConfigureQC object for initializing @see atoms, @see charges, @see masses
+     * A constant reference to ConfigureQC object
      */
     const ConfigureQC &configure_qc;
 
@@ -92,7 +110,7 @@ namespace dealiiqc
      * current processor's set of locally owned cells. The bounding box needs to be extended
      * with @see cluster_radius + @see cutoff_radius.
      */
-    std::multimap< CellIteratorType, Atom<dim>> atoms;
+    std::multimap< CellIteratorType, Atom<dim>> energy_atoms;
 
     /**
      * Neighbor lists using cell approach.

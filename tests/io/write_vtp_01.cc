@@ -58,7 +58,7 @@ public:
     vtp_file.open (vtp_file_name.c_str(), std::ofstream::out | std::ofstream::trunc);
 
     DataOutAtomData<dim> atom_data_out;
-    atom_data_out.write_vtp( AtomHandler<dim>::atoms,
+    atom_data_out.write_vtp( AtomHandler<dim>::energy_atoms,
                              flags,
                              vtp_file);
     vtp_file.close();
@@ -82,7 +82,7 @@ public:
       {
         MPI_Barrier(mpi_communicator);
         if (p == this_mpi_process)
-          atom_data_out.write_vtp( AtomHandler<dim>::atoms,
+          atom_data_out.write_vtp( AtomHandler<dim>::energy_atoms,
                                    flags,
                                    std::cout);
       }

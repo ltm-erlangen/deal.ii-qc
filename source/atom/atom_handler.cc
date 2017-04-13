@@ -90,7 +90,7 @@ namespace dealiiqc
             if ( Utilities::is_point_within_distance_from_cell_vertices( atom.position, my_pair.first, configure_qc.get_maximum_search_radius() ))
               {
                 atom_associated_to_cell = true;
-                atoms.insert( std::make_pair( my_pair.first, atom ));
+                energy_atoms.insert( std::make_pair( my_pair.first, atom ));
               }
           }
         catch ( dealii::GridTools::ExcPointNotFound<dim> &)
@@ -103,7 +103,7 @@ namespace dealiiqc
           n_thrown_atoms++;
       }
 
-    Assert( atoms.size()+n_thrown_atoms==vector_atoms.size(),
+    Assert( energy_atoms.size()+n_thrown_atoms==vector_atoms.size(),
             ExcInternalError());
 
   }
@@ -132,13 +132,13 @@ namespace dealiiqc
     // use something like MappingQEulerian to work
     // with the deformed mesh.
     // TODO: optimize loop over unique keys ( mulitmap::upper_bound()'s complexity is O(nlogn) )
-    for ( auto unique_I = atoms.cbegin(); unique_I != atoms.cend(); unique_I = atoms.upper_bound(unique_I->first))
+    for ( auto unique_I = energy_atoms.cbegin(); unique_I != energy_atoms.cend(); unique_I = energy_atoms.upper_bound(unique_I->first))
       // Only locally owned cells have cell neighbors
       if ( unique_I->first->is_locally_owned()  )
         {
           const auto cell_I = unique_I->first;
           const double radius_I = cutoff_radius + Utilities::calculate_cell_radius<dim>(cell_I);
-          for ( auto unique_J = atoms.cbegin(); unique_J != atoms.cend(); unique_J = atoms.upper_bound(unique_J->first))
+          for ( auto unique_J = energy_atoms.cbegin(); unique_J != energy_atoms.cend(); unique_J = energy_atoms.upper_bound(unique_J->first))
             {
               const auto cell_J = unique_J->first;
               if ( (cell_I->center()-cell_J->center()).norm_square() <
@@ -153,8 +153,8 @@ namespace dealiiqc
         const CellIteratorType cell_I = cell_pair_IJ.first;
         const CellIteratorType cell_J = cell_pair_IJ.second;
 
-        const auto range_of_cell_I = atoms.equal_range(cell_I);
-        const auto range_of_cell_J = atoms.equal_range(cell_J);
+        const auto range_of_cell_I = energy_atoms.equal_range(cell_I);
+        const auto range_of_cell_J = energy_atoms.equal_range(cell_J);
 
         // for each atom associated to locally owned cell_I
         for ( auto cell_atom_I = range_of_cell_I.first; cell_atom_I != range_of_cell_I.second; ++cell_atom_I)
@@ -214,14 +214,14 @@ namespace dealiiqc
     //     loop over all atoms
     //       if within distance
     //         total_number_of_interactions++;
-    for ( auto cell_atom_I : atoms )
+    for ( auto cell_atom_I : energy_atoms )
       if ( cell_atom_I.first->is_locally_owned() )
         {
           const Atom<dim> &atom_I = cell_atom_I.second;
-          for ( auto cell_atom_J : atoms )
+          for ( auto cell_atom_J : energy_atoms )
             {
               const Atom<dim> &atom_J = cell_atom_J.second;
-              // TODO: Once functions updating cluster weights of atoms is implemented
+              // TODO: Once functions updating cluster weights of energy_atoms is implemented
               // use is_cluster() member function in atom struct.
               const bool atom_J_is_cluster_atom =
                 Utilities::is_point_within_distance_from_cell_vertices( atom_J.position, cell_atom_J.first, cluster_radius );
