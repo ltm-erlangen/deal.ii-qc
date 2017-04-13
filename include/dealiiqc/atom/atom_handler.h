@@ -119,6 +119,14 @@ namespace dealiiqc
      */
     std::multimap< std::pair<CellIteratorType, CellIteratorType>, std::pair<CellAtomIteratorType, CellAtomIteratorType> > neighbor_lists;
 
+    /**
+     * Number of locally relevant non-energy atoms per cell.
+     * This is exactly the number of non-energy atoms for whom a
+     * locally relevant cell is found while updating @see energy_atoms.
+     * They were thrown because they weren't energy atoms.
+     */
+    std::map<CellIteratorType, unsigned int> n_thrown_atoms_per_cell;
+
   };
 
 } /* namespace dealiiqc */
