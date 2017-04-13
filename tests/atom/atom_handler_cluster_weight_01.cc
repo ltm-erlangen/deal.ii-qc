@@ -15,7 +15,7 @@ using namespace dealiiqc;
 // Short test to compute the number of locally relevant thrown atoms.
 // The tria consists of only one cell
 // 8 thrown atoms
-// 2 energy atom
+// 2 cluster atom
 // Cluster_Weight is 5 for cluster atoms.
 
 template<int dim>
