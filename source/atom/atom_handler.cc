@@ -94,6 +94,13 @@ namespace dealiiqc
                                                                 atom.position,
                                                                 locally_active_vertices);
 
+            if (!my_pair.first->is_locally_owned() &&
+                (std::find(ghost_cells.begin(), ghost_cells.end(), my_pair.first)==ghost_cells.end()))
+              {
+                n_thrown_atoms++;
+                continue;
+              }
+
             atom.reference_position = GeometryInfo<dim>::project_to_unit_cell(my_pair.second);
             // TODO: Remove parent_cell
             atom.parent_cell = my_pair.first;
@@ -103,11 +110,8 @@ namespace dealiiqc
                 energy_atoms.insert( std::make_pair( my_pair.first, atom ));
               }
             else
-              {
-                if ( (my_pair.first)->is_locally_owned() )
-                  // Increment the number of locally relevant non-energy atom
-                  n_thrown_atoms_per_cell.at(my_pair.first)++;
-              }
+              // Increment the number of locally relevant non-energy atom
+              n_thrown_atoms_per_cell.at(my_pair.first)++;
           }
         catch ( dealii::GridTools::ExcPointNotFound<dim> &)
           {
