@@ -37,7 +37,7 @@ namespace dealiiqc
     {
       const double cluster_radius = WeightsByBase<dim>::config.get_cluster_radius();
 
-      // Number of cluster atoms count per cell
+      // Number of cluster atoms per cell
       std::map<typename AtomHandler<dim>::CellIteratorType, unsigned int> n_cluster_atoms_per_cell;
 
       // Initialize n_cluster_atoms_per_cell
@@ -50,20 +50,24 @@ namespace dealiiqc
           const auto &cell = cell_atom.first;
           const Atom<dim> &atom  = cell_atom.second;
 
-          // There are no locally relevant cluster atoms in ghost cells
-          if ( cell->is_locally_owned())
-            //TODO use is_cluster_atom from atom struct
-            if ( Utilities::is_point_within_distance_from_cell_vertices( atom.position, cell, cluster_radius) )
-              // Increment cluster atom count for this "cell"
-              ++n_cluster_atoms_per_cell.at(cell);
+          //TODO use is_cluster_atom from atom struct
+          if ( Utilities::is_point_within_distance_from_cell_vertices( atom.position, cell, cluster_radius) )
+            // Increment cluster atom count for this "cell"
+            n_cluster_atoms_per_cell[cell]++;
         }
 
       for ( const auto &cell_count : n_cluster_atoms_per_cell)
         {
           const auto &cell = cell_count.first;
-          for ( auto &cell_atom : energy_atoms )
+          const double n_cluster_atoms = cell_count.second;
+
+          auto cell_range = energy_atoms.equal_range(cell);
+          for ( auto &cell_atom = cell_range.first; cell_atom !=cell_range.second; ++cell_atom)
             {
-              Atom<dim> &atom = cell_atom.second;
+              Atom<dim> &atom = cell_atom->second;
+
+              const double n_energy_atoms = energy_atoms.count(cell);
+              const double n_atoms_per_cell = n_thrown_atoms_per_cell.at(cell) + n_energy_atoms;
 
               if ( Utilities::is_point_within_distance_from_cell_vertices( atom.position, cell, cluster_radius) )
                 {
@@ -72,12 +76,10 @@ namespace dealiiqc
                   // cluster_weight = n_atoms / n_cluster_atoms;
                   if ( n_thrown_atoms_per_cell.count(cell) )
                     // Some of the atom might have been thrown from cell
-                    atom.cluster_weight = static_cast<double>(n_thrown_atoms_per_cell.at(cell) + energy_atoms.count(cell)) /
-                                          static_cast<double>(cell_count.second);
+                    atom.cluster_weight = n_atoms_per_cell / n_cluster_atoms;
                   else
                     // None of the atoms in the cell were thrown
-                    atom.cluster_weight = static_cast<double>(energy_atoms.count(cell)) /
-                                          static_cast<double>(cell_count.second);
+                    atom.cluster_weight = n_energy_atoms / n_cluster_atoms;
                 }
             }
         }

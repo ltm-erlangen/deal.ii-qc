@@ -27,15 +27,21 @@ namespace dealiiqc
       virtual ~WeightsByBase() {}
 
       /**
-       * Function through which cluster_weights are assigned to atoms.
+       * Calculate and assign cluster weights to to all cluster atoms in
+       * @p energy_atoms stored on this MPI process using, if needed,
+       * additionally provided number of disregarded atoms in the fully
+       * resolved simulation @p n_thrown_atoms_per_cell
        */
       virtual void update_cluster_weights( const std::map< typename AtomHandler<dim>::CellIteratorType, unsigned int> &n_thrown_atoms_per_cell,
-                                           typename AtomHandler<dim>::CellAtomContainerType &energy_atoms)=0;
+                                           typename AtomHandler<dim>::CellAtomContainerType &energy_atoms) = 0;
 
     protected:
       const ConfigureQC &config;
     };
 
+    /**
+     * A derived class for updating cluster weights using the cell approach.
+     */
     template<int dim>
     class WeightsByCell : public WeightsByBase<dim>
     {
@@ -46,10 +52,6 @@ namespace dealiiqc
        */
       WeightsByCell(const ConfigureQC &config);
 
-      /**
-       * Update cluster weights of the cluster atoms in @p energy_atoms
-       * using @p n_thrown_atoms_per_cell.
-       */
       void
       update_cluster_weights( const std::map< typename AtomHandler<dim>::CellIteratorType, unsigned int> &n_thrown_atoms_per_cell,
                               typename AtomHandler<dim>::CellAtomContainerType &energy_atoms);
