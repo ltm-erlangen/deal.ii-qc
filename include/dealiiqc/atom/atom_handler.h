@@ -124,6 +124,10 @@ namespace dealiiqc
      * This is exactly the number of non-energy atoms for whom a
      * locally relevant cell is found while updating @see energy_atoms.
      * They were thrown because they weren't energy atoms.
+     *
+     * @note The map also contains the information of number of
+     * thrown atoms per cell for ghost cells on the current
+     * MPI process.
      */
     std::map<CellIteratorType, unsigned int> n_thrown_atoms_per_cell;
 
