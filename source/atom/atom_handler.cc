@@ -42,13 +42,18 @@ namespace dealiiqc
     std::vector<bool> locally_active_vertices( mesh.get_triangulation().n_vertices(),
                                                false);
 
-    // Mark (true) all the vertices of the locally owned cells
+    // Loop through all the locally owned cells and
+    // mark (true) all the vertices of the locally owned cells.
+    // Also, initialize n_thrown_atoms_per_cell container.
     for ( typename MeshType::active_cell_iterator
           cell = mesh.begin_active();
           cell != mesh.end(); ++cell)
       if ( cell->is_locally_owned())
-        for (unsigned int v=0; v<GeometryInfo<dim>::vertices_per_cell; ++v)
-          locally_active_vertices[cell->vertex_index(v)] = true;
+        {
+          for (unsigned int v=0; v<GeometryInfo<dim>::vertices_per_cell; ++v)
+            locally_active_vertices[cell->vertex_index(v)] = true;
+          n_thrown_atoms_per_cell.insert(std::make_pair(cell,0));
+        }
 
     // This MPI process also needs to know certain active ghost cells
     // within a certain distance from locally owned cells.
@@ -61,11 +66,16 @@ namespace dealiiqc
       GridTools::compute_ghost_cell_layer_within_distance( mesh,
                                                            configure_qc.get_maximum_search_radius());
 
+    // Loop through all the ghost cells computed above and
     // Mark (true) all the vertices of the active ghost cells within
     // a maximum search radius.
+    // Also, initialize n_thrown_atoms_per_cell.
     for ( auto cell : ghost_cells)
-      for (unsigned int v=0; v<GeometryInfo<dim>::vertices_per_cell; ++v)
-        locally_active_vertices[cell->vertex_index(v)] = true;
+      {
+        for (unsigned int v=0; v<GeometryInfo<dim>::vertices_per_cell; ++v)
+          locally_active_vertices[cell->vertex_index(v)] = true;
+        n_thrown_atoms_per_cell.insert(std::make_pair(cell,0));
+      }
 
     // TODO: If/when required collect all non-relevant atoms
     // (those that are not within a maximum search radius
@@ -92,6 +102,9 @@ namespace dealiiqc
                 atom_associated_to_cell = true;
                 energy_atoms.insert( std::make_pair( my_pair.first, atom ));
               }
+            else
+              // Increment the number of locally relevant non-energy atom
+              n_thrown_atoms_per_cell.at(my_pair.first)++;
           }
         catch ( dealii::GridTools::ExcPointNotFound<dim> &)
           {
