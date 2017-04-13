@@ -103,8 +103,11 @@ namespace dealiiqc
                 energy_atoms.insert( std::make_pair( my_pair.first, atom ));
               }
             else
-              // Increment the number of locally relevant non-energy atom
-              n_thrown_atoms_per_cell.at(my_pair.first)++;
+              {
+                if ( (my_pair.first)->is_locally_owned() )
+                  // Increment the number of locally relevant non-energy atom
+                  n_thrown_atoms_per_cell.at(my_pair.first)++;
+              }
           }
         catch ( dealii::GridTools::ExcPointNotFound<dim> &)
           {
