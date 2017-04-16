@@ -33,7 +33,7 @@ namespace dealiiqc
        * resolved simulation @p n_thrown_atoms_per_cell
        */
       virtual void update_cluster_weights( const std::map< typename AtomHandler<dim>::CellIteratorType, unsigned int> &n_thrown_atoms_per_cell,
-                                           typename AtomHandler<dim>::CellAtomContainerType &energy_atoms) = 0;
+                                           typename AtomHandler<dim>::CellAtomContainerType &energy_atoms) const = 0;
 
     protected:
       const ConfigureQC &config;
@@ -54,7 +54,7 @@ namespace dealiiqc
 
       void
       update_cluster_weights( const std::map< typename AtomHandler<dim>::CellIteratorType, unsigned int> &n_thrown_atoms_per_cell,
-                              typename AtomHandler<dim>::CellAtomContainerType &energy_atoms);
+                              typename AtomHandler<dim>::CellAtomContainerType &energy_atoms) const;
 
     };
 

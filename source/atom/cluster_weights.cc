@@ -33,7 +33,7 @@ namespace dealiiqc
     template<int dim>
     void
     WeightsByCell<dim>::update_cluster_weights( const std::map< typename AtomHandler<dim>::CellIteratorType, unsigned int> &n_thrown_atoms_per_cell,
-                                                typename AtomHandler<dim>::CellAtomContainerType &energy_atoms)
+                                                typename AtomHandler<dim>::CellAtomContainerType &energy_atoms) const
     {
       const double cluster_radius = WeightsByBase<dim>::config.get_cluster_radius();
 
@@ -60,14 +60,12 @@ namespace dealiiqc
         {
           const auto &cell = cell_count.first;
           const double n_cluster_atoms = cell_count.second;
+          const double n_energy_atoms = energy_atoms.count(cell);
 
           auto cell_range = energy_atoms.equal_range(cell);
           for ( auto &cell_atom = cell_range.first; cell_atom !=cell_range.second; ++cell_atom)
             {
               Atom<dim> &atom = cell_atom->second;
-
-              const double n_energy_atoms = energy_atoms.count(cell);
-              const double n_atoms_per_cell = n_thrown_atoms_per_cell.at(cell) + n_energy_atoms;
 
               if ( Utilities::is_point_within_distance_from_cell_vertices( atom.position, cell, cluster_radius) )
                 {
@@ -76,7 +74,7 @@ namespace dealiiqc
                   // cluster_weight = n_atoms / n_cluster_atoms;
                   if ( n_thrown_atoms_per_cell.count(cell) )
                     // Some of the atom might have been thrown from cell
-                    atom.cluster_weight = n_atoms_per_cell / n_cluster_atoms;
+                    atom.cluster_weight = (n_thrown_atoms_per_cell.at(cell) + n_energy_atoms) / n_cluster_atoms;
                   else
                     // None of the atoms in the cell were thrown
                     atom.cluster_weight = n_energy_atoms / n_cluster_atoms;

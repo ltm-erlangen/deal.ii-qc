@@ -14,9 +14,9 @@ using namespace dealiiqc;
 
 // Short test to compute the number of locally relevant thrown atoms.
 // The tria consists of only one cell
-// 8 thrown atoms
-// 2 cluster atom
-// Cluster_Weight is 5 for cluster atoms.
+// 0 thrown atoms
+// 10 cluster atom
+// Cluster_Weight is 1 for all (cluster) atoms.
 
 template<int dim>
 class TestAtomHandler : public AtomHandler<dim>
@@ -66,11 +66,11 @@ int main (int argc, char **argv)
       std::ostringstream oss;
       oss << "set Dimension = 3"                              << std::endl
           << "subsection Configure atoms"                     << std::endl
-          << "  set Maximum energy radius = 1.9"             << std::endl
+          << "  set Maximum energy radius = 9"             << std::endl
           << "end"                                            << std::endl
           << "subsection Configure QC"                        << std::endl
-          << "  set Max search radius = 1.9"                  << std::endl
-          << "  set Cluster radius = 1.9"                     << std::endl
+          << "  set Max search radius = 9"                  << std::endl
+          << "  set Cluster radius = 9"                     << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section" << std::endl
           << "LAMMPS Description"        << std::endl << std::endl
