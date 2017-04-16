@@ -60,25 +60,28 @@ namespace dealiiqc
         {
           const auto &cell = cell_count.first;
           const double n_cluster_atoms = cell_count.second;
-          const double n_energy_atoms = energy_atoms.count(cell);
 
+          Assert ( n_thrown_atoms_per_cell.count(cell) > 0,
+                   ExcInternalError());
+
+          // The total number of atoms in a cell is the sum of thrown atoms
+          // and the energy_atoms in the cell.
+          const double n_cell_atoms = n_thrown_atoms_per_cell.at(cell) + energy_atoms.count(cell);
+
+          // Loop over all the energy atoms in the cell,
+          // if they are cluster atoms,
+          // update their weights (n_cell_atoms/n_cluster_atoms)
+          // if they are not cluster atoms,
+          // set their weights to zero.
           auto cell_range = energy_atoms.equal_range(cell);
           for ( auto &cell_atom = cell_range.first; cell_atom !=cell_range.second; ++cell_atom)
             {
               Atom<dim> &atom = cell_atom->second;
 
               if ( Utilities::is_point_within_distance_from_cell_vertices( atom.position, cell, cluster_radius) )
-                {
-                  // The total number of atoms in a cell is the sum of thrown atoms
-                  // and the energy_atoms in the cell.
-                  // cluster_weight = n_atoms / n_cluster_atoms;
-                  if ( n_thrown_atoms_per_cell.count(cell) )
-                    // Some of the atom might have been thrown from cell
-                    atom.cluster_weight = (n_thrown_atoms_per_cell.at(cell) + n_energy_atoms) / n_cluster_atoms;
-                  else
-                    // None of the atoms in the cell were thrown
-                    atom.cluster_weight = n_energy_atoms / n_cluster_atoms;
-                }
+                atom.cluster_weight = n_cell_atoms / n_cluster_atoms;
+              else
+                atom.cluster_weight = 0.;
             }
         }
     }
