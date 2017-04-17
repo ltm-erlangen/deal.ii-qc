@@ -94,6 +94,20 @@ namespace dealiiqc
                                                                 atom.position,
                                                                 locally_active_vertices);
 
+            // Since in locally_active_vertices all the vertices of
+            // the ghost cells are marked true, find_active_cell_around_point
+            // could take the liberty to find a cell that is not a ghost cell
+            // of a current MPI process but has one of it's vertices marked
+            // true.
+            // In such a case, we need to throw the atom and
+            // continue associating remaining atoms.
+            if (!my_pair.first->is_locally_owned() &&
+                (std::find(ghost_cells.begin(), ghost_cells.end(), my_pair.first)==ghost_cells.end()))
+              {
+                n_thrown_atoms++;
+                continue;
+              }
+
             atom.reference_position = GeometryInfo<dim>::project_to_unit_cell(my_pair.second);
             // TODO: Remove parent_cell
             atom.parent_cell = my_pair.first;

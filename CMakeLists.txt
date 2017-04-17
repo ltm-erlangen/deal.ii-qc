@@ -18,6 +18,7 @@ INCLUDE_DIRECTORIES(
 # page of the documentation.
 SET(TARGET_SRC
   source/atom/atom_handler.cc
+  source/atom/cluster_weights.cc
   source/io/configure_qc.cc
   source/io/data_out_atom_data.cc
   source/io/parse_atom_data.cc
