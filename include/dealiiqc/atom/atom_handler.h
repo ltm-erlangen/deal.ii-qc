@@ -11,7 +11,6 @@
 namespace dealiiqc
 {
 
-  // TODO: easy access to atoms in any cell using atom iterators per cell
   /**
    * Manage initializing and indexing the atoms, distributing them to cells so
    * as that the cells own disjoint atom index sets.
@@ -52,13 +51,15 @@ namespace dealiiqc
      * for the sake of updating cluster weights.
      *
      */
-    void parse_atoms_and_assign_to_cells( const types::MeshType<dim> &mesh);
+    void parse_atoms_and_assign_to_cells( const types::MeshType<dim> &mesh,
+                                          AtomData<dim> &atom_data) const;
 
     /**
-     * Initialize or update neighbor lists of the @see energy_atoms.
+     * Return the neighbor lists of the @see energy_atoms.
      * This function can be called as often as one deems necessary.
      */
-    void update_neighbor_lists();
+    std::multimap< std::pair<types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair<types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > >
+        get_neighbor_lists( const types::CellAtomContainerType<dim> &energy_atoms) const;
 
 
   protected:
@@ -67,49 +68,6 @@ namespace dealiiqc
      * A constant reference to ConfigureQC object
      */
     const ConfigureQC &configure_qc;
-
-    /**
-     * A vector of charges of different atom species.
-     */
-    std::vector<types::charge> charges;
-
-    /**
-     * A vector to store masses of different atom species.
-     */
-    std::vector<double> masses;
-
-    /**
-     * A lookup data structure for all atoms in the system needed by a
-     * current MPI core, namely a union of locally owned and ghost atoms.
-     * Used for initializing cell based data structures that would actually be
-     * used for computations.
-     *
-     * Optimization technique (not yet implemented):
-     * Before going over all locally owned cells to find if a given atom lies within it,
-     * we can first check whether the atom's location lies inside the certain bounding box of the
-     * current processor's set of locally owned cells. The bounding box needs to be extended
-     * with @see cluster_radius + @see cutoff_radius.
-     */
-    std::multimap< types::CellIteratorType<dim>, Atom<dim>> energy_atoms;
-
-    /**
-     * Neighbor lists using cell approach.
-     * For each cell loop over all nearby relevant cells only once
-     * and loop over all interacting atoms between the two cells.
-     */
-    std::multimap< std::pair< types::CellIteratorType<dim>, types::CellIteratorType<dim>>, std::pair< types::CellAtomIteratorType<dim>, types::CellAtomIteratorType<dim> > > neighbor_lists;
-
-    /**
-     * Number of locally relevant non-energy atoms per cell.
-     * This is exactly the number of non-energy atoms for whom a
-     * locally relevant cell is found while updating @see energy_atoms.
-     * They were thrown because they weren't energy atoms.
-     *
-     * @note The map also contains the information of number of
-     * thrown atoms per cell for ghost cells on the current
-     * MPI process.
-     */
-    std::map<types::CellIteratorType<dim>, unsigned int> n_thrown_atoms_per_cell;
 
   };
 

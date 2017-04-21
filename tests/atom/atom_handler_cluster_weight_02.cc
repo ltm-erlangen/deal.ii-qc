@@ -37,11 +37,11 @@ public:
   void run()
   {
     GridGenerator::hyper_cube( triangulation, 0., 8., true );
-    AtomHandler<dim>::parse_atoms_and_assign_to_cells( dof_handler);
+    AtomHandler<dim>::parse_atoms_and_assign_to_cells( dof_handler, atom_data);
     Cluster::WeightsByCell<dim> weights_by_cell(config);
-    weights_by_cell.update_cluster_weights( AtomHandler<dim>::n_thrown_atoms_per_cell,
-                                            AtomHandler<dim>::energy_atoms);
-    for ( const auto &cell_atom : AtomHandler<dim>::energy_atoms )
+    weights_by_cell.update_cluster_weights( atom_data.n_thrown_atoms_per_cell,
+                                            atom_data.energy_atoms);
+    for ( const auto &cell_atom : atom_data.energy_atoms )
       std::cout << "Atom: " << cell_atom.second.position << " "
                 << "Cluster_Weight: "
                 << cell_atom.second.cluster_weight << std::endl;
@@ -52,6 +52,7 @@ private:
   parallel::shared::Triangulation<dim> triangulation;
   DoFHandler<dim>      dof_handler;
   MPI_Comm mpi_communicator;
+  AtomData<dim> atom_data;
 
 };
 

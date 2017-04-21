@@ -37,7 +37,7 @@ public:
   {
     GridGenerator::hyper_cube( triangulation, 0., 16., true );
     triangulation.refine_global (3);
-    AtomHandler<dim>::parse_atoms_and_assign_to_cells( dof_handler);
+    AtomHandler<dim>::parse_atoms_and_assign_to_cells( dof_handler, atom_data);
     write_output();
   }
 
@@ -58,7 +58,7 @@ public:
     vtp_file.open (vtp_file_name.c_str(), std::ofstream::out | std::ofstream::trunc);
 
     DataOutAtomData<dim> atom_data_out;
-    atom_data_out.write_vtp( AtomHandler<dim>::energy_atoms,
+    atom_data_out.write_vtp( atom_data.energy_atoms,
                              flags,
                              vtp_file);
     vtp_file.close();
@@ -82,7 +82,7 @@ public:
       {
         MPI_Barrier(mpi_communicator);
         if (p == this_mpi_process)
-          atom_data_out.write_vtp( AtomHandler<dim>::energy_atoms,
+          atom_data_out.write_vtp( atom_data.energy_atoms,
                                    flags,
                                    std::cout);
       }
@@ -92,6 +92,7 @@ private:
   parallel::shared::Triangulation<dim> triangulation;
   DoFHandler<dim>      dof_handler;
   MPI_Comm mpi_communicator;
+  AtomData<dim> atom_data;
 
 };
 

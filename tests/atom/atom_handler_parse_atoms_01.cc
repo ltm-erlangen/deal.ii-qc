@@ -32,13 +32,13 @@ public:
   {
     GridGenerator::hyper_cube( triangulation, 0., 8., true );
     triangulation.refine_global (1);
-    AtomHandler<dim>::parse_atoms_and_assign_to_cells( dof_handler);
+    AtomHandler<dim>::parse_atoms_and_assign_to_cells( dof_handler, atom_data);
   }
 
 private:
   parallel::shared::Triangulation<dim> triangulation;
   DoFHandler<dim>      dof_handler;
-
+  AtomData<dim> atom_data;
 };
 
 
