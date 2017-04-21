@@ -55,11 +55,11 @@ namespace dealiiqc
                                           AtomData<dim> &atom_data);
 
     /**
-     * Initialize or update neighbor lists of the @see energy_atoms.
+     * Return the neighbor lists of the @see energy_atoms.
      * This function can be called as often as one deems necessary.
      */
-    void update_neighbor_lists( std::multimap< std::pair< types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > > &neighbor_lists,
-                                const types::CellAtomContainerType<dim> &energy_atoms);
+    std::multimap< std::pair< types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > >
+    get_neighbor_lists( const types::CellAtomContainerType<dim> &energy_atoms);
 
 
   protected:

@@ -142,11 +142,11 @@ namespace dealiiqc
   }
 
   template<int dim>
-  void
-  AtomHandler<dim>::update_neighbor_lists( std::multimap< std::pair< types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > > &neighbor_lists,
-                                           const types::CellAtomContainerType<dim> &energy_atoms)
+  std::multimap< std::pair< types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > >
+  AtomHandler<dim>::get_neighbor_lists( const types::CellAtomContainerType<dim> &energy_atoms)
   {
-    neighbor_lists.clear();
+    std::multimap< std::pair< types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > >
+    neighbor_lists;
 
     // cell_neighbor_lists contains all the pairs of cell
     // whose atoms interact with each other.
@@ -271,6 +271,7 @@ namespace dealiiqc
             ExcMessage("Some of the interactions are not accounted while updating neighbor lists"));
 #endif
 
+    return neighbor_lists;
   }
 
   template class AtomHandler<1>;
