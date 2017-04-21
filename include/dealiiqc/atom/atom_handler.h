@@ -69,16 +69,6 @@ namespace dealiiqc
      */
     const ConfigureQC &configure_qc;
 
-    // TODO: Remove below members.
-    //       Removing will make significant changes to update_neighbor_lists()
-    //       I will make these changes in the next PR.
-    /**
-     * Neighbor lists using cell approach.
-     * For each cell loop over all nearby relevant cells only once
-     * and loop over all interacting atoms between the two cells.
-     */
-    std::multimap< std::pair< types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > > neighbor_lists;
-
   };
 
 } /* namespace dealiiqc */
