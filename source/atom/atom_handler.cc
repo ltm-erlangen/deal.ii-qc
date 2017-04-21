@@ -14,7 +14,7 @@ namespace dealiiqc
   }
 
   template<int dim>
-  void AtomHandler<dim>::parse_atoms_and_assign_to_cells( const MeshType &mesh)
+  void AtomHandler<dim>::parse_atoms_and_assign_to_cells( const types::MeshType<dim> &mesh)
   {
     // TODO: Assign atoms to cells as we parse atom data ?
     //       relevant for when we have a large collection of atoms.
@@ -45,7 +45,7 @@ namespace dealiiqc
     // Loop through all the locally owned cells and
     // mark (true) all the vertices of the locally owned cells.
     // Also, initialize n_thrown_atoms_per_cell container.
-    for ( typename MeshType::active_cell_iterator
+    for ( typename types::MeshType<dim>::active_cell_iterator
           cell = mesh.begin_active();
           cell != mesh.end(); ++cell)
       if ( cell->is_locally_owned())
@@ -62,7 +62,7 @@ namespace dealiiqc
     // ghost_cells vector will contain all such active ghost cells.
     // If the total number of MPI processes is just one,
     // the size of ghost_cells vector is zero.
-    const std::vector<typename MeshType::active_cell_iterator> ghost_cells =
+    const std::vector<typename types::MeshType<dim>::active_cell_iterator> ghost_cells =
       GridTools::compute_ghost_cell_layer_within_distance( mesh,
                                                            configure_qc.get_maximum_search_radius());
 
@@ -88,7 +88,7 @@ namespace dealiiqc
         bool atom_associated_to_cell = false;
         try
           {
-            std::pair<typename MeshType::active_cell_iterator, Point<dim> >
+            std::pair<typename types::MeshType<dim>::active_cell_iterator, Point<dim> >
             my_pair = GridTools::find_active_cell_around_point( MappingQ1<dim>(),
                                                                 mesh,
                                                                 atom.position,
@@ -142,7 +142,7 @@ namespace dealiiqc
 
     // cell_neighbor_lists contains all the pairs of cell
     // whose atoms interact with each other.
-    std::list< std::pair< CellIteratorType, CellIteratorType> > cell_neighbor_lists;
+    std::list< std::pair< types::CellIteratorType<dim>, types::CellIteratorType<dim>> > cell_neighbor_lists;
 
     const double cutoff_radius = configure_qc.get_maximum_energy_radius();
     const double cluster_radius = configure_qc.get_cluster_radius();
@@ -177,8 +177,8 @@ namespace dealiiqc
 
     for ( const auto cell_pair_IJ : cell_neighbor_lists )
       {
-        const CellIteratorType cell_I = cell_pair_IJ.first;
-        const CellIteratorType cell_J = cell_pair_IJ.second;
+        const types::CellIteratorType<dim> cell_I = cell_pair_IJ.first;
+        const types::CellIteratorType<dim> cell_J = cell_pair_IJ.second;
 
         const auto range_of_cell_I = energy_atoms.equal_range(cell_I);
         const auto range_of_cell_J = energy_atoms.equal_range(cell_J);
