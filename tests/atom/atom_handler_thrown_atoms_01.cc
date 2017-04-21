@@ -37,8 +37,8 @@ public:
   void run()
   {
     GridGenerator::hyper_cube( triangulation, 0., 8., true );
-    AtomHandler<dim>::parse_atoms_and_assign_to_cells( dof_handler);
-    for ( const auto &entry : AtomHandler<dim>::n_thrown_atoms_per_cell)
+    AtomHandler<dim>::parse_atoms_and_assign_to_cells( dof_handler, atom_data);
+    for ( const auto &entry : atom_data.n_thrown_atoms_per_cell)
       std::cout << "Cell: "
                 << entry.first
                 << " has "
@@ -47,7 +47,7 @@ public:
                 << std::endl;
 
     std::cout << "Number of energy atoms: "
-              << AtomHandler<dim>::energy_atoms.size() << std::endl;
+              << atom_data.energy_atoms.size() << std::endl;
     std::cout << std::endl;
   }
 
@@ -55,6 +55,7 @@ private:
   parallel::shared::Triangulation<dim> triangulation;
   DoFHandler<dim>      dof_handler;
   MPI_Comm mpi_communicator;
+  AtomData<dim> atom_data;
 
 };
 

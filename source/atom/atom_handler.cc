@@ -14,12 +14,18 @@ namespace dealiiqc
   }
 
   template<int dim>
-  void AtomHandler<dim>::parse_atoms_and_assign_to_cells( const types::MeshType<dim> &mesh)
+  void AtomHandler<dim>::parse_atoms_and_assign_to_cells( const types::MeshType<dim> &mesh,
+                                                          AtomData<dim> &atom_data)
   {
     // TODO: Assign atoms to cells as we parse atom data ?
     //       relevant for when we have a large collection of atoms.
     std::vector<Atom<dim>> vector_atoms;
     ParseAtomData<dim> atom_parser;
+
+    auto &charges = atom_data.charges;
+    auto &masses  = atom_data.masses;
+    auto &energy_atoms = atom_data.energy_atoms;
+    auto &n_thrown_atoms_per_cell = atom_data.n_thrown_atoms_per_cell;
 
     if (!(configure_qc.get_atom_data_file()).empty() )
       {
