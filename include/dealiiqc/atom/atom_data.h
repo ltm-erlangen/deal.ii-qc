@@ -23,6 +23,12 @@ namespace dealiiqc
     using CellIteratorType = typename MeshType<dim>::active_cell_iterator;
 
     /**
+     * A typedef for active_cell_iterator for ease of use
+     */
+    template<int dim>
+    using ConstCellIteratorType = const typename MeshType<dim>::active_cell_iterator;
+
+    /**
      * A typedef for container that holds cell and associated atoms
      */
     template<int dim>
@@ -38,7 +44,8 @@ namespace dealiiqc
      * A typedef for const_iterator over CellAtomContainerType
      */
     template<int dim>
-    using CellAtomIteratorType = typename std::multimap< CellIteratorType<dim>, Atom<dim> >::iterator;
+    using CellAtomConstIteratorType = typename std::multimap< CellIteratorType<dim>, Atom<dim> >::const_iterator;
+
 
   } // types
 
@@ -80,7 +87,7 @@ namespace dealiiqc
      * For each cell loop over all nearby relevant cells only once
      * and loop over all interacting atoms between the two cells.
      */
-    std::multimap< std::pair< types::CellIteratorType<dim>, types::CellIteratorType<dim>>, std::pair< types::CellAtomIteratorType<dim>, types::CellAtomIteratorType<dim> > > neighbor_lists;
+    std::multimap< std::pair< types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > > neighbor_lists;
 
     /**
      * Number of locally relevant non-energy atoms per cell.

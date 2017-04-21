@@ -142,7 +142,9 @@ namespace dealiiqc
   }
 
   template<int dim>
-  void AtomHandler<dim>::update_neighbor_lists()
+  void
+  AtomHandler<dim>::update_neighbor_lists( std::multimap< std::pair< types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > > &neighbor_lists,
+                                           const types::CellAtomContainerType<dim> &energy_atoms)
   {
     neighbor_lists.clear();
 
@@ -165,15 +167,15 @@ namespace dealiiqc
     // use something like MappingQEulerian to work
     // with the deformed mesh.
     // TODO: optimize loop over unique keys ( mulitmap::upper_bound()'s complexity is O(nlogn) )
-    for ( auto unique_I = energy_atoms.cbegin(); unique_I != energy_atoms.cend(); unique_I = energy_atoms.upper_bound(unique_I->first))
+    for ( types::CellAtomConstIteratorType<dim> unique_I = energy_atoms.cbegin(); unique_I != energy_atoms.cend(); unique_I = energy_atoms.upper_bound(unique_I->first))
       // Only locally owned cells have cell neighbors
       if ( unique_I->first->is_locally_owned()  )
         {
-          const auto cell_I = unique_I->first;
+          types::ConstCellIteratorType<dim> cell_I = unique_I->first;
           const double radius_I = cutoff_radius + Utilities::calculate_cell_radius<dim>(cell_I);
-          for ( auto unique_J = energy_atoms.cbegin(); unique_J != energy_atoms.cend(); unique_J = energy_atoms.upper_bound(unique_J->first))
+          for ( types::CellAtomConstIteratorType<dim> unique_J = energy_atoms.cbegin(); unique_J != energy_atoms.cend(); unique_J = energy_atoms.upper_bound(unique_J->first))
             {
-              const auto cell_J = unique_J->first;
+              types::ConstCellIteratorType<dim> cell_J = unique_J->first;
               if ( (cell_I->center()-cell_J->center()).norm_square() <
                    dealii::Utilities::fixed_power<2>( radius_I +
                                                       Utilities::calculate_cell_radius<dim>(cell_J)) )
@@ -183,14 +185,15 @@ namespace dealiiqc
 
     for ( const auto cell_pair_IJ : cell_neighbor_lists )
       {
-        const types::CellIteratorType<dim> cell_I = cell_pair_IJ.first;
-        const types::CellIteratorType<dim> cell_J = cell_pair_IJ.second;
+        types::ConstCellIteratorType<dim> cell_I = cell_pair_IJ.first;
+        types::ConstCellIteratorType<dim> cell_J = cell_pair_IJ.second;
 
-        const auto range_of_cell_I = energy_atoms.equal_range(cell_I);
-        const auto range_of_cell_J = energy_atoms.equal_range(cell_J);
+        std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> >
+        range_of_cell_I = energy_atoms.equal_range(cell_I),
+        range_of_cell_J = energy_atoms.equal_range(cell_J);
 
         // for each atom associated to locally owned cell_I
-        for ( auto cell_atom_I = range_of_cell_I.first; cell_atom_I != range_of_cell_I.second; ++cell_atom_I)
+        for ( types::CellAtomConstIteratorType<dim> cell_atom_I = range_of_cell_I.first; cell_atom_I != range_of_cell_I.second; ++cell_atom_I)
           {
             const Atom<dim> &atom_I = cell_atom_I->second;
 
@@ -204,7 +207,7 @@ namespace dealiiqc
             // Check if the atom_I is cluster atom,
             // only cluster atoms get to have neighbor lists
             if ( Utilities::is_point_within_distance_from_cell_vertices( atom_I.position, cell_I, cluster_radius) )
-              for ( auto cell_atom_J = range_of_cell_J.first; cell_atom_J != range_of_cell_J.second; ++cell_atom_J )
+              for ( types::CellAtomConstIteratorType<dim> cell_atom_J = range_of_cell_J.first; cell_atom_J != range_of_cell_J.second; ++cell_atom_J )
                 {
                   const Atom<dim> &atom_J = cell_atom_J->second;
 
@@ -228,7 +231,6 @@ namespace dealiiqc
                       neighbor_lists.insert( std::make_pair( cell_pair_IJ, std::make_pair( cell_atom_I, cell_atom_J)) );
                 }
           }
-
 
       }
 
@@ -274,5 +276,6 @@ namespace dealiiqc
   template class AtomHandler<1>;
   template class AtomHandler<2>;
   template class AtomHandler<3>;
+
 
 } // dealiiqc namespace

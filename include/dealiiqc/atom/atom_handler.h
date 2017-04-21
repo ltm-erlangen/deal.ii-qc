@@ -58,7 +58,8 @@ namespace dealiiqc
      * Initialize or update neighbor lists of the @see energy_atoms.
      * This function can be called as often as one deems necessary.
      */
-    void update_neighbor_lists();
+    void update_neighbor_lists( std::multimap< std::pair< types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > > &neighbor_lists,
+                                const types::CellAtomContainerType<dim> &energy_atoms);
 
 
   protected:
@@ -72,25 +73,11 @@ namespace dealiiqc
     //       Removing will make significant changes to update_neighbor_lists()
     //       I will make these changes in the next PR.
     /**
-     * A lookup data structure for all atoms in the system needed by a
-     * current MPI core, namely a union of locally owned and ghost atoms.
-     * Used for initializing cell based data structures that would actually be
-     * used for computations.
-     *
-     * Optimization technique (not yet implemented):
-     * Before going over all locally owned cells to find if a given atom lies within it,
-     * we can first check whether the atom's location lies inside the certain bounding box of the
-     * current processor's set of locally owned cells. The bounding box needs to be extended
-     * with @see cluster_radius + @see cutoff_radius.
-     */
-    std::multimap< types::CellIteratorType<dim>, Atom<dim>> energy_atoms;
-
-    /**
      * Neighbor lists using cell approach.
      * For each cell loop over all nearby relevant cells only once
      * and loop over all interacting atoms between the two cells.
      */
-    std::multimap< std::pair< types::CellIteratorType<dim>, types::CellIteratorType<dim>>, std::pair< types::CellAtomIteratorType<dim>, types::CellAtomIteratorType<dim> > > neighbor_lists;
+    std::multimap< std::pair< types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > > neighbor_lists;
 
   };
 
