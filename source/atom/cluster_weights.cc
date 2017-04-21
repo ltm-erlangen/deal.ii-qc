@@ -32,16 +32,16 @@ namespace dealiiqc
 
     template<int dim>
     void
-    WeightsByCell<dim>::update_cluster_weights( const std::map< typename AtomHandler<dim>::CellIteratorType, unsigned int> &n_thrown_atoms_per_cell,
-                                                typename AtomHandler<dim>::CellAtomContainerType &energy_atoms) const
+    WeightsByCell<dim>::update_cluster_weights( const std::map< types::CellIteratorType<dim>, unsigned int> &n_thrown_atoms_per_cell,
+                                                types::CellAtomContainerType<dim> &energy_atoms) const
     {
       const double cluster_radius = WeightsByBase<dim>::config.get_cluster_radius();
 
       // Number of cluster atoms per cell
-      std::map<typename AtomHandler<dim>::CellIteratorType, unsigned int> n_cluster_atoms_per_cell;
+      std::map<typename types::CellIteratorType<dim>, unsigned int> n_cluster_atoms_per_cell;
 
       // Initialize n_cluster_atoms_per_cell
-      for ( auto unique_key = energy_atoms.begin(); unique_key != energy_atoms.end(); unique_key = energy_atoms.upper_bound(unique_key->first))
+      for ( typename types::CellAtomContainerType<dim>::iterator unique_key = energy_atoms.begin(); unique_key != energy_atoms.end(); unique_key = energy_atoms.upper_bound(unique_key->first))
         n_cluster_atoms_per_cell[ unique_key->first] = (unsigned int) 0;
 
       // Loop over all energy_atoms to compute the number of cluster_atoms

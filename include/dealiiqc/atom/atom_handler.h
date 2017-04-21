@@ -3,7 +3,7 @@
 
 #include <deal.II/grid/grid_tools.h>
 
-#include <dealiiqc/atom/atom.h>
+#include <dealiiqc/atom/atom_data.h>
 #include <dealiiqc/io/configure_qc.h>
 #include <dealiiqc/io/parse_atom_data.h>
 #include <dealiiqc/utilities.h>
@@ -29,26 +29,6 @@ namespace dealiiqc
     AtomHandler( const ConfigureQC &configure_qc);
 
     /**
-     * A typedef for mesh.
-     */
-    using MeshType = dealii::DoFHandler<dim>;
-
-    /**
-     * A typedef for active_cell_iterator for ease of use
-     */
-    using CellIteratorType = typename MeshType::active_cell_iterator;
-
-    /**
-     * A typedef for cell and atom associations
-     */
-    using CellAtomContainerType = typename std::multimap< CellIteratorType, Atom<dim>>;
-
-    /**
-     * A typedef for iterating over @see CellAtoms
-     */
-    using CellAtomIteratorType = typename std::multimap< CellIteratorType, Atom<dim>>::iterator;
-
-    /**
      * Setup atom attributes namely:
      * @see energy_atoms, @see masses and @see atomtype_to_atoms
      *
@@ -72,7 +52,7 @@ namespace dealiiqc
      * for the sake of updating cluster weights.
      *
      */
-    void parse_atoms_and_assign_to_cells( const MeshType &mesh);
+    void parse_atoms_and_assign_to_cells( const types::MeshType<dim> &mesh);
 
     /**
      * Initialize or update neighbor lists of the @see energy_atoms.
@@ -110,14 +90,14 @@ namespace dealiiqc
      * current processor's set of locally owned cells. The bounding box needs to be extended
      * with @see cluster_radius + @see cutoff_radius.
      */
-    std::multimap< CellIteratorType, Atom<dim>> energy_atoms;
+    std::multimap< types::CellIteratorType<dim>, Atom<dim>> energy_atoms;
 
     /**
      * Neighbor lists using cell approach.
      * For each cell loop over all nearby relevant cells only once
      * and loop over all interacting atoms between the two cells.
      */
-    std::multimap< std::pair<CellIteratorType, CellIteratorType>, std::pair<CellAtomIteratorType, CellAtomIteratorType> > neighbor_lists;
+    std::multimap< std::pair< types::CellIteratorType<dim>, types::CellIteratorType<dim>>, std::pair< types::CellAtomIteratorType<dim>, types::CellAtomIteratorType<dim> > > neighbor_lists;
 
     /**
      * Number of locally relevant non-energy atoms per cell.
@@ -129,7 +109,7 @@ namespace dealiiqc
      * thrown atoms per cell for ghost cells on the current
      * MPI process.
      */
-    std::map<CellIteratorType, unsigned int> n_thrown_atoms_per_cell;
+    std::map<types::CellIteratorType<dim>, unsigned int> n_thrown_atoms_per_cell;
 
   };
 
