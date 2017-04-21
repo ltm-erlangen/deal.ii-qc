@@ -52,14 +52,14 @@ namespace dealiiqc
      *
      */
     void parse_atoms_and_assign_to_cells( const types::MeshType<dim> &mesh,
-                                          AtomData<dim> &atom_data);
+                                          AtomData<dim> &atom_data) const;
 
     /**
      * Return the neighbor lists of the @see energy_atoms.
      * This function can be called as often as one deems necessary.
      */
-    std::multimap< std::pair< types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > >
-    get_neighbor_lists( const types::CellAtomContainerType<dim> &energy_atoms);
+    std::multimap< std::pair<types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair<types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > >
+        get_neighbor_lists( const types::CellAtomContainerType<dim> &energy_atoms) const;
 
 
   protected:

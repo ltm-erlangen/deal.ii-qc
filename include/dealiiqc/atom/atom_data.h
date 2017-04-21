@@ -32,19 +32,19 @@ namespace dealiiqc
      * A typedef for container that holds cell and associated atoms
      */
     template<int dim>
-    using CellAtomContainerType = typename std::multimap< CellIteratorType<dim>, Atom<dim> >;
+    using CellAtomContainerType = typename std::multimap<CellIteratorType<dim>, Atom<dim> >;
 
     /**
      * A typedef for iterator over CellAtomContainerType
      */
     template<int dim>
-    using CellAtomIteratorType = typename std::multimap< CellIteratorType<dim>, Atom<dim> >::iterator;
+    using CellAtomIteratorType = typename std::multimap<CellIteratorType<dim>, Atom<dim> >::iterator;
 
     /**
      * A typedef for const_iterator over CellAtomContainerType
      */
     template<int dim>
-    using CellAtomConstIteratorType = typename std::multimap< CellIteratorType<dim>, Atom<dim> >::const_iterator;
+    using CellAtomConstIteratorType = typename std::multimap<CellIteratorType<dim>, Atom<dim> >::const_iterator;
 
 
   } // types
@@ -80,14 +80,15 @@ namespace dealiiqc
      * current processor's set of locally owned cells. The bounding box needs to be extended
      * with @see cluster_radius + @see cutoff_radius.
      */
-    std::multimap< types::CellIteratorType<dim>, Atom<dim>> energy_atoms;
+    std::multimap<types::CellIteratorType<dim>, Atom<dim>> energy_atoms;
 
     /**
      * Neighbor lists using cell approach.
      * For each cell loop over all nearby relevant cells only once
      * and loop over all interacting atoms between the two cells.
      */
-    std::multimap< std::pair< types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > > neighbor_lists;
+    std::multimap< std::pair<types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair<types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > >
+    neighbor_lists;
 
     /**
      * Number of locally relevant non-energy atoms per cell.
@@ -99,7 +100,7 @@ namespace dealiiqc
      * thrown atoms per cell for ghost cells on the current
      * MPI process.
      */
-    std::map< types::CellIteratorType<dim>, unsigned int> n_thrown_atoms_per_cell;
+    std::map<types::CellIteratorType<dim>, unsigned int> n_thrown_atoms_per_cell;
 
   };
 

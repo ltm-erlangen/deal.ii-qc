@@ -15,7 +15,7 @@ namespace dealiiqc
 
   template<int dim>
   void AtomHandler<dim>::parse_atoms_and_assign_to_cells( const types::MeshType<dim> &mesh,
-                                                          AtomData<dim> &atom_data)
+                                                          AtomData<dim> &atom_data) const
   {
     // TODO: Assign atoms to cells as we parse atom data ?
     //       relevant for when we have a large collection of atoms.
@@ -143,10 +143,10 @@ namespace dealiiqc
 
   template<int dim>
   std::multimap< std::pair< types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > >
-  AtomHandler<dim>::get_neighbor_lists( const types::CellAtomContainerType<dim> &energy_atoms)
+      AtomHandler<dim>::get_neighbor_lists( const types::CellAtomContainerType<dim> &energy_atoms) const
   {
     std::multimap< std::pair< types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > >
-    neighbor_lists;
+        neighbor_lists;
 
     // cell_neighbor_lists contains all the pairs of cell
     // whose atoms interact with each other.

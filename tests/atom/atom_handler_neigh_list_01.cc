@@ -37,7 +37,7 @@ public:
     triangulation.refine_global (3);
     AtomHandler<dim>::parse_atoms_and_assign_to_cells( dof_handler, atom_data);
     atom_data.neighbor_lists =
-    AtomHandler<dim>::get_neighbor_lists( atom_data.energy_atoms);
+      AtomHandler<dim>::get_neighbor_lists( atom_data.energy_atoms);
     for ( auto entry : atom_data.neighbor_lists)
       std::cout << "Atom I: "  << entry.second.first->second.global_index << " "
                 << "Atom J: "  << entry.second.second->second.global_index << std::endl;
