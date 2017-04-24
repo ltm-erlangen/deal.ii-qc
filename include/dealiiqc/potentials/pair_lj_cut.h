@@ -72,8 +72,6 @@ namespace dealiiqc
 
     private:
 
-      std::pair<types::atom_type, types::atom_type> interacting_atom_types;
-
       /**
        * Cutoff radius.
        */
