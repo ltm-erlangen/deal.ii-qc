@@ -2,7 +2,6 @@
 #include <utility>
 
 #include <dealiiqc/potentials/pair_lj_cut.h>
-#include "../source/potentials/pair_lj_cut.cc"
 #include <dealiiqc/atom/atom.h>
 
 
