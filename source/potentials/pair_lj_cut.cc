@@ -12,6 +12,25 @@ namespace dealiiqc
   namespace Potential
   {
 
+    // TODO: Move this to potentials.h
+    /**
+     * Return a pair of atom type such that the first element is less than
+     * or equal to that of the second element given the two atom types
+     * @p i_atom_type and @p j_atom_type.
+     */
+    inline
+    std::pair<types::atom_type, types::atom_type>
+    get_pair (const types::atom_type i_atom_type,
+              const types::atom_type j_atom_type)
+    {
+      return ( i_atom_type <= j_atom_type)
+             ?
+             std::make_pair( i_atom_type, j_atom_type)
+             :
+             std::make_pair( j_atom_type, i_atom_type);
+    }
+
+
     PairLJCutManager::PairLJCutManager( const double &cutoff_radius)
       :
       cutoff_radius(cutoff_radius)
@@ -26,21 +45,11 @@ namespace dealiiqc
       Assert( interaction==InteractionTypes::LJ,
               ExcMessage("Invalid InteractionTypes specified"));
 
-      if ( i_atom_type <= j_atom_type )
-        {
-          epsilon.insert( std::make_pair( std::make_pair( i_atom_type, j_atom_type),
-                                          parameters[0]) );
-          r_m.insert( std::make_pair( std::make_pair( i_atom_type, j_atom_type),
-                                      parameters[1]) );
-        }
-      else
-        {
-          epsilon.insert( std::make_pair( std::make_pair( j_atom_type, i_atom_type),
-                                          parameters[0]) );
-          r_m.insert( std::make_pair( std::make_pair( j_atom_type, i_atom_type),
-                                      parameters[1]) );
-        }
+      epsilon.insert( std::make_pair( get_pair(i_atom_type, j_atom_type),
+                                      parameters[0]) );
 
+      r_m.insert( std::make_pair( get_pair(i_atom_type, j_atom_type),
+                                  parameters[1]) );
     }
 
     template<bool ComputeScalarForce>
@@ -51,18 +60,14 @@ namespace dealiiqc
     {
 
       if ( squared_distance > cutoff_radius*cutoff_radius )
-        return (ComputeScalarForce)
+        return ComputeScalarForce
                ?
                std::make_pair(0.,0.)
                :
                std::make_pair(0., std::numeric_limits<double>::signaling_NaN());
 
-      const std::pair<types::atom_type, types::atom_type> interacting_atom_types =
-        (i_atom_type <= j_atom_type)
-        ?
-        std::make_pair(i_atom_type, j_atom_type)
-        :
-        std::make_pair(j_atom_type, i_atom_type);
+      const std::pair<types::atom_type, types::atom_type>
+      interacting_atom_types = get_pair( i_atom_type, j_atom_type);
 
       Assert( epsilon.count(interacting_atom_types),
               ExcMessage("LJ parameter not set for the given interacting atom types"));
@@ -74,20 +79,16 @@ namespace dealiiqc
       const double rm6  = dealii::Utilities::fixed_power<6>(r_m.find(interacting_atom_types)->second);
       const double eps  = epsilon.find(interacting_atom_types)->second;
 
-
       const double rm_by_r6 = rm6 / dealii::Utilities::fixed_power<3>(squared_distance);
 
-      const double energy = eps * rm_by_r6 * ( rm_by_r6 - 2. );
-      double force  = std::numeric_limits<double>::signaling_NaN();
-
-      if (ComputeScalarForce)
-        {
-          const double distance_inv = 1. / sqrt(squared_distance);
-          force = -12. * eps * rm_by_r6 * ( 1. - rm_by_r6 ) * distance_inv;
-        }
+      const double energy = eps * rm_by_r6 * ( rm_by_r6 - 2.);
+      const double force  = ComputeScalarForce
+                            ?
+                            -12. * eps * rm_by_r6 * ( 1. - rm_by_r6) / sqrt(squared_distance)
+                            :
+                            std::numeric_limits<double>::signaling_NaN();
 
       return std::make_pair(energy, force);
-
     }
 
     template
