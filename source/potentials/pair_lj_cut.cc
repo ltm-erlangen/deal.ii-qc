@@ -33,7 +33,7 @@ namespace dealiiqc
 
     PairLJCutManager::PairLJCutManager( const double &cutoff_radius)
       :
-      cutoff_radius_squared(cutoff_radius*cutoff_radius)
+      cutoff_radius_squared(cutoff_radius *cutoff_radius)
     {}
 
     void
@@ -45,15 +45,16 @@ namespace dealiiqc
       Assert( interaction==InteractionTypes::LJ,
               ExcMessage("Invalid InteractionTypes specified"));
       Assert (parameters.size() == 2,
-                   ExcMessage("Invalid parameters list"));
+              ExcMessage("Invalid parameters list"));
       Assert (parameters[0] > 0.,
-                   ExcMessage("Invalid epsilon value specified for LJ pair potential"));
+              ExcMessage("Invalid epsilon value specified for LJ pair potential"));
       Assert (parameters[1] > 0.,
-                   ExcMessage("Invalid r_m value specified for LJ pair potential"));
+              ExcMessage("Invalid r_m value specified for LJ pair potential"));
 
       std::array<double, 3> params { parameters[0],
                                      parameters[1],
-                                     dealii::Utilities::fixed_power<6>(parameters[1]) };
+                                     dealii::Utilities::fixed_power<6>(parameters[1])
+                                   };
 
       lj_parameters.insert( std::make_pair( get_pair(i_atom_type, j_atom_type),
                                             params) );
