@@ -2,6 +2,8 @@
 #ifndef __dealii_qc_pair_lj_cut_h
 #define __dealii_qc_pair_lj_cut_h
 
+#include <array>
+
 #include <dealiiqc/utilities.h>
 
 namespace dealiiqc
@@ -17,8 +19,8 @@ namespace dealiiqc
     enum InteractionTypes
     {
       /**
-       * @p Lennard-Jones indicates that the pair potential manager
-       * PairLJCutManager is implemented in the Potentials namespace.
+       * Truncated Lenard-Jones contribution to the potential
+       * (see, for example, PairLJCutManager class).
        */
       LJ = 0
     };
@@ -26,7 +28,7 @@ namespace dealiiqc
 
     /**
      * Truncated Lennard-Jones pair potential.
-     * Only support InteractionTypes::LJ interaction type.
+     * Only supports InteractionTypes::LJ interaction type.
      *
      * \f[
      *     \phi_{ij} =  \epsilon \left\[    (\frac{r_m}{r_{ij}})^12
@@ -102,21 +104,18 @@ namespace dealiiqc
     private:
 
       /**
-       * Cutoff radius.
+       * Cutoff radius squared.
        */
-      const double cutoff_radius;
+      const double cutoff_radius_squared;
 
       /**
-       * A list of minimum LJ energy values (depths of the potential wells)
-       * due to interaction between different atom types.
+       * A list of parameters corresponding to
+       * - minimum LJ energy values (depths of the potential wells)
+       * - distances at which LJ energy values reaches a minimum
+       * - distances raised to the power six at which LJ energy values
+       * reaches a minimum due to interaction between different atom types.
        */
-      std::map<std::pair<types::atom_type, types::atom_type>, double> epsilon;
-
-      /**
-       * A list of distances at which LJ energy values due to interaction
-       * between different atom types reaches a minimum.
-       */
-      std::map<std::pair<types::atom_type, types::atom_type>, double> r_m;
+      std::map<std::pair<types::atom_type, types::atom_type>, std::array<double,3> > lj_parameters;
 
     };
 

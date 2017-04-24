@@ -33,7 +33,7 @@ namespace dealiiqc
 
     PairLJCutManager::PairLJCutManager( const double &cutoff_radius)
       :
-      cutoff_radius(cutoff_radius)
+      cutoff_radius_squared(cutoff_radius*cutoff_radius)
     {}
 
     void
@@ -44,12 +44,20 @@ namespace dealiiqc
     {
       Assert( interaction==InteractionTypes::LJ,
               ExcMessage("Invalid InteractionTypes specified"));
+      Assert (parameters.size() == 2,
+                   ExcMessage("Invalid parameters list"));
+      Assert (parameters[0] > 0.,
+                   ExcMessage("Invalid epsilon value specified for LJ pair potential"));
+      Assert (parameters[1] > 0.,
+                   ExcMessage("Invalid r_m value specified for LJ pair potential"));
 
-      epsilon.insert( std::make_pair( get_pair(i_atom_type, j_atom_type),
-                                      parameters[0]) );
+      std::array<double, 3> params { parameters[0],
+                                     parameters[1],
+                                     dealii::Utilities::fixed_power<6>(parameters[1]) };
 
-      r_m.insert( std::make_pair( get_pair(i_atom_type, j_atom_type),
-                                  parameters[1]) );
+      lj_parameters.insert( std::make_pair( get_pair(i_atom_type, j_atom_type),
+                                            params) );
+
     }
 
     template<bool ComputeScalarForce>
@@ -59,7 +67,7 @@ namespace dealiiqc
                                                 const double &squared_distance) const
     {
 
-      if ( squared_distance > cutoff_radius*cutoff_radius )
+      if ( squared_distance > cutoff_radius_squared)
         return ComputeScalarForce
                ?
                std::make_pair(0.,0.)
@@ -69,15 +77,12 @@ namespace dealiiqc
       const std::pair<types::atom_type, types::atom_type>
       interacting_atom_types = get_pair( i_atom_type, j_atom_type);
 
-      Assert( epsilon.count(interacting_atom_types),
+      Assert( lj_parameters.count(interacting_atom_types),
               ExcMessage("LJ parameter not set for the given interacting atom types"));
 
       // get LJ parameters
-      // TODO: Move rm6 to a seperate map
-      //       so that rm6 is precomputed as opposed to computing each time this
-      //       function is called
-      const double rm6  = dealii::Utilities::fixed_power<6>(r_m.find(interacting_atom_types)->second);
-      const double eps  = epsilon.find(interacting_atom_types)->second;
+      const double eps = lj_parameters.find(interacting_atom_types)->second[0];
+      const double rm6 = lj_parameters.find(interacting_atom_types)->second[2];
 
       const double rm_by_r6 = rm6 / dealii::Utilities::fixed_power<3>(squared_distance);
 
