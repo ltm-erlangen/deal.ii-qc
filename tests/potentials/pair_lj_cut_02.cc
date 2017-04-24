@@ -28,9 +28,9 @@ void test ( const double &r,
   std::pair<double, double> energy_force_1 =
     lj.energy_and_scalar_force( 1, 0, r*r);
 
-  AssertThrow( fabs(energy_force_0.first-lammps_energy) < 100.*std::numeric_limits<double>::min(),
+  AssertThrow( fabs(energy_force_1.first-lammps_energy) < 100.*std::numeric_limits<double>::min(),
                ExcInternalError());
-  AssertThrow( fabs(energy_force_0.second-lammps_force) < 100.*std::numeric_limits<double>::min(),
+  AssertThrow( fabs(energy_force_1.second-lammps_force) < 100.*std::numeric_limits<double>::min(),
                ExcInternalError());
 
 }
