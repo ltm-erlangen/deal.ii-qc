@@ -34,11 +34,6 @@ namespace dealiiqc
       PairLJCutManager( const double &cutoff_radius);
 
       /**
-       * Destructor.
-       */
-      virtual ~PairLJCutManager();
-
-      /**
        * Declare interacting pair of atom types.
        *
        * This function updates or initializes interacting_atom_types

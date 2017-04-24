@@ -22,6 +22,7 @@ SET(TARGET_SRC
   source/io/configure_qc.cc
   source/io/data_out_atom_data.cc
   source/io/parse_atom_data.cc
+  source/potentials/pair_lj_cut.cc
   source/qc/core.cc
   )
 
@@ -123,6 +124,7 @@ SET (TEST_TIME_LIMIT 900)
 ADD_SUBDIRECTORY(tests/atom)
 ADD_SUBDIRECTORY(tests/core)
 ADD_SUBDIRECTORY(tests/io)
+ADD_SUBDIRECTORY(tests/potentials)
 ADD_SUBDIRECTORY(tests/utilities)
 #
 # installation target.
