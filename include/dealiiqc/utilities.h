@@ -35,7 +35,6 @@ namespace dealiiqc
      */
     typedef unsigned char atom_type;
 
-
   } //typedefs
 
   /**
