@@ -35,10 +35,6 @@ namespace dealiiqc
      */
     typedef unsigned char atom_type;
 
-    /**
-     * The type used for interacting pair of atom types.
-     */
-    typedef std::pair<atom_type, atom_type> InteractingPair;
 
   } //typedefs
 

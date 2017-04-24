@@ -1,4 +1,6 @@
 
+#include <deal.II/base/utilities.h>
+#include <limits>
 
 #include <dealiiqc/potentials/pair_lj_cut.h>
 
@@ -7,48 +9,75 @@ namespace dealiiqc
 
   namespace Potential
   {
-    template<int dim>
-    PairLJCut<dim>::PairLJCut( const ConfigureQC &configure)
-    :
-    Pair<dim>(configure)
+
+    PairLJCutManager::PairLJCutManager( const double &cutoff_radius)
+      :
+      cutoff_radius(cutoff_radius)
     {}
 
-    template<int dim>
-    double
-    PairLJCut<dim>::value ( const types::NeighborListsType<dim> &neighbor_lists)
+    void
+    PairLJCutManager::declare_interactions ( const types::atom_type i_atom_type,
+                                             const types::atom_type j_atom_type,
+                                             InteractionTypes interaction,
+                                             std::vector<double> &parameters)
     {
-      double energy = 0.;
+      Assert( interaction==InteractionTypes::LJ,
+              ExcMessage("Invalid InteractionTypes specified"));
 
-      // NeighborListType is arranged as cell_pair, atom_pair
-      for ( const auto &cell_pair_atom_pair : neighbor_lists )
+      if ( i_atom_type <= j_atom_type )
         {
-          const Atom<dim> &
-          atom_I = (cell_pair_atom_pair.second.first)->second,
-          atom_J = (cell_pair_atom_pair.second.second)->second;
-
-          // TODO: implement LJ code here
-          //       now has dummy code.
-          energy += (atom_I-atom_J).norm();
-          // TODO: update energy_per_cluster_atom
+          epsilon.insert( std::make_pair( std::make_pair( i_atom_type, j_atom_type),
+                                          parameters[0]) );
+          r_m.insert( std::make_pair( std::make_pair( i_atom_type, j_atom_type),
+                                      parameters[1]) );
+        }
+      else
+        {
+          epsilon.insert( std::make_pair( std::make_pair( j_atom_type, i_atom_type),
+                                          parameters[0]) );
+          r_m.insert( std::make_pair( std::make_pair( j_atom_type, i_atom_type),
+                                      parameters[1]) );
         }
 
-      return energy;
     }
 
-    template<int dim>
-    void
-    PairLJCut<dim>::gradient ( vector_t &gradient,
-                               const types::CellAssemblyData<dim> &cell_assembly_data,
-                               const types::NeighborListsType<dim> &neighbor_lists) const
+    template<bool ComputeScalarForce=true>
+    std::pair<double, double>
+    PairLJCutManager::energy_and_scalar_force ( const types::atom_type i_atom_type,
+                                                const types::atom_type j_atom_type,
+                                                const double &squared_distance) const
     {
-      // TODO
-    }
+      std::pair<types::atom_type, types::atom_type> interacting_atom_types =
+        (i_atom_type <= j_atom_type)
+        ?
+        std::make_pair(i_atom_type, j_atom_type)
+        :
+        std::make_pair(j_atom_type, i_atom_type);
 
-    template<int dim>
-    void
-    PairLJCut<dim>::parse_pair_coefficients ()
-    {
-      // TODO
+      Assert( epsilon.count(interacting_atom_types),
+              "LJ parameter not set for the given interacting atom types");
+
+      // get LJ parameters
+      // TODO: Move rm6 to a seperate map
+      //       so that rm6 is precomputed as opposed to computing each time this
+      //       function is called
+      const double rm6  = dealii::Utilities::fixed_power<6>(r_m[interacting_atom_types]);
+      const double eps  = epsilon[interacting_atom_types];
+
+
+      const double rm_by_r6 = rm6 / dealii::Utilities::fixed_power<3>(squared_distance);
+
+      const double energy = epsilon * rm_by_r6 * ( rm_by_r6 - 2. );
+      const double force  = std::numeric_limits<double>::signaling_NaN();
+
+      if (ComputeScalarForce)
+        {
+          const double distance_inv = 1. / sqrt(squared_distance);
+          force = -12. * energy * distance_inv;
+        }
+
+      return std::make_pair(energy, force);
+
     }
 
   }
