@@ -112,9 +112,8 @@ namespace dealiiqc
       const double cutoff_radius_squared;
 
       /**
-       * A list of parameters corresponding to
-       * - minimum LJ energy values (depths of the potential wells)
-       * - distances at which LJ energy values reaches a minimum
+       * A list of two parameters corresponding to
+       * - minimum LJ energy values (depths of the potential wells), and
        * - distances raised to the power six at which LJ energy values
        * reaches a minimum due to interaction between different atom types.
        */

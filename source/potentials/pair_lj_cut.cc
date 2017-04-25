@@ -83,8 +83,8 @@ namespace dealiiqc
               ExcMessage("LJ parameter not set for the given interacting atom types"));
 
       // get LJ parameters
-      const double eps = param->second[0];
-      const double rm6 = param->second[1];
+      const double &eps = param->second[0];
+      const double &rm6 = param->second[1];
 
       const double rm_by_r6 = rm6 / dealii::Utilities::fixed_power<3>(squared_distance);
 
