@@ -20,7 +20,7 @@ namespace dealiiqc
     void
     PairLJCutManager::declare_interactions ( const types::atom_type i_atom_type,
                                              const types::atom_type j_atom_type,
-                                             InteractionTypes interaction,
+                                             const InteractionTypes interaction,
                                              const std::vector<double> &parameters)
     {
       Assert( interaction==InteractionTypes::LJ,
