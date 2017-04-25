@@ -8,7 +8,10 @@
 
 namespace dealiiqc
 {
-
+  /**
+   * A namespace to define all interaction potentials of the atomistic
+   * system and related data members.
+   */
   namespace Potential
   {
     // TODO: Move this to potentials.h
@@ -115,7 +118,7 @@ namespace dealiiqc
        * - distances raised to the power six at which LJ energy values
        * reaches a minimum due to interaction between different atom types.
        */
-      std::map<std::pair<types::atom_type, types::atom_type>, std::array<double,3> > lj_parameters;
+      std::map<std::pair<types::atom_type, types::atom_type>, std::array<double,2> > lj_parameters;
 
     };
 

@@ -51,8 +51,7 @@ namespace dealiiqc
       Assert (parameters[1] > 0.,
               ExcMessage("Invalid r_m value specified for LJ pair potential"));
 
-      std::array<double, 3> params { parameters[0],
-                                     parameters[1],
+      std::array<double, 2> params { parameters[0],
                                      dealii::Utilities::fixed_power<6>(parameters[1])
                                    };
 
@@ -78,12 +77,14 @@ namespace dealiiqc
       const std::pair<types::atom_type, types::atom_type>
       interacting_atom_types = get_pair( i_atom_type, j_atom_type);
 
-      Assert( lj_parameters.count(interacting_atom_types),
+      const auto &param = lj_parameters.find(interacting_atom_types);
+
+      Assert( param != lj_parameters.end(),
               ExcMessage("LJ parameter not set for the given interacting atom types"));
 
       // get LJ parameters
-      const double eps = lj_parameters.find(interacting_atom_types)->second[0];
-      const double rm6 = lj_parameters.find(interacting_atom_types)->second[2];
+      const double eps = param->second[0];
+      const double rm6 = param->second[1];
 
       const double rm_by_r6 = rm6 / dealii::Utilities::fixed_power<3>(squared_distance);
 
