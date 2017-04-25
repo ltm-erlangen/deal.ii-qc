@@ -4,30 +4,14 @@
 
 #include <array>
 
+#include <dealiiqc/potentials/potentials.h>
 #include <dealiiqc/utilities.h>
 
 namespace dealiiqc
 {
-  /**
-   * A namespace to define all interaction potentials of the atomistic
-   * system and related data members.
-   */
+
   namespace Potential
   {
-    // TODO: Move this to potentials.h
-    /**
-     * An enumeration of all the pair potentials implemented in
-     * Potentials namespace.
-     */
-    enum InteractionTypes
-    {
-      /**
-       * Truncated Lenard-Jones contribution to the potential
-       * (see, for example, PairLJCutManager class).
-       */
-      LJ = 0
-    };
-
 
     /**
      * Truncated Lennard-Jones pair potential.
@@ -79,7 +63,7 @@ namespace dealiiqc
       void declare_interactions ( const types::atom_type i_atom_type,
                                   const types::atom_type j_atom_type,
                                   InteractionTypes interaction,
-                                  std::vector<double> &parameters);
+                                  const std::vector<double> &parameters);
 
 
       /**
@@ -121,7 +105,7 @@ namespace dealiiqc
 
     };
 
-  }
+  } // namespace Potential
 
 } /* namespace dealiiqc */
 
