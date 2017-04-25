@@ -88,7 +88,7 @@ namespace dealiiqc
      * and loop over all interacting atoms between the two cells.
      */
     std::multimap< std::pair<types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair<types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > >
-    neighbor_lists;
+        neighbor_lists;
 
     /**
      * Number of locally relevant non-energy atoms per cell.

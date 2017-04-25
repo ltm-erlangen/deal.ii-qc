@@ -1,0 +1,59 @@
+# LAMMPS input script for pair_lj_cut_02 test
+
+units       metal
+dimension	3
+boundary	s s s
+
+
+atom_style	full
+
+read_data atom_data
+
+thermo_style custom step epair evdwl ecoul elong ebond fmax
+thermo_modify format 3 %20.16g
+thermo_modify format 7 %20.16g
+
+
+velocity all create 0.1 146981634 dist gaussian mom yes rot no
+
+# variables defined in pair_lj_cut_02
+variable epsilon equal 0.877
+variable rm equal 1.55
+
+# classical lj with epsilon and sigma
+variable pow equal -1.0/6.0
+variable sigma equal 1.55*2.0^${pow}
+print       "Sigma = ${sigma}"
+print       "Epsilon = ${epsilon}"
+
+# first call
+pair_style lj/cut 0.95
+pair_coeff * * ${epsilon} ${sigma}
+run 0
+variable energy equal epair
+variable force equal fmax
+variable energy_1 equal ${energy}
+variable force_1 equal ${force}
+
+# second call
+set atom 1 x 1.2  y 2.09 z 0.8
+set atom 2 x 2.7  y 2.09 z 0.8
+pair_style lj/cut 0.95
+pair_coeff * * ${epsilon} ${sigma}
+run 0
+variable energy_2 equal ${energy}
+variable force_2 equal ${force}
+
+# third call
+set atom 1 x 1.2  y 2.09 z 0.8
+set atom 2 x 2.75  y 2.09 z 0.8
+pair_style lj/cut 1.75
+pair_coeff * * ${epsilon} ${sigma}
+run 0
+variable energy_3 equal ${energy}
+variable force_3 equal ${force}
+
+print       "Energy: ${energy_1} Force: ${force_1}"
+print       "Energy: ${energy_2} Force: ${force_2}"
+print       "Energy: ${energy_3} Force: ${force_3}"
+
