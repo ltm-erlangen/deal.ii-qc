@@ -28,6 +28,12 @@ namespace dealiiqc
        */
       LJ = 0,
 
+      /**
+       * Coulomb pair potential computed using Wolf summation method.
+       * (see PairCoulWolfManager class).
+       */
+      Coul_Wolf=1
+
     };
 
 
