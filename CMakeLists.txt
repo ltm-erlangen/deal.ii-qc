@@ -23,6 +23,7 @@ SET(TARGET_SRC
   source/io/data_out_atom_data.cc
   source/io/parse_atom_data.cc
   source/potentials/pair_lj_cut.cc
+  source/potentials/pair_coul_wolf.cc
   source/qc/core.cc
   )
 
