@@ -31,7 +31,7 @@ namespace dealiiqc
       Assert( interaction==InteractionTypes::Coul_Wolf,
               ExcMessage("Invalid InteractionTypes specified"));
 
-      Assert( i_atom_type < charges.size() || j_atom_type < charges.size(),
+      Assert( i_atom_type < charges.size() && j_atom_type < charges.size(),
               ExcMessage("Either the list of charges is initialized incorrectly"
                          "Or atom type argument passed is incorrect"));
 
