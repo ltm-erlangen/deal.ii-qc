@@ -24,6 +24,17 @@ namespace dealiiqc
     types::global_atom_index global_index;
 
     /**
+     * Local atom index of this atom within the cell it is associated with.
+     *
+     * @note During constructing FEValues object for the cell associated to this
+     * atom, the local_index of this atom can be used as the index for the
+     * quadrature point corresponding to this atom. It is convenient to have
+     * the index of the quadrature point while calling the value function of
+     * the FEValues object.
+     */
+    unsigned int local_index;
+
+    /**
      * Atom species type.
      */
     types::atom_type type;

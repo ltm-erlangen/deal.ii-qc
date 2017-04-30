@@ -29,7 +29,8 @@ namespace LA
 #endif
 }
 
-#include <dealiiqc/atom/atom.h>
+#include <dealiiqc/atom/atom_handler.h>
+#include <dealiiqc/atom/cluster_weights.h>
 #include <dealiiqc/io/configure_qc.h>
 
 namespace dealiiqc
@@ -67,9 +68,14 @@ namespace dealiiqc
     void setup_triangulation();
 
     /**
-     * Setup atoms
+     * Setup atom data object of the current MPI process.
+     *
+     * This function initializes the cell based data structures of atom data.
+     * More importantly it initializes the primary data member @see energy_atoms
+     * which holds an association between the locally relevant active cell of
+     * the underlying @see triangulation and the energy atoms in it.
      */
-    void setup_atoms();
+    void setup_atom_data();
 
     /**
      * Distribute degrees-of-freedom and initialise matrices and vectors.
@@ -77,31 +83,37 @@ namespace dealiiqc
     void setup_system ();
 
     /**
-     * Main function to calculate gradient of the energy function
-     * (written to @p gradient) and it's value (returned) for a given input
-     * @p locally_relevant_displacement finite element field.
+     * Update positions of the energy atoms according to the given
+     * @p locally_relevant_displacement of finite element displacement field.
+     *
+     * @note: During a typical minimization call in ROL, this function is called
+     * after each iterate is formed. Internally in ROL, update() function of the
+     * objective class is called after each iterate is formed and is responsible
+     * for updating the data members of the objective class. Therefore,
+     * update_energy_atoms_positions() is separated from
+     * calculate_energy_gradient().
      */
-    double calculate_energy_gradient(const vector_t &locally_relevant_displacement,
-                                     vector_t &gradient) const;
-
+    void update_energy_atoms_positions();
 
     /**
-     * Run through all atoms and find a cells to which they belong.
-     *
-     * TODO: move to a utility function
+     * Main function to calculate gradient of the energy function
+     * (written to @p gradient) and it's value (returned).
      */
-    void associate_atoms_with_cells();
+    double calculate_energy_gradient (vector_t &gradient) const;
 
-
+    // TODO: implement the logic above. For now just use all atoms.
     /**
      * Given cells and dof handler, for each cell set-up FEValues object with
      * quadrature made of those atoms, which we are interested in. Namely
      * atoms within clusters and also atoms within a cut-off radios of each
      * cluster (one sphere within another).
-     *
-     * TODO: implement the logic above. For now just use all atoms.
      */
     void setup_fe_values_objects();
+
+    /**
+     * Update neighbor lists.
+     */
+    void update_neighbor_lists();
 
     /**
      * MPI communicator
@@ -194,36 +206,27 @@ namespace dealiiqc
       /**
        * FEValues object to evaluate fields and shape function values at
        * quadrature points.
+       *
+       * The @see energy_atoms data member of AtomData holds association between
+       * all the locally relevant active cells and the locally relevant energy
+       * atoms of the current MPI process. The positions of atoms' associated
+       * to a particular active cell are updated according to the (linearly
+       * varying) displacement field within the cell.
+       * The displacement within the cell can be obtained using FEValues object
+       * of the cell.
        */
       std::shared_ptr<FEValues<dim>> fe_values;
 
+      // TODO: do we really need this? FEValues do store displacement already
+      // after calling FEValues::reinit(cell), so we might just ask it directly
+      // for those values. It would probably even store it more efficiently
+      // internally given the tensor product property of FE basis.
       /**
-       * All atoms attributed to this cell.
+       * A vector to store displacements evaluated at quadrature points.
        *
-       * TOOD: move away from this struct? Do-once-and-forget.
-       */
-      std::vector<unsigned int> cell_atoms;
-
-      /**
-       * Any atom contributing to (QC) energy of the system is in @see energy_atoms.
-       * An atom contributes to (QC) energy computations if it happens to be
-       * located within a distance of @see cluster_radius + @see cutoff_radius
-       * to any vertex.
-       */
-      //std::multimap< CellIterator, Atom<dim>> energy_atoms;
-
-      /**
-       * A map of global atom IDs to quadrature point (local id of at atom)
-       */
-      std::map<unsigned int, unsigned int> quadrature_atoms;
-
-      /**
-       * IDs of all atoms which are needed for energy calculation.
-       */
-      std::vector<unsigned int> energy_atoms;
-
-      /**
-       * A vector to store displacements evaluated at quadrature points
+       * The size of this vector is exactly equal to the number of energy_atoms
+       * on a per cell basis. The order of this list is the same order in which
+       * the energy atoms are stored in energy_atoms on a per cell basis.
        */
       mutable std::vector<Tensor<1,dim>> displacements;
 
@@ -242,11 +245,23 @@ namespace dealiiqc
     std::map<typename DoFHandler<dim>::active_cell_iterator, AssemblyData> cells_to_data;
 
     /**
-     * A vector of atoms in the system. The vector is used only for
-     * initializing cell based data structures that would actually be
-     * used for computations.
+     * The primary atom data object that holds cell based atom data structures.
+     * Cell based atom data structures rely on the association between atoms
+     * and mesh.
      */
-    std::vector<Atom<dim>> atoms;
+    AtomData<dim> atom_data;
+
+    /**
+     * AtomHandler object to manage the cell based atom data mainly through
+     * initializing or updating atom_data.
+     */
+    AtomHandler<dim> atom_handler;
+
+    /**
+     * Neighbor lists.
+     */
+    std::multimap<std::pair<types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair<types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim>>>
+        neighbor_lists;
 
     /**
      * A time object
@@ -255,6 +270,6 @@ namespace dealiiqc
 
   };
 
-}
+} // namespace dealiiqc
 
 #endif // __dealii_qc_qc_h

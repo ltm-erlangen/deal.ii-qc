@@ -10,11 +10,15 @@ namespace dealiiqc
 {
   using namespace dealii;
 
+
+
   template <int dim>
   QC<dim>::~QC ()
   {
     dof_handler.clear();
   }
+
+
 
   template <int dim>
   QC<dim>::QC ( const ConfigureQC &config )
@@ -29,7 +33,8 @@ namespace dealiiqc
                    Triangulation<dim>::limit_level_difference_at_vertices),
     fe (FE_Q<dim>(1),dim),
     u_fe (0),
-    dof_handler    (triangulation),
+    dof_handler (triangulation),
+    atom_handler (configure_qc),
     computing_timer (mpi_communicator,
                      pcout,
                      TimerOutput::never,
@@ -41,12 +46,14 @@ namespace dealiiqc
     setup_triangulation();
 
     // Read atom data file and initialize atoms
-    setup_atoms();
+    setup_atom_data();
 
     setup_system();
-    associate_atoms_with_cells();
 
   }
+
+
+
 
   template <int dim>
   void QC<dim>::setup_triangulation()
@@ -67,36 +74,23 @@ namespace dealiiqc
       triangulation.refine_global(configure_qc.get_n_initial_global_refinements());
   }
 
+
+
+
   template <int dim>
-  void QC<dim>::setup_atoms()
+  void QC<dim>::setup_atom_data()
   {
-    if (!(configure_qc.get_atom_data_file()).empty() )
-      {
-        const std::string atom_data_file = configure_qc.get_atom_data_file();
-        std::fstream fin(atom_data_file, std::fstream::in );
-        ParseAtomData<dim> atom_parser;
-        // TODO: Use atom types to initialize neighbor lists faster
-        // TODO: Use masses of different types of atom for FIRE minimization scheme?
+    // TODO: Change timer description
+    TimerOutput::Scope t (computing_timer, "Parse atom data and associate atoms with cells");
+    atom_handler.parse_atoms_and_assign_to_cells( dof_handler, atom_data);
 
-        std::vector<types::charge> charges;
-        std::vector<double> masses;
-        atom_parser.parse( fin, atoms, charges, masses);
-      }
-    else if ( !(* configure_qc.get_stream()).eof() )
-      {
-        ParseAtomData<dim> atom_parser;
-        // TODO: Use atom types to initialize neighbor lists faster
-        // TODO: Use masses of different types of atom for FIRE minimization scheme?
-
-        std::vector<types::charge> charges;
-        std::vector<double> masses;
-        atom_parser.parse( *configure_qc.get_stream(), atoms, charges, masses);
-      }
-    else
-      AssertThrow(false,
-                  ExcMessage("Atom data was not provided neither as an auxiliary "
-                             "data file nor at the end of the parameter file!"));
+    // TODO: Read the method of updating cluster_weight of atoms.
+    Cluster::WeightsByCell<dim> weights_by_cell(configure_qc);
+    weights_by_cell.update_cluster_weights( atom_data.n_thrown_atoms_per_cell,
+                                            atom_data.energy_atoms);
   }
+
+
 
   template <int dim>
   template<typename T>
@@ -110,6 +104,9 @@ namespace dealiiqc
     else
       AssertThrow(false, ExcNotImplemented());
   }
+
+
+
 
   template <int dim>
   void QC<dim>::setup_system ()
@@ -144,45 +141,100 @@ namespace dealiiqc
     locally_relevant_displacement = displacement;
 
     cells_to_data.clear();
+
+    // TODO: use TriaAccessor<>::set_user_pointer() to associate AssemblyData with a cell
     for (auto cell = dof_handler.begin_active(); cell != dof_handler.end(); cell++)
       cells_to_data.insert(std::make_pair(cell,AssemblyData()));
+
+    /*
+    // FIXME: Do we want to initialize cell_to_data using cells in energy_atoms?
+    //        Initializing it with all the cells is perhaps not necessary.
+    // Initialize cells_to_data with all the cells in energy_atoms
+    auto &energy_atoms = atom_data.energy_atoms;
+    types::CellAtomConstIteratorType<dim> unique_key;
+    for (unique_key  = energy_atoms.cbegin();
+         unique_key != energy_atoms.cend();
+         unique_key  = energy_atoms.upper_bound(unique_key->first))
+      cells_to_data.insert(std::make_pair(unique_key->first, AssemblyData()));
+     */
+
   }
+
+
 
   template <int dim>
   void QC<dim>::setup_fe_values_objects ()
   {
-    // vector of atoms we care about for calculation, i.e. those within
-    // the clusters plus those in the cut-off:
+    // Container to store quadrature points and weights.
     std::vector<Point<dim>> points;
     std::vector<double> weights_per_atom;
+
     const unsigned int dofs_per_cell = fe.dofs_per_cell;
     std::vector<dealii::types::global_dof_index> local_dof_indices(dofs_per_cell);
 
-    for (auto cell = dof_handler.begin_active(); cell != dof_handler.end(); cell++)
+    // FIXME: Loop only over cells in energy_atoms
+    for (types::CellIteratorType<dim> cell = dof_handler.begin_active(); cell != dof_handler.end(); ++cell)
       {
-        // vector of atoms we care about for calculation, i.e. those within
-        // the clusters plus those in the cut-off:
-        points.resize(0);
-        weights_per_atom.resize(0);
+        // Include all the energy_atoms associated to this active cell
+        // as quadrature points. The quadrature points will be then used to
+        // initialize fe_values object so as to evaluate the displacement
+        // at the location of energy_atoms in the active cell.
+
+        // Non const iterators to update local indices of energy atoms.
+        std::pair<types::CellAtomIteratorType<dim>, types::CellAtomIteratorType<dim>>
+            cell_atom_range = atom_data.energy_atoms.equal_range(cell);
+
+        const types::CellAtomIteratorType<dim>
+        &cell_atom_range_begin = cell_atom_range.first,
+         &cell_atom_range_end  = cell_atom_range.second;
+
+        // If this cell is not within the locally relevant active cells of the
+        // current MPI process continue active cell loop
+        if (cell_atom_range_begin == cell_atom_range_end)
+          continue;
+
+        // Faster to get the number of energy_atoms in the active cell by
+        // computing the distance between first and second iterators
+        // instead of calling count on energy_atoms.
+        typename std::iterator_traits<types::CellAtomConstIteratorType<dim> >::difference_type
+        n_energy_atoms_in_cell = std::distance (cell_atom_range.first,
+                                                cell_atom_range.second);
+
+        AssertThrow (n_energy_atoms_in_cell > 0,
+                     ExcMessage("The number of energy atoms in the cell counted "
+                                "using the distance between the iterator ranges "
+                                "yields unusable value."));
+
+        // Comparision with int and unsigned int, this is probably safe but ugly
+        Assert (n_energy_atoms_in_cell == atom_data.energy_atoms.count(cell),
+                ExcMessage("The number of energy atoms in the cell counted "
+                           "using the distance between the iterator ranges "
+                           "yields a different result than "
+                           "energy_atom.count(cell)"));
+
+        // Resize containers to known number of energy atoms in cell.
+        points.resize(n_energy_atoms_in_cell);
+        weights_per_atom.resize(n_energy_atoms_in_cell);
 
         AssemblyData &data = cells_to_data[cell];
-
-        // for now take all points as relevant:
-        for (unsigned int q = 0; q < data.cell_atoms.size(); q++)
+        types::CellAtomIteratorType<dim> cell_atom_iterator = cell_atom_range_begin;
+        for (unsigned int q = 0; q < n_energy_atoms_in_cell; ++q, ++cell_atom_iterator)
           {
-            const unsigned int aid = data.cell_atoms[q];
-            points.push_back(atoms[aid].reference_position);
-            weights_per_atom.push_back(1.0); // TODO: put cluster weights here and 0. for those outside of clusters.
-            data.quadrature_atoms[aid] = q;
-            data.energy_atoms.push_back(aid);
+            // const_iter->second yields the actual atom
+            points[q]           = cell_atom_iterator->second.reference_position;
+            weights_per_atom[q] = cell_atom_iterator->second.cluster_weight;
+            cell_atom_iterator->second.local_index = q;
           }
+
+        Assert (cell_atom_iterator == cell_atom_range.second,
+                ExcMessage("The number of energy atoms in the cell counted "
+                           "using the distance between the iterator ranges "
+                           "yields a different result than "
+                           "incrementing the iterator to energy_atoms."
+                           "Why wasn't this error thrown earlier?"));
 
         Assert (points.size() == weights_per_atom.size(),
                 ExcDimensionMismatch(points.size(), weights_per_atom.size()));
-
-        Assert (points.size() > 0,
-                ExcMessage("Cell does not have any atoms at which fields and "
-                           "shape functions are to be evaluated."));
 
         Assert (data.fe_values.use_count() ==0,
                 ExcInternalError());
@@ -207,13 +259,11 @@ namespace dealiiqc
       }
   }
 
-  template <int dim>
-  double QC<dim>::calculate_energy_gradient(const vector_t &locally_relevant_displacement,
-                                            vector_t &gradient) const
-  {
-    double res = 0.;
-    gradient = 0.;
 
+
+  template <int dim>
+  void QC<dim>::update_energy_atoms_positions()
+  {
     // First, loop over all cells and evaluate displacement field at quadrature
     // points. This is needed irrespectively of energy or gradient calculations.
     for (auto cell = dof_handler.begin_active(); cell != dof_handler.end(); cell++)
@@ -225,160 +275,163 @@ namespace dealiiqc
         // get displacement field on all quadrature points of this object
         it->second.fe_values->operator[](u_fe).get_function_values(locally_relevant_displacement,
                                                                    it->second.displacements);
+        const auto &displacements = it->second.displacements;
+
+        std::pair<types::CellAtomIteratorType<dim>, types::CellAtomIteratorType<dim> >
+        cell_atom_range = atom_data.energy_atoms.equal_range(cell);
+
+        // update energy atoms positions
+        // TODO: write test to check if positions are updated correctly.
+        for (unsigned int i = 0;
+             i < displacements.size();
+             i++, ++cell_atom_range.first)
+          cell_atom_range.first->second.position += displacements[i];
+
+        // The loop over displacements must have exhausted all the energy_atoms
+        // on a per cell basis (and the converse also should be true).
+        Assert (cell_atom_range.first==cell_atom_range.second,
+                ExcInternalError());
       }
+
+  }
+
+
+
+  template <int dim>
+  void QC<dim>::update_neighbor_lists()
+  {
 
     // TODO: Update neighbor lists
     // if( (iter_count % neigh_modify_delay)==0 || (max_abs_displacement > neigh_skin)   )
     //   update_neighbour_lists();
+    neighbor_lists = atom_handler.get_neighbor_lists(atom_data.energy_atoms);
+  }
+
+
+
+  template <int dim>
+  double QC<dim>::calculate_energy_gradient (vector_t &gradient) const
+  {
+    double res = 0.;
+    gradient = 0.;
 
     const unsigned int dofs_per_cell = fe.dofs_per_cell;
-    std::vector<dealii::types::global_dof_index> local_dof_indices(dofs_per_cell);
-    Vector<double> local_gradient(dofs_per_cell);
+    std::vector<dealii::types::global_dof_index>
+    local_dof_indices_I(dofs_per_cell), local_dof_indices_J(dofs_per_cell);
+    Vector<double> local_gradient_I(dofs_per_cell), local_gradient_J(dofs_per_cell);
 
+    typename
+    std::map<types::CellIteratorType<dim>, AssemblyData>::const_iterator
+    cell_data_I = cells_to_data.begin(),
+    cell_data_J = cells_to_data.begin();
 
-    // TODO: parallelize using multithreading by dropping i>j and doing 1/2 ?
-    // We can't really enforce that two threads won't try to simultaneously
-    // calculate E_{ij} and E_{ji} where i and j belong to neighboring cells.
-    for (auto cell = dof_handler.begin_active(); cell != dof_handler.end(); cell++)
+    // TODO: parallelize using using TBB by looping over pairs of cells.
+    // Rework neighbor list as std::map<std::pair<Cell,Cell>,....>
+    for (const auto &cell_pair_cell_atom_pair : neighbor_lists)
       {
-        local_gradient = 0.;
-        const auto it = cells_to_data.find(cell);
-        Assert (it != cells_to_data.end(),
-                ExcInternalError());
+        // get reference to current cell pair and atom pair
+        const types::CellIteratorType<dim>
+        &cell_I  = cell_pair_cell_atom_pair.first.first,
+         &cell_J = cell_pair_cell_atom_pair.first.second;
 
-        cell->get_dof_indices (local_dof_indices);
+        const types::CellAtomConstIteratorType<dim>
+        &cell_atom_I  = cell_pair_cell_atom_pair.second.first,
+         &cell_atom_J = cell_pair_cell_atom_pair.second.second;
 
-        // for each cell, go through all atoms we care about in energy calculation
-        for (unsigned int a = 0; a < it->second.energy_atoms.size(); a++)
+        Assert ((cell_I == cell_atom_I->first) &&
+                (cell_J == cell_atom_J->first),
+                ExcMessage("Incorrect neighbor lists."
+                           "Either cell_I or cell_J doesn't contain "
+                           "cell_atom_I or cell_atom_J, respectively."));
+
+        // Check if I'th or Jth cell changed, if so, update the pointer to
+        // the cell data and get dof indices.
+        if (cell_data_I->first != cell_I)
           {
-            // global id of current atom:
-            const unsigned int  I = it->second.energy_atoms[a];
-            const auto qI_it = it->second.quadrature_atoms.find(I);
-            const unsigned int qI = qI_it->second;
+            cell_data_I = cells_to_data.find(cell_I);
+            cell_I->get_dof_indices (local_dof_indices_I);
+            local_gradient_I = 0.;
+          }
+        if (cell_data_J->first != cell_J)
+          {
+            cell_data_J = cells_to_data.find(cell_J);
+            cell_J->get_dof_indices (local_dof_indices_J);
+            local_gradient_J = 0.;
+          }
 
-            // Current position of atom:
-            const Point<dim> xI = atoms[I].position + it->second.displacements[qI];
+        const Tensor<1,dim> rIJ = cell_atom_I->second.position -
+                                  cell_atom_J->second.position;
 
-            // loop over all neighbors and disregard J<I
-            // TODO: implement ^^^^
-            // for now there is always one neighbor only: I+1
-            if (I+1 < atoms.size())
+        const double r = rIJ.norm();
+
+        // If atoms I and J interact with each other while belonging to
+        // different clusters. In this case, we need to account for
+        // different weights associated with the clusters by
+        // scaling E_{IJ} with (n_I + n_J)/2, which is exactly how
+        // this contribution would be added had we followed assembly
+        // from clusters perspective.
+        // Here we need to distinguish between two cases: both atoms
+        // belong to clusters (weight is as above), or
+        // only the main atom belongs to a cluster (weight is n_I/2)
+        // Now we can calculate energy:
+        // TODO: generalize, energy depends on a 2-points potential
+        // used for atoms I and J. Could be different for any combination
+        // of atoms.
+        const double energy = 0.5 * dealii::Utilities::fixed_power<2>(r - 0.25);
+        const double deriv  = r - 0.25;
+
+        // Get quadrature point index from the local_index of atom pairs
+        const unsigned int
+        qI = cell_atom_I->second.local_index,
+        qJ = cell_atom_J->second.local_index;
+
+        // Finally, we evaluated local contribution to the gradient of
+        // energy. Here we need to distinguish between two cases:
+        // 1. N_k(X_j) is non-zero on (possibly) neighboring cell
+        // 2. N_k(X_j) is zero, i.e. X_j does not belong to the support
+        // of N_k.
+        // Here k is the index of local shape function on the cell
+        // where atom I belongs.
+        // TODO: fix missing evaluation of forces on DoFs at cell J
+        for (unsigned int k = 0; k < dofs_per_cell; ++k)
+          {
+            const auto k_neigh = cell_data_J->second.global_to_local_dof.find(local_dof_indices_I[k]);
+            if (k_neigh == cell_data_J->second.global_to_local_dof.end())
               {
-                const unsigned int J = I+1;
-                // get Data for neighbor atom
-                // TODO: check if the atom is in this cell also to save some time.
-                const auto n_data = cells_to_data.find(atoms[J].parent_cell);
+                local_gradient_I[k] += (deriv / r) * rIJ *
+                                       cell_data_I->second.fe_values->operator[](u_fe).value(k, qI);
+              }
+            else
+              {
+                local_gradient_I[k] += (deriv / r) * rIJ *
+                                       (cell_data_I->second.fe_values->operator[](u_fe).value(k, qI) -
+                                        cell_data_J->second.fe_values->operator[](u_fe).value(k_neigh->second, qJ));
+              }
+          }
+        res += energy;
 
-                // now we need to know what is the quadrature point number
-                // associated with the atom J
-                const auto qJ_it = n_data->second.quadrature_atoms.find(J);
-                Assert (qJ_it != n_data->second.quadrature_atoms.end(),
-                        ExcInternalError());
-                const unsigned int qJ = qJ_it->second;
-
-                // current position of atom J
-                const Point<dim> xJ = atoms[J].position + n_data->second.displacements[qJ];
-
-                // distance vector
-                const Tensor<1,dim> rIJ = xI - xJ;
-
-                const double r = rIJ.norm();
-
-                // If atoms I and J interact with each other while belonging to
-                // different clusters. In this case, we need to account for
-                // different weights associated with the clusters by
-                // scaling E_{IJ} with (n_I + n_J)/2, which is exactly how
-                // this contribution would be added had we followed assembly
-                // from clusters perspective.
-                // Here we need to distinguish between two cases: both atoms
-                // belong to clusters (weight is as above), or
-                // only the main atom belongs to a cluster (weight is n_I/2)
-
-
-                // Now we can calculate energy:
-                // TODO: generalize, energy depends on a 2-points potential
-                // used for atoms I and J. Could be different for any combination
-                // of atoms.
-                const double energy = 0.5 * dealii::Utilities::fixed_power<2>(r - 0.25);
-                const double deriv  = r - 0.25;
-
-                // Finally, we evaluated local contribution to the gradient of
-                // energy. Here we need to distinguish between two cases:
-                // 1. N_k(X_j) is non-zero on (possibly) neighboring cell
-                // 2. N_k(X_j) is zero, i.e. X_j does not belong to the support
-                // of N_k.
-                // Here k is the index of local shape function on the cell
-                // where atom I belongs.
-                for (unsigned int k = 0; k < dofs_per_cell; ++k)
-                  {
-                    const auto k_neigh = n_data->second.global_to_local_dof.find(local_dof_indices[k]);
-                    if (k_neigh == n_data->second.global_to_local_dof.end())
-                      {
-                        local_gradient[k] += (deriv / r) * rIJ *
-                                             it->second.fe_values->operator[](u_fe).value(k, qI);
-                      }
-                    else
-                      {
-                        local_gradient[k] += (deriv / r) * rIJ *
-                                             (it->second.fe_values->operator[](u_fe).value(k, qI) -
-                                              n_data->second.fe_values->operator[](u_fe).value(k_neigh->second, qJ));
-                      }
-                  }
-
-                res += energy;
-              } // end of the loop over all neighbors
-
-          } // end of the loop over all atoms
-
-        // distribute gradient to the RHS:
-        constraints.distribute_local_to_global(local_gradient,
-                                               local_dof_indices,
+        // FIXME: distribute local gradients to the RHS ONLY when cells change!!
+        constraints.distribute_local_to_global(local_gradient_I,
+                                               local_dof_indices_I,
                                                gradient);
-
-      } // end of the loop over all cells
+        constraints.distribute_local_to_global(local_gradient_J,
+                                               local_dof_indices_J,
+                                               gradient);
+      }
 
     return res;
   }
+
 
 
   template <int dim>
   void QC<dim>::run ()
   {
     setup_fe_values_objects();
-
-    const double e = calculate_energy_gradient(locally_relevant_displacement,
-                                               gradient);
+    update_energy_atoms_positions();
+    const double e = calculate_energy_gradient(gradient);
   }
 
-
-  template <int dim>
-  void QC<dim>::associate_atoms_with_cells ()
-  {
-    TimerOutput::Scope t (computing_timer, "Associate atoms with cells");
-
-    for (unsigned int i = 0; i < atoms.size(); i++)
-      {
-        Atom<dim> &a = atoms[i];
-        const std::pair<typename DoFHandler<dim>::active_cell_iterator, Point<dim>>
-            my_pair = GridTools::find_active_cell_around_point(mapping, dof_handler, a.position);
-
-        a.reference_position = GeometryInfo<dim>::project_to_unit_cell(my_pair.second);
-        a.parent_cell = my_pair.first;
-
-        // add this atom to cell
-        auto data = cells_to_data.find(a.parent_cell);
-        Assert (data != cells_to_data.end(),
-                ExcInternalError());
-        data->second.cell_atoms.push_back(i);
-      }
-    // Check if all atoms are associated
-    size_t atom_count =0;
-    for (auto cell = dof_handler.begin_active(); cell != dof_handler.end(); cell++)
-      atom_count += cells_to_data[cell].cell_atoms.size();
-
-    Assert( atom_count==atoms.size(), ExcInternalError() );
-
-  }
 
   // instantiations:
   // TODO: move to insta.in
@@ -400,12 +453,9 @@ namespace dealiiqc
   template void QC<1>::write_mesh<std::ofstream>( std::ofstream &, const std::string &);
   template void QC<2>::write_mesh<std::ofstream>( std::ofstream &, const std::string &);
   template void QC<3>::write_mesh<std::ofstream>( std::ofstream &, const std::string &);
-  template void QC<1>::associate_atoms_with_cells ();
-  template void QC<2>::associate_atoms_with_cells ();
-  template void QC<3>::associate_atoms_with_cells ();
   template void QC<1>::setup_fe_values_objects ();
   template void QC<2>::setup_fe_values_objects ();
   template void QC<3>::setup_fe_values_objects ();
-  template double QC<1>::calculate_energy_gradient(TrilinosWrappers::MPI::Vector const &, TrilinosWrappers::MPI::Vector &) const;
+  template double QC<1>::calculate_energy_gradient(TrilinosWrappers::MPI::Vector &) const;
 
 }
