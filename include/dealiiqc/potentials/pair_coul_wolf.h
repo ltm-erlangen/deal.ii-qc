@@ -16,23 +16,23 @@ namespace dealiiqc
      * Only supports InteractionTypes::Coul_Wolf interaction type.
      *
      * \f[
-     *     \phi_{ij} =  \frac{q_i q_j \mbox{erfc}(\alpha r_{ij})}{r_{ij}}
-     *               -  \frac{q_i q_j \mbox{erfc}(\alpha r_{c})}{r_{c}}
+     *     \phi_{ij} =  \frac{q_i \, q_j \, \mbox{erfc}(\alpha r_{ij})}{r_{ij}}
+     *               -  \frac{q_i \, q_j \, \mbox{erfc}(\alpha r_{c })}{r_{c }}
      * \f]
      *
-     * where \f$\phi_{ij}$\f is the Coulomb interaction energy between atom
-     * \f$i$\f and atom \f$j$\f with charges \f$q_i$\f and \f$q_j$\f
-     * which are \f$r_{ij}$\f distance apart. The parameter \f$\alpha$\f is
-     * the damping coefficient and \f$r_c$\f is the cutoff radius.
+     * where \f$\phi_{ij}\f$ is the Coulomb interaction energy between atom
+     * \f$i\f$ and atom \f$j\f$ with charges \f$q_i\f$ and \f$q_j\f$
+     * which are \f$r_{ij}\f$ distance apart. The parameter \f$\alpha\f$ is
+     * the damping coefficient and \f$r_c\f$ is the cutoff radius.
      *
-     * @note: The contribution of self energy \f[E^s\f] is not computed
+     * @note The contribution of self energy \f$E^s\f$ is not computed
      * within this class's function energy_and_scalar_force(). Therefore, the
-     * value of the energy is shifted by a value of \f[E^s\f] given by,
+     * value of the energy is shifted by a value of \f$E^s\f$ given by
      *
      * \f[
-     *      E^s =  - \[ \mbox{erfc}(\alpha r_{c})}{2 r_{c}}
-     *             +    \frac{2 \alpha}{\sqrt{pi}} \] \sum_i^N q_i
-     * \f].
+     *      E^s =  - \left[ \frac{\mbox{erfc}(\alpha r_{c})}{2 r_{c}}
+     *                 +    \frac{2 \alpha}{\sqrt{\pi}}  \sum_i^N q_i^2 \right]
+     * \f]
      */
     class PairCoulWolfManager
     {
@@ -74,19 +74,10 @@ namespace dealiiqc
        * computation of scalar force; this is in the case when only the
        * value of the energy is intended to be queried.
        *
-       * @note: A typical energy minimization process might need the value of
+       * @note A typical energy minimization process might need the value of
        * energy much more often than the value of force. Therefore,
        * this function can be called by passing @p false as template
        * parameter to query only the computation of the energy.
-       *
-       * @note: The contribution of self energy \f[E^s\f] is not computed
-       * within this class's function energy_and_scalar_force(). Therefore, the
-       * value of the energy is shifted by a value of \f[E^s\f] given by,
-       *
-       * \f[
-       *      E^s =  - \[ \mbox{erfc}(\alpha r_{c})}{2 r_{c}}
-       *             +    \frac{2 \alpha}{\sqrt{pi}} \] \sum_i^N q_i
-       * \f].
        */
       template<bool ComputeScalarForce=true>
       inline
@@ -108,7 +99,7 @@ namespace dealiiqc
       const double cutoff_radius;
 
       /**
-       * A list of charges \f$q_i$\f of the different the atom types.
+       * A list of charges \f$q_i\f$ of the different the atom types.
        */
       const std::vector<types::charge> &charges;
 
