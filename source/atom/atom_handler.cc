@@ -172,13 +172,22 @@ namespace dealiiqc
       if ( unique_I->first->is_locally_owned()  )
         {
           types::ConstCellIteratorType<dim> cell_I = unique_I->first;
-          const double radius_I = cutoff_radius + Utilities::calculate_cell_radius<dim>(cell_I);
+
+          // Get center and the radius of the enclosing ball of cell_I
+          const auto enclosing_ball_I = cell_I->enclosing_ball();
+
           for ( types::CellAtomConstIteratorType<dim> unique_J = energy_atoms.cbegin(); unique_J != energy_atoms.cend(); unique_J = energy_atoms.upper_bound(unique_J->first))
             {
               types::ConstCellIteratorType<dim> cell_J = unique_J->first;
-              if ( (cell_I->center()-cell_J->center()).norm_square() <
-                   dealii::Utilities::fixed_power<2>( radius_I +
-                                                      Utilities::calculate_cell_radius<dim>(cell_J)) )
+
+              // Get center and the radius of the enclosing ball of cell_I
+              const auto enclosing_ball_J = cell_J->enclosing_ball();
+
+              // If the shortest distance between the enclosing balls of
+              // cell_I and cell_J is less than cutoff_radius, then the
+              // cell pair is in the cell_neighbor_lists.
+              if (enclosing_ball_I.first.distance_square(enclosing_ball_J.first)
+                  < cutoff_radius + enclosing_ball_I.second +enclosing_ball_J.second)
                 cell_neighbor_lists.push_back( std::make_pair(cell_I, cell_J) );
             }
         }
@@ -227,7 +236,7 @@ namespace dealiiqc
                   if ( ( atom_J_is_cluster_atom && (atom_I.global_index > atom_J.global_index))
                        ||
                        !atom_J_is_cluster_atom )
-                    if ( (atom_I.position - atom_J.position).norm_square() < cutoff_radius*cutoff_radius)
+                    if ( atom_I.position.distance_square(atom_J.position) < cutoff_radius*cutoff_radius)
                       neighbor_lists.insert( std::make_pair( cell_pair_IJ, std::make_pair( cell_atom_I, cell_atom_J)) );
                 }
           }
