@@ -18,25 +18,25 @@ namespace dealiiqc
      * Only supports InteractionTypes::LJ interaction type.
      *
      * \f[
-     *     \phi_{ij} =  \epsilon \left\[    (\frac{r_m}{r_{ij}})^12
-     *                                   - 2(\frac{r_m}{r_{ij}})^6  \right\]
+     *     \phi_{ij} =  \epsilon \left[ \left(\frac{r_m}{r_{ij}}\right)^{12}
+     *                               - 2\left(\frac{r_m}{r_{ij}}\right)^6  \right]
      * \f]
      *
-     * where \f$\phi_{ij}$\f is the interactiong energy between atom \f$i$\f
-     * and atom \f$j$\f which are \f$r_{ij}$\f distance apart.
+     * where \f$\phi_{ij}\f$ is the interacting energy between atom \f$i\f$
+     * and atom \f$j\f$ which are \f$r_{ij}\f$ distance apart.
      *
-     * The parameter \f$\epsilon$\f is the depth of the potential well and
-     * \f$r_m$\f is the distance between atoms such that the interaction energy
-     * between the two atoms is minimum (equal to \f$\epsilon$\f).
+     * The parameter \f$\epsilon\f$ is the depth of the potential well and
+     * \f$r_m\f$ is the distance between atoms such that the interaction energy
+     * between the two atoms is minimum (equal to \f$\epsilon\f$).
      *
-     * @note: The above is a modified version of classical Lennard-Jones
+     * @note The above is a modified version of classical Lennard-Jones
      * potential which has the following form,
      * \f[
-     *     \phi_{ij} =  4 \epsilon \left\[   (\frac{\sigma}{r_{ij}})^12
-     *                                     - (\frac{\sigma}{r_{ij}})^6  \right\]
+     *     \phi_{ij} =  4 \epsilon \left[ \left(\frac{\sigma}{r_{ij}}\right)^{12}
+     *                                   -\left(\frac{\sigma}{r_{ij}}\right)^6  \right]
      * \f]
      *
-     * where \f$r_m$\f is \f$2^{1/6}\sigma$\f.
+     * where \f$r_m=2^{1/6}\sigma\f$.
      */
     class PairLJCutManager
     {
@@ -57,7 +57,7 @@ namespace dealiiqc
        *
        * This function updates or initializes the interaction to use
        * @p parameters, which should be of size two with the first element
-       * being \f$\epsilon$\f and second being \f$r_m$\f as defined in
+       * being \f$\epsilon\f$ and second being \f$r_m\f$ as defined in
        * PairLJCutManager.
        */
       void declare_interactions ( const types::atom_type i_atom_type,
@@ -76,7 +76,7 @@ namespace dealiiqc
        * computation of scalar force; this is in the case when only the
        * value of the energy is intended to be queried.
        *
-       * @note: A typical energy minimization process might need the value of
+       * @note A typical energy minimization process might need the value of
        * energy much more often than the value of force. Therefore,
        * this function can be called by passing @p false as template
        * parameter to query only the computation of the energy.
