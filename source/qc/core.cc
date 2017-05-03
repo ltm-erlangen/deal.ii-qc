@@ -196,7 +196,7 @@ namespace dealiiqc
         // Faster to get the number of energy_atoms in the active cell by
         // computing the distance between first and second iterators
         // instead of calling count on energy_atoms.
-        typename std::iterator_traits<types::CellAtomConstIteratorType<dim> >::difference_type
+        const typename std::iterator_traits<types::CellAtomConstIteratorType<dim> >::difference_type
         n_energy_atoms_in_cell = std::distance (cell_atom_range.first,
                                                 cell_atom_range.second);
 
