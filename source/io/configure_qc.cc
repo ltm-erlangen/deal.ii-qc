@@ -61,6 +61,12 @@ namespace dealiiqc
     return cluster_radius;
   }
 
+  std::shared_ptr<Potential::PairBaseManager>
+  ConfigureQC::get_potential() const
+  {
+    return pair_potential;
+  }
+
   void ConfigureQC::declare_parameters( ParameterHandler &prm )
   {
     // TODO: Write intput file name to the screen
@@ -97,8 +103,27 @@ namespace dealiiqc
                         "plus a skin thickness "
                         "used to update the neighbor lists "
                         "of atoms");
-      // TODO: Declare interaction potential style (Pair style)
-      // TODO: Declare interaction potential coefficients (Pair coeff)
+      prm.declare_entry("Pair potential type", "LJ",
+                        Patterns::Selection("Coulomb Wolf|LJ"),
+                        "Pairwise interactions type of the "
+                        "pair potential energy function");
+      prm.declare_entry("Pair global coefficients", "5.",
+                        Patterns::List(Patterns::Anything(),1),
+                        "Global coefficient values for the provided pair "
+                        "potential type."
+                        "LJ: cutoff radius "
+                        "Coulomb Wolf: alpha and cutoff radius.");
+      prm.declare_entry("Pair specific coefficients", "0, 1, 0.8, 0.95",
+                        Patterns::List(Patterns::List(Patterns::Anything(),1),0,5,";"),
+                        "Pair specific coefficients for the provided pair "
+                        "potential type are either necessary or not necessary"
+                        "depending on the specific pair potential type."
+                        "For the pair potential type: Coulomb Wolf, the pair "
+                        "specific coefficients are not necessary."
+                        "For the pair potential type: LJ, the first two "
+                        "entries are the atom types (therefore of type "
+                        "unsigned int) and the remaining two are epsilon and "
+                        "alpha LJ parameters, respectively.");
     }
     prm.leave_subsection ();
     prm.enter_subsection ("Configure QC");
@@ -134,6 +159,72 @@ namespace dealiiqc
     {
       atom_data_file = prm.get("Atom data file");
       maximum_energy_radius = prm.get_double("Maximum energy radius");
+
+      const std::string pair_potential_type = prm.get("Pair potential type");
+
+      std::vector<double> global_coeffs;
+      {
+        const std::vector<std::string> tmp =
+          dealii::Utilities::split_string_list(prm.get("Pair global coefficients"), ',');
+        for ( const auto &c : tmp)
+          global_coeffs.push_back(dealii::Utilities::string_to_double(c));
+      }
+
+      if (pair_potential_type == "Coulomb Wolf")
+        {
+          AssertThrow (global_coeffs.size()==2,
+                       ExcMessage("Invalid Pair global coefficients provided "
+                                  "for the Pair potential type: "
+                                  "Coulomb Wolf."));
+          pair_potential =
+            std::static_pointer_cast<Potential::PairBaseManager>
+            (std::make_shared<Potential::PairCoulWolfManager> (global_coeffs[0],
+                                                               global_coeffs[1]));
+        }
+      else if (pair_potential_type == "LJ")
+        {
+          AssertThrow (global_coeffs.size()==1,
+                       ExcMessage("Invalid Pair global coefficients provided "
+                                  "for the Pair potential type: LJ."));
+          pair_potential =
+            std::static_pointer_cast<Potential::PairBaseManager>
+            (std::make_shared<Potential::PairLJCutManager> (global_coeffs[0]));
+
+          const std::vector<std::string> coeffs_per_type =
+            dealii::Utilities::split_string_list(prm.get("Pair specific coefficients"),';');
+
+          for ( const auto &specific_coeffs : coeffs_per_type)
+            {
+              // Pair specifiec coefficients = 0, 1, 2.5, 1.0
+              // atom type 0 and 1 interact with epsilon = 2.5 and r_m = 1.
+              const std::vector<std::string> tmp =
+                dealii::Utilities::split_string_list(specific_coeffs,',');
+
+              AssertThrow (tmp.size()==4,
+                           ExcMessage("Only two specific coefficients should be "
+                                      "provided the first element being "
+                                      "epsilon and second being r_m as "));
+
+              const types::atom_type
+              i = dealii::Utilities::string_to_int(tmp[0]),
+              j = dealii::Utilities::string_to_int(tmp[1]);
+
+              std::vector<double> coeffs(2);
+              coeffs[0] = dealii::Utilities::string_to_double(tmp[2]);
+              coeffs[1] = dealii::Utilities::string_to_double(tmp[3]);
+
+              (std::static_pointer_cast<Potential::PairLJCutManager>
+              (pair_potential))->declare_interactions (i,
+                                                       j,
+                                                       Potential::InteractionTypes::LJ,
+                                                       coeffs);
+            }
+        }
+      else
+        {
+          AssertThrow (false, ExcMessage("Not yet implemented!"));
+        }
+
     }
     prm.leave_subsection();
     prm.enter_subsection("Configure QC");

@@ -12,6 +12,8 @@
 #include <memory>
 
 #include <dealiiqc/io/parse_atom_data.h>
+#include <dealiiqc/potentials/pair_lj_cut.h>
+#include <dealiiqc/potentials/pair_coul_wolf.h>
 #include <dealiiqc/utilities.h>
 
 namespace dealiiqc
@@ -77,6 +79,11 @@ namespace dealiiqc
      */
     double get_cluster_radius() const;
 
+    /**
+     * Get a shared pointer to the pair potential class object.
+     */
+    std::shared_ptr<Potential::PairBaseManager> get_potential() const;
+
   private:
 
     /*
@@ -114,6 +121,11 @@ namespace dealiiqc
      * constructor @see ConfigureQC().
      */
     mutable std::shared_ptr<std::istream> input_stream;
+
+    /**
+     * A shared pointer to the pair potential object.
+     */
+    std::shared_ptr<Potential::PairBaseManager> pair_potential;
 
     /**
      * Maximum search distance from any of the vertices of locally owned cells
