@@ -4,7 +4,7 @@
 
 #include <array>
 
-#include <dealiiqc/potentials/potentials.h>
+#include <dealiiqc/potentials/pair_base.h>
 #include <dealiiqc/utilities.h>
 
 namespace dealiiqc
@@ -38,7 +38,7 @@ namespace dealiiqc
      *
      * where \f$r_m=2^{1/6}\sigma\f$.
      */
-    class PairLJCutManager
+    class PairLJCutManager : public PairBaseManager
     {
 
     public:

@@ -2,7 +2,7 @@
 #ifndef __dealii_qc_pair_coul_wolf_h
 #define __dealii_qc_pair_coul_wolf_h
 
-#include <dealiiqc/potentials/potentials.h>
+#include <dealiiqc/potentials/pair_base.h>
 #include <dealiiqc/utilities.h>
 
 namespace dealiiqc
@@ -34,24 +34,21 @@ namespace dealiiqc
      *                 +    \frac{2 \alpha}{\sqrt{\pi}}  \sum_i^N q_i^2 \right]
      * \f]
      */
-    class PairCoulWolfManager
+    class PairCoulWolfManager : public PairBaseManager
     {
 
     public:
 
       /**
        * Constructor that takes in the damping coefficient @p alpha,
-       * the cutoff radius @p cutoff_radius, and a list of charges @p charges
-       * (whose size should be of size equal to the number of different
-       * atom types) to be used for computation of Coulomb energy and
-       * it's derivative using Wolf summation.
+       * the cutoff radius @p cutoff_radius to be used for computation of
+       * Coulomb energy and it's derivative using Wolf summation.
        * The atoms which are farther than @p cutoff_radius do not
        * interact with each other, consequently do not contribute to either
        * energy or its derivative.
        */
       PairCoulWolfManager( const double &alpha,
-                           const double &cutoff_radius,
-                           const std::vector<types::charge> &charges);
+                           const double &cutoff_radius);
 
       /**
        * Declare the type of interaction between the atom types @p i_atom_type
@@ -97,11 +94,6 @@ namespace dealiiqc
        * Cutoff radius.
        */
       const double cutoff_radius;
-
-      /**
-       * A list of charges \f$q_i\f$ of the different the atom types.
-       */
-      const std::vector<types::charge> &charges;
 
       /**
        * A const member whose value is required during energy computations.

@@ -10,17 +10,17 @@ namespace dealiiqc
   namespace Potential
   {
 
+
     PairCoulWolfManager::PairCoulWolfManager ( const double &alpha,
-                                               const double &cutoff_radius,
-                                               const std::vector<types::charge> &charges)
+                                               const double &cutoff_radius)
       :
       alpha(alpha),
       cutoff_radius(cutoff_radius),
-      charges(charges),
       energy_shift(std::erfc(alpha *cutoff_radius)/cutoff_radius),
       cutoff_radius_inverse(1./cutoff_radius),
       compound_exp_value(std::exp(-alpha *alpha *cutoff_radius *cutoff_radius))
     {}
+
 
     void
     PairCoulWolfManager::declare_interactions ( const types::atom_type i_atom_type,
@@ -31,7 +31,7 @@ namespace dealiiqc
       Assert( interaction==InteractionTypes::Coul_Wolf,
               ExcMessage("Invalid InteractionTypes specified"));
 
-      Assert( i_atom_type < charges.size() && j_atom_type < charges.size(),
+      Assert( i_atom_type < charges->size() && j_atom_type < charges->size(),
               ExcMessage("Either the list of charges is initialized incorrectly"
                          "Or atom type argument passed is incorrect"));
 
@@ -52,19 +52,21 @@ namespace dealiiqc
                :
                std::make_pair(0., std::numeric_limits<double>::signaling_NaN());
 
+      Assert (charges, ExcInternalError());
+
       // TODO: Need to setup units
       // The multiplying factor qqrd2e = 14.399645 yields energy in eV
       // and force in eV/Angstrom units
       const double qqrd2e = 14.399645;
       const double distance = std::sqrt(squared_distance);
 
-      Assert( i_atom_type < charges.size() && i_atom_type < charges.size(),
+      Assert( i_atom_type < charges->size() && i_atom_type < charges->size(),
               ExcMessage("The function is called with a value of atom type "
                          "larger than the size of PairCoulWolf::charges."
                          "Please ensure that the PairCoulWolf::charges is "
                          "initialized accurately."));
 
-      const double qiqj = (double) charges[i_atom_type] * charges[j_atom_type];
+      const double qiqj = (double) (*charges)[i_atom_type] * (*charges)[j_atom_type];
       const double distance_inverse = 1.0/distance;
       const double erfc_a_distance = std::erfc(alpha*distance) * distance_inverse;
 

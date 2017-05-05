@@ -61,6 +61,12 @@ namespace dealiiqc
     return cluster_radius;
   }
 
+  std::shared_ptr<Potential::PairBaseManager>
+  ConfigureQC::get_potential() const
+  {
+    return pair_potential;
+  }
+
   void ConfigureQC::declare_parameters( ParameterHandler &prm )
   {
     // TODO: Write intput file name to the screen
@@ -97,8 +103,33 @@ namespace dealiiqc
                         "plus a skin thickness "
                         "used to update the neighbor lists "
                         "of atoms");
-      // TODO: Declare interaction potential style (Pair style)
-      // TODO: Declare interaction potential coefficients (Pair coeff)
+      prm.declare_entry("Pair potential type", "LJ",
+                        Patterns::Selection("Coulomb Wolf|LJ"),
+                        "Pairwise interactions type of the "
+                        "pair potential energy function");
+      prm.declare_entry("Pair global coefficients", ".90",
+                        Patterns::List(Patterns::Anything(),1),
+                        "Comma separated global coefficient values for the "
+                        "provided pair potential type."
+                        "Coulomb Wolf: alpha and cutoff radius."
+                        "LJ: cutoff radius ");
+      prm.declare_entry("Pair specific coefficients", "0, 0, .8, 1.1;",
+                        Patterns::List(Patterns::List(Patterns::Anything(),
+                                                      0,
+                                                      std::numeric_limits<unsigned int>::max(),
+                                                      ","),
+                                       0,
+                                       std::numeric_limits<unsigned int>::max(),
+                                       ";"),
+                        "Additional coefficients for a pair of atoms of "
+                        "certain types. Depending on the specific pair "
+                        "potential type this input may not be necessary. "
+                        "For the pair potential type: Coulomb Wolf, the pair "
+                        "specific coefficients are not necessary."
+                        "For the pair potential type: LJ, the first two "
+                        "entries are the atom types (therefore of type "
+                        "unsigned int) and the remaining two are epsilon and "
+                        "alpha LJ parameters, respectively.");
     }
     prm.leave_subsection ();
     prm.enter_subsection ("Configure QC");
@@ -121,6 +152,52 @@ namespace dealiiqc
 
   }
 
+  namespace
+  {
+    // TODO: Move this to Utilities.
+    /**
+     * Given a string that contains a list of @p minor_delimiter separated
+     * text separated by a @p major_delimiter, split it into its components,
+     * remove leading and trailing spaces.
+     *
+     * The input string can end without specifying any delimiters (possibly
+     * followed by an arbitrary amount of whitespace). For example,
+     * @code
+     *   Utilities::split_list_of_string_lists("abc, def; ghi; j, k, l; ", ';', ',');
+     * @endcode
+     * yields the same 3-element list of sub-lists output
+     * <code>{ {"abc", "def"},{"ghi"}, {"j", "k", "l"}}</code>
+     * as you would get if the input had been
+     * @code
+     *   Utilities::split_list_of_string_lists("abc, def; ghi; j, k, l", ';', ',');
+     * @endcode
+     * or
+     * @code
+     *   Utilities::split_list_of_string_lists("abc, def; ghi; j, k, l;", ';', ',');
+     * @endcode
+     */
+    inline
+    std::vector<std::vector<std::string>>
+                                       split_list_of_string_lists (const std::string &s,
+                                           const char major_delimiter = ';',
+                                           const char minor_delimiter = ',')
+    {
+      AssertThrow (major_delimiter!=minor_delimiter,
+                   ExcMessage("Invalid major and minor delimiters provided!"));
+
+      std::vector<std::vector<std::string>> res;
+
+      const std::vector<std::string> coeffs_per_type =
+        dealii::Utilities::split_string_list (s,
+                                              major_delimiter);
+      res.resize(coeffs_per_type.size());
+      for (unsigned int i = 0; i < coeffs_per_type.size(); ++i)
+        res[i] = dealii::Utilities::split_string_list (coeffs_per_type[i],
+                                                       minor_delimiter);
+      return res;
+    }
+  }
+
   void ConfigureQC::parse_parameters( ParameterHandler &prm )
   {
     dimension = prm.get_integer("Dimension");
@@ -134,6 +211,67 @@ namespace dealiiqc
     {
       atom_data_file = prm.get("Atom data file");
       maximum_energy_radius = prm.get_double("Maximum energy radius");
+
+      const std::string pair_potential_type = prm.get("Pair potential type");
+
+      std::vector<double> global_coeffs;
+      {
+        const std::vector<std::string> tmp =
+          dealii::Utilities::split_string_list(prm.get("Pair global coefficients"), ',');
+        for ( const auto &c : tmp)
+          global_coeffs.push_back(dealii::Utilities::string_to_double(c));
+      }
+
+      const std::vector<std::vector<std::string>> list_of_coeffs_per_type =
+                                                 /*Utilities::*/split_list_of_string_lists(prm.get("Pair specific coefficients"),';',',');
+
+      if (pair_potential_type == "Coulomb Wolf")
+        {
+          AssertThrow (global_coeffs.size()==2,
+                       ExcMessage("Invalid Pair global coefficients provided "
+                                  "for the Pair potential type: "
+                                  "Coulomb Wolf."));
+          pair_potential =
+            std::make_shared<Potential::PairCoulWolfManager> (global_coeffs[0],
+                                                              global_coeffs[1]);
+        }
+      else if (pair_potential_type == "LJ")
+        {
+          AssertThrow (global_coeffs.size()==1,
+                       ExcMessage("Invalid Pair global coefficients provided "
+                                  "for the Pair potential type: LJ."));
+          pair_potential =
+            std::make_shared<Potential::PairLJCutManager> (global_coeffs[0]);
+
+          for (const auto &specific_coeffs : list_of_coeffs_per_type)
+            {
+              // Pair specific coefficients = 0, 1, 2.5, 1.0
+              // atom type 0 and 1 interact with epsilon = 2.5 and r_m = 1.
+              AssertThrow (specific_coeffs.size() == 4,
+                           ExcMessage("Only two specific coefficients should be "
+                                      "provided the first element being "
+                                      "epsilon and second being r_m as "));
+
+              const types::atom_type
+              i = dealii::Utilities::string_to_int(specific_coeffs[0]),
+              j = dealii::Utilities::string_to_int(specific_coeffs[1]);
+
+              std::vector<double> coeffs(2);
+              coeffs[0] = dealii::Utilities::string_to_double(specific_coeffs[2]);
+              coeffs[1] = dealii::Utilities::string_to_double(specific_coeffs[3]);
+
+              (std::static_pointer_cast<Potential::PairLJCutManager>
+               (pair_potential))->declare_interactions (i,
+                                                        j,
+                                                        Potential::InteractionTypes::LJ,
+                                                        coeffs);
+            }
+        }
+      else
+        {
+          AssertThrow (false, ExcInternalError());
+        }
+
     }
     prm.leave_subsection();
     prm.enter_subsection("Configure QC");
