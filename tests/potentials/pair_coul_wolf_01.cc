@@ -15,14 +15,20 @@ void test ( const double &r,
             const double &blessed_energy,
             const double &blessed_force)
 {
-  std::vector<dealiiqc::types::charge> charges = { 1., -1.};
+  Potential::PairCoulWolfManager coul_wolf ( alpha, cutoff_radius);
 
-  Potential::PairCoulWolfManager coul_wolf ( alpha, cutoff_radius, charges);
+  std::shared_ptr<std::vector<dealiiqc::types::charge> > charges_ =
+    std::make_shared<std::vector<dealiiqc::types::charge> >(2);
+  (*charges_)[0] =  1.;
+  (*charges_)[1] = -1.;
+
+  coul_wolf.set_charges(charges_);
+
   coul_wolf.declare_interactions( 0,
                                   1,
                                   Potential::InteractionTypes::Coul_Wolf);
 
-  std::pair<double, double> energy_force_0 =
+  const std::pair<double, double> energy_force_0 =
     coul_wolf.energy_and_scalar_force( 0, 1, r*r);
 
   std::cout << "Energy: " << energy_force_0.first << " "
@@ -33,7 +39,7 @@ void test ( const double &r,
   AssertThrow( fabs(energy_force_0.second-blessed_force) < 100. * std::numeric_limits<double>::epsilon(),
                ExcInternalError());
 
-  std::pair<double, double> energy_force_1 =
+  const std::pair<double, double> energy_force_1 =
     coul_wolf.energy_and_scalar_force( 1, 0, r*r);
 
   std::cout << "Energy: " << energy_force_1.first << " "
@@ -44,7 +50,7 @@ void test ( const double &r,
   AssertThrow( fabs(energy_force_1.second-blessed_force) < 100. * std::numeric_limits<double>::epsilon(),
                ExcInternalError());
 
-  std::pair<double, double> energy_force_2 =
+  const std::pair<double, double> energy_force_2 =
     coul_wolf.energy_and_scalar_force<false>( 0, 1, r*r);
 
   std::cout << "Energy: " << energy_force_2.first << " "
