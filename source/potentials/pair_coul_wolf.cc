@@ -10,23 +10,6 @@ namespace dealiiqc
   namespace Potential
   {
 
-    // Move PairBaseManager methods to pair_base.cc?
-    PairBaseManager::PairBaseManager ()
-    {
-      charges = NULL;
-    }
-
-    PairBaseManager::~PairBaseManager (){}
-
-    void
-    PairBaseManager::set_charges (std::shared_ptr<std::vector<types::charge>> &charges_)
-    {
-      // non-virtual function
-      // Update the shared pointer to point to the vector of charges
-      // (whose size should be of size equal to the number of different
-      //  atom types)
-      charges = charges_;
-    }
 
     PairCoulWolfManager::PairCoulWolfManager ( const double &alpha,
                                                const double &cutoff_radius)

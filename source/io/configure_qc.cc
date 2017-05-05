@@ -62,7 +62,7 @@ namespace dealiiqc
   }
 
   std::shared_ptr<Potential::PairBaseManager>
-  ConfigureQC::get_potential()
+  ConfigureQC::get_potential() const
   {
     return pair_potential;
   }
@@ -107,14 +107,20 @@ namespace dealiiqc
                         Patterns::Selection("Coulomb Wolf|LJ"),
                         "Pairwise interactions type of the "
                         "pair potential energy function");
-      prm.declare_entry("Pair global coefficients", "10000",
+      prm.declare_entry("Pair global coefficients", ".90",
                         Patterns::List(Patterns::Anything(),1),
                         "Comma separated global coefficient values for the "
                         "provided pair potential type."
                         "Coulomb Wolf: alpha and cutoff radius."
                         "LJ: cutoff radius ");
-      prm.declare_entry("Pair specific coefficients", "10000, 10000, 10000, 10000;",
-                        Patterns::List(Patterns::List(Patterns::Anything(),1),0,5,";"),
+      prm.declare_entry("Pair specific coefficients", "0, 0, .8, 1.1;",
+                        Patterns::List(Patterns::List(Patterns::Anything(),
+                                                      0,
+                                                      std::numeric_limits<unsigned int>::max(),
+                                                      ","),
+                                       0,
+                                       std::numeric_limits<unsigned int>::max(),
+                                       ";"),
                         "Additional coefficients for a pair of atoms of "
                         "certain types. Depending on the specific pair "
                         "potential type this input may not be necessary. "
@@ -172,9 +178,9 @@ namespace dealiiqc
      */
     inline
     std::vector<std::vector<std::string>>
-    split_list_of_string_lists (const std::string &s,
-                                const char major_delimiter = ';',
-                                const char minor_delimiter = ',')
+                                       split_list_of_string_lists (const std::string &s,
+                                           const char major_delimiter = ';',
+                                           const char minor_delimiter = ',')
     {
       AssertThrow (major_delimiter!=minor_delimiter,
                    ExcMessage("Invalid major and minor delimiters provided!"));
@@ -182,12 +188,12 @@ namespace dealiiqc
       std::vector<std::vector<std::string>> res;
 
       const std::vector<std::string> coeffs_per_type =
-          dealii::Utilities::split_string_list (s,
-                                                major_delimiter);
+        dealii::Utilities::split_string_list (s,
+                                              major_delimiter);
       res.resize(coeffs_per_type.size());
       for (unsigned int i = 0; i < coeffs_per_type.size(); ++i)
-         res[i] = dealii::Utilities::split_string_list (coeffs_per_type[i],
-                                                        minor_delimiter);
+        res[i] = dealii::Utilities::split_string_list (coeffs_per_type[i],
+                                                       minor_delimiter);
       return res;
     }
   }
@@ -217,7 +223,7 @@ namespace dealiiqc
       }
 
       const std::vector<std::vector<std::string>> list_of_coeffs_per_type =
-        /*Utilities::*/split_list_of_string_lists(prm.get("Pair specific coefficients"),';',',');
+                                                 /*Utilities::*/split_list_of_string_lists(prm.get("Pair specific coefficients"),';',',');
 
       if (pair_potential_type == "Coulomb Wolf")
         {
@@ -236,9 +242,6 @@ namespace dealiiqc
                                   "for the Pair potential type: LJ."));
           pair_potential =
             std::make_shared<Potential::PairLJCutManager> (global_coeffs[0]);
-
-          const std::vector<std::string> coeffs_per_type =
-            dealii::Utilities::split_string_list(prm.get("Pair specific coefficients"),';');
 
           for (const auto &specific_coeffs : list_of_coeffs_per_type)
             {

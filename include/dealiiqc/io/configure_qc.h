@@ -82,7 +82,7 @@ namespace dealiiqc
     /**
      * Get a shared pointer to the pair potential class object.
      */
-    std::shared_ptr<Potential::PairBaseManager> get_potential();
+    std::shared_ptr<Potential::PairBaseManager> get_potential() const;
 
   private:
 
