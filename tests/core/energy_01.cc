@@ -9,28 +9,28 @@
 using namespace dealii;
 using namespace dealiiqc;
 
-template <int dim>
-class Problem : public QC<dim>
+template <int dim, typename PotentialType>
+class Problem : public QC<dim, PotentialType>
 {
 public:
   Problem (const ConfigureQC &);
   void run ();
 };
 
-template <int dim>
-Problem<dim>::Problem (const ConfigureQC &config)
+template <int dim, typename PotentialType>
+Problem<dim, PotentialType>::Problem (const ConfigureQC &config)
   :
-  QC<dim>(config)
+  QC<dim, PotentialType>(config)
 {}
 
-template <int dim>
-void Problem<dim>::run()
+template <int dim, typename PotentialType>
+void Problem<dim, PotentialType>::run()
 {
-  QC<dim>::run ();
-  QC<dim>::pcout << QC<dim>::calculate_energy_gradient(QC<dim>::locally_relevant_displacement,
-                                                       QC<dim>::gradient);
-  QC<dim>::pcout << std::endl;
-  QC<dim>::pcout << QC<dim>::gradient.linfty_norm() << std::endl;
+  QC<dim, PotentialType>::run ();
+  QC<dim, PotentialType>::pcout << QC<dim>::calculate_energy_gradient(QC<dim>::locally_relevant_displacement,
+                                QC<dim>::gradient);
+  QC<dim, PotentialType>::pcout << std::endl;
+  QC<dim, PotentialType>::pcout << QC<dim>::gradient.linfty_norm() << std::endl;
 }
 
 
@@ -61,7 +61,8 @@ int main (int argc, char *argv[])
       ConfigureQC config( prm_stream );
 
       // Define Problem
-      Problem<dim> problem(config);
+      // FIXME: PotentialType
+      Problem<dim, Potential::PairLJCutManager> problem(config);
       problem.run ();
     }
   catch (std::exception &exc)

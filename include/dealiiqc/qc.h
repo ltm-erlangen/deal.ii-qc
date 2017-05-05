@@ -18,8 +18,6 @@
 
 #include <deal.II/lac/generic_linear_algebra.h>
 
-#include <dealiiqc/utilities.h>
-
 namespace LA
 {
 #ifdef USE_PETSC_LA
@@ -32,6 +30,9 @@ namespace LA
 #include <dealiiqc/atom/atom_handler.h>
 #include <dealiiqc/atom/cluster_weights.h>
 #include <dealiiqc/io/configure_qc.h>
+#include <dealiiqc/potentials/pair_lj_cut.h>
+#include <dealiiqc/potentials/pair_coul_wolf.h>
+#include <dealiiqc/utilities.h>
 
 namespace dealiiqc
 {
@@ -40,7 +41,7 @@ namespace dealiiqc
   /**
    * Main class for the Quasi-continuum calculations
    */
-  template <int dim>
+  template <int dim, typename PotentialType>
   class QC
   {
   public:
@@ -269,6 +270,7 @@ namespace dealiiqc
     mutable TimerOutput  computing_timer;
 
   };
+
 
 } // namespace dealiiqc
 

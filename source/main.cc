@@ -30,19 +30,20 @@ int main (int argc, char *argv[])
       ConfigureQC config(prm_stream);
       const unsigned int dim = config.get_dimension();
 
+      // FIXME: adding a dummy potential to compile
       if (dim == 2)
         {
-          QC<2> problem(config);
+          QC<2, Potential::PairLJCutManager> problem(config);
           problem.run ();
         }
       else if (dim == 3)
         {
-          QC<3> problem(config);
+          QC<3, Potential::PairLJCutManager> problem(config);
           problem.run ();
         }
       else if (dim ==1)
         {
-          QC<1> problem(config);
+          QC<1, Potential::PairLJCutManager> problem(config);
           problem.run ();
         }
       else
