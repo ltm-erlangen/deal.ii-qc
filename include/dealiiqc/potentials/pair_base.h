@@ -20,6 +20,16 @@ namespace dealiiqc
     public:
 
       /**
+       * Default constructor.
+       */
+      PairBaseManager();
+
+      /**
+       * Virtual destructor.
+       */
+      virtual ~PairBaseManager();
+
+      /**
        * Set the charges of each atom type in the system using a shared pointer
        * to a list of @p charges. This is needed by the
        * derived classes to compute Coulomb interaction energy when there are
@@ -36,7 +46,8 @@ namespace dealiiqc
     protected:
 
       /**
-       * A shared pointer to the list of charges in the system.
+       * A shared pointer to the list of charges \f$q_i\f$ of the different
+       * atom typesin the system.
        */
       std::shared_ptr<std::vector<types::charge>> charges;
 

@@ -9,6 +9,15 @@ namespace dealiiqc
 
   namespace Potential
   {
+
+    // Move PairBaseManager methods to pair_base.cc?
+    PairBaseManager::PairBaseManager ()
+    {
+      charges = NULL;
+    }
+
+    PairBaseManager::~PairBaseManager (){}
+
     void
     PairBaseManager::set_charges (std::shared_ptr<std::vector<types::charge>> &charges_)
     {
@@ -74,8 +83,7 @@ namespace dealiiqc
                          "Please ensure that the PairCoulWolf::charges is "
                          "initialized accurately."));
 
-      const double qiqj = (double) PairBaseManager::charges->operator[](i_atom_type)*
-                          PairBaseManager::charges->operator[](j_atom_type);
+      const double qiqj = (double) (*charges)[i_atom_type] * (*charges)[j_atom_type];
       const double distance_inverse = 1.0/distance;
       const double erfc_a_distance = std::erfc(alpha*distance) * distance_inverse;
 

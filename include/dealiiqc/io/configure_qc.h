@@ -82,7 +82,7 @@ namespace dealiiqc
     /**
      * Get a shared pointer to the pair potential class object.
      */
-    std::shared_ptr<Potential::PairBaseManager> get_potential() const;
+    std::shared_ptr<Potential::PairBaseManager> get_potential();
 
   private:
 
@@ -125,7 +125,7 @@ namespace dealiiqc
     /**
      * A shared pointer to the pair potential object.
      */
-    std::shared_ptr<Potential::PairBaseManager> pair_potential;
+    mutable std::shared_ptr<Potential::PairBaseManager> pair_potential;
 
     /**
      * Maximum search distance from any of the vertices of locally owned cells
