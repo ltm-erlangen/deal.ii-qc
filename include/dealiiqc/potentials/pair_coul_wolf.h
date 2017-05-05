@@ -31,7 +31,7 @@ namespace dealiiqc
      *
      * \f[
      *      E^s =  - \left[ \frac{\mbox{erfc}(\alpha r_{c})}{2 r_{c}}
-     *                 +    \frac{2 \alpha}{\sqrt{\pi}}  \sum_i^N q_i^2 \right]
+     *                 +    \frac{2 \alpha}{\sqrt{\pi}} \right] \sum_i^N q_i^2
      * \f]
      */
     class PairCoulWolfManager : public PairBaseManager
