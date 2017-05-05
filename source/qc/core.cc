@@ -12,16 +12,16 @@ namespace dealiiqc
 
 
 
-  template <int dim>
-  QC<dim>::~QC ()
+  template <int dim, typename PotentialType>
+  QC<dim, PotentialType>::~QC ()
   {
     dof_handler.clear();
   }
 
 
 
-  template <int dim>
-  QC<dim>::QC ( const ConfigureQC &config )
+  template <int dim, typename PotentialType>
+  QC<dim, PotentialType>::QC ( const ConfigureQC &config )
     :
     mpi_communicator(MPI_COMM_WORLD),
     pcout (std::cout,
@@ -55,8 +55,8 @@ namespace dealiiqc
 
 
 
-  template <int dim>
-  void QC<dim>::setup_triangulation()
+  template <int dim, typename PotentialType>
+  void QC<dim, PotentialType>::setup_triangulation()
   {
     if (!(configure_qc.get_mesh_file()).empty() )
       {
@@ -77,8 +77,8 @@ namespace dealiiqc
 
 
 
-  template <int dim>
-  void QC<dim>::setup_atom_data()
+  template <int dim, typename PotentialType>
+  void QC<dim, PotentialType>::setup_atom_data()
   {
     // TODO: Change timer description
     TimerOutput::Scope t (computing_timer, "Parse atom data and associate atoms with cells");
@@ -92,9 +92,9 @@ namespace dealiiqc
 
 
 
-  template <int dim>
+  template <int dim, typename PotentialType>
   template<typename T>
-  void QC<dim>::write_mesh( T &os, const std::string &type )
+  void QC<dim, PotentialType>::write_mesh( T &os, const std::string &type )
   {
     GridOut grid_out;
     if ( !type.compare("eps")  )
@@ -108,8 +108,8 @@ namespace dealiiqc
 
 
 
-  template <int dim>
-  void QC<dim>::setup_system ()
+  template <int dim, typename PotentialType>
+  void QC<dim, PotentialType>::setup_system ()
   {
     TimerOutput::Scope t (computing_timer, "Setup system");
 
@@ -162,8 +162,8 @@ namespace dealiiqc
 
 
 
-  template <int dim>
-  void QC<dim>::setup_fe_values_objects ()
+  template <int dim, typename PotentialType>
+  void QC<dim, PotentialType>::setup_fe_values_objects ()
   {
     // Container to store quadrature points and weights.
     std::vector<Point<dim>> points;
@@ -261,8 +261,8 @@ namespace dealiiqc
 
 
 
-  template <int dim>
-  void QC<dim>::update_energy_atoms_positions()
+  template <int dim, typename PotentialType>
+  void QC<dim, PotentialType>::update_energy_atoms_positions()
   {
     // First, loop over all cells and evaluate displacement field at quadrature
     // points. This is needed irrespectively of energy or gradient calculations.
@@ -297,8 +297,8 @@ namespace dealiiqc
 
 
 
-  template <int dim>
-  void QC<dim>::update_neighbor_lists()
+  template <int dim, typename PotentialType>
+  void QC<dim, PotentialType>::update_neighbor_lists()
   {
 
     // TODO: Update neighbor lists
@@ -309,8 +309,8 @@ namespace dealiiqc
 
 
 
-  template <int dim>
-  double QC<dim>::calculate_energy_gradient (vector_t &gradient) const
+  template <int dim, typename PotentialType>
+  double QC<dim, PotentialType>::calculate_energy_gradient (vector_t &gradient) const
   {
     double res = 0.;
     gradient = 0.;
@@ -424,8 +424,8 @@ namespace dealiiqc
 
 
 
-  template <int dim>
-  void QC<dim>::run ()
+  template <int dim, typename PotentialType>
+  void QC<dim, PotentialType>::run ()
   {
     setup_fe_values_objects();
     update_energy_atoms_positions();
@@ -433,29 +433,33 @@ namespace dealiiqc
   }
 
 
-  // instantiations:
-  // TODO: move to insta.in
-  template void QC<1>::run ();
-  template void QC<2>::run ();
-  template void QC<3>::run ();
-  template void QC<1>::setup_system ();
-  template void QC<2>::setup_system ();
-  template void QC<3>::setup_system ();
-  template QC<1>::~QC ();
-  template QC<2>::~QC ();
-  template QC<3>::~QC ();
-  template QC<1>::QC (const ConfigureQC &);
-  template QC<2>::QC (const ConfigureQC &);
-  template QC<3>::QC (const ConfigureQC &);
-  template void QC<1>::setup_triangulation();
-  template void QC<2>::setup_triangulation();
-  template void QC<3>::setup_triangulation();
-  template void QC<1>::write_mesh<std::ofstream>( std::ofstream &, const std::string &);
-  template void QC<2>::write_mesh<std::ofstream>( std::ofstream &, const std::string &);
-  template void QC<3>::write_mesh<std::ofstream>( std::ofstream &, const std::string &);
-  template void QC<1>::setup_fe_values_objects ();
-  template void QC<2>::setup_fe_values_objects ();
-  template void QC<3>::setup_fe_values_objects ();
-  template double QC<1>::calculate_energy_gradient(TrilinosWrappers::MPI::Vector &) const;
 
-}
+  /**
+   * A macro that is used in instantiating QC class and it's functions
+   * for 1d, 2d and 3d. Call this macro with the name of another macro that when
+   * called with an integer argument and a PotentialType instantiates the
+   * respective classes and functions in the given space dimension.
+   */
+#define DEAL_II_QC_INSTANTIATE(INSTANTIATIONS) \
+  INSTANTIATIONS(1, Potential::PairLJCutManager) \
+  INSTANTIATIONS(2, Potential::PairLJCutManager) \
+  INSTANTIATIONS(3, Potential::PairLJCutManager) \
+  INSTANTIATIONS(1, Potential::PairCoulWolfManager) \
+  INSTANTIATIONS(2, Potential::PairCoulWolfManager) \
+  INSTANTIATIONS(3, Potential::PairCoulWolfManager)
+
+// Instantiations
+#define INSTANTIATE(dim, PotentialType) \
+  template QC<dim, PotentialType>::QC (const ConfigureQC&); \
+  template QC<dim, PotentialType>::~QC (); \
+  template void QC<dim, PotentialType>::run (); \
+  template void QC<dim, PotentialType>::setup_system (); \
+  template void QC<dim, PotentialType>::setup_triangulation(); \
+  template void QC<dim, PotentialType>::write_mesh<std::ofstream> (std::ofstream &, const std::string &); \
+  template void QC<dim, PotentialType>::setup_fe_values_objects (); \
+  template void QC<dim, PotentialType>::update_energy_atoms_positions(); \
+  template double QC<dim, PotentialType>::calculate_energy_gradient(TrilinosWrappers::MPI::Vector &) const;
+
+  DEAL_II_QC_INSTANTIATE(INSTANTIATE)
+
+} // namespace dealiiqc

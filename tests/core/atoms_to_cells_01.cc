@@ -9,30 +9,30 @@
 using namespace dealii;
 using namespace dealiiqc;
 
-template <int dim>
-class Problem : public QC<dim>
+template <int dim, typename PotentialType>
+class Problem : public QC<dim, PotentialType>
 {
 public:
   Problem (const ConfigureQC &);
   void run ();
 };
 
-template <int dim>
-Problem<dim>::Problem (const ConfigureQC &config)
+template <int dim, typename PotentialType>
+Problem<dim, PotentialType>::Problem (const ConfigureQC &config)
   :
-  QC<dim>(config)
+  QC<dim, PotentialType>(config)
 {}
 
-template <int dim>
-void Problem<dim>::run()
+template <int dim, typename PotentialType>
+void Problem<dim, PotentialType>::run()
 {
-  QC<dim>::run ();
+  QC<dim, PotentialType>::run ();
 
   for (auto a = QC<dim>::atoms.begin(); a != QC<dim>::atoms.end(); ++a)
     {
-      QC<dim>::pcout << "x =" << a->position << "; "
-                     << "ref =" << a->reference_position << "; "
-                     << "cell=" << a->parent_cell->center() << std::endl;
+      QC<dim, PotentialType>::pcout << "x =" << a->position << "; "
+                                    << "ref =" << a->reference_position << "; "
+                                    << "cell=" << a->parent_cell->center() << std::endl;
     }
 }
 
@@ -64,7 +64,8 @@ int main (int argc, char *argv[])
       ConfigureQC config( prm_stream );
 
       // Define problem
-      Problem<dim> problem(config);
+      // FIXME: PotentialType
+      Problem<dim, Potential::PairLJCutManager> problem(config);
       problem.run ();
     }
   catch (std::exception &exc)
