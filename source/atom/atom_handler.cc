@@ -187,7 +187,9 @@ namespace dealiiqc
               // cell_I and cell_J is less than cutoff_radius, then the
               // cell pair is in the cell_neighbor_lists.
               if (enclosing_ball_I.first.distance_square(enclosing_ball_J.first)
-                  < cutoff_radius + enclosing_ball_I.second +enclosing_ball_J.second)
+                  < dealii::Utilities::fixed_power<2>(cutoff_radius +
+                                                      enclosing_ball_I.second +
+                                                      enclosing_ball_J.second) )
                 cell_neighbor_lists.push_back( std::make_pair(cell_I, cell_J) );
             }
         }
