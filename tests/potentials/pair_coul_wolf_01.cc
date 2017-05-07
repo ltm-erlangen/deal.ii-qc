@@ -18,7 +18,7 @@ void test ( const double &r,
   Potential::PairCoulWolfManager coul_wolf ( alpha, cutoff_radius);
 
   std::shared_ptr<std::vector<dealiiqc::types::charge> > charges_ =
-    std::make_shared<std::vector<dealiiqc::types::charge> >(2);
+    std::make_shared<std::vector<dealiiqc::types::charge>>(2);
   (*charges_)[0] =  1.;
   (*charges_)[1] = -1.;
 
