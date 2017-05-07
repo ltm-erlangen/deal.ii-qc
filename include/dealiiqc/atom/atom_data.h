@@ -83,14 +83,6 @@ namespace dealiiqc
     std::multimap<types::CellIteratorType<dim>, Atom<dim>> energy_atoms;
 
     /**
-     * Neighbor lists using cell approach.
-     * For each cell loop over all nearby relevant cells only once
-     * and loop over all interacting atoms between the two cells.
-     */
-    std::multimap< std::pair<types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair<types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > >
-        neighbor_lists;
-
-    /**
      * Number of locally relevant non-energy atoms per cell.
      * This is exactly the number of non-energy atoms for whom a
      * locally relevant cell is found while updating @see energy_atoms.
