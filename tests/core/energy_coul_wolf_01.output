@@ -1,0 +1,9 @@
+The number of energy atoms in the system: 4
+Neighbor lists: 
+Atom I: 1 Atom J: 0
+Atom I: 2 Atom J: 0
+Atom I: 2 Atom J: 1
+Atom I: 3 Atom J: 0
+Atom I: 3 Atom J: 1
+Atom I: 3 Atom J: 2
+The energy computed using PairCoulWolfManager of 4 charged atom system is: -111.121 eV

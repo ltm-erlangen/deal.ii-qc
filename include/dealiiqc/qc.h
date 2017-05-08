@@ -97,9 +97,14 @@ namespace dealiiqc
     void update_energy_atoms_positions();
 
     /**
-     * Main function to calculate gradient of the energy function
-     * (written to @p gradient) and it's value (returned).
+     * Return the computed energy of the atomistic system using QC approach, and
+     * update the its @p gradient if @tparam ComputeGradient is set true.
+     *
+     * The template parameter indicates whether to do the additional
+     * computation of the gradient of the energy; when @tparam ComputeGradient
+     * is set false only the value of the energy is computed.
      */
+    template<bool ComputeGradient=true>
     double calculate_energy_gradient (vector_t &gradient) const;
 
     // TODO: implement the logic above. For now just use all atoms.
@@ -259,7 +264,7 @@ namespace dealiiqc
     AtomHandler<dim> atom_handler;
 
     /**
-     * Neighbor lists.
+     * Neighbor lists using cell approach.
      */
     std::multimap<std::pair<types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair<types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim>>>
         neighbor_lists;
