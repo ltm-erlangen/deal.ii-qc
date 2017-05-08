@@ -11,6 +11,8 @@
 #include <utility>
 #include <memory>
 
+#include <dealiiqc/io/geometry_box.h>
+#include <dealiiqc/io/geometry_gmsh.h>
 #include <dealiiqc/io/parse_atom_data.h>
 #include <dealiiqc/potentials/pair_lj_cut.h>
 #include <dealiiqc/potentials/pair_coul_wolf.h>
@@ -32,9 +34,9 @@ namespace dealiiqc
   public:
 
     /**
-     * Constructor with istream object
+     * Constructor with a shared pointer to an istream object @p is.
      */
-    ConfigureQC( std::shared_ptr<std::istream> );
+    ConfigureQC( std::shared_ptr<std::istream> is);
 
     /**
      * Get dimensionality of the problem
@@ -42,20 +44,24 @@ namespace dealiiqc
     unsigned int get_dimension() const;
 
     /**
-     * Get current mesh file
+     * Get a shared pointer to const dim dimensional Geometry object.
+     *
+     * The function returns one of #geometry_3d, #geometry_2d or #geometry_1d
+     * depending on the dimension provided in the input script while
+     * constructing the ConfigureQC object.
      */
-    std::string get_mesh_file() const;
+    template<int dim>
+    std::shared_ptr<const Geometry::Base<dim>> get_geometry () const;
 
     /**
-     * Get atom data file
+     * Get atom data file.
      */
     std::string get_atom_data_file() const;
 
     /**
-     * Get number of initial grid refinement cycles
+     * Get number of initial grid refinement cycles.
      */
     unsigned int get_n_initial_global_refinements() const;
-
 
     /**
      * Get input stream
@@ -70,12 +76,12 @@ namespace dealiiqc
     // TODO: take maximum_energy_radius from pair potential cutoff radii?
     // maximum_energy_radius= max{ cutoff_radii } + skin?
     /**
-     * Get maximum energy radius
+     * Get maximum energy radius.
      */
     double get_maximum_energy_radius() const;
 
     /**
-     * Get cluster radius
+     * Get cluster radius.
      */
     double get_cluster_radius() const;
 
@@ -87,7 +93,7 @@ namespace dealiiqc
   private:
 
     /*
-     * Declare parameters to configure qc
+     * Declare parameters to configure QC class.
      */
     static void declare_parameters( ParameterHandler &prm );
 
@@ -102,9 +108,29 @@ namespace dealiiqc
     unsigned int dimension;
 
     /**
-     * Path to the mesh file for initial qc setup.
+     * Shared pointer to the three dimensional Geometry object.
+     *
+     * @note The dimension of the Geometry object has to be read from the input
+     * stream, therefore in ConfigureQC class, shared pointers to all the three
+     * dimensioned Geometry object is declared. However, upon reading the input
+     * stream only the relevant shared pointer is initialized and the rest of
+     * the shared pointers are NULL.
      */
-    std::string mesh_file;
+    std::shared_ptr<const Geometry::Base<3>> geometry_3d;
+
+    /**
+     * Shared pointer to the two dimensional Geometry object.
+     *
+     * See note in #geometry_3d
+     */
+    std::shared_ptr<const Geometry::Base<2>> geometry_2d;
+
+    /**
+     * Shared pointer to the one dimensional Geometry object.
+     *
+     * See note in #geometry_3d
+     */
+    std::shared_ptr<const Geometry::Base<1>> geometry_1d;
 
     /**
      * Number of cycles of initial global refinement
@@ -118,7 +144,7 @@ namespace dealiiqc
 
     /**
      * Shared pointer to the input stream passed in to the
-     * constructor @see ConfigureQC().
+     * constructor ConfigureQC().
      */
     mutable std::shared_ptr<std::istream> input_stream;
 
@@ -132,30 +158,30 @@ namespace dealiiqc
      * to an atom, to identify whether the atom contributes to the
      * QC energy computations.
      *
-     * @p maximum_search_radius is also used to identify ghost cells of a
+     * #maximum_search_radius is also used to identify ghost cells of a
      * current MPI process. If any of a cell's vertices are within a
-     * @p maximum_search_radius distance from any of locally owned cell's vertices,
+     * #maximum_search_radius distance from any of locally owned cell's vertices,
      * then the cell is a ghost cell of a current MPI process.
      *
-     * @note @p maximum_search_radius should not be less than the sum of cluster
+     * @note #maximum_search_radius should not be less than the sum of cluster
      * radius and (maximum) cutoff radius.
      */
     double maximum_search_radius;
 
     /**
-     * @p maximum_energy_radius is the maximum of all the cutoff radii
+     * #maximum_energy_radius is the maximum of all the cutoff radii
      * of the pair potentials. It is used to update neighbor lists of
      * atoms.
      *
-     * @note @p maximum_search_radius is different from
-     * @p maximum_energy_radius. The former is used to identify ghost cells
+     * @note #maximum_search_radius is different from
+     * #maximum_energy_radius. The former is used to identify ghost cells
      * of a current MPI process, while the latter is used to update
      * neighbor lists of atoms.
      */
     double maximum_energy_radius;
 
     /**
-     * @p cluster_radius is the cluster radius used in QC
+     * The cluster radius used in QC.
      */
     double cluster_radius;
 

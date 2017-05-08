@@ -10,7 +10,6 @@ namespace dealiiqc
   ConfigureQC::ConfigureQC( std::shared_ptr<std::istream> is)
     :
     dimension(0),
-    mesh_file(std::string()),
     n_initial_global_refinements(1),
     input_stream(is)
   {
@@ -26,9 +25,28 @@ namespace dealiiqc
     return dimension;
   }
 
-  std::string ConfigureQC::get_mesh_file () const
+  template<>
+  std::shared_ptr<const Geometry::Base<1>> ConfigureQC::get_geometry() const
   {
-    return mesh_file;
+    AssertThrow (dimension == 1, ExcInternalError());
+    Assert(geometry_1d, ExcInternalError());
+    return geometry_1d;
+  }
+
+  template<>
+  std::shared_ptr<const Geometry::Base<2>> ConfigureQC::get_geometry() const
+  {
+    AssertThrow (dimension == 2, ExcInternalError());
+    Assert(geometry_2d, ExcInternalError());
+    return geometry_2d;
+  }
+
+  template<>
+  std::shared_ptr<const Geometry::Base<3>> ConfigureQC::get_geometry() const
+  {
+    AssertThrow (dimension == 3, ExcInternalError());
+    Assert(geometry_3d, ExcInternalError());
+    return geometry_3d;
   }
 
   std::string ConfigureQC::get_atom_data_file () const
@@ -67,6 +85,8 @@ namespace dealiiqc
     return pair_potential;
   }
 
+
+
   void ConfigureQC::declare_parameters( ParameterHandler &prm )
   {
     // TODO: Write intput file name to the screen
@@ -76,12 +96,11 @@ namespace dealiiqc
     prm.declare_entry("Dimension", "2",
                       Patterns::Integer(1,3),
                       "Dimensionality of the problem ");
+
+    Geometry::declare_parameters(prm);
+
     prm.enter_subsection ("Configure mesh");
     {
-      prm.declare_entry("Mesh file", "",
-                        Patterns::Anything(),
-                        "Name of the mesh file "
-                        "with dealii compatible mesh files");
       prm.declare_entry("Number of initial global refinements", "1",
                         Patterns::Integer(0),
                         "Number of global mesh refinement cycles "
@@ -157,12 +176,34 @@ namespace dealiiqc
   void ConfigureQC::parse_parameters( ParameterHandler &prm )
   {
     dimension = prm.get_integer("Dimension");
+
+    if (dimension==3)
+      {
+        geometry_3d = Geometry::parse_parameters_and_get_geometry<3>(prm);
+        Assert( !geometry_1d, ExcInternalError());
+        Assert( !geometry_2d, ExcInternalError());
+      }
+    else if (dimension==2)
+      {
+        geometry_2d = Geometry::parse_parameters_and_get_geometry<2>(prm);
+        Assert( !geometry_1d, ExcInternalError());
+        Assert( !geometry_3d, ExcInternalError());
+      }
+    else if (dimension==1)
+      {
+        geometry_1d = Geometry::parse_parameters_and_get_geometry<1>(prm);
+        Assert( !geometry_2d, ExcInternalError());
+        Assert( !geometry_3d, ExcInternalError());
+      }
+    else
+      AssertThrow (false, ExcNotImplemented());
+
     prm.enter_subsection("Configure mesh");
     {
-      mesh_file                    = prm.get("Mesh file");
       n_initial_global_refinements = prm.get_integer("Number of initial global refinements");
     }
     prm.leave_subsection();
+
     prm.enter_subsection("Configure atoms");
     {
       atom_data_file = prm.get("Atom data file");
@@ -230,6 +271,7 @@ namespace dealiiqc
 
     }
     prm.leave_subsection();
+
     prm.enter_subsection("Configure QC");
     {
       //TODO: Max->Maximum
@@ -239,4 +281,12 @@ namespace dealiiqc
     prm.leave_subsection();
   }
 
-}
+
+
+  template std::shared_ptr<const Geometry::Base<1>> ConfigureQC::get_geometry() const;
+  template std::shared_ptr<const Geometry::Base<2>> ConfigureQC::get_geometry() const;
+  template std::shared_ptr<const Geometry::Base<3>> ConfigureQC::get_geometry() const;
+
+
+
+} // namespace dealiiqc

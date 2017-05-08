@@ -22,6 +22,9 @@ SET(TARGET_SRC
   source/io/configure_qc.cc
   source/io/data_out_atom_data.cc
   source/io/parse_atom_data.cc
+  source/io/geometry_base.cc
+  source/io/geometry_box.cc
+  source/io/geometry_gmsh.cc
   source/potentials/pair_base.cc
   source/potentials/pair_coul_wolf.cc
   source/potentials/pair_lj_cut.cc
