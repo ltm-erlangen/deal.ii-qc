@@ -40,6 +40,10 @@ namespace dealiiqc
        * class before we start parsing the atom data. Therefore the
        * charges in system are set-up in a separate function as opposed to the
        * constructor of derived classes.
+       *
+       * @note This non-virtual function shares ownership
+       * (with the member variable PairBaseManager::charges) over
+       * the resources of @p charges_, increasing the use count by one.
        */
       void set_charges (std::shared_ptr<std::vector<types::charge>> &charges_);
 
@@ -49,7 +53,7 @@ namespace dealiiqc
        * A shared pointer to the list of charges \f$q_i\f$ of the different
        * atom typesin the system.
        */
-      std::shared_ptr<std::vector<types::charge>> charges;
+      std::shared_ptr<const std::vector<types::charge>> charges;
 
 
     };

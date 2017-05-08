@@ -29,7 +29,7 @@ namespace dealiiqc
       // Update the shared pointer to point to the vector of charges
       // (whose size should be of size equal to the number of different
       //  atom types)
-      charges = charges_;
+      charges = std::const_pointer_cast<const std::vector<types::charge>>(charges_);
     }
 
 
