@@ -6,12 +6,16 @@
 namespace dealiiqc
 {
 
+
+
   template<int dim>
   AtomHandler<dim>::AtomHandler( const ConfigureQC &configure_qc)
     :
     configure_qc(configure_qc)
   {
   }
+
+
 
   template<int dim>
   void AtomHandler<dim>::parse_atoms_and_assign_to_cells( const types::MeshType<dim> &mesh,
@@ -22,7 +26,8 @@ namespace dealiiqc
     std::vector<Atom<dim>> vector_atoms;
     ParseAtomData<dim> atom_parser;
 
-    auto &charges = atom_data.charges;
+    atom_data.charges = NULL;
+    std::vector<types::charge> charges;
     auto &masses  = atom_data.masses;
     auto &energy_atoms = atom_data.energy_atoms;
     auto &n_thrown_atoms_per_cell = atom_data.n_thrown_atoms_per_cell;
@@ -41,6 +46,8 @@ namespace dealiiqc
       AssertThrow(false,
                   ExcMessage("Atom data was not provided neither as an auxiliary "
                              "data file nor at the end of the parameter file!"));
+
+    atom_data.charges = std::make_shared<std::vector<types::charge>>(charges);
 
     // In order to speed-up finding an active cell around atoms through
     // find_active_cell_around_point(), we will need to construct a
@@ -140,6 +147,8 @@ namespace dealiiqc
             ExcInternalError());
 
   }
+
+
 
   template<int dim>
   std::multimap< std::pair< types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > >
@@ -284,6 +293,8 @@ namespace dealiiqc
 
     return neighbor_lists;
   }
+
+
 
   template class AtomHandler<1>;
   template class AtomHandler<2>;

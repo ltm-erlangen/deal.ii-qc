@@ -54,7 +54,6 @@ namespace dealiiqc
 
 
 
-
   template <int dim, typename PotentialType>
   void QC<dim, PotentialType>::setup_triangulation()
   {
@@ -76,13 +75,18 @@ namespace dealiiqc
 
 
 
-
   template <int dim, typename PotentialType>
   void QC<dim, PotentialType>::setup_atom_data()
   {
     // TODO: Change timer description
     TimerOutput::Scope t (computing_timer, "Parse atom data and associate atoms with cells");
     atom_handler.parse_atoms_and_assign_to_cells( dof_handler, atom_data);
+
+    // It is ConfigureQC that actually creates a PotentialType object according
+    // to the parsed input and can return a shared pointer to the PotentialType
+    // object. However, charges in PotentialType object aren't set yet.
+    // Finish setting up PotentialType object here.
+    configure_qc.get_potential()->set_charges(atom_data.charges);
 
     // TODO: Read the method of updating cluster_weight of atoms.
     Cluster::WeightsByCell<dim> weights_by_cell(configure_qc);
@@ -104,7 +108,6 @@ namespace dealiiqc
     else
       AssertThrow(false, ExcNotImplemented());
   }
-
 
 
 
@@ -310,10 +313,21 @@ namespace dealiiqc
 
 
   template <int dim, typename PotentialType>
+  template <bool ComputeGradient>
   double QC<dim, PotentialType>::calculate_energy_gradient (vector_t &gradient) const
   {
     double res = 0.;
-    gradient = 0.;
+
+    if (ComputeGradient)
+      gradient = 0.;
+
+    // Get the const PotentialType object from configure_qc.
+    const std::shared_ptr<const PotentialType> potential_ptr =
+      std::const_pointer_cast<const PotentialType>(
+        std::static_pointer_cast<PotentialType>(configure_qc.get_potential()));
+
+    // Assert that the casted pointer is not NULL.
+    Assert (potential_ptr, ExcInternalError());
 
     const unsigned int dofs_per_cell = fe.dofs_per_cell;
     std::vector<dealii::types::global_dof_index>
@@ -344,25 +358,10 @@ namespace dealiiqc
                            "Either cell_I or cell_J doesn't contain "
                            "cell_atom_I or cell_atom_J, respectively."));
 
-        // Check if I'th or Jth cell changed, if so, update the pointer to
-        // the cell data and get dof indices.
-        if (cell_data_I->first != cell_I)
-          {
-            cell_data_I = cells_to_data.find(cell_I);
-            cell_I->get_dof_indices (local_dof_indices_I);
-            local_gradient_I = 0.;
-          }
-        if (cell_data_J->first != cell_J)
-          {
-            cell_data_J = cells_to_data.find(cell_J);
-            cell_J->get_dof_indices (local_dof_indices_J);
-            local_gradient_J = 0.;
-          }
-
         const Tensor<1,dim> rIJ = cell_atom_I->second.position -
                                   cell_atom_J->second.position;
 
-        const double r = rIJ.norm();
+        const double r_square = rIJ.norm_square();
 
         // If atoms I and J interact with each other while belonging to
         // different clusters. In this case, we need to account for
@@ -377,46 +376,75 @@ namespace dealiiqc
         // TODO: generalize, energy depends on a 2-points potential
         // used for atoms I and J. Could be different for any combination
         // of atoms.
-        const double energy = 0.5 * dealii::Utilities::fixed_power<2>(r - 0.25);
-        const double deriv  = r - 0.25;
+        const std::pair<double, double> pair =
+          (*potential_ptr).template
+          energy_and_scalar_force<ComputeGradient> (cell_atom_I->second.type,
+                                                    cell_atom_J->second.type,
+                                                    r_square);
 
-        // Get quadrature point index from the local_index of atom pairs
-        const unsigned int
-        qI = cell_atom_I->second.local_index,
-        qJ = cell_atom_J->second.local_index;
+        res += pair.first;
 
-        // Finally, we evaluated local contribution to the gradient of
-        // energy. Here we need to distinguish between two cases:
-        // 1. N_k(X_j) is non-zero on (possibly) neighboring cell
-        // 2. N_k(X_j) is zero, i.e. X_j does not belong to the support
-        // of N_k.
-        // Here k is the index of local shape function on the cell
-        // where atom I belongs.
-        // TODO: fix missing evaluation of forces on DoFs at cell J
-        for (unsigned int k = 0; k < dofs_per_cell; ++k)
+        if (ComputeGradient)
           {
-            const auto k_neigh = cell_data_J->second.global_to_local_dof.find(local_dof_indices_I[k]);
-            if (k_neigh == cell_data_J->second.global_to_local_dof.end())
+            // Check if I'th or Jth cell changed, if so, update the pointer to
+            // the cell data and get dof indices.
+            if (cell_data_I->first != cell_I)
               {
-                local_gradient_I[k] += (deriv / r) * rIJ *
-                                       cell_data_I->second.fe_values->operator[](u_fe).value(k, qI);
+                cell_data_I = cells_to_data.find(cell_I);
+                cell_I->get_dof_indices (local_dof_indices_I);
+                local_gradient_I = 0.;
               }
-            else
+            if (cell_data_J->first != cell_J)
               {
-                local_gradient_I[k] += (deriv / r) * rIJ *
-                                       (cell_data_I->second.fe_values->operator[](u_fe).value(k, qI) -
-                                        cell_data_J->second.fe_values->operator[](u_fe).value(k_neigh->second, qJ));
+                cell_data_J = cells_to_data.find(cell_J);
+                cell_J->get_dof_indices (local_dof_indices_J);
+                local_gradient_J = 0.;
               }
-          }
-        res += energy;
 
-        // FIXME: distribute local gradients to the RHS ONLY when cells change!!
-        constraints.distribute_local_to_global(local_gradient_I,
-                                               local_dof_indices_I,
-                                               gradient);
-        constraints.distribute_local_to_global(local_gradient_J,
-                                               local_dof_indices_J,
-                                               gradient);
+            // TODO: Write test for update_energy_atoms_positions()
+            // TODO: Complete gradient computation.
+            const double &deriv  = pair.second;
+
+            // Get quadrature point index from the local_index of atom pairs
+            const unsigned int
+            qI = cell_atom_I->second.local_index,
+            qJ = cell_atom_J->second.local_index;
+
+            const double r = std::sqrt(r_square);
+
+            // Finally, we evaluated local contribution to the gradient of
+            // energy. Here we need to distinguish between two cases:
+            // 1. N_k(X_j) is non-zero on (possibly) neighboring cell
+            // 2. N_k(X_j) is zero, i.e. X_j does not belong to the support
+            // of N_k.
+            // Here k is the index of local shape function on the cell
+            // where atom I belongs.
+            // TODO: fix missing evaluation of forces on DoFs at cell J
+            for (unsigned int k = 0; k < dofs_per_cell; ++k)
+              {
+                const auto k_neigh = cell_data_J->second.global_to_local_dof.find(local_dof_indices_I[k]);
+                if (k_neigh == cell_data_J->second.global_to_local_dof.end())
+                  {
+                    local_gradient_I[k] += (deriv / r) * rIJ *
+                                           cell_data_I->second.fe_values->operator[](u_fe).value(k, qI);
+                  }
+                else
+                  {
+                    local_gradient_I[k] += (deriv / r) * rIJ *
+                                           (cell_data_I->second.fe_values->operator[](u_fe).value(k, qI) -
+                                            cell_data_J->second.fe_values->operator[](u_fe).value(k_neigh->second, qJ));
+                  }
+              }
+
+            // FIXME: distribute local gradients to the RHS ONLY when cells change!!
+            constraints.distribute_local_to_global(local_gradient_I,
+                                                   local_dof_indices_I,
+                                                   gradient);
+            constraints.distribute_local_to_global(local_gradient_J,
+                                                   local_dof_indices_J,
+                                                   gradient);
+          }
+
       }
 
     return res;
@@ -428,6 +456,7 @@ namespace dealiiqc
   void QC<dim, PotentialType>::run ()
   {
     setup_fe_values_objects();
+    update_neighbor_lists();
     update_energy_atoms_positions();
     const double e = calculate_energy_gradient(gradient);
   }
@@ -458,7 +487,8 @@ namespace dealiiqc
   template void QC<dim, PotentialType>::write_mesh<std::ofstream> (std::ofstream &, const std::string &); \
   template void QC<dim, PotentialType>::setup_fe_values_objects (); \
   template void QC<dim, PotentialType>::update_energy_atoms_positions(); \
-  template double QC<dim, PotentialType>::calculate_energy_gradient(TrilinosWrappers::MPI::Vector &) const;
+  template double QC<dim, PotentialType>::calculate_energy_gradient<true >(TrilinosWrappers::MPI::Vector &) const; \
+  template double QC<dim, PotentialType>::calculate_energy_gradient<false>(TrilinosWrappers::MPI::Vector &) const;
 
   DEAL_II_QC_INSTANTIATE(INSTANTIATE)
 

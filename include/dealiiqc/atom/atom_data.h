@@ -61,7 +61,7 @@ namespace dealiiqc
     /**
      * A vector of charges of different atom species.
      */
-    std::vector<types::charge> charges;
+    std::shared_ptr<std::vector<types::charge>> charges;
 
     /**
      * A vector to store masses of different atom species.
