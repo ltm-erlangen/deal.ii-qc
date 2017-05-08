@@ -12,16 +12,16 @@ namespace dealiiqc
   namespace Potential
   {
 
-    PairLJCutManager::PairLJCutManager( const double &cutoff_radius)
+    PairLJCutManager::PairLJCutManager (const double &cutoff_radius)
       :
       cutoff_radius_squared(cutoff_radius *cutoff_radius)
     {}
 
     void
-    PairLJCutManager::declare_interactions ( const types::atom_type i_atom_type,
-                                             const types::atom_type j_atom_type,
-                                             const InteractionTypes interaction,
-                                             const std::vector<double> &parameters)
+    PairLJCutManager::declare_interactions (const types::atom_type i_atom_type,
+                                            const types::atom_type j_atom_type,
+                                            const InteractionTypes interaction,
+                                            const std::vector<double> &parameters)
     {
       Assert( interaction==InteractionTypes::LJ,
               ExcMessage("Invalid InteractionTypes specified"));
@@ -38,15 +38,15 @@ namespace dealiiqc
 
     }
 
-    template<bool ComputeScalarForce>
+    template<bool ComputeGradient>
     std::pair<double, double>
-    PairLJCutManager::energy_and_scalar_force ( const types::atom_type i_atom_type,
-                                                const types::atom_type j_atom_type,
-                                                const double &squared_distance) const
+    PairLJCutManager::energy_and_gradient (const types::atom_type i_atom_type,
+                                           const types::atom_type j_atom_type,
+                                           const double &squared_distance) const
     {
 
       if ( squared_distance > cutoff_radius_squared)
-        return ComputeScalarForce
+        return ComputeGradient
                ?
                std::make_pair(0.,0.)
                :
@@ -67,7 +67,7 @@ namespace dealiiqc
       const double rm_by_r6 = rm6 / dealii::Utilities::fixed_power<3>(squared_distance);
 
       const double energy = eps * rm_by_r6 * ( rm_by_r6 - 2.);
-      const double force  = ComputeScalarForce
+      const double force  = ComputeGradient
                             ?
                             -12. * eps * rm_by_r6 * ( 1. - rm_by_r6) / sqrt(squared_distance)
                             :
@@ -78,15 +78,15 @@ namespace dealiiqc
 
     template
     std::pair<double, double>
-    PairLJCutManager::energy_and_scalar_force<true> ( const types::atom_type i_atom_type,
-                                                      const types::atom_type j_atom_type,
-                                                      const double &squared_distance) const;
+    PairLJCutManager::energy_and_gradient<true> (const types::atom_type i_atom_type,
+                                                 const types::atom_type j_atom_type,
+                                                 const double &squared_distance) const;
 
     template
     std::pair<double, double>
-    PairLJCutManager::energy_and_scalar_force<false> ( const types::atom_type i_atom_type,
-                                                       const types::atom_type j_atom_type,
-                                                       const double &squared_distance) const;
+    PairLJCutManager::energy_and_gradient<false> (const types::atom_type i_atom_type,
+                                                  const types::atom_type j_atom_type,
+                                                  const double &squared_distance) const;
 
   } // namespace Potential
 

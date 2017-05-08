@@ -27,7 +27,7 @@ void test ( const double &r,
                                         Potential::InteractionTypes::Coul_Wolf);
 
   const std::pair<double, double> energy_force_0 =
-    coulf_wolf_ptr->energy_and_scalar_force( 0, 1, r*r);
+    coulf_wolf_ptr->energy_and_gradient( 0, 1, r*r);
 
   std::cout << "Energy: " << energy_force_0.first << " "
             << "Force scalar: " << energy_force_0.second << std::endl;
@@ -38,7 +38,7 @@ void test ( const double &r,
                ExcInternalError());
 
   const std::pair<double, double> energy_force_1 =
-    coulf_wolf_ptr->energy_and_scalar_force( 1, 0, r*r);
+    coulf_wolf_ptr->energy_and_gradient( 1, 0, r*r);
 
   std::cout << "Energy: " << energy_force_1.first << " "
             << "Force scalar: " << energy_force_1.second << std::endl;
@@ -49,7 +49,7 @@ void test ( const double &r,
                ExcInternalError());
 
   const std::pair<double, double> energy_force_2 =
-    coulf_wolf_ptr->energy_and_scalar_force<false>( 0, 1, r*r);
+    coulf_wolf_ptr->energy_and_gradient<false>( 0, 1, r*r);
 
   std::cout << "Energy: " << energy_force_2.first << " "
             << "Force scalar: " << energy_force_2.second << std::endl;

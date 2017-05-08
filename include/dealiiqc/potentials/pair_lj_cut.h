@@ -49,7 +49,7 @@ namespace dealiiqc
        * are farther than @p cutoff_radius do not interact with each other,
        * consequently do not contribute to either energy or it's derivative.
        */
-      PairLJCutManager( const double &cutoff_radius);
+      PairLJCutManager (const double &cutoff_radius);
 
       /**
        * Declare the type of interaction between the atom types @p i_atom_type
@@ -60,33 +60,21 @@ namespace dealiiqc
        * being \f$\epsilon\f$ and second being \f$r_m\f$ as defined in
        * PairLJCutManager.
        */
-      void declare_interactions ( const types::atom_type i_atom_type,
-                                  const types::atom_type j_atom_type,
-                                  const InteractionTypes interaction,
-                                  const std::vector<double> &parameters);
+      void declare_interactions (const types::atom_type i_atom_type,
+                                 const types::atom_type j_atom_type,
+                                 const InteractionTypes interaction,
+                                 const std::vector<double> &parameters);
 
 
       /**
-       * Returns a pair of computed value of energy and scalar force between
-       * two atoms with atom type @p i_atom_type and atom_type @p j_atom_type
-       * that are a distance of square root of @p squared_distance apart.
-       * The first value in the returned pair is energy whereas the second
-       * is its (scalar) derivative, i.e. scalar force.
-       * The template parameter indicates whether to skip the additional
-       * computation of scalar force; this is in the case when only the
-       * value of the energy is intended to be queried.
-       *
-       * @note A typical energy minimization process might need the value of
-       * energy much more often than the value of force. Therefore,
-       * this function can be called by passing @p false as template
-       * parameter to query only the computation of the energy.
+       * @copydoc PairCoulWolfManager::energy_and_gradient()
        */
-      template<bool ComputeScalarForce=true>
+      template<bool ComputeGradient=true>
       inline
       std::pair<double, double>
-      energy_and_scalar_force ( const types::atom_type i_atom_type,
-                                const types::atom_type j_atom_type,
-                                const double &squared_distance) const;
+      energy_and_gradient (const types::atom_type i_atom_type,
+                           const types::atom_type j_atom_type,
+                           const double &squared_distance) const;
 
     private:
 

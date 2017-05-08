@@ -11,8 +11,8 @@ namespace dealiiqc
   {
 
 
-    PairCoulWolfManager::PairCoulWolfManager ( const double &alpha,
-                                               const double &cutoff_radius)
+    PairCoulWolfManager::PairCoulWolfManager (const double &alpha,
+                                              const double &cutoff_radius)
       :
       alpha(alpha),
       cutoff_radius(cutoff_radius),
@@ -23,10 +23,10 @@ namespace dealiiqc
 
 
     void
-    PairCoulWolfManager::declare_interactions ( const types::atom_type i_atom_type,
-                                                const types::atom_type j_atom_type,
-                                                InteractionTypes interaction,
-                                                const std::vector<double> &parameters)
+    PairCoulWolfManager::declare_interactions (const types::atom_type i_atom_type,
+                                               const types::atom_type j_atom_type,
+                                               InteractionTypes interaction,
+                                               const std::vector<double> &parameters)
     {
       Assert( interaction==InteractionTypes::Coul_Wolf,
               ExcMessage("Invalid InteractionTypes specified"));
@@ -39,14 +39,14 @@ namespace dealiiqc
               ExcMessage("This class does not accept any parameters."));
     }
 
-    template<bool ComputeScalarForce>
+    template<bool ComputeGradient>
     std::pair<double, double>
-    PairCoulWolfManager::energy_and_scalar_force ( const types::atom_type i_atom_type,
-                                                   const types::atom_type j_atom_type,
-                                                   const double &squared_distance) const
+    PairCoulWolfManager::energy_and_gradient (const types::atom_type i_atom_type,
+                                              const types::atom_type j_atom_type,
+                                              const double &squared_distance) const
     {
       if ( squared_distance > cutoff_radius*cutoff_radius )
-        return ComputeScalarForce
+        return ComputeGradient
                ?
                std::make_pair(0.,0.)
                :
@@ -72,7 +72,7 @@ namespace dealiiqc
 
       const double energy = qiqj * ( erfc_a_distance - energy_shift ) * qqrd2e;
 
-      const double force = ComputeScalarForce
+      const double force = ComputeGradient
                            ?
                            qqrd2e * qiqj *
                            ( distance_inverse *
@@ -95,15 +95,15 @@ namespace dealiiqc
 
     template
     std::pair<double, double>
-    PairCoulWolfManager::energy_and_scalar_force <true> ( const types::atom_type i_atom_type,
-                                                          const types::atom_type j_atom_type,
-                                                          const double &squared_distance) const;
+    PairCoulWolfManager::energy_and_gradient <true> (const types::atom_type i_atom_type,
+                                                     const types::atom_type j_atom_type,
+                                                     const double &squared_distance) const;
 
     template
     std::pair<double, double>
-    PairCoulWolfManager::energy_and_scalar_force <false> ( const types::atom_type i_atom_type,
-                                                           const types::atom_type j_atom_type,
-                                                           const double &squared_distance) const;
+    PairCoulWolfManager::energy_and_gradient <false> (const types::atom_type i_atom_type,
+                                                      const types::atom_type j_atom_type,
+                                                      const double &squared_distance) const;
   }
 
 }

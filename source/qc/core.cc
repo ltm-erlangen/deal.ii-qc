@@ -378,9 +378,9 @@ namespace dealiiqc
         // of atoms.
         const std::pair<double, double> pair =
           (*potential_ptr).template
-          energy_and_scalar_force<ComputeGradient> (cell_atom_I->second.type,
-                                                    cell_atom_J->second.type,
-                                                    r_square);
+          energy_and_gradient<ComputeGradient> (cell_atom_I->second.type,
+                                                cell_atom_J->second.type,
+                                                r_square);
 
         res += pair.first;
 

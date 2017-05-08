@@ -47,7 +47,7 @@ namespace dealiiqc
        * interact with each other, consequently do not contribute to either
        * energy or its derivative.
        */
-      PairCoulWolfManager( const double &alpha,
+      PairCoulWolfManager (const double &alpha,
                            const double &cutoff_radius);
 
       /**
@@ -56,19 +56,19 @@ namespace dealiiqc
        * this class and is present here only for consistency with the other
        * potentials.
        */
-      void declare_interactions ( const types::atom_type i_atom_type,
-                                  const types::atom_type j_atom_type,
-                                  InteractionTypes interaction,
-                                  const std::vector<double> &parameters=std::vector<double>());
+      void declare_interactions (const types::atom_type i_atom_type,
+                                 const types::atom_type j_atom_type,
+                                 InteractionTypes interaction,
+                                 const std::vector<double> &parameters=std::vector<double>());
 
       /**
-       * Returns a pair of computed values of energy and scalar force between
-       * two atoms of type @p i_atom_type and atom_type @p j_atom_type
+       * Returns a pair of computed values of energy and its gradient between
+       * two atoms of type @p i_atom_type and type @p j_atom_type
        * that are a distance of square root of @p squared_distance apart.
        * The first value in the returned pair is energy whereas the second
-       * is its (scalar) derivative, i.e. scalar force.
+       * is its (scalar) derivative, i.e. negative scalar force.
        * The template parameter indicates whether to skip the additional
-       * computation of scalar force; this is in the case when only the
+       * computation of gradient; this is in the case when only the
        * value of the energy is intended to be queried.
        *
        * @note A typical energy minimization process might need the value of
@@ -76,12 +76,12 @@ namespace dealiiqc
        * this function can be called by passing @p false as template
        * parameter to query only the computation of the energy.
        */
-      template<bool ComputeScalarForce=true>
+      template<bool ComputeGradient=true>
       inline
       std::pair<double, double>
-      energy_and_scalar_force ( const types::atom_type i_atom_type,
-                                const types::atom_type j_atom_type,
-                                const double &squared_distance) const;
+      energy_and_gradient (const types::atom_type i_atom_type,
+                           const types::atom_type j_atom_type,
+                           const double &squared_distance) const;
 
     private:
 
