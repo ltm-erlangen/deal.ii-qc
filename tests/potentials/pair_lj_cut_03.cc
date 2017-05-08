@@ -15,7 +15,7 @@ void test ( const double &r,
             std::shared_ptr<Potential::PairLJCutManager> lj_ptr)
 {
   std::pair<double, double> energy_force_0 =
-    lj_ptr->energy_and_scalar_force( 0, 1, r*r);
+    lj_ptr->energy_and_gradient( 0, 1, r*r);
 
   AssertThrow( fabs(energy_force_0.first-lammps_energy) < 1e5 * std::numeric_limits<double>::epsilon(),
                ExcInternalError());
@@ -23,7 +23,7 @@ void test ( const double &r,
                ExcInternalError());
 
   std::pair<double, double> energy_force_1 =
-    lj_ptr->energy_and_scalar_force( 1, 0, r*r);
+    lj_ptr->energy_and_gradient( 1, 0, r*r);
 
   AssertThrow( fabs(energy_force_1.first-lammps_energy) < 1e5 * std::numeric_limits<double>::epsilon(),
                ExcInternalError());

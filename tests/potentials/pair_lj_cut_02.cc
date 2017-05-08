@@ -21,7 +21,7 @@ void test ( const double &r,
                            Potential::InteractionTypes::LJ,
                            lj_params);
   std::pair<double, double> energy_force_0 =
-    lj.energy_and_scalar_force( 0, 1, r*r);
+    lj.energy_and_gradient( 0, 1, r*r);
 
   AssertThrow( fabs(energy_force_0.first-lammps_energy) < 1e5 * std::numeric_limits<double>::epsilon(),
                ExcInternalError());
@@ -29,7 +29,7 @@ void test ( const double &r,
                ExcInternalError());
 
   std::pair<double, double> energy_force_1 =
-    lj.energy_and_scalar_force( 1, 0, r*r);
+    lj.energy_and_gradient( 1, 0, r*r);
 
   AssertThrow( fabs(energy_force_1.first-lammps_energy) < 1e5 * std::numeric_limits<double>::epsilon(),
                ExcInternalError());
