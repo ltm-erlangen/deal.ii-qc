@@ -5,7 +5,7 @@
 #include <deal.II/grid/grid_generator.h>
 
 #include <dealiiqc/atom/atom_handler.h>
-#include <dealiiqc/io/configure_qc.h>
+#include <dealiiqc/configure/configure_qc.h>
 #include <dealiiqc/utilities.h>
 
 using namespace dealii;
@@ -33,6 +33,12 @@ public:
     GridGenerator::hyper_cube( triangulation, 0., 8., true );
     triangulation.refine_global (1);
     AtomHandler<dim>::parse_atoms_and_assign_to_cells( dof_handler, atom_data);
+
+    // Check that the number of atoms picked up and added to energy_atoms
+    // is so and so and shouldn't change each time this test is run.
+    std::cout << "The number of energy atoms picked up : "
+              << atom_data.energy_atoms.size()
+              << std::endl;
   }
 
 private:
