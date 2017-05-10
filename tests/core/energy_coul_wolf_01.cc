@@ -69,25 +69,44 @@ int main (int argc, char *argv[])
       // Allow the restriction that user must provide Dimension of the problem
       const unsigned int dim = 3;
       std::ostringstream oss;
-      oss << "set Dimension = " << dim                      << std::endl
-          << "subsection Configure atoms"                   << std::endl
-          << "  set Maximum energy radius = 2.0"            << std::endl
-          << "  set Pair potential type = Coulomb Wolf"     << std::endl
-          << "  set Pair global coefficients = 0.25, 1.25 " << std::endl
-          << "end"                                          << std::endl
-          << "subsection Configure QC"                      << std::endl
-          << "  set Max search radius = 2.0"                << std::endl
-          << "  set Cluster radius = 2.0"                   << std::endl
-          << "end"                                          << std::endl
-          << "#end-of-parameter-section"                    << std::endl
-          << "LAMMPS Description"              << std::endl << std::endl
-          << "4 atoms"                         << std::endl << std::endl
-          << "2  atom types"                   << std::endl << std::endl
-          << "Atoms #"                         << std::endl << std::endl
-          << "1 1 1  1.0 0.00 0. 0."                        << std::endl
-          << "2 2 2 -1.0 0.25 0. 0."                        << std::endl
-          << "3 3 1  1.0 0.50 0. 0."                        << std::endl
-          << "4 4 2 -1.0 0.75 0. 0."                        << std::endl;
+      oss << "set Dimension = " << dim                        << std::endl
+
+          << "subsection Geometry"                            << std::endl
+          << "  set Type = Box"                               << std::endl
+          << "  subsection Box"                               << std::endl
+          << "    set X center = .5"                          << std::endl
+          << "    set Y center = .5"                          << std::endl
+          << "    set Z center = .5"                          << std::endl
+          << "    set X extent = 1."                          << std::endl
+          << "    set Y extent = 1."                          << std::endl
+          << "    set Z extent = 1."                          << std::endl
+          << "    set X repetitions = 1"                      << std::endl
+          << "    set Y repetitions = 1"                      << std::endl
+          << "    set Z repetitions = 1"                      << std::endl
+          << "  end"                                          << std::endl
+          << "  set Number of initial global refinements = 0" << std::endl
+          << "end"                                            << std::endl
+
+          << "subsection Configure atoms"                     << std::endl
+          << "  set Maximum energy radius = 2.0"              << std::endl
+          << "  set Pair potential type = Coulomb Wolf"       << std::endl
+          << "  set Pair global coefficients = 0.25, 1.25 "   << std::endl
+          << "end"                                            << std::endl
+
+          << "subsection Configure QC"                        << std::endl
+          << "  set Max search radius = 2.0"                  << std::endl
+          << "  set Cluster radius = 2.0"                     << std::endl
+          << "end"                                            << std::endl
+          << "#end-of-parameter-section"                      << std::endl
+
+          << "LAMMPS Description"              << std::endl   << std::endl
+          << "4 atoms"                         << std::endl   << std::endl
+          << "2  atom types"                   << std::endl   << std::endl
+          << "Atoms #"                         << std::endl   << std::endl
+          << "1 1 1  1.0 0.00 0. 0."                          << std::endl
+          << "2 2 2 -1.0 0.25 0. 0."                          << std::endl
+          << "3 3 1  1.0 0.50 0. 0."                          << std::endl
+          << "4 4 2 -1.0 0.75 0. 0."                          << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());
