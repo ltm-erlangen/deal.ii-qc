@@ -19,7 +19,7 @@ void test (const MPI_Comm &mpi_communicator, const ConfigureQC &config)
   parallel::shared::Triangulation<dim> tria (mpi_communicator,
                                              Triangulation<dim>::limit_level_difference_at_vertices);
 
-  config.get_geometry<dim>()->create_coarse_mesh(tria);
+  config.get_geometry<dim>()->create_mesh(tria);
 
   GridOut grid_out;
   grid_out.write_vtk (tria, std::cout);
@@ -38,6 +38,7 @@ int main (int argc, char **argv)
           << "set Dimension = 3"                              << std::endl
           << "subsection Geometry"                            << std::endl
           << "  set Type = Box"                               << std::endl
+          << "  set Number of initial global refinements = 0" << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section" << std::endl;
 

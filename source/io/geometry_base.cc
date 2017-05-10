@@ -14,6 +14,8 @@ namespace dealiiqc
 
     template <int dim>
     Base<dim>::Base()
+      :
+      n_initial_global_refinements(numbers::invalid_unsigned_int)
     {}
 
 
@@ -38,6 +40,10 @@ namespace dealiiqc
         prm.declare_entry ("Type", "Box",
                            Patterns::Selection ("Box|Gmsh"),
                            "Domain geometry type.");
+        prm.declare_entry ("Number of initial global refinements", "1",
+                           Patterns::Integer(0),
+                           "Number of global mesh refinement cycles "
+                           "applied to initial grid");
       }
       prm.leave_subsection();
 

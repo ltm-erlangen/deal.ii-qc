@@ -30,12 +30,13 @@ namespace dealiiqc
 
 
     template <int dim>
-    void Gmsh<dim>::create_coarse_mesh (parallel::shared::Triangulation<dim> &coarse_grid) const
+    void Gmsh<dim>::create_mesh (parallel::shared::Triangulation<dim> &mesh) const
     {
       GridIn<dim> gridin;
-      gridin.attach_triangulation (coarse_grid);
+      gridin.attach_triangulation (mesh);
       std::ifstream mesh_stream (mesh_file.c_str());
       gridin.read_msh (mesh_stream);
+      mesh.refine_global(Base<dim>::n_initial_global_refinements);
     }
 
 
@@ -45,6 +46,7 @@ namespace dealiiqc
     {
       prm.enter_subsection("Geometry");
       {
+        Base<dim>::n_initial_global_refinements = prm.get_integer("Number of initial global refinements");
         prm.enter_subsection("Gmsh");
         {
           mesh_file = prm.get("File");

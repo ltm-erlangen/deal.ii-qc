@@ -59,11 +59,6 @@ namespace dealiiqc
     std::string get_atom_data_file() const;
 
     /**
-     * Get number of initial grid refinement cycles.
-     */
-    unsigned int get_n_initial_global_refinements() const;
-
-    /**
      * Get input stream
      */
     std::shared_ptr<std::istream> get_stream() const;
@@ -131,11 +126,6 @@ namespace dealiiqc
      * See note in #geometry_3d
      */
     std::shared_ptr<const Geometry::Base<1>> geometry_1d;
-
-    /**
-     * Number of cycles of initial global refinement
-     */
-    unsigned int n_initial_global_refinements;
 
     /**
      * Path to the atom data file.
