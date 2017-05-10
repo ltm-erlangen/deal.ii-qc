@@ -450,6 +450,7 @@ namespace dealiiqc
     update_neighbor_lists();
     update_energy_atoms_positions();
     const double e = calculate_energy_gradient(gradient);
+    (void)e;
   }
 
 
