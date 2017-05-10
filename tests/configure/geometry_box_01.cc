@@ -4,7 +4,7 @@
 #include <deal.II/distributed/shared_tria.h>
 #include <deal.II/grid/grid_out.h>
 
-#include <dealiiqc/io/configure_qc.h>
+#include <dealiiqc/configure/configure_qc.h>
 #include <dealiiqc/utilities.h>
 
 using namespace dealii;

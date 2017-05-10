@@ -1,5 +1,5 @@
 
-#include <dealiiqc/io/geometry_box.h>
+#include <dealiiqc/configure/geometry/geometry_box.h>
 
 namespace dealiiqc
 {

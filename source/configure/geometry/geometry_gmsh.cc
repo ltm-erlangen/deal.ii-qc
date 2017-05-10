@@ -3,7 +3,7 @@
 
 #include <deal.II/grid/grid_in.h>
 
-#include <dealiiqc/io/geometry_gmsh.h>
+#include <dealiiqc/configure/geometry/geometry_gmsh.h>
 
 namespace dealiiqc
 {

@@ -29,7 +29,7 @@ namespace LA
 
 #include <dealiiqc/atom/atom_handler.h>
 #include <dealiiqc/atom/cluster_weights.h>
-#include <dealiiqc/io/configure_qc.h>
+#include <dealiiqc/configure/configure_qc.h>
 #include <dealiiqc/potentials/pair_lj_cut.h>
 #include <dealiiqc/potentials/pair_coul_wolf.h>
 #include <dealiiqc/utilities.h>

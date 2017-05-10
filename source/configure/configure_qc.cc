@@ -1,5 +1,5 @@
 
-#include <dealiiqc/io/configure_qc.h>
+#include <dealiiqc/configure/configure_qc.h>
 
 namespace dealiiqc
 {
