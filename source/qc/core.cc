@@ -57,18 +57,8 @@ namespace dealiiqc
   template <int dim, typename PotentialType>
   void QC<dim, PotentialType>::setup_triangulation()
   {
-    if (!(configure_qc.get_mesh_file()).empty() )
-      {
-        const std::string meshfile = configure_qc.get_mesh_file();
-        GridIn<dim> gridin;
-        gridin.attach_triangulation( triangulation );
-        std::ifstream fin( meshfile );
-        gridin.read_msh(fin);
-      }
-    else
-      {
-        GridGenerator::hyper_cube (triangulation);
-      }
+    configure_qc.get_geometry<dim>()->create_coarse_mesh(triangulation);
+
     if ( configure_qc.get_n_initial_global_refinements() )
       triangulation.refine_global(configure_qc.get_n_initial_global_refinements());
   }
