@@ -16,7 +16,7 @@ using namespace dealiiqc;
 // Short test to check write_vtp() function of DataOutAtomData
 
 // Comment below line to skip writing atom data in vtp file format
-#define WRITE_ATOM_DATA
+// #define WRITE_ATOM_DATA
 
 template<int dim>
 class TestAtomHandler : public AtomHandler<dim>
@@ -35,8 +35,16 @@ public:
 
   void run()
   {
-    GridGenerator::hyper_cube( triangulation, 0., 16., true );
-    triangulation.refine_global (3);
+    {
+      Point<dim> bl(0,0,0);
+      Point<dim> tr(16,16,16);
+      // create a mesh which is not aligned with crystal structure
+      std::vector<unsigned int> repetitions(dim,7);
+      GridGenerator::subdivided_hyper_rectangle(triangulation,
+                                                repetitions,
+                                                bl,
+                                                tr);
+    }
     AtomHandler<dim>::parse_atoms_and_assign_to_cells( dof_handler, atom_data);
     write_output();
   }
@@ -51,13 +59,14 @@ public:
                                          std::numeric_limits<unsigned int>::min(),
                                          false);
 
+    DataOutAtomData<dim> atom_data_out;
+
 #ifdef WRITE_ATOM_DATA
     std::string vtp_file_name = "atoms-" + dealii::Utilities::int_to_string(this_mpi_process,3) + ".vtp";
 
     std::ofstream vtp_file;
     vtp_file.open (vtp_file_name.c_str(), std::ofstream::out | std::ofstream::trunc);
 
-    DataOutAtomData<dim> atom_data_out;
     atom_data_out.write_vtp( atom_data.energy_atoms,
                              flags,
                              vtp_file);
