@@ -79,18 +79,24 @@ void Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
   const double energy = QC<dim, PotentialType>::template
                         calculate_energy_gradient<false> (QC<dim, PotentialType>::gradient);
 
-  // Accumulate the energy over all the processes.
-  const double total_energy = dealii::Utilities::MPI::sum(energy,
-                                                          QC<dim, PotentialType>::mpi_communicator);
+  QC<dim, PotentialType>::pcout
+      << "The energy computed using PairCoulWolfManager of 2 charged atom system is: "
+      << energy << " eV." << std::endl;
+
+  const unsigned int total_n_neighbors =
+    dealii::Utilities::MPI::sum(QC<dim, PotentialType>::neighbor_lists.size(),
+                                QC<dim, PotentialType>::mpi_communicator);
+
+  QC<dim, PotentialType>::pcout
+      << "Total number of neighbors "
+      << total_n_neighbors
+      << std::endl;
+
   for (unsigned int p = 0; p < n_mpi_processes; p++)
     {
       MPI_Barrier(QC<dim, PotentialType>::mpi_communicator);
       if (p == this_mpi_process)
         {
-          std::cout << "Neighbor lists of process " << p  << " has "
-                    << QC<dim, PotentialType>::neighbor_lists.size()
-                    << " entry(s)." << std::endl;
-
           for ( auto entry : QC<dim, PotentialType>::neighbor_lists)
             std::cout << "Atom I: "
                       << entry.second.first->second.global_index
@@ -101,20 +107,13 @@ void Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
                       << entry.second.second->second.global_index
                       << " Cluster weight: "
                       << entry.second.second->second.cluster_weight << std::endl;
-
-          std::cout
-              << "The energy computed using PairCoulWolfManager of 2 charged atom system is: "
-              << energy << " eV." << std::endl;
         }
       MPI_Barrier(QC<dim, PotentialType>::mpi_communicator);
     }
 
   MPI_Barrier(QC<dim, PotentialType>::mpi_communicator);
-  QC<dim, PotentialType>::pcout
-      << "Total energy computed: "
-      << total_energy  << " eV."<< std::endl;
 
-  AssertThrow (std::fabs(total_energy-blessed_energy) < 100 * std::numeric_limits<double>::epsilon(),
+  AssertThrow (std::fabs(energy-blessed_energy) < 100 * std::numeric_limits<double>::epsilon(),
                ExcInternalError());
 
 }

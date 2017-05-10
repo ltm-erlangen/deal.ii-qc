@@ -18,7 +18,7 @@ using namespace dealiiqc;
 
 
 template <int dim>
-void test(const MPI_Comm &mpi_communicator, const ConfigureQC & config)
+void test(const MPI_Comm &mpi_communicator, const ConfigureQC &config)
 {
   parallel::shared::Triangulation<dim> tria (mpi_communicator,
                                              Triangulation<dim>::limit_level_difference_at_vertices);

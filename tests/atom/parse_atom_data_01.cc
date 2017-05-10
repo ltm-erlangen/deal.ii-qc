@@ -15,7 +15,7 @@ template <int dim>
 void test_parse(const MPI_Comm &mpi_communicator, std::istream &is)
 {
   unsigned int n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_communicator)),
-               this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_communicator));
+           this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_communicator));
 
   std::vector<Atom<dim>> atoms;
   std::vector<dealiiqc::types::charge> charges;
@@ -25,7 +25,7 @@ void test_parse(const MPI_Comm &mpi_communicator, std::istream &is)
 
   parsing_object.parse(is, atoms, charges, masses);
 
-  for(unsigned int p = 0; p < n_mpi_processes; ++p)
+  for (unsigned int p = 0; p < n_mpi_processes; ++p)
     {
       MPI_Barrier(mpi_communicator);
 
