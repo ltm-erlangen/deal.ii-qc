@@ -1,5 +1,5 @@
 
-#include <dealiiqc/io/configure_qc.h>
+#include <dealiiqc/configure/configure_qc.h>
 #include <dealiiqc/potentials/pair_lj_cut.h>
 
 // Short test to check validity of PairLJCut class member functions

@@ -1,5 +1,5 @@
 
-#include <dealiiqc/io/configure_qc.h>
+#include <dealiiqc/configure/configure_qc.h>
 #include <dealiiqc/potentials/pair_coul_wolf.h>
 #include <dealiiqc/utilities.h>
 
