@@ -4,6 +4,7 @@
 
 #include <dealiiqc/potentials/pair_base.h>
 #include <dealiiqc/utilities.h>
+#include <deal.II/base/exceptions.h>
 
 namespace dealiiqc
 {
@@ -111,6 +112,69 @@ namespace dealiiqc
       const double compound_exp_value;
 
     };
+
+
+
+    /*----------------------- Inline functions ----------------------------------*/
+
+#ifndef DOXYGEN
+
+    template<bool ComputeGradient>
+    inline
+    std::pair<double, double>
+    PairCoulWolfManager::energy_and_gradient (const types::atom_type i_atom_type,
+                                              const types::atom_type j_atom_type,
+                                              const double &squared_distance) const
+    {
+      if ( squared_distance > cutoff_radius*cutoff_radius )
+        return ComputeGradient
+               ?
+               std::make_pair(0.,0.)
+               :
+               std::make_pair(0., std::numeric_limits<double>::signaling_NaN());
+
+      Assert (charges, dealii::ExcInternalError());
+
+      // TODO: Need to setup units
+      // The multiplying factor qqrd2e = 14.399645 yields energy in eV
+      // and force in eV/Angstrom units
+      const double qqrd2e = 14.399645;
+      const double distance = std::sqrt(squared_distance);
+
+      Assert( i_atom_type < charges->size() && i_atom_type < charges->size(),
+              dealii::ExcMessage("The function is called with a value of atom type "
+                                 "larger than the size of PairCoulWolf::charges."
+                                 "Please ensure that the PairCoulWolf::charges is "
+                                 "initialized accurately."));
+
+      const double qiqj = (double) (*charges)[i_atom_type] * (*charges)[j_atom_type];
+      const double distance_inverse = 1.0/distance;
+      const double erfc_a_distance = std::erfc(alpha*distance) * distance_inverse;
+
+      const double energy = qiqj * ( erfc_a_distance - energy_shift ) * qqrd2e;
+
+      const double force = ComputeGradient
+                           ?
+                           qqrd2e * qiqj *
+                           ( distance_inverse *
+                             (
+                               erfc_a_distance + alpha*M_2_SQRTPI *
+                               std::exp(-alpha*alpha*squared_distance)
+                             )
+                             -
+                             cutoff_radius_inverse *
+                             (
+                               energy_shift + alpha * M_2_SQRTPI *
+                               compound_exp_value
+                             )
+                           )
+                           :
+                           std::numeric_limits<double>::signaling_NaN();
+
+      return std::make_pair(energy,force);
+    }
+
+#endif /* DOXYGEN */
 
   } // namespace Potential
 
