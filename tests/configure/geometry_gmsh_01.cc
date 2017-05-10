@@ -7,10 +7,29 @@
 #include <fstream>
 #include <sstream>
 
-#include <dealiiqc/qc.h>
+#include <deal.II/distributed/shared_tria.h>
+#include <deal.II/grid/grid_out.h>
+
+#include <dealiiqc/configure/configure_qc.h>
 
 using namespace dealii;
 using namespace dealiiqc;
+
+
+
+template <int dim>
+void test(const MPI_Comm &mpi_communicator, const ConfigureQC & config)
+{
+  parallel::shared::Triangulation<dim> tria (mpi_communicator,
+                                             Triangulation<dim>::limit_level_difference_at_vertices);
+
+  config.get_geometry<dim>()->create_mesh(tria);
+
+  GridOut grid_out;
+  grid_out.write_msh(tria, std::cout);
+}
+
+
 
 int main (int argc, char *argv[])
 {
@@ -20,11 +39,13 @@ int main (int argc, char *argv[])
       MPI_Comm mpi_communicator(MPI_COMM_WORLD);
       std::ostringstream oss;
       oss
-          << "set Dimension = 3"                              << std::endl
-          << "subsection Configure mesh"                      << std::endl
-          << "  set Mesh file = "        << SOURCE_DIR
-          << "/../data/hex_01.msh"                            << std::endl
-          << "  set Number of initial global refinements = 1" << std::endl
+          << "set Dimension = 3"                                  << std::endl
+          << "subsection Geometry"                                << std::endl
+          << "  set Type = Gmsh"                                  << std::endl
+          << "  subsection Gmsh"                                  << std::endl
+          << "    set File = "<< SOURCE_DIR "/../data/hex_01.msh" << std::endl
+          << "  end" << std::endl
+          << "  set Number of initial global refinements = 0"     << std::endl
           << "end" << std::endl
           << "#end-of-parameter-section"
           << std::endl;
@@ -33,14 +54,10 @@ int main (int argc, char *argv[])
         std::make_shared<std::istringstream>(oss.str().c_str());
 
       ConfigureQC config( prm_stream );
-      // Allow the restriction that user must provide Dimension of the problem
-      const unsigned int dim = config.get_dimension();
-      std::ofstream out ("output", std::ofstream::trunc);
 
-      QC<3> problem( config );
+      test<3>(MPI_COMM_WORLD, config);
 
-      if ( dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == 0 )
-        problem.write_mesh(out,"msh");
+
     }
   catch (std::exception &exc)
     {
