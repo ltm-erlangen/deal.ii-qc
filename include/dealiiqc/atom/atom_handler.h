@@ -4,7 +4,7 @@
 #include <deal.II/grid/grid_tools.h>
 
 #include <dealiiqc/atom/atom_data.h>
-#include <dealiiqc/io/configure_qc.h>
+#include <dealiiqc/configure/configure_qc.h>
 #include <dealiiqc/io/parse_atom_data.h>
 #include <dealiiqc/utilities.h>
 

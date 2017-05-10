@@ -1,7 +1,7 @@
 
-#include <dealiiqc/io/geometry_base.h>
-#include <dealiiqc/io/geometry_box.h>
-#include <dealiiqc/io/geometry_gmsh.h>
+#include <dealiiqc/configure/geometry/geometry_base.h>
+#include <dealiiqc/configure/geometry/geometry_box.h>
+#include <dealiiqc/configure/geometry/geometry_gmsh.h>
 
 namespace dealiiqc
 {
