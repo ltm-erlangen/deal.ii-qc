@@ -189,16 +189,17 @@ namespace dealiiqc
         // Faster to get the number of energy_atoms in the active cell by
         // computing the distance between first and second iterators
         // instead of calling count on energy_atoms.
-        const typename std::iterator_traits<types::CellAtomConstIteratorType<dim> >::difference_type
+        // Here we implicitly cast to usngined int, but this should be OK as
+        // we check that the result is the same as calling count().s
+        const unsigned int
         n_energy_atoms_in_cell = std::distance (cell_atom_range.first,
                                                 cell_atom_range.second);
 
         AssertThrow (n_energy_atoms_in_cell > 0,
                      ExcMessage("The number of energy atoms in the cell counted "
                                 "using the distance between the iterator ranges "
-                                "yields unusable value."));
+                                "yields not positive value."));
 
-        // Comparision with int and unsigned int, this is probably safe but ugly
         Assert (n_energy_atoms_in_cell == atom_data.energy_atoms.count(cell),
                 ExcMessage("The number of energy atoms in the cell counted "
                            "using the distance between the iterator ranges "
