@@ -5,7 +5,7 @@
 
 #include <dealiiqc/atom/atom_data.h>
 #include <dealiiqc/configure/configure_qc.h>
-#include <dealiiqc/io/parse_atom_data.h>
+#include <dealiiqc/atom/parse_atom_data.h>
 #include <dealiiqc/utilities.h>
 
 namespace dealiiqc

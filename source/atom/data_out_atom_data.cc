@@ -1,5 +1,5 @@
 
-#include <dealiiqc/io/data_out_atom_data.h>
+#include <dealiiqc/atom/data_out_atom_data.h>
 #include "data_out_base.cc"
 
 namespace dealiiqc
