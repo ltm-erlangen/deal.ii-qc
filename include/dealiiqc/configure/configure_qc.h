@@ -13,7 +13,6 @@
 
 #include <dealiiqc/configure/geometry/geometry_box.h>
 #include <dealiiqc/configure/geometry/geometry_gmsh.h>
-#include <dealiiqc/io/parse_atom_data.h>
 #include <dealiiqc/potentials/pair_lj_cut.h>
 #include <dealiiqc/potentials/pair_coul_wolf.h>
 #include <dealiiqc/utilities.h>

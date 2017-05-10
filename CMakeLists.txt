@@ -19,12 +19,12 @@ INCLUDE_DIRECTORIES(
 SET(TARGET_SRC
   source/atom/atom_handler.cc
   source/atom/cluster_weights.cc
+  source/atom/data_out_atom_data.cc
+  source/atom/parse_atom_data.cc
   source/configure/configure_qc.cc
   source/configure/geometry/geometry_base.cc
   source/configure/geometry/geometry_box.cc
   source/configure/geometry/geometry_gmsh.cc
-  source/io/data_out_atom_data.cc
-  source/io/parse_atom_data.cc
   source/potentials/pair_base.cc
   source/potentials/pair_coul_wolf.cc
   source/potentials/pair_lj_cut.cc
@@ -129,7 +129,6 @@ SET (TEST_TIME_LIMIT 900)
 ADD_SUBDIRECTORY(tests/atom)
 ADD_SUBDIRECTORY(tests/configure)
 ADD_SUBDIRECTORY(tests/core)
-ADD_SUBDIRECTORY(tests/io)
 ADD_SUBDIRECTORY(tests/potentials)
 ADD_SUBDIRECTORY(tests/utilities)
 #
