@@ -26,7 +26,7 @@ namespace dealiiqc
 
 
     template <int dim>
-    void Box<dim>::create_coarse_mesh (parallel::shared::Triangulation<dim> &coarse_grid) const
+    void Box<dim>::create_mesh (parallel::shared::Triangulation<dim> &mesh) const
     {
       std::vector<unsigned int> rep_vec(repetitions, repetitions+dim);
       Point<dim> bottom_left;
@@ -36,11 +36,12 @@ namespace dealiiqc
           bottom_left[d] = center[d] - extents[d]/2.;
           top_right[d]   = center[d] + extents[d]/2.;
         }
-      GridGenerator::subdivided_hyper_rectangle (coarse_grid,
+      GridGenerator::subdivided_hyper_rectangle (mesh,
                                                  rep_vec,
                                                  bottom_left,
                                                  top_right,
                                                  false);
+      mesh.refine_global(Base<dim>::n_initial_global_refinements);
     }
 
 
@@ -50,6 +51,7 @@ namespace dealiiqc
     {
       prm.enter_subsection("Geometry");
       {
+        Base<1>::n_initial_global_refinements = prm.get_integer("Number of initial global refinements");
         prm.enter_subsection("Box");
         {
           center[0] = prm.get_double ("X center");
@@ -68,6 +70,7 @@ namespace dealiiqc
     {
       prm.enter_subsection("Geometry");
       {
+        Base<2>::n_initial_global_refinements = prm.get_integer("Number of initial global refinements");
         prm.enter_subsection("Box");
         {
           center[0] = prm.get_double ("X center");
@@ -90,6 +93,7 @@ namespace dealiiqc
     {
       prm.enter_subsection("Geometry");
       {
+        Base<3>::n_initial_global_refinements = prm.get_integer("Number of initial global refinements");
         prm.enter_subsection("Box");
         {
           center[0] = prm.get_double ("X center");

@@ -10,7 +10,6 @@ namespace dealiiqc
   ConfigureQC::ConfigureQC( std::shared_ptr<std::istream> is)
     :
     dimension(0),
-    n_initial_global_refinements(1),
     input_stream(is)
   {
     AssertThrow( *input_stream, ExcIO() );
@@ -54,11 +53,6 @@ namespace dealiiqc
     return atom_data_file;
   }
 
-  unsigned int ConfigureQC::get_n_initial_global_refinements() const
-  {
-    return n_initial_global_refinements;
-  }
-
   std::shared_ptr<std::istream> ConfigureQC::get_stream() const
   {
     return input_stream;
@@ -98,15 +92,6 @@ namespace dealiiqc
                       "Dimensionality of the problem ");
 
     Geometry::declare_parameters(prm);
-
-    prm.enter_subsection ("Configure mesh");
-    {
-      prm.declare_entry("Number of initial global refinements", "1",
-                        Patterns::Integer(0),
-                        "Number of global mesh refinement cycles "
-                        "applied to initial grid");
-    }
-    prm.leave_subsection ();
 
     // TODO: Declare atom information
     // Use LAMMPS-like atom data file
@@ -197,12 +182,6 @@ namespace dealiiqc
       }
     else
       AssertThrow (false, ExcNotImplemented());
-
-    prm.enter_subsection("Configure mesh");
-    {
-      n_initial_global_refinements = prm.get_integer("Number of initial global refinements");
-    }
-    prm.leave_subsection();
 
     prm.enter_subsection("Configure atoms");
     {

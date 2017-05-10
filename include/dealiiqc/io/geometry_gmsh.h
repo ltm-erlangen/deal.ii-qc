@@ -24,7 +24,7 @@ namespace dealiiqc
 
       virtual ~Gmsh ();
 
-      virtual void create_coarse_mesh (parallel::shared::Triangulation<dim> &tria) const;
+      virtual void create_mesh (parallel::shared::Triangulation<dim> &tria) const;
 
       virtual void parse_parameters (ParameterHandler &prm);
 

@@ -39,12 +39,19 @@ namespace dealiiqc
       /**
        * Create a parallel::shared::Triangulation @p tria based on the chosen geometry.
        */
-      virtual void create_coarse_mesh(parallel::shared::Triangulation<dim> &tria) const = 0;
+      virtual void create_mesh(parallel::shared::Triangulation<dim> &tria) const = 0;
 
       /**
        * Parse parameter stored in @p prm .
        */
       virtual void parse_parameters(ParameterHandler &prm) = 0;
+
+    protected:
+
+      /**
+       * Number of cycles of initial global refinement
+       */
+      unsigned int n_initial_global_refinements;
 
     };
 

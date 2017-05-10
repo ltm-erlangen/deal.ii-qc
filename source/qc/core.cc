@@ -57,10 +57,7 @@ namespace dealiiqc
   template <int dim, typename PotentialType>
   void QC<dim, PotentialType>::setup_triangulation()
   {
-    configure_qc.get_geometry<dim>()->create_coarse_mesh(triangulation);
-
-    if ( configure_qc.get_n_initial_global_refinements() )
-      triangulation.refine_global(configure_qc.get_n_initial_global_refinements());
+    configure_qc.get_geometry<dim>()->create_mesh(triangulation);
   }
 
 

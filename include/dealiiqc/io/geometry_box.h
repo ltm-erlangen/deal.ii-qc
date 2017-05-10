@@ -24,7 +24,7 @@ namespace dealiiqc
 
       virtual ~Box ();
 
-      virtual void create_coarse_mesh (dealii::parallel::shared::Triangulation<dim> &tria) const;
+      virtual void create_mesh (dealii::parallel::shared::Triangulation<dim> &tria) const;
 
       virtual void parse_parameters (ParameterHandler &prm);
 
