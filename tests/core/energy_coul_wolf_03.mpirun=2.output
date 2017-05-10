@@ -1,0 +1,7 @@
+Process: 0 picked up : 512 number of energy atoms.
+Process: 1 picked up : 512 number of energy atoms.
+Neighbor lists of process 0 has 58276 entry(s).
+The energy computed using PairCoulWolfManager of 2 charged atom system is: -1935.17 eV.
+Neighbor lists of process 1 has 72540 entry(s).
+The energy computed using PairCoulWolfManager of 2 charged atom system is: -2813.39 eV.
+Total energy computed: -4748.56 eV.
