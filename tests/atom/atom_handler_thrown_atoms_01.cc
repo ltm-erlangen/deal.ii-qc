@@ -4,11 +4,9 @@
 
 #include <deal.II/distributed/shared_tria.h>
 #include <deal.II/grid/grid_generator.h>
-#include <deal.II/grid/grid_out.h>
 
 #include <dealiiqc/atom/atom_handler.h>
-#include <dealiiqc/io/data_out_atom_data.h>
-#include <dealiiqc/io/configure_qc.h>
+#include <dealiiqc/configure/configure_qc.h>
 #include <dealiiqc/utilities.h>
 
 using namespace dealii;
