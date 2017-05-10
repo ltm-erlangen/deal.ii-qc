@@ -435,7 +435,8 @@ namespace dealiiqc
 
       }
 
-    return res;
+    // sum contributions from all MPI cores and return the result:
+    return dealii::Utilities::MPI::sum(res, mpi_communicator);
   }
 
 

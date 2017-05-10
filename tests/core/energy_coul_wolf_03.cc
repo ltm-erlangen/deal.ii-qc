@@ -61,35 +61,25 @@ void Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
   const double energy = QC<dim, PotentialType>::template
                         calculate_energy_gradient<false> (QC<dim, PotentialType>::gradient);
 
-  for (unsigned int p = 0; p < n_mpi_processes; p++)
-    {
-      MPI_Barrier(QC<dim, PotentialType>::mpi_communicator);
-      if (p == this_mpi_process)
-        {
-          std::cout << "Neighbor lists of process " << p  << " has "
-                    << QC<dim, PotentialType>::neighbor_lists.size()
-                    << " entry(s)."
-                    << std::endl
-
-                    << "The energy computed using PairCoulWolfManager "
-                    <<    "of 2 charged atom system is: "
-                    << energy
-                    << " eV."
-                    << std::endl;
-        }
-    }
-
-  // Accumulate the energy over all the processes.
-  const double total_energy = dealii::Utilities::MPI::sum(energy,
-                                                          QC<dim, PotentialType>::mpi_communicator);
-
-  MPI_Barrier(QC<dim, PotentialType>::mpi_communicator);
   QC<dim, PotentialType>::pcout
-      << "Total energy computed: "
-      << total_energy  << " eV."<< std::endl;
+      << "The energy computed using PairCoulWolfManager "
+      <<    "of 2 charged atom system is: "
+      << energy
+      << " eV."
+      << std::endl;
+
+
+  const unsigned int total_n_neighbors =
+    dealii::Utilities::MPI::sum(QC<dim, PotentialType>::neighbor_lists.size(),
+                                QC<dim, PotentialType>::mpi_communicator);
+
+  QC<dim, PotentialType>::pcout
+      << "Total number of neighbors "
+      << total_n_neighbors
+      << std::endl;
 
   // Accurate to 1e-9 // TODO Check unit and conversions
-  AssertThrow (std::fabs(total_energy-blessed_energy) < 1e7 * std::numeric_limits<double>::epsilon(),
+  AssertThrow (std::fabs(energy-blessed_energy) < 1e7 * std::numeric_limits<double>::epsilon(),
                ExcInternalError());
 
 }
@@ -128,7 +118,7 @@ int main (int argc, char *argv[])
           << "  set Pair potential type = Coulomb Wolf"       << std::endl
           << "  set Pair global coefficients = 0.4, 1.5"      << std::endl
           << "  set Atom data file = " << SOURCE_DIR "/../data/8_NaCl_atom.data"
-                                                              << std::endl
+          << std::endl
           << "end"                                            << std::endl
 
           << "subsection Configure QC"                        << std::endl
