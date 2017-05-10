@@ -6,7 +6,7 @@
 #include <fstream>
 #include <sstream>
 
-#include <dealiiqc/qc.h>
+#include <dealiiqc/core/qc.h>
 
 using namespace dealii;
 using namespace dealiiqc;
