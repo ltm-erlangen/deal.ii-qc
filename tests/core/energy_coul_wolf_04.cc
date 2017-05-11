@@ -14,11 +14,12 @@ using namespace dealiiqc;
 // interacting exclusively through Coulomb interactions.
 // The blessed output is created through the script included at the end.
 //
-// Test case scenario is similar to that of energy_coul_wolf_01.
+// Test case scenario is similar to that of energy_coul_wolf_02. The value of
+// the energy should also be same as the atom positions are kept same.
 //
-//       6------(*)       6------(*)
+//       6-------7        6-------7
 //      /|       |       /       /|
-//     / |       |      /       / |
+//     / |  (*)  |      /       / |
 //    /  |       |     /       /  |
 //   4   |       |    4-------5   |
 //   |   2-------3    |       |   3
@@ -28,12 +29,11 @@ using namespace dealiiqc;
 //  (*)------1       (*)------1
 //
 //  (*) indicates that the site has been occupied by an atom.
-//  This initial hyper cube is refined once. This test is run with two processes
-//  The processes own different active cells. The two charged atoms are
-//  positioned such that both of them are cluster atoms. Therefore their cluster
-//  weights are exactly equal to one. Both the process have 2 energy atoms but
-//  only one process should contain a non-zero sized neighbor_lists data member
-//  (by the virtue of get_neighbor_lists() algorithm).
+//
+//  This test is run with a single process. The size of the single celled mesh
+//  is increased keeping the atom positions fixed from energy_coul_wolf_02.
+//  Due to the increase in cell size, one of the atom is not cluster atom.
+//  Therefore, the cluster weights are 2 and 0 while keeping the energy same.
 
 
 
@@ -134,28 +134,28 @@ int main (int argc, char *argv[])
           << "subsection Geometry"                            << std::endl
           << "  set Type = Box"                               << std::endl
           << "  subsection Box"                               << std::endl
-          << "    set X center = .5"                          << std::endl
-          << "    set Y center = .5"                          << std::endl
-          << "    set Z center = .5"                          << std::endl
-          << "    set X extent = 1."                          << std::endl
-          << "    set Y extent = 1."                          << std::endl
-          << "    set Z extent = 1."                          << std::endl
+          << "    set X center = 1.5"                          << std::endl
+          << "    set Y center = 1.5"                          << std::endl
+          << "    set Z center = 1.5"                          << std::endl
+          << "    set X extent = 3."                          << std::endl
+          << "    set Y extent = 3."                          << std::endl
+          << "    set Z extent = 3."                          << std::endl
           << "    set X repetitions = 1"                      << std::endl
           << "    set Y repetitions = 1"                      << std::endl
           << "    set Z repetitions = 1"                      << std::endl
           << "  end"                                          << std::endl
-          << "  set Number of initial global refinements = 1" << std::endl
+          << "  set Number of initial global refinements = 0" << std::endl
           << "end"                                            << std::endl
 
           << "subsection Configure atoms"                     << std::endl
-          << "  set Maximum energy radius = 2.25"             << std::endl
+          << "  set Maximum energy radius = 2.25"              << std::endl
           << "  set Pair potential type = Coulomb Wolf"       << std::endl
           << "  set Pair global coefficients = 0.25, 2.25 "   << std::endl
           << "end"                                            << std::endl
 
           << "subsection Configure QC"                        << std::endl
-          << "  set Max search radius = 2.25"                 << std::endl
-          << "  set Cluster radius = 2.0"                     << std::endl
+          << "  set Max search radius = 2.0"                  << std::endl
+          << "  set Cluster radius = 1.0"                     << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section"                      << std::endl
 
