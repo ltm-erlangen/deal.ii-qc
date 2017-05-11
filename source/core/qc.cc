@@ -75,10 +75,11 @@ namespace dealiiqc
     // Finish setting up PotentialType object here.
     configure_qc.get_potential()->set_charges(atom_data.charges);
 
-    // TODO: Read the method of updating cluster_weight of atoms.
-    Cluster::WeightsByCell<dim> weights_by_cell(configure_qc);
-    weights_by_cell.update_cluster_weights( atom_data.n_thrown_atoms_per_cell,
-                                            atom_data.energy_atoms);
+    // It is ConfigureQC that actually creates a shared pointer to the derived
+    // class object of the Cluster::WeightsByBase according to the parsed input.
+    configure_qc.get_cluster_weights<dim>()->
+    update_cluster_weights (atom_data.n_thrown_atoms_per_cell,
+                            atom_data.energy_atoms);
   }
 
 
@@ -304,7 +305,7 @@ namespace dealiiqc
   template <bool ComputeGradient>
   double QC<dim, PotentialType>::calculate_energy_gradient (vector_t &gradient) const
   {
-    double res = 0.;
+    double energy_per_process = 0.;
 
     if (ComputeGradient)
       gradient = 0.;
@@ -357,20 +358,29 @@ namespace dealiiqc
         // scaling E_{IJ} with (n_I + n_J)/2, which is exactly how
         // this contribution would be added had we followed assembly
         // from clusters perspective.
-        // Here we need to distinguish between two cases: both atoms
-        // belong to clusters (weight is as above), or
-        // only the main atom belongs to a cluster (weight is n_I/2)
-        // Now we can calculate energy:
-        // TODO: generalize, energy depends on a 2-points potential
-        // used for atoms I and J. Could be different for any combination
-        // of atoms.
+        // Since atoms not attributed to clusters have zero weights,
+        // we can directly use the scaling above without the need to find out
+        // whether or not one of the two atoms do not belong to any cluster.
+
+        // Compute scaling of energy due to cluster weights.
+        const double scale_energy = 0.5 * (cell_atom_I->second.cluster_weight +
+                                           cell_atom_J->second.cluster_weight );
+
+        // Assert that the scaling factor of energy, due to clustering, is
+        // non-zero. One of the atom must be a cluster atom and
+        // therefore have non-zero (more specifically positive) cluster_weight.
+        Assert (scale_energy > 0, ExcInternalError());
+
+        // Compute energy and gradient for a purely pair-wise interaction of
+        // atom I and  atom J:
         const std::pair<double, double> pair =
           (*potential_ptr).template
           energy_and_gradient<ComputeGradient> (cell_atom_I->second.type,
                                                 cell_atom_J->second.type,
                                                 r_square);
 
-        res += pair.first;
+        // Now we scale the energy according to cluster weights of the atoms.
+        energy_per_process += scale_energy * pair.first ;
 
         if (ComputeGradient)
           {
@@ -391,7 +401,7 @@ namespace dealiiqc
 
             // TODO: Write test for update_energy_atoms_positions()
             // TODO: Complete gradient computation.
-            const double &deriv  = pair.second;
+            const double deriv  = scale_energy * pair.second;
 
             // Get quadrature point index from the local_index of atom pairs
             const unsigned int
@@ -436,7 +446,7 @@ namespace dealiiqc
       }
 
     // sum contributions from all MPI cores and return the result:
-    return dealii::Utilities::MPI::sum(res, mpi_communicator);
+    return dealii::Utilities::MPI::sum(energy_per_process, mpi_communicator);
   }
 
 
