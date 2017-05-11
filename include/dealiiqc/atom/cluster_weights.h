@@ -2,7 +2,7 @@
 #ifndef __dealii_qc_cluster_weights_h_
 #define __dealii_qc_cluster_weights_h_
 
-#include <dealiiqc/atom/atom_handler.h>
+#include <dealiiqc/atom/atom_data.h>
 
 namespace dealiiqc
 {
@@ -13,18 +13,18 @@ namespace dealiiqc
     /**
      * Base class for assigning @see cluster_weight to atoms
      */
-    template<int dim>
+    template <int dim>
     class WeightsByBase
     {
     public:
 
       /**
-       * Constructor
+       * Constructor.
        */
-      WeightsByBase( const ConfigureQC &config);
+      WeightsByBase( const double &cluster_radius);
 
 
-      virtual ~WeightsByBase() {}
+      virtual ~WeightsByBase();
 
       /**
        * Calculate and assign cluster weights to to all cluster atoms in
@@ -32,25 +32,31 @@ namespace dealiiqc
        * additionally provided number of disregarded atoms in the fully
        * resolved simulation @p n_thrown_atoms_per_cell
        */
-      virtual void update_cluster_weights( const std::map< types::CellIteratorType<dim>, unsigned int> &n_thrown_atoms_per_cell,
-                                           types::CellAtomContainerType<dim> &energy_atoms) const = 0;
+      virtual
+      void
+      update_cluster_weights (const std::map< types::CellIteratorType<dim>, unsigned int> &n_thrown_atoms_per_cell,
+                              types::CellAtomContainerType<dim> &energy_atoms) const = 0;
 
     protected:
-      const ConfigureQC &config;
+
+      /**
+       * The cluster radius for the QC approach.
+       */
+      const double cluster_radius;
     };
 
     /**
      * A derived class for updating cluster weights using the cell approach.
      */
-    template<int dim>
-    class WeightsByCell : public WeightsByBase<dim>
+    template <int dim>
+    class WeightsByCell : public WeightsByBase <dim>
     {
     public:
 
       /**
        * Constructor
        */
-      WeightsByCell(const ConfigureQC &config);
+      WeightsByCell(const double &cluster_radius);
 
       void
       update_cluster_weights( const std::map< types::CellIteratorType<dim>, unsigned int> &n_thrown_atoms_per_cell,
@@ -58,10 +64,11 @@ namespace dealiiqc
 
     };
 
-  }
+
+  } // namespace Cluster
 
 
-}
+} // namespace dealiiqc
 
 
 

@@ -38,7 +38,7 @@ public:
   {
     GridGenerator::hyper_cube( triangulation, 0., 8., true );
     AtomHandler<dim>::parse_atoms_and_assign_to_cells( dof_handler, atom_data);
-    Cluster::WeightsByCell<dim> weights_by_cell(config);
+    const Cluster::WeightsByCell<dim> weights_by_cell(config.get_cluster_radius());
     weights_by_cell.update_cluster_weights( atom_data.n_thrown_atoms_per_cell,
                                             atom_data.energy_atoms);
     for ( const auto &cell_atom : atom_data.energy_atoms )
@@ -61,33 +61,34 @@ int main (int argc, char **argv)
 {
   try
     {
-      dealii::Utilities::MPI::MPI_InitFinalize mpi_initialization( argc,
+      dealii::Utilities::MPI::MPI_InitFinalize mpi_initialization (argc,
           argv,
           numbers::invalid_unsigned_int);
       std::ostringstream oss;
-      oss << "set Dimension = 3"                              << std::endl
-          << "subsection Configure atoms"                     << std::endl
-          << "  set Maximum energy radius = 1.9"             << std::endl
-          << "end"                                            << std::endl
-          << "subsection Configure QC"                        << std::endl
-          << "  set Max search radius = 1.9"                  << std::endl
-          << "  set Cluster radius = 1.9"                     << std::endl
-          << "end"                                            << std::endl
+      oss << "set Dimension = 3"                            << std::endl
+          << "subsection Configure atoms"                   << std::endl
+          << "  set Maximum energy radius = 1.9"            << std::endl
+          << "end"                                          << std::endl
+          << "subsection Configure QC"                      << std::endl
+          << "  set Max search radius = 1.9"                << std::endl
+          << "  set Cluster radius = 1.9"                   << std::endl
+          << "  set Cluster weights by type = Cell"         << std::endl
+          << "end"                                          << std::endl
           << "#end-of-parameter-section" << std::endl
-          << "LAMMPS Description"        << std::endl << std::endl
-          << "10 atoms"                  << std::endl << std::endl
-          << "1  atom types"             << std::endl << std::endl
-          << "Atoms #"                   << std::endl << std::endl
-          << "1 1 1 1.0 2. 2. 2."      << std::endl
-          << "2 2 1 1.0 6. 2. 2."      << std::endl
-          << "3 3 1 1.0 2. 6. 2."      << std::endl
-          << "4 4 1 1.0 2. 2. 6."      << std::endl
-          << "5 5 1 1.0 6. 6. 2."      << std::endl
-          << "6 6 1 1.0 6. 2. 6."      << std::endl
-          << "7 7 1 1.0 2. 6. 6."      << std::endl
-          << "8 8 1 1.0 6. 6. 6."      << std::endl
-          << "9 9 1 1.0 7. 7. 7.9"     << std::endl
-          << "10 10 1 1.0 1. 1. 0.1"   << std::endl;
+          << "LAMMPS Description"        << std::endl       << std::endl
+          << "10 atoms"                  << std::endl       << std::endl
+          << "1  atom types"             << std::endl       << std::endl
+          << "Atoms #"                   << std::endl       << std::endl
+          << "1 1 1 1.0 2. 2. 2."        << std::endl
+          << "2 2 1 1.0 6. 2. 2."        << std::endl
+          << "3 3 1 1.0 2. 6. 2."        << std::endl
+          << "4 4 1 1.0 2. 2. 6."        << std::endl
+          << "5 5 1 1.0 6. 6. 2."        << std::endl
+          << "6 6 1 1.0 6. 2. 6."        << std::endl
+          << "7 7 1 1.0 2. 6. 6."        << std::endl
+          << "8 8 1 1.0 6. 6. 6."        << std::endl
+          << "9 9 1 1.0 7. 7. 7.9"       << std::endl
+          << "10 10 1 1.0 1. 1. 0.1"     << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());

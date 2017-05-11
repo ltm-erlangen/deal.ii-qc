@@ -11,6 +11,7 @@
 #include <utility>
 #include <memory>
 
+#include <dealiiqc/atom/cluster_weights.h>
 #include <dealiiqc/configure/geometry/geometry_box.h>
 #include <dealiiqc/configure/geometry/geometry_gmsh.h>
 #include <dealiiqc/potentials/pair_lj_cut.h>
@@ -83,6 +84,13 @@ namespace dealiiqc
      * Get a shared pointer to the pair potential class object.
      */
     std::shared_ptr<Potential::PairBaseManager> get_potential() const;
+
+    /**
+     * Create and return a shared pointer to the derived class object of
+     * WeightsByBase.
+     */
+    template <int dim>
+    std::shared_ptr<const Cluster::WeightsByBase<dim>> get_cluster_weights() const;
 
   private:
 
@@ -173,6 +181,11 @@ namespace dealiiqc
      * The cluster radius used in QC.
      */
     double cluster_radius;
+
+    /**
+     * The type of method to update cluster weights.
+     */
+    std::string cluster_weights_type;
 
   };
 

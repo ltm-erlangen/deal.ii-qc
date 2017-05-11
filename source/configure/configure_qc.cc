@@ -76,7 +76,26 @@ namespace dealiiqc
   std::shared_ptr<Potential::PairBaseManager>
   ConfigureQC::get_potential() const
   {
+    Assert (pair_potential, ExcInternalError());
     return pair_potential;
+  }
+
+  template<int dim>
+  std::shared_ptr<const Cluster::WeightsByBase<dim> >
+  ConfigureQC::get_cluster_weights() const
+  {
+    AssertDimension(dim, dimension);
+
+    if (cluster_weights_type == "Cell")
+      // It would be cleaner to store this object as a member variable, but then
+      // we either need to make ConfigureQC templated with dim, or keep around
+      // three different shared pointers.
+      return std::make_shared<const Cluster::WeightsByCell<dim> >
+             (cluster_radius);
+    else
+      AssertThrow (false, ExcInternalError());
+
+    return NULL;
   }
 
 
@@ -148,6 +167,11 @@ namespace dealiiqc
                         Patterns::Double(0),
                         "Cluster radius used in "
                         "QC simulation");
+      prm.declare_entry("Cluster weights by type", "Cell",
+                        Patterns::Selection("Cell"),
+                        "Select the way how cluster "
+                        "weights are computed for "
+                        "cluster atoms.");
     }
     prm.leave_subsection ();
 
@@ -256,6 +280,7 @@ namespace dealiiqc
       //TODO: Max->Maximum
       maximum_search_radius = prm.get_double("Max search radius");
       cluster_radius = prm.get_double( "Cluster radius");
+      cluster_weights_type = prm.get("Cluster weights by type");
     }
     prm.leave_subsection();
   }
@@ -265,6 +290,9 @@ namespace dealiiqc
   template std::shared_ptr<const Geometry::Base<1>> ConfigureQC::get_geometry() const;
   template std::shared_ptr<const Geometry::Base<2>> ConfigureQC::get_geometry() const;
   template std::shared_ptr<const Geometry::Base<3>> ConfigureQC::get_geometry() const;
+  template std::shared_ptr<const Cluster::WeightsByBase<1>> ConfigureQC::get_cluster_weights() const;
+  template std::shared_ptr<const Cluster::WeightsByBase<2>> ConfigureQC::get_cluster_weights() const;
+  template std::shared_ptr<const Cluster::WeightsByBase<3>> ConfigureQC::get_cluster_weights() const;
 
 
 
