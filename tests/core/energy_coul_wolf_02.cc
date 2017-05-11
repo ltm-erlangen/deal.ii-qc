@@ -31,7 +31,7 @@ using namespace dealiiqc;
 //  This initial hyper cube is refined once. This test is run with two processes
 //  The processes own different active cells. The two charged atoms are
 //  positioned such that both of them are cluster atoms. Therefore their cluster
-//  weights are exactly equal to one. Both the process have 2 energy atoms but
+//  weights are exactly equal to one. Both the processes have 2 energy atoms but
 //  only one process should contain a non-zero sized neighbor_lists data member
 //  (by the virtue of get_neighbor_lists() algorithm).
 

@@ -273,19 +273,22 @@ namespace dealiiqc
       if ( cell_atom_I.first->is_locally_owned() )
         {
           const Atom<dim> &atom_I = cell_atom_I.second;
-          for ( auto cell_atom_J : energy_atoms )
-            {
-              const Atom<dim> &atom_J = cell_atom_J.second;
-              // TODO: Once functions updating cluster weights of energy_atoms is implemented
-              // use is_cluster() member function in atom struct.
-              const bool atom_J_is_cluster_atom =
-                Utilities::is_point_within_distance_from_cell_vertices( atom_J.position, cell_atom_J.first, cluster_radius );
-              if ( ( atom_J_is_cluster_atom && (atom_I.global_index > atom_J.global_index))
-                   ||
-                   !atom_J_is_cluster_atom )
-                if ( (atom_I.position - atom_J.position).norm_square() < cutoff_radius*cutoff_radius)
-                  total_number_of_interactions++;
-            }
+          // We are building neighbor lists for only atom_Is
+          // so we can skip atom_I if it's not a cluster atom.
+          if (Utilities::is_point_within_distance_from_cell_vertices( atom_I.position, cell_atom_I.first, cluster_radius ))
+            for ( auto cell_atom_J : energy_atoms )
+              {
+                const Atom<dim> &atom_J = cell_atom_J.second;
+                // TODO: Once functions updating cluster weights of energy_atoms is implemented
+                // use is_cluster() member function in atom struct.
+                const bool atom_J_is_cluster_atom =
+                  Utilities::is_point_within_distance_from_cell_vertices( atom_J.position, cell_atom_J.first, cluster_radius );
+                if ( ( atom_J_is_cluster_atom && (atom_I.global_index > atom_J.global_index))
+                     ||
+                     !atom_J_is_cluster_atom )
+                  if ( (atom_I.position - atom_J.position).norm_square() < cutoff_radius*cutoff_radius)
+                    total_number_of_interactions++;
+              }
         }
     Assert( total_number_of_interactions == neighbor_lists.size(),
             ExcMessage("Some of the interactions are not accounted while updating neighbor lists"));
