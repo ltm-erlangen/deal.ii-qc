@@ -51,8 +51,8 @@ namespace dealiiqc
 
 
   /**
-   * Primary class that holds atom data and the association between atoms
-   * and mesh.
+   * Primary class that holds cell based atom data structures with the
+   * association between atoms and mesh.
    */
   template<int dim>
   struct AtomData
@@ -74,18 +74,18 @@ namespace dealiiqc
      * Used for initializing cell based data structures that would actually be
      * used for computations.
      *
-     * Optimization technique (not yet implemented):
-     * Before going over all locally owned cells to find if a given atom lies within it,
-     * we can first check whether the atom's location lies inside the certain bounding box of the
-     * current processor's set of locally owned cells. The bounding box needs to be extended
-     * with @see cluster_radius + @see cutoff_radius.
+     * The following optimization technique is employed while adding energy
+     * atoms. For each atom in the system, before going over all locally owned
+     * cells to find if the atom lies within it, we can first check whether the
+     * atom's location lies inside the bounding box of the current processor's
+     * set of locally relevant cells.
      */
     std::multimap<types::CellIteratorType<dim>, Atom<dim>> energy_atoms;
 
     /**
-     * Number of locally relevant non-energy atoms per cell.
+     * The number of locally relevant non-energy atoms per cell.
      * This is exactly the number of non-energy atoms for whom a
-     * locally relevant cell is found while updating @see energy_atoms.
+     * locally relevant cell is found while updating #energy_atoms.
      * They were thrown because they weren't energy atoms.
      *
      * @note The map also contains the information of number of
