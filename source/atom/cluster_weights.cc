@@ -7,36 +7,47 @@ namespace dealiiqc
 
   namespace Cluster
   {
+
     //------------------------------------------------------------------------//
     // WeightsByBase
 
-    template<int dim>
-    WeightsByBase<dim>::WeightsByBase( const ConfigureQC &config)
+    template <int dim>
+    WeightsByBase<dim>::WeightsByBase (const double &cluster_radius)
       :
-      config(config)
+      cluster_radius(cluster_radius)
     {}
 
+
+
+    template <int dim>
+    WeightsByBase<dim>::~WeightsByBase()
+    {}
+
+
+
+    // Instantiations
     template class WeightsByBase<1>;
     template class WeightsByBase<2>;
     template class WeightsByBase<3>;
 
 
+
     //------------------------------------------------------------------------//
     // WeightsByCell
-    template<int dim>
-    WeightsByCell<dim>::WeightsByCell(const ConfigureQC &config)
+
+    template <int dim>
+    WeightsByCell<dim>::WeightsByCell (const double &cluster_radius)
       :
-      WeightsByBase<dim>(config)
+      WeightsByBase<dim>(cluster_radius)
     {}
 
 
-    template<int dim>
+
+    template <int dim>
     void
-    WeightsByCell<dim>::update_cluster_weights( const std::map< types::CellIteratorType<dim>, unsigned int> &n_thrown_atoms_per_cell,
+    WeightsByCell<dim>::update_cluster_weights (const std::map< types::CellIteratorType<dim>, unsigned int> &n_thrown_atoms_per_cell,
                                                 types::CellAtomContainerType<dim> &energy_atoms) const
     {
-      const double cluster_radius = WeightsByBase<dim>::config.get_cluster_radius();
-
       // Number of cluster atoms per cell
       std::map<typename types::CellIteratorType<dim>, unsigned int> n_cluster_atoms_per_cell;
 
@@ -50,8 +61,9 @@ namespace dealiiqc
           const auto &cell = cell_atom.first;
           const Atom<dim> &atom  = cell_atom.second;
 
-          //TODO use is_cluster_atom from atom struct
-          if ( Utilities::is_point_within_distance_from_cell_vertices( atom.position, cell, cluster_radius) )
+          // TODO use is_cluster_atom from atom struct
+          // TODO When is_cluster_atom, one could remore cluster_radius member variable.
+          if ( Utilities::is_point_within_distance_from_cell_vertices( atom.position, cell, WeightsByBase<dim>::cluster_radius) )
             // Increment cluster atom count for this "cell"
             n_cluster_atoms_per_cell[cell]++;
         }
@@ -78,7 +90,7 @@ namespace dealiiqc
             {
               Atom<dim> &atom = cell_atom->second;
 
-              if ( Utilities::is_point_within_distance_from_cell_vertices( atom.position, cell, cluster_radius) )
+              if ( Utilities::is_point_within_distance_from_cell_vertices( atom.position, cell, WeightsByBase<dim>::cluster_radius) )
                 atom.cluster_weight = n_cell_atoms / n_cluster_atoms;
               else
                 atom.cluster_weight = 0.;
@@ -86,11 +98,16 @@ namespace dealiiqc
         }
     }
 
+
+
+    // Instantiations.
     template class WeightsByCell<1>;
     template class WeightsByCell<2>;
     template class WeightsByCell<3>;
 
 
-  }
+  } // namespace Cluster
 
-}
+
+} // namespace dealiiqc
+
