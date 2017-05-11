@@ -69,12 +69,19 @@ namespace dealiiqc
     void setup_triangulation();
 
     /**
-     * Setup atom data object of the current MPI process.
+     * Setup #atom_data of the current MPI process.
      *
-     * This function initializes the cell based data structures of atom data.
-     * More importantly it initializes the primary data member @see energy_atoms
-     * which holds an association between the locally relevant active cell of
-     * the underlying @see triangulation and the energy atoms in it.
+     * This function initializes the cell based data structures of #atom_data.
+     * More importantly it initializes the primary data member
+     * AtomData::energy_atoms which holds an association between the locally
+     * relevant active cell of the underlying #triangulation and the energy
+     * atoms in it.
+     *
+     * This function also updates cluster weights of the AtomData::energy_atoms
+     * in #atom_data. All cluster atoms get a non zero cluster weight while the
+     * other energy atoms get a zero cluster weight. #configure_qc creates a
+     * shared pointer to the derived class of Cluster::WeightsByBase based on
+     * the chosen method to update cluster weights of cluster atoms.
      */
     void setup_atom_data();
 
