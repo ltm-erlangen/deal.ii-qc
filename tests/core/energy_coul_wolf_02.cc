@@ -154,7 +154,7 @@ int main (int argc, char *argv[])
           << "end"                                            << std::endl
 
           << "subsection Configure QC"                        << std::endl
-          << "  set Max search radius = 2.25"                 << std::endl
+          << "  set Ghost cell layer thickness = 2.25"        << std::endl
           << "  set Cluster radius = 2.0"                     << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section"                      << std::endl
