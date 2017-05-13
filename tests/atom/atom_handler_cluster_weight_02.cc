@@ -75,7 +75,7 @@ int main (int argc, char **argv)
           << "  set Maximum energy radius = 9"              << std::endl
           << "end"                                          << std::endl
           << "subsection Configure QC"                      << std::endl
-          << "  set Max search radius = 9"                  << std::endl
+          << "  set Ghost cell layer thickness = 9"         << std::endl
           << "  set Cluster radius = 9"                     << std::endl
           << "  set Cluster weights by type = Cell"         << std::endl
           << "end"                                          << std::endl

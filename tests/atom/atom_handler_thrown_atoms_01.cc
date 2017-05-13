@@ -68,10 +68,10 @@ int main (int argc, char **argv)
       std::ostringstream oss;
       oss << "set Dimension = 3"                              << std::endl
           << "subsection Configure atoms"                     << std::endl
-          << "  set Maximum energy radius = 1.1"             << std::endl
+          << "  set Maximum energy radius = 1.1"              << std::endl
           << "end"                                            << std::endl
           << "subsection Configure QC"                        << std::endl
-          << "  set Max search radius = 1.9"                  << std::endl
+          << "  set Ghost cell layer thickness = 1.9"         << std::endl
           << "  set Cluster radius = 1.1"                     << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section" << std::endl

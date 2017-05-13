@@ -64,9 +64,9 @@ namespace dealiiqc
     std::shared_ptr<std::istream> get_stream() const;
 
     /**
-     * Get maximum search radius
+     * Return #ghost_cell_layer_thickness.
      */
-    double get_maximum_search_radius() const;
+    double get_ghost_cell_layer_thickness() const;
 
     // TODO: take maximum_energy_radius from pair potential cutoff radii?
     // maximum_energy_radius= max{ cutoff_radii } + skin?
@@ -151,29 +151,41 @@ namespace dealiiqc
     mutable std::shared_ptr<Potential::PairBaseManager> pair_potential;
 
     /**
-     * Maximum search distance from any of the vertices of locally owned cells
-     * to an atom, to identify whether the atom contributes to the
-     * QC energy computations.
+     * In distributed memory calculation with local h-adaptive FE each
+     * MPI process stores a non-overlapping subset of all cells, such that
+     * their union gives the global mesh. Additionally each core stores a
+     * layer of so called ghost cells. For non-local methods such as QC,
+     * the calculation of energy functional and its derivative may require
+     * more than a halo layer around locally owned cells. This is due to the
+     * non-local energy evaluation for pair potentials where an energy atom
+     * within a locally owned cell may interact with another ghost atom
+     * located in a cell not owned by this MPI process.
      *
-     * #maximum_search_radius is also used to identify ghost cells of a
-     * current MPI process. If any of a cell's vertices are within a
-     * #maximum_search_radius distance from any of locally owned cell's vertices,
-     * then the cell is a ghost cell of a current MPI process.
+     * The #ghost_cell_layer_thickness is used to build a layer of ghost cells
+     * around locally owned cells such that in the reference configuration all
+     * atoms that are no further than #ghost_cell_layer_thickness away from the
+     * cluster atoms for a given MPI core are located only within the union of
+     * locally owned cells and ghost cells. This algorithm relies on the upper
+     * bound estimation of the distance between two arbitrary cells using
+     * TriaAccessor::enclosing_ball().
      *
-     * @note #maximum_search_radius should not be less than the sum of cluster
-     * radius and (maximum) cutoff radius.
+     * @note Note that for physically correct results
+     * #ghost_cell_layer_thickness should always be more or equal to the
+     * maximum cut-off radius used in a pair potential. Since the ghost cells
+     * are determined once at the beginning of calculations, the value of this
+     * parameter should be large enough to account for expected deformations in
+     * the system so that at each step of applied load the ghost cells contain
+     * all ghost atoms.
      */
-    double maximum_search_radius;
+    double ghost_cell_layer_thickness;
 
     /**
-     * #maximum_energy_radius is the maximum of all the cutoff radii
-     * of the pair potentials. It is used to update neighbor lists of
-     * atoms.
+     * The maximum of all the cutoff radii of the pair potentials.
+     * It is used to update neighbor lists of atoms.
      *
-     * @note #maximum_search_radius is different from
-     * #maximum_energy_radius. The former is used to identify ghost cells
-     * of a current MPI process, while the latter is used to update
-     * neighbor lists of atoms.
+     * @note #maximum_energy_radius is different from
+     * #ghost_cell_layer_thickness which is used to identify locally relevant
+     * ghost cells of MPI processes.
      */
     double maximum_energy_radius;
 

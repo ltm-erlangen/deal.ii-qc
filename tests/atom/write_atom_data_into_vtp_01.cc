@@ -120,7 +120,7 @@ int main (int argc, char **argv)
           << SOURCE_DIR "/../data/16_NaCl_atom.data"          << std::endl
           << "end" << std::endl
           << "subsection Configure QC"                        << std::endl
-          << "  set Max search radius = 1.1"                  << std::endl
+          << "  set Ghost cell layer thickness = 1.1"         << std::endl
           << "end" << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =

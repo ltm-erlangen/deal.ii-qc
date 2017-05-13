@@ -60,10 +60,10 @@ int main (int argc, char **argv)
           << "set Dimension = 3"                              << std::endl
           << "subsection Configure atoms"                     << std::endl
           << "  set Atom data file = "
-          << SOURCE_DIR "/../data/8_NaCl_atom.data"          << std::endl
+          << SOURCE_DIR "/../data/8_NaCl_atom.data"           << std::endl
           << "end" << std::endl
           << "subsection Configure QC"                        << std::endl
-          << "  set Max search radius = 2.0"                  << std::endl
+          << "  set Ghost cell layer thickness = 2"           << std::endl
           << "end" << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =

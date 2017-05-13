@@ -77,11 +77,11 @@ namespace dealiiqc
     // the size of ghost_cells vector is zero.
     const std::vector<typename types::MeshType<dim>::active_cell_iterator> ghost_cells =
       GridTools::compute_ghost_cell_layer_within_distance( mesh,
-                                                           configure_qc.get_maximum_search_radius());
+                                                           configure_qc.get_ghost_cell_layer_thickness());
 
     // Loop through all the ghost cells computed above and
-    // Mark (true) all the vertices of the active ghost cells within
-    // a maximum search radius.
+    // Mark (true) all the vertices of the locally owned and active
+    // ghost cells within ConfigureQC::ghost_cell_layer_thickness.
     // Also, initialize n_thrown_atoms_per_cell.
     for ( auto cell : ghost_cells)
       {
@@ -91,8 +91,8 @@ namespace dealiiqc
       }
 
     // TODO: If/when required collect all non-relevant atoms
-    // (those that are not within a maximum search radius
-    //  for this MPI process energy computation)
+    // (those that are not within a ConfigureQC::ghost_cell_layer_thickness
+    // for this MPI process energy computation)
     // For now just add the number of atoms being thrown.
     types::global_atom_index n_thrown_atoms=0;
 
@@ -124,7 +124,7 @@ namespace dealiiqc
             atom.reference_position = GeometryInfo<dim>::project_to_unit_cell(my_pair.second);
             // TODO: Remove parent_cell
             atom.parent_cell = my_pair.first;
-            if ( Utilities::is_point_within_distance_from_cell_vertices( atom.position, my_pair.first, configure_qc.get_maximum_search_radius() ))
+            if ( Utilities::is_point_within_distance_from_cell_vertices( atom.position, my_pair.first, configure_qc.get_ghost_cell_layer_thickness() ))
               {
                 atom_associated_to_cell = true;
                 energy_atoms.insert( std::make_pair( my_pair.first, atom ));
