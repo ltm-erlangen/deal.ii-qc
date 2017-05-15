@@ -145,6 +145,8 @@ namespace dealiiqc
      */
     mutable std::shared_ptr<std::istream> input_stream;
 
+  protected:
+
     /**
      * A shared pointer to the pair potential object.
      */
