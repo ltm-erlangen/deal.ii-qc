@@ -1,10 +1,12 @@
+#
 # Set the name of the project and target:
+#
+SET(DEAL_II_QC_PACKAGE_NAME "deal.II-qc")
 SET(TARGET "qc")
-SET(TARGETLIB "qc_dealii")
+SET(TARGETLIB ${DEAL_II_QC_PACKAGE_NAME})
 
-INCLUDE_DIRECTORIES(
- ${CMAKE_SOURCE_DIR}/include
-)
+
+INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR}/include)
 
 # Declare all source files the target consists of. Here, this is only
 # the one step-X.cc file, but as you expand your project you may wish
@@ -52,6 +54,34 @@ DEAL_II_INITIALIZE_CACHED_VARIABLES()
 # flags.
 #
 PROJECT(${TARGET})
+
+#
+# Information about relative paths for installation.
+#
+SET(DEAL_II_QC_EXECUTABLE_RELDIR     "bin"       )
+SET(DEAL_II_QC_INCLUDE_RELDIR        "include"   )
+SET(DEAL_II_QC_LIBRARY_RELDIR        "lib"       )
+SET(DEAL_II_QC_PROJECT_CONFIG_RELDIR "${DEAL_II_QC_LIBRARY_RELDIR}/cmake/${DEAL_II_QC_PACKAGE_NAME}")
+
+#
+# Load in version info and export it
+#
+FILE(STRINGS "${CMAKE_SOURCE_DIR}/VERSION" DEAL_II_QC_PACKAGE_VERSION LIMIT_COUNT 1)
+
+INCLUDE(CMakePackageConfigHelpers)
+WRITE_BASIC_PACKAGE_VERSION_FILE(
+  "${CMAKE_BINARY_DIR}/${DEAL_II_QC_PACKAGE_NAME}ConfigVersion.cmake"
+  VERSION ${DEAL_II_QC_PACKAGE_VERSION}
+  COMPATIBILITY AnyNewerVersion
+)
+
+# Configure a cmake fragment that plugins can use to
+# set up compiler flags, include paths, etc to compile plugin
+CONFIGURE_FILE(
+  ${CMAKE_SOURCE_DIR}/cmake/${DEAL_II_QC_PACKAGE_NAME}Config.cmake.in
+  ${CMAKE_BINARY_DIR}/${DEAL_II_QC_PACKAGE_NAME}Config.cmake
+  @ONLY
+)
 
 #
 # Specify a target:
@@ -131,16 +161,23 @@ ADD_SUBDIRECTORY(tests/configure)
 ADD_SUBDIRECTORY(tests/core)
 ADD_SUBDIRECTORY(tests/potentials)
 ADD_SUBDIRECTORY(tests/utilities)
+
+
 #
 # installation target.
 # use with -DCMAKE_INSTALL_PREFIX=/path/to/
 #
 # 1. Install defined library target
 install (TARGETS ${TARGETLIB}
-         LIBRARY DESTINATION lib)
+         LIBRARY DESTINATION ${DEAL_II_QC_LIBRARY_RELDIR})
 # 2. Install the binary
 install (TARGETS ${TARGET}
-         RUNTIME DESTINATION bin)
+         RUNTIME DESTINATION ${DEAL_II_QC_EXECUTABLE_RELDIR})
 # 3. Install content of include dir
 install (DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
-         DESTINATION include)
+         DESTINATION ${DEAL_II_QC_INCLUDE_RELDIR})
+# 4. Install cmake configuration files in lib/cmake/deal.II-qc folder
+install (FILES
+         "${CMAKE_CURRENT_BINARY_DIR}/${DEAL_II_QC_PACKAGE_NAME}Config.cmake"
+         "${CMAKE_CURRENT_BINARY_DIR}/${DEAL_II_QC_PACKAGE_NAME}ConfigVersion.cmake"
+         DESTINATION ${DEAL_II_QC_PROJECT_CONFIG_RELDIR})
