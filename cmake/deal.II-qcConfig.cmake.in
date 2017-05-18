@@ -1,0 +1,105 @@
+########################################################################
+##                                                                    ##
+##               The deal.II-qc project configuration file            ##
+##                                                                    ##
+########################################################################
+
+
+#
+# Set the main deal.II-qc cmake variables
+# 
+SET(DEAL_II_QC_PACKAGE_NAME          "@DEAL_II_QC_PACKAGE_NAME@"   )
+SET(DEAL_II_QC_PACKAGE_VERSION       "@DEAL_II_QC_PACKAGE_VERSION@")
+
+SET(DEAL_II_QC_EXECUTABLE_RELDIR     "@DEAL_II_QC_EXECUTABLE_RELDIR@"    )
+SET(DEAL_II_QC_INCLUDE_RELDIR        "@DEAL_II_QC_INCLUDE_RELDIR@"       )
+SET(DEAL_II_QC_LIBRARY_RELDIR        "@DEAL_II_QC_LIBRARY_RELDIR@"       )
+SET(DEAL_II_QC_PROJECT_CONFIG_RELDIR "@DEAL_II_QC_PROJECT_CONFIG_RELDIR@")
+
+
+#
+# Pickup DEAL_II version related cmake variables used to build deal.II-qc
+#
+SET(DEAL_II_VERSION_MAJOR    "@DEAL_II_VERSION_MAJOR@"   )
+SET(DEAL_II_VERSION_MINOR    "@DEAL_II_VERSION_MINOR@"   )
+SET(DEAL_II_VERSION_SUBMINOR "@DEAL_II_VERSION_SUBMINOR@")
+SET(DEAL_II_PATH             "@DEAL_II_PATH@"            )
+
+
+#
+# Determine DEAL_II_QC_PATH from CMAKE_CURRENT_LIST_DIR:
+#
+SET(DEAL_II_QC_PATH "${CMAKE_CURRENT_LIST_DIR}")
+SET(_path "${DEAL_II_QC_PROJECT_CONFIG_RELDIR}")
+WHILE(NOT "${_path}" STREQUAL "")
+  GET_FILENAME_COMPONENT(DEAL_II_QC_PATH "${DEAL_II_QC_PATH}" PATH)
+  GET_FILENAME_COMPONENT(_path "${_path}" PATH)
+ENDWHILE()
+
+
+#
+# force build type to the one that is used by deal.II-QC:
+#
+SET(CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@" 
+    CACHE STRING "select debug or release mode" FORCE)
+
+#
+# Set deal.II-qc include directories and libraries
+#
+SET(DEAL_II_QC_INCLUDE_DIRS "${DEAL_II_QC_PATH}/${DEAL_II_QC_INCLUDE_RELDIR}")
+SET(DEAL_II_QC_LIBRARIES "${DEAL_II_QC_PATH}/${DEAL_II_QC_LIBRARY_RELDIR}/lib${DEAL_II_QC_PACKAGE_NAME}.so")
+
+
+#
+# Use the following to write CMakeLists.txt for your own projects.
+#
+IF(FALSE)
+
+  # The user's project should just copy paste (exactly) the following into their
+  # top level CMakeLists.txt to pick up the exact version of deal.II used for
+  # building deal.II-qc
+
+  CMAKE_MINIMUM_REQUIRED(VERSION 2.8.8)
+
+  FIND_PACKAGE(deal.II-qc 0.0.1 QUIET HINTS ${deal.II-qc_DIR} ${DEAL_II_QC_DIR} ../ ../../ $ENV{DEAL_II_QC_DIR})
+
+  IF (NOT deal.II-qc_FOUND)
+    MESSAGE(FATAL_ERROR "\n"
+          "Could not find a valid deal.II-qc build/installation directory. "
+          "Please specify the directory where you are building deal.II-qc by passing\n"
+          "   -D DEAL_II_QC_DIR=<path to DEAL_II_QC>\n"
+          "to cmake or by setting the environment variable DEAL_II_QC_DIR in your shell "
+          "before calling cmake.")
+  ENDIF ()
+  MESSAGE( STATUS "deal.II-qc_FOUND at: "        ${DEAL_II_QC_PATH} )
+
+  SET(TARGET "RealFoo")
+
+  PROJECT(${TARGET})
+
+  FIND_PACKAGE(deal.II ${DEAL_II_VERSION_MAJOR}.${DEAL_II_VERSION_MINOR}.${DEAL_II_VERSION_SUBMINOR}
+               QUIET REQUIRED HINTS ${DEAL_II_PATH}
+               )
+  IF(NOT ${deal.II_FOUND})
+    MESSAGE(FATAL_ERROR "\n"
+      "*** Could not locate a version of deal.II "
+      " that was used to build deal.II-qc. ***\n\n"
+      )
+  ENDIF()
+  MESSAGE( STATUS "deal.II_FOUND at: "        ${DEAL_II_PATH} )
+
+  DEAL_II_INITIALIZE_CACHED_VARIABLES()
+
+  MESSAGE( STATUS "Including DEAL_II_QC_INCLUDE_DIRS: " ${DEAL_II_QC_INCLUDE_DIRS} )
+  INCLUDE_DIRECTORIES(${DEAL_II_QC_INCLUDE_DIRS})
+
+  ADD_EXECUTABLE(${TARGET}
+                 ${TARGET}.cc
+                 )
+
+  DEAL_II_SETUP_TARGET(${TARGET})
+
+  MESSAGE( STATUS "Linking DEAL_II_QC_LIBRARIES: "    ${DEAL_II_QC_LIBRARIES} )
+  TARGET_LINK_LIBRARIES(${TARGET} "${DEAL_II_QC_LIBRARIES}")
+
+ENDIF()
