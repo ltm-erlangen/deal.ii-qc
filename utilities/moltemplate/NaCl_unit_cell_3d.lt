@@ -1,0 +1,43 @@
+# 3 Dimensioanl NaCl Lattice
+
+# Vishal Boddu  May 2017
+
+#     AtomID         MolID       AtomType          Charge        X     Y    Z
+Na_ATOM
+{
+   create_var{$mol}
+   write("Data Atoms")
+   {
+      $atom:Na      $mol:...	@atom:TYPE_Na	     1.0		 0.0  0.0  0.0
+   }
+   write_once("Data Masses") 
+   {
+      @atom:TYPE_Na		22.989
+   }
+} # Na_ATOM
+
+#     AtomID         MolID       AtomType          Charge        X     Y    Z
+Cl_ATOM
+{
+   create_var{$mol}
+   write("Data Atoms")
+   {
+      $atom:Cl	     $mol:...   @atom:TYPE_Cl	    -1.0		 0.0  0.0  0.0
+   }
+   write_once("Data Masses") 
+   {
+      @atom:TYPE_Cl 	35.453
+   }
+} # Na_ATOM
+
+NaCl_UNIT_CELL_3D
+{
+    Na1 = new Na_ATOM
+    Cl1 = new Cl_ATOM.move(0.5,0.0,0.0)
+    Na2 = new Na_ATOM.move(0.5,0.5,0.0)
+    Cl2 = new Cl_ATOM.move(0.0,0.5,0.0)
+    Na3 = new Na_ATOM.move(0.5,0.0,0.5)
+    Cl3 = new Cl_ATOM.move(0.0,0.0,0.5)
+    Na4 = new Na_ATOM.move(0.0,0.5,0.5)
+    Cl4 = new Cl_ATOM.move(0.5,0.5,0.5)
+} # NaCl_UNIT_CELL_3D
