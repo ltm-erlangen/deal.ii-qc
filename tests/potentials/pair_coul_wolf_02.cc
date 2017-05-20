@@ -1,11 +1,10 @@
 
-#include <dealiiqc/configure/configure_qc.h>
-#include <dealiiqc/potentials/pair_coul_wolf.h>
-#include <dealiiqc/utilities.h>
-
 // Short test to check validity of PairLJCut class energy_and_gradient
 // member function.
 // The blessed file is created using maxima script: pair_coul_wolf.mc file.
+
+#include <deal.II-qc/configure/configure_qc.h>
+#include <deal.II-qc/potentials/pair_coul_wolf.h>
 
 using namespace dealiiqc;
 using namespace dealii;

@@ -1,11 +1,12 @@
 
-#include <deal.II/base/point.h>
-
-#include <dealiiqc/utilities.h>
-
-using namespace dealii;
 // Short test to check correctness of
 // dealiiqc::Utilities::is_outside_bounding_box()
+
+#include <deal.II/base/point.h>
+
+#include <deal.II-qc/utilities.h>
+
+using namespace dealii;
 
 int main()
 {

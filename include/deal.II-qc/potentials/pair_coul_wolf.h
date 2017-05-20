@@ -2,9 +2,8 @@
 #ifndef __dealii_qc_pair_coul_wolf_h
 #define __dealii_qc_pair_coul_wolf_h
 
-#include <dealiiqc/potentials/pair_base.h>
-#include <dealiiqc/utilities.h>
 #include <deal.II/base/exceptions.h>
+#include <deal.II-qc/potentials/pair_base.h>
 
 namespace dealiiqc
 {

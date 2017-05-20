@@ -2,10 +2,11 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+
 #include <deal.II/base/conditional_ostream.h>
 
-#include <dealiiqc/atom/parse_atom_data.h>
-#include <dealiiqc/configure/configure_qc.h>
+#include <deal.II-qc/atom/parse_atom_data.h>
+#include <deal.II-qc/configure/configure_qc.h>
 
 using namespace dealii;
 using namespace dealiiqc;

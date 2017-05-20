@@ -9,8 +9,7 @@
 
 #include <deal.II/base/point.h>
 
-#include <dealiiqc/atom/atom.h>
-#include <dealiiqc/utilities.h>
+#include <deal.II-qc/atom/atom.h>
 
 namespace dealiiqc
 {

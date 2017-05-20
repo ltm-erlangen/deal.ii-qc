@@ -1,7 +1,7 @@
 
-#include <dealiiqc/potentials/pair_lj_cut.h>
-
 // Short test to check validity of PairLJCut class member functions
+
+#include <deal.II-qc/potentials/pair_lj_cut.h>
 
 using namespace dealiiqc;
 using namespace dealii;

@@ -1,5 +1,5 @@
 
-#include <dealiiqc/configure/configure_qc.h>
+#include <deal.II-qc/configure/configure_qc.h>
 
 namespace dealiiqc
 {
@@ -232,8 +232,8 @@ namespace dealiiqc
                                   "for the Pair potential type: "
                                   "Coulomb Wolf."));
           AssertThrow (global_coeffs[1] < maximum_energy_radius,
-                  ExcMessage("Maximum energy radius should be more than or "
-                             "equal to the provided cutoff radius."));
+                       ExcMessage("Maximum energy radius should be more than or "
+                                  "equal to the provided cutoff radius."));
           pair_potential =
             std::make_shared<Potential::PairCoulWolfManager> (global_coeffs[0],
                                                               global_coeffs[1]);
@@ -244,8 +244,8 @@ namespace dealiiqc
                        ExcMessage("Invalid Pair global coefficients provided "
                                   "for the Pair potential type: LJ."));
           AssertThrow (global_coeffs[0] < maximum_energy_radius,
-                  ExcMessage("Maximum energy radius should be more than or "
-                             "equal to the provided cutoff radius."));
+                       ExcMessage("Maximum energy radius should be more than or "
+                                  "equal to the provided cutoff radius."));
           pair_potential =
             std::make_shared<Potential::PairLJCutManager> (global_coeffs[0]);
 
@@ -286,8 +286,8 @@ namespace dealiiqc
       ghost_cell_layer_thickness = prm.get_double("Ghost cell layer thickness");
 
       Assert (maximum_energy_radius < ghost_cell_layer_thickness,
-                    ExcMessage("Ghost cell layer thickness should be more than or "
-                               "equal to the Maximum energy radius."));
+              ExcMessage("Ghost cell layer thickness should be more than or "
+                         "equal to the Maximum energy radius."));
 
       cluster_radius = prm.get_double( "Cluster radius");
       cluster_weights_type = prm.get("Cluster weights by type");

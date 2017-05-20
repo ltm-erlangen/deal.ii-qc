@@ -1,7 +1,5 @@
 
-#include <dealiiqc/potentials/pair_base.h>
-
-
+#include <deal.II-qc/potentials/pair_base.h>
 
 namespace dealiiqc
 {

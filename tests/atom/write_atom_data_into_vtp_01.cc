@@ -5,10 +5,9 @@
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_out.h>
 
-#include <dealiiqc/atom/atom_handler.h>
-#include <dealiiqc/atom/data_out_atom_data.h>
-#include <dealiiqc/configure/configure_qc.h>
-#include <dealiiqc/utilities.h>
+#include <deal.II-qc/atom/atom_handler.h>
+#include <deal.II-qc/atom/data_out_atom_data.h>
+#include <deal.II-qc/configure/configure_qc.h>
 
 using namespace dealii;
 using namespace dealiiqc;

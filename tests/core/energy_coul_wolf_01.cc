@@ -1,3 +1,4 @@
+
 // Compute the energy of the system of 4 charged atoms
 // interacting exclusively through Coulomb interactions.
 // The blessed output is created through the script included at the end.
@@ -6,7 +7,7 @@
 #include <fstream>
 #include <sstream>
 
-#include <dealiiqc/core/qc.h>
+#include <deal.II-qc/core/qc.h>
 
 using namespace dealii;
 using namespace dealiiqc;

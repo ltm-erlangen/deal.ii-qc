@@ -2,7 +2,7 @@
 #ifndef __dealii_qc_cluster_weights_h_
 #define __dealii_qc_cluster_weights_h_
 
-#include <dealiiqc/atom/atom_data.h>
+#include <deal.II-qc/atom/atom_data.h>
 
 namespace dealiiqc
 {

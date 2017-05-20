@@ -11,12 +11,11 @@
 #include <utility>
 #include <memory>
 
-#include <dealiiqc/atom/cluster_weights.h>
-#include <dealiiqc/configure/geometry/geometry_box.h>
-#include <dealiiqc/configure/geometry/geometry_gmsh.h>
-#include <dealiiqc/potentials/pair_lj_cut.h>
-#include <dealiiqc/potentials/pair_coul_wolf.h>
-#include <dealiiqc/utilities.h>
+#include <deal.II-qc/atom/cluster_weights.h>
+#include <deal.II-qc/configure/geometry/geometry_box.h>
+#include <deal.II-qc/configure/geometry/geometry_gmsh.h>
+#include <deal.II-qc/potentials/pair_coul_wolf.h>
+#include <deal.II-qc/potentials/pair_lj_cut.h>
 
 namespace dealiiqc
 {
