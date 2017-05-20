@@ -3,10 +3,9 @@
 
 #include <deal.II/grid/grid_tools.h>
 
-#include <dealiiqc/atom/atom_data.h>
-#include <dealiiqc/configure/configure_qc.h>
-#include <dealiiqc/atom/parse_atom_data.h>
-#include <dealiiqc/utilities.h>
+#include <deal.II-qc/atom/atom_data.h>
+#include <deal.II-qc/atom/parse_atom_data.h>
+#include <deal.II-qc/configure/configure_qc.h>
 
 namespace dealiiqc
 {

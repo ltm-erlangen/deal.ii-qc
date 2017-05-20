@@ -3,7 +3,7 @@
 #ifndef __dealii_qc_atom_data_h
 #define __dealii_qc_atom_data_h
 
-#include <dealiiqc/atom/atom.h>
+#include <deal.II-qc/atom/atom.h>
 
 namespace dealiiqc
 {

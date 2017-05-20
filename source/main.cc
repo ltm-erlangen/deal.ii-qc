@@ -4,8 +4,9 @@
 #include <fstream>
 #include <sstream>
 
-#include <dealiiqc/core/qc.h>
 #include <deal.II/base/parameter_handler.h>
+
+#include <deal.II-qc/core/qc.h>
 
 int main (int argc, char *argv[])
 {

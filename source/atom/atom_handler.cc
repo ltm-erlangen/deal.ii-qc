@@ -1,7 +1,9 @@
 
 #include <deal.II/distributed/shared_tria.h>
 
-#include <dealiiqc/atom/atom_handler.h>
+#include <deal.II-qc/atom/atom_handler.h>
+
+
 
 namespace dealiiqc
 {

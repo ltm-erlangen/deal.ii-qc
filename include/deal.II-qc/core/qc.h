@@ -27,12 +27,11 @@ namespace LA
 #endif
 }
 
-#include <dealiiqc/atom/atom_handler.h>
-#include <dealiiqc/atom/cluster_weights.h>
-#include <dealiiqc/configure/configure_qc.h>
-#include <dealiiqc/potentials/pair_lj_cut.h>
-#include <dealiiqc/potentials/pair_coul_wolf.h>
-#include <dealiiqc/utilities.h>
+#include <deal.II-qc/atom/atom_handler.h>
+#include <deal.II-qc/atom/cluster_weights.h>
+#include <deal.II-qc/configure/configure_qc.h>
+#include <deal.II-qc/potentials/pair_lj_cut.h>
+#include <deal.II-qc/potentials/pair_coul_wolf.h>
 
 namespace dealiiqc
 {

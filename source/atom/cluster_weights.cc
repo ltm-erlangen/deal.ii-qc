@@ -1,12 +1,13 @@
 
-
-#include <dealiiqc/atom/cluster_weights.h>
+#include <deal.II-qc/atom/cluster_weights.h>
 
 namespace dealiiqc
 {
 
   namespace Cluster
   {
+
+
 
     //------------------------------------------------------------------------//
     // WeightsByBase

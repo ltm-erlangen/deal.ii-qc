@@ -3,7 +3,7 @@
 #include <fstream>
 #include <sstream>
 
-#include <dealiiqc/core/qc.h>
+#include <deal.II-qc/core/qc.h>
 
 using namespace dealii;
 using namespace dealiiqc;

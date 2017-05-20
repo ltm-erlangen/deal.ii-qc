@@ -1,7 +1,7 @@
 
 #include <cmath>
 
-#include <dealiiqc/potentials/pair_coul_wolf.h>
+#include <deal.II-qc/potentials/pair_coul_wolf.h>
 
 namespace dealiiqc
 {
@@ -9,6 +9,8 @@ namespace dealiiqc
 
   namespace Potential
   {
+
+
 
     PairCoulWolfManager::PairCoulWolfManager (const double &alpha,
                                               const double &cutoff_radius)
@@ -19,6 +21,7 @@ namespace dealiiqc
       cutoff_radius_inverse(1./cutoff_radius),
       compound_exp_value(std::exp(-alpha *alpha *cutoff_radius *cutoff_radius))
     {}
+
 
 
     void

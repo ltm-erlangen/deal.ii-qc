@@ -3,7 +3,7 @@
 
 #include <deal.II/base/utilities.h>
 
-#include <dealiiqc/potentials/pair_lj_cut.h>
+#include <deal.II-qc/potentials/pair_lj_cut.h>
 
 namespace dealiiqc
 {

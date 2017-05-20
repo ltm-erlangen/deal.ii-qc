@@ -4,7 +4,7 @@
 
 #include <utility>
 
-#include <dealiiqc/utilities.h>
+#include <deal.II-qc/utilities.h>
 
 namespace dealiiqc
 {

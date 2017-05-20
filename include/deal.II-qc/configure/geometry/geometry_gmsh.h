@@ -4,7 +4,7 @@
 
 #include <deal.II/grid/grid_tools.h>
 
-#include <dealiiqc/configure/geometry/geometry_base.h>
+#include <deal.II-qc/configure/geometry/geometry_base.h>
 
 namespace dealiiqc
 {

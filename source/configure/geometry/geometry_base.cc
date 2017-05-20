@@ -1,7 +1,8 @@
 
-#include <dealiiqc/configure/geometry/geometry_base.h>
-#include <dealiiqc/configure/geometry/geometry_box.h>
-#include <dealiiqc/configure/geometry/geometry_gmsh.h>
+#include <deal.II-qc/configure/geometry/geometry_base.h>
+
+#include <deal.II-qc/configure/geometry/geometry_box.h>
+#include <deal.II-qc/configure/geometry/geometry_gmsh.h>
 
 namespace dealiiqc
 {
@@ -10,6 +11,7 @@ namespace dealiiqc
 
   namespace Geometry
   {
+
 
 
     template <int dim>

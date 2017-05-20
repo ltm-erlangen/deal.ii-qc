@@ -1,10 +1,10 @@
 
-#include <dealiiqc/configure/configure_qc.h>
-#include <dealiiqc/potentials/pair_lj_cut.h>
-
 // Short test to check validity of PairLJCut class member functions
 // This test compares the partial results of pair_lj_cut_01 test to
 // that of LAMMPS output.
+
+#include <deal.II-qc/configure/configure_qc.h>
+#include <deal.II-qc/potentials/pair_lj_cut.h>
 
 using namespace dealiiqc;
 using namespace dealii;

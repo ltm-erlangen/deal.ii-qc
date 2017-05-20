@@ -2,8 +2,7 @@
 #ifndef __dealii_qc_pair_base_h
 #define __dealii_qc_pair_base_h
 
-#include <dealiiqc/potentials/potentials.h>
-#include <dealiiqc/utilities.h>
+#include <deal.II-qc/potentials/potentials.h>
 
 namespace dealiiqc
 {

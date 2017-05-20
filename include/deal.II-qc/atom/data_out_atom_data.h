@@ -4,7 +4,7 @@
 
 #include <deal.II/base/data_out_base.h>
 
-#include <dealiiqc/atom/atom_handler.h>
+#include <deal.II-qc/atom/atom_handler.h>
 
 
 namespace dealiiqc

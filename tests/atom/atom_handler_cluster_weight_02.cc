@@ -6,8 +6,8 @@
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_out.h>
 
-#include <dealiiqc/atom/cluster_weights.h>
-#include <dealiiqc/atom/atom_handler.h>
+#include <deal.II-qc/atom/atom_handler.h>
+#include <deal.II-qc/atom/cluster_weights.h>
 
 using namespace dealii;
 using namespace dealiiqc;

@@ -1,5 +1,5 @@
 
-#include <dealiiqc/atom/parse_atom_data.h>
+#include <deal.II-qc/atom/parse_atom_data.h>
 
 namespace dealiiqc
 {
