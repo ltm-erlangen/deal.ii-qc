@@ -67,12 +67,12 @@ namespace dealiiqc
      */
     double get_ghost_cell_layer_thickness() const;
 
-    // TODO: take maximum_energy_radius from pair potential cutoff radii?
-    // maximum_energy_radius= max{ cutoff_radii } + skin?
+    // TODO: take maximum_cutoff_radius from pair potential cutoff radii?
+    // maximum_cutoff_radius= max{ cutoff_radii } + skin?
     /**
-     * Get maximum energy radius.
+     * Return #maximum_cutoff_radius.
      */
-    double get_maximum_energy_radius() const;
+    double get_maximum_cutoff_radius() const;
 
     /**
      * Get cluster radius.
@@ -184,11 +184,11 @@ namespace dealiiqc
      * The maximum of all the cutoff radii of the pair potentials.
      * It is used to update neighbor lists of atoms.
      *
-     * @note #maximum_energy_radius is different from
+     * @note #maximum_cutoff_radius is different from
      * #ghost_cell_layer_thickness which is used to identify locally relevant
      * ghost cells of MPI processes.
      */
-    double maximum_energy_radius;
+    double maximum_cutoff_radius;
 
     /**
      * The cluster radius used in QC.
