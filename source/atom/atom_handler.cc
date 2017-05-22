@@ -99,9 +99,9 @@ namespace dealiiqc
     types::global_atom_index n_thrown_atoms=0;
 
     // Get the energy_radius to identify energy atoms.
-    const double energy_radius = configure_qc.get_maximum_cutoff_radius() +
-                                 configure_qc.get_cluster_radius();
-
+    const double squared_energy_radius =
+        dealii::Utilities::fixed_power<2> (configure_qc.get_maximum_cutoff_radius() +
+                                           configure_qc.get_cluster_radius());
     for ( auto atom : vector_atoms )
       {
         bool atom_associated_to_cell = false;
@@ -130,7 +130,11 @@ namespace dealiiqc
             atom.reference_position = GeometryInfo<dim>::project_to_unit_cell(my_pair.second);
             // TODO: Remove parent_cell
             atom.parent_cell = my_pair.first;
-            if ( Utilities::is_point_within_distance_from_cell_vertices( atom.position, my_pair.first, energy_radius) )
+
+            // Get the closest vertex and squared distance.
+            const auto closest_vertex = Utilities::find_closest_vertex(atom.position,
+                                                                       my_pair.first);
+            if ( closest_vertex.second < squared_energy_radius)
               {
                 atom_associated_to_cell = true;
                 energy_atoms.insert( std::make_pair( my_pair.first, atom ));
@@ -167,8 +171,11 @@ namespace dealiiqc
     // whose atoms interact with each other.
     std::list< std::pair< types::CellIteratorType<dim>, types::CellIteratorType<dim>> > cell_neighbor_lists;
 
-    const double cutoff_radius = configure_qc.get_maximum_cutoff_radius();
-    const double cluster_radius = configure_qc.get_cluster_radius();
+    const double cutoff_radius  = configure_qc.get_maximum_cutoff_radius();
+    const double squared_cutoff_radius  = dealii::Utilities::fixed_power<2>(cutoff_radius);
+
+    const double squared_cluster_radius =
+        dealii::Utilities::fixed_power<2>(configure_qc.get_cluster_radius());
 
     // For each locally owned cell, identify all the cells
     // whose associated atoms may interact.At this point we do not
@@ -232,14 +239,14 @@ namespace dealiiqc
             // to the atom struct and use it here !!!
             // Check if the atom_I is cluster atom,
             // only cluster atoms get to have neighbor lists
-            if ( Utilities::is_point_within_distance_from_cell_vertices( atom_I.position, cell_I, cluster_radius) )
+            if (Utilities::find_closest_vertex(atom_I.position, cell_I).second < squared_cluster_radius)
               for ( types::CellAtomConstIteratorType<dim> cell_atom_J = range_of_cell_J.first; cell_atom_J != range_of_cell_J.second; ++cell_atom_J )
                 {
                   const Atom<dim> &atom_J = cell_atom_J->second;
 
                   // TODO: Once functions updating cluster weights of atoms is implemented
                   const bool atom_J_is_cluster_atom =
-                    Utilities::is_point_within_distance_from_cell_vertices( atom_J.position, cell_J, cluster_radius );
+                    Utilities::find_closest_vertex (atom_J.position, cell_J).second < squared_cluster_radius;
 
                   // If atom_J is not cluster atom,
                   // then add atom_J to atom_i's neighbor list.
@@ -250,10 +257,10 @@ namespace dealiiqc
                   // that there is no double counting of energy
                   // contribution due to cluster atoms - atom_I and atom_J
 
-                  if ( ( atom_J_is_cluster_atom && (atom_I.global_index > atom_J.global_index))
+                  if ( (atom_J_is_cluster_atom && (atom_I.global_index > atom_J.global_index))
                        ||
                        !atom_J_is_cluster_atom )
-                    if ( atom_I.position.distance_square(atom_J.position) < cutoff_radius*cutoff_radius)
+                    if ( atom_I.position.distance_square(atom_J.position) < squared_cutoff_radius)
                       neighbor_lists.insert( std::make_pair( cell_pair_IJ, std::make_pair( cell_atom_I, cell_atom_J)) );
                 }
           }
@@ -275,24 +282,28 @@ namespace dealiiqc
     //     loop over all atoms
     //       if within distance
     //         total_number_of_interactions++;
-    for ( auto cell_atom_I : energy_atoms )
-      if ( cell_atom_I.first->is_locally_owned() )
+    for (auto cell_atom_I : energy_atoms)
+      if (cell_atom_I.first->is_locally_owned())
         {
           const Atom<dim> &atom_I = cell_atom_I.second;
           // We are building neighbor lists for only atom_Is
           // so we can skip atom_I if it's not a cluster atom.
-          if (Utilities::is_point_within_distance_from_cell_vertices( atom_I.position, cell_atom_I.first, cluster_radius ))
-            for ( auto cell_atom_J : energy_atoms )
+          const bool atom_I_is_cluster_atom =
+            Utilities::find_closest_vertex (atom_I.position,
+                                            cell_atom_I.first).second < squared_cluster_radius;
+          if (atom_I_is_cluster_atom)
+            for (auto cell_atom_J : energy_atoms)
               {
                 const Atom<dim> &atom_J = cell_atom_J.second;
                 // TODO: Once functions updating cluster weights of energy_atoms is implemented
                 // use is_cluster() member function in atom struct.
                 const bool atom_J_is_cluster_atom =
-                  Utilities::is_point_within_distance_from_cell_vertices( atom_J.position, cell_atom_J.first, cluster_radius );
+                  Utilities::find_closest_vertex(atom_J.position, cell_atom_J.first).second
+                  < squared_cluster_radius;
                 if ( ( atom_J_is_cluster_atom && (atom_I.global_index > atom_J.global_index))
                      ||
                      !atom_J_is_cluster_atom )
-                  if ( (atom_I.position - atom_J.position).norm_square() < cutoff_radius*cutoff_radius)
+                  if ( atom_I.position.distance_square(atom_J.position) < squared_cutoff_radius)
                     total_number_of_interactions++;
               }
         }

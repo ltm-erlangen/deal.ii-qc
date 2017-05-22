@@ -49,27 +49,37 @@ namespace dealiiqc
 
 
 
+    // TODO: Add a test for this function.
     /**
-     * Function to check if a Point @p p is a within a certain
-     * @p distance from the vertices of a given parent cell.
+     * Find the closest vertex of a given cell @p cell to a given Point @p and
+     * return a pair of its number and the squared distance.
      */
     template<int dim>
     inline
-    bool
-    is_point_within_distance_from_cell_vertices( const Point<dim> &p,
-                                                 const typename Triangulation<dim>::cell_iterator cell,
-                                                 const double &distance)
+    std::pair<unsigned int, double>
+    find_closest_vertex (const Point<dim> &p,
+                         const typename Triangulation<dim>::cell_iterator cell)
     {
       // Throw exception if the given cell is is not in a valid
       // cell iterator state.
       AssertThrow( cell->state() == IteratorState::valid,
                    ExcMessage( "The given cell iterator is not in a valid iterator state"));
 
-      for (unsigned int v=0; v<GeometryInfo<dim>::vertices_per_cell; ++v)
-        if (  p.distance_square(cell->vertex(v))
-              < dealii::Utilities::fixed_power<2>( distance ) )
-          return true;
-      return false;
+      // Assume the first vertex is the closest at first.
+      double squared_distance = p.distance_square(cell->vertex(0));
+      unsigned int vertex_number = 0;
+
+      // Loop over all the other vertices to search for closest vertex.
+      for (unsigned int v=1; v<GeometryInfo<dim>::vertices_per_cell; ++v)
+        {
+          const double p_squared_distance = p.distance_square(cell->vertex(v));
+          if (p_squared_distance < squared_distance)
+            {
+              squared_distance = p_squared_distance;
+              vertex_number = v;
+            }
+        }
+      return std::make_pair(vertex_number, squared_distance);
     }
 
 
