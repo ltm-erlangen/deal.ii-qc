@@ -63,9 +63,9 @@ namespace dealiiqc
     return ghost_cell_layer_thickness;
   }
 
-  double ConfigureQC::get_maximum_energy_radius() const
+  double ConfigureQC::get_maximum_cutoff_radius() const
   {
-    return maximum_energy_radius;
+    return maximum_cutoff_radius;
   }
 
   double ConfigureQC::get_cluster_radius() const
@@ -120,7 +120,7 @@ namespace dealiiqc
                         Patterns::Anything(),
                         "Name of the atom data file "
                         "that is compatible with LAMMPS");
-      prm.declare_entry("Maximum energy radius", "6.0",
+      prm.declare_entry("Maximum cutoff radius", "6.0",
                         Patterns::Double(0),
                         "Maximum of all the cutoff radii "
                         "plus a skin thickness "
@@ -210,7 +210,7 @@ namespace dealiiqc
     prm.enter_subsection("Configure atoms");
     {
       atom_data_file = prm.get("Atom data file");
-      maximum_energy_radius = prm.get_double("Maximum energy radius");
+      maximum_cutoff_radius = prm.get_double("Maximum cutoff radius");
 
       const std::string pair_potential_type = prm.get("Pair potential type");
 
@@ -231,8 +231,8 @@ namespace dealiiqc
                        ExcMessage("Invalid Pair global coefficients provided "
                                   "for the Pair potential type: "
                                   "Coulomb Wolf."));
-          AssertThrow (global_coeffs[1] < maximum_energy_radius,
-                       ExcMessage("Maximum energy radius should be more than or "
+          AssertThrow (global_coeffs[1] < maximum_cutoff_radius,
+                       ExcMessage("Maximum cutoff radius should be more than or "
                                   "equal to the provided cutoff radius."));
           pair_potential =
             std::make_shared<Potential::PairCoulWolfManager> (global_coeffs[0],
@@ -243,8 +243,8 @@ namespace dealiiqc
           AssertThrow (global_coeffs.size()==1,
                        ExcMessage("Invalid Pair global coefficients provided "
                                   "for the Pair potential type: LJ."));
-          AssertThrow (global_coeffs[0] < maximum_energy_radius,
-                       ExcMessage("Maximum energy radius should be more than or "
+          AssertThrow (global_coeffs[0] < maximum_cutoff_radius,
+                       ExcMessage("Maximum cutoff radius should be more than or "
                                   "equal to the provided cutoff radius."));
           pair_potential =
             std::make_shared<Potential::PairLJCutManager> (global_coeffs[0]);
@@ -285,9 +285,9 @@ namespace dealiiqc
     {
       ghost_cell_layer_thickness = prm.get_double("Ghost cell layer thickness");
 
-      Assert (maximum_energy_radius < ghost_cell_layer_thickness,
+      Assert (maximum_cutoff_radius < ghost_cell_layer_thickness,
               ExcMessage("Ghost cell layer thickness should be more than or "
-                         "equal to the Maximum energy radius."));
+                         "equal to the Maximum cutoff radius."));
 
       cluster_radius = prm.get_double( "Cluster radius");
       cluster_weights_type = prm.get("Cluster weights by type");

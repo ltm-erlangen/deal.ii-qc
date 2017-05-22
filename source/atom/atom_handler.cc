@@ -99,8 +99,7 @@ namespace dealiiqc
     types::global_atom_index n_thrown_atoms=0;
 
     // Get the energy_radius to identify energy atoms.
-    // TODO: Change maximum_energy_radius to maximum_cutoff_radius
-    const double energy_radius = configure_qc.get_maximum_energy_radius() +
+    const double energy_radius = configure_qc.get_maximum_cutoff_radius() +
                                  configure_qc.get_cluster_radius();
 
     for ( auto atom : vector_atoms )
@@ -168,7 +167,7 @@ namespace dealiiqc
     // whose atoms interact with each other.
     std::list< std::pair< types::CellIteratorType<dim>, types::CellIteratorType<dim>> > cell_neighbor_lists;
 
-    const double cutoff_radius = configure_qc.get_maximum_energy_radius();
+    const double cutoff_radius = configure_qc.get_maximum_cutoff_radius();
     const double cluster_radius = configure_qc.get_cluster_radius();
 
     // For each locally owned cell, identify all the cells
