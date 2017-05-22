@@ -21,21 +21,29 @@ namespace dealiiqc
       /**
        * Constructor.
        */
-      WeightsByBase( const double &cluster_radius);
+      WeightsByBase (const double &cluster_radius,
+                     const double &maximum_cutoff_radius);
 
 
       virtual ~WeightsByBase();
 
       /**
-       * Calculate and assign cluster weights to to all cluster atoms in
-       * @p energy_atoms stored on this MPI process using, if needed,
-       * additionally provided number of disregarded atoms in the fully
-       * resolved simulation @p n_thrown_atoms_per_cell
+       * Return energy atoms (in a cell based data structure) with appropriately
+       * set cluster weights based on @p atoms that were associated to @p mesh.
+       * The cluster radius and the maximum cutoff radius are specified in
+       * constructor.
+       *
+       * The returned energy atoms may have non-zero (cluster atoms) or
+       * zero (non cluster atoms) cluster weights.
+       *
+       * An atom is indeed an energy atom if it is within #cluster_radius
+       * plus #maximum_cutoff_radius distance to it's surrounding
+       * (or associated) cell's vertices.
        */
       virtual
-      void
-      update_cluster_weights (const std::map< types::CellIteratorType<dim>, unsigned int> &n_thrown_atoms_per_cell,
-                              types::CellAtomContainerType<dim> &energy_atoms) const = 0;
+      types::CellAtomContainerType<dim>
+      update_cluster_weights (const types::MeshType<dim> &mesh,
+                              const types::CellAtomContainerType<dim> &atoms) const = 0;
 
     protected:
 
@@ -43,6 +51,11 @@ namespace dealiiqc
        * The cluster radius for the QC approach.
        */
       const double cluster_radius;
+
+      /**
+       * The maximum of cutoff radii.
+       */
+      const double maximum_cutoff_radius;
     };
 
     /**
@@ -56,11 +69,20 @@ namespace dealiiqc
       /**
        * Constructor
        */
-      WeightsByCell(const double &cluster_radius);
+      WeightsByCell (const double &cluster_radius,
+                     const double &maximum_energy_radius);
 
-      void
-      update_cluster_weights( const std::map< types::CellIteratorType<dim>, unsigned int> &n_thrown_atoms_per_cell,
-                              types::CellAtomContainerType<dim> &energy_atoms) const;
+      /**
+       * @copydoc WeightsByBase::update_cluster_weights()
+       *
+       * The approach of WeightsByCell counts the number of non-energy atoms
+       * (i.e., the atoms in locally relevant cells but are not close enough
+       * to cell's vertices that they are not energy atoms) which is then used
+       * to compute cluster weights of the cluster atoms.
+       */
+      types::CellAtomContainerType<dim>
+      update_cluster_weights (const types::MeshType<dim> &mesh,
+                              const types::CellAtomContainerType<dim> &atoms) const;
 
     };
 

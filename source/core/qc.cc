@@ -70,7 +70,7 @@ namespace dealiiqc
   {
     // TODO: Change timer description
     TimerOutput::Scope t (computing_timer, "Parse atom data and associate atoms with cells");
-    atom_handler.parse_atoms_and_assign_to_cells( dof_handler, atom_data);
+    atom_handler.parse_atoms_and_assign_to_cells (dof_handler, atom_data);
 
     // It is ConfigureQC that actually creates a PotentialType object according
     // to the parsed input and can return a shared pointer to the PotentialType
@@ -80,9 +80,10 @@ namespace dealiiqc
 
     // It is ConfigureQC that actually creates a shared pointer to the derived
     // class object of the Cluster::WeightsByBase according to the parsed input.
-    configure_qc.get_cluster_weights<dim>()->
-    update_cluster_weights (atom_data.n_thrown_atoms_per_cell,
-                            atom_data.energy_atoms);
+    atom_data.energy_atoms =
+      configure_qc.get_cluster_weights<dim>()->
+      update_cluster_weights (dof_handler,
+                              atom_data.atoms);
   }
 
 

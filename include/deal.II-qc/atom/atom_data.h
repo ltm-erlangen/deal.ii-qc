@@ -69,30 +69,28 @@ namespace dealiiqc
     std::vector<double> masses;
 
     /**
-     * A lookup data structure for all atoms in the system needed by a
-     * current MPI core, namely a union of locally owned and ghost atoms.
-     * Used for initializing cell based data structures that would actually be
-     * used for computations.
+     * The cell based data structure that contains cells and atoms association
+     * for all the atoms in the system. The function
+     * AtomHandler::parse_atoms_and_assign_to_cells() is responsible for
+     * updating this data member.
      *
-     * The following optimization technique is employed while adding energy
-     * atoms. For each atom in the system, before going over all locally owned
+     * The following optimization technique is employed while adding atoms.
+     * For each atom in the system, before going over all locally owned
      * cells to find if the atom lies within it, we can first check whether the
      * atom's location lies inside the bounding box of the current processor's
      * set of locally relevant cells.
      */
-    std::multimap<types::CellIteratorType<dim>, Atom<dim>> energy_atoms;
+    types::CellAtomContainerType<dim> atoms;
 
+    // TODO: * The function QC::setup_energy_atoms() is responsible for
+    //       * updating this data member.
     /**
-     * The number of locally relevant non-energy atoms per cell.
-     * This is exactly the number of non-energy atoms for whom a
-     * locally relevant cell is found while updating #energy_atoms.
-     * They were thrown because they weren't energy atoms.
-     *
-     * @note The map also contains the information of number of
-     * thrown atoms per cell for ghost cells on the current
-     * MPI process.
+     * The cell based data structure that contains cells and energy atoms
+     * association for all the energy atoms in the system needed by a
+     * current MPI core. This data member contains the central information for
+     * energy and force computations.
      */
-    std::map<types::CellIteratorType<dim>, unsigned int> n_thrown_atoms_per_cell;
+    types::CellAtomContainerType<dim> energy_atoms;
 
   };
 

@@ -27,28 +27,25 @@ namespace dealiiqc
     AtomHandler( const ConfigureQC &configure_qc);
 
     /**
-     * Setup cell based atom attributes in @p atom_data,  namely:
-     * AtomData::energy_atoms, AtomData::masses and AtomData::atomtype_to_atoms.
+     * Setup few data members in AtomData (namely: AtomData::atoms,
+     * AtomData::masses and AtomData::atomtype_to_atoms) by parsing the atom
+     * data information provided through #configure_qc. This function does not
+     * update AtomData::energy_atoms.
      *
      * For each and every atom in the system, find the locally relevant cell
      * of the @p mesh which surrounds it. If the atom doesn't belong to
      * any of the locally relevant cells, it is thrown. In the case when
-     * a locally relevant cell is found, and if the atom is energy atom it is
-     * inserted into AtomData::energy_atoms.
+     * a locally relevant cell is found is is inserted into AtomData::atoms.
      *
      * A locally relevant cell is one which is either a locally owned cell or
-     * a ghost cell within a certain distance(determined by interaction radius
-     * between atoms in the system). A ghost cell could contain atoms whose
+     * a ghost cell within a ConfigureQC::ghost_cell_layer_thickness from the
+     * locally owned cell. A ghost cell could contain atoms whose
      * positions are needed for computing energy or forces on locally owned
      * cluster atoms. An MPI process computes energy and forces only of it's
      * locally relevant cluster atoms.
      *
-     * All the atoms which are not locally relevant energy_atoms
-     * are thrown away. However, a count of the number of (locally relevant)
-     * non-energy atoms (i.e., for which a locally relevant cell is found
-     * but are not energy atoms) is kept using AtomData::n_thrown_atoms_per_cell
-     * for the sake of updating cluster weights at a later stage.
-     *
+     * All the atoms which are outside the locally relevant cells are thrown
+     * away.
      */
     void parse_atoms_and_assign_to_cells( const types::MeshType<dim> &mesh,
                                           AtomData<dim> &atom_data) const;

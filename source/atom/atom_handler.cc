@@ -31,8 +31,9 @@ namespace dealiiqc
     atom_data.charges = NULL;
     std::vector<types::charge> charges;
     auto &masses  = atom_data.masses;
-    auto &energy_atoms = atom_data.energy_atoms;
-    auto &n_thrown_atoms_per_cell = atom_data.n_thrown_atoms_per_cell;
+    auto &atoms = atom_data.atoms;
+
+    const unsigned int n_vertices =  mesh.get_triangulation().n_vertices();
 
     if (!(configure_qc.get_atom_data_file()).empty() )
       {
@@ -54,21 +55,17 @@ namespace dealiiqc
     // In order to speed-up finding an active cell around atoms through
     // find_active_cell_around_point(), we will need to construct a
     // mask for vertices of locally owned cells and ghost cells
-    std::vector<bool> locally_active_vertices( mesh.get_triangulation().n_vertices(),
+    std::vector<bool> locally_active_vertices( n_vertices,
                                                false);
 
     // Loop through all the locally owned cells and
     // mark (true) all the vertices of the locally owned cells.
-    // Also, initialize n_thrown_atoms_per_cell container.
     for ( typename types::MeshType<dim>::active_cell_iterator
           cell = mesh.begin_active();
           cell != mesh.end(); ++cell)
       if ( cell->is_locally_owned())
-        {
-          for (unsigned int v=0; v<GeometryInfo<dim>::vertices_per_cell; ++v)
-            locally_active_vertices[cell->vertex_index(v)] = true;
-          n_thrown_atoms_per_cell.insert(std::make_pair(cell,0));
-        }
+        for (unsigned int v=0; v<GeometryInfo<dim>::vertices_per_cell; ++v)
+          locally_active_vertices[cell->vertex_index(v)] = true;
 
     // This MPI process also needs to know certain active ghost cells
     // within a certain distance from locally owned cells.
@@ -82,15 +79,11 @@ namespace dealiiqc
                                                            configure_qc.get_ghost_cell_layer_thickness());
 
     // Loop through all the ghost cells computed above and
-    // Mark (true) all the vertices of the locally owned and active
+    // mark (true) all the vertices of the locally owned and active
     // ghost cells within ConfigureQC::ghost_cell_layer_thickness.
-    // Also, initialize n_thrown_atoms_per_cell.
     for ( auto cell : ghost_cells)
-      {
-        for (unsigned int v=0; v<GeometryInfo<dim>::vertices_per_cell; ++v)
-          locally_active_vertices[cell->vertex_index(v)] = true;
-        n_thrown_atoms_per_cell.insert(std::make_pair(cell,0));
-      }
+      for (unsigned int v=0; v<GeometryInfo<dim>::vertices_per_cell; ++v)
+        locally_active_vertices[cell->vertex_index(v)] = true;
 
     // TODO: If/when required collect all non-relevant atoms
     // (those that are not within a ConfigureQC::ghost_cell_layer_thickness
@@ -98,10 +91,6 @@ namespace dealiiqc
     // For now just add the number of atoms being thrown.
     types::global_atom_index n_thrown_atoms=0;
 
-    // Get the energy_radius to identify energy atoms.
-    const double squared_energy_radius =
-        dealii::Utilities::fixed_power<2> (configure_qc.get_maximum_cutoff_radius() +
-                                           configure_qc.get_cluster_radius());
     for ( auto atom : vector_atoms )
       {
         bool atom_associated_to_cell = false;
@@ -130,18 +119,8 @@ namespace dealiiqc
             atom.reference_position = GeometryInfo<dim>::project_to_unit_cell(my_pair.second);
             // TODO: Remove parent_cell
             atom.parent_cell = my_pair.first;
-
-            // Get the closest vertex and squared distance.
-            const auto closest_vertex = Utilities::find_closest_vertex(atom.position,
-                                                                       my_pair.first);
-            if ( closest_vertex.second < squared_energy_radius)
-              {
-                atom_associated_to_cell = true;
-                energy_atoms.insert( std::make_pair( my_pair.first, atom ));
-              }
-            else
-              // Increment the number of locally relevant non-energy atom
-              n_thrown_atoms_per_cell.at(my_pair.first)++;
+            atoms.insert( std::make_pair( my_pair.first, atom ));
+            atom_associated_to_cell = true;
           }
         catch ( dealii::GridTools::ExcPointNotFound<dim> &)
           {
@@ -153,7 +132,7 @@ namespace dealiiqc
           n_thrown_atoms++;
       }
 
-    Assert( energy_atoms.size()+n_thrown_atoms==vector_atoms.size(),
+    Assert( atoms.size()+n_thrown_atoms==vector_atoms.size(),
             ExcInternalError());
 
   }
@@ -175,7 +154,7 @@ namespace dealiiqc
     const double squared_cutoff_radius  = dealii::Utilities::fixed_power<2>(cutoff_radius);
 
     const double squared_cluster_radius =
-        dealii::Utilities::fixed_power<2>(configure_qc.get_cluster_radius());
+      dealii::Utilities::fixed_power<2>(configure_qc.get_cluster_radius());
 
     // For each locally owned cell, identify all the cells
     // whose associated atoms may interact.At this point we do not
