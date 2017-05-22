@@ -120,7 +120,7 @@ namespace dealiiqc
                         Patterns::Anything(),
                         "Name of the atom data file "
                         "that is compatible with LAMMPS");
-      prm.declare_entry("Maximum cutoff radius", "6.0",
+      prm.declare_entry("Maximum cutoff radius", "5.9",
                         Patterns::Double(0),
                         "Maximum of all the cutoff radii "
                         "plus a skin thickness "
