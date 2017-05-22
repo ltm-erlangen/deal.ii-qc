@@ -13,9 +13,11 @@ namespace dealiiqc
     // WeightsByBase
 
     template <int dim>
-    WeightsByBase<dim>::WeightsByBase (const double &cluster_radius)
+    WeightsByBase<dim>::WeightsByBase (const double &cluster_radius,
+                                       const double &maximum_cutoff_radius)
       :
-      cluster_radius(cluster_radius)
+      cluster_radius(cluster_radius),
+      maximum_cutoff_radius(maximum_cutoff_radius)
     {}
 
 
@@ -37,71 +39,110 @@ namespace dealiiqc
     // WeightsByCell
 
     template <int dim>
-    WeightsByCell<dim>::WeightsByCell (const double &cluster_radius)
+    WeightsByCell<dim>::WeightsByCell (const double &cluster_radius,
+                                       const double &maximum_cutoff_radius)
       :
-      WeightsByBase<dim>(cluster_radius)
+      WeightsByBase<dim>(cluster_radius, maximum_cutoff_radius)
     {}
 
 
 
     template <int dim>
-    void
-    WeightsByCell<dim>::update_cluster_weights (const std::map< types::CellIteratorType<dim>, unsigned int> &n_thrown_atoms_per_cell,
-                                                types::CellAtomContainerType<dim> &energy_atoms) const
+    types::CellAtomContainerType<dim>
+    WeightsByCell<dim>::update_cluster_weights (const types::MeshType<dim> &mesh,
+                                                const types::CellAtomContainerType<dim> &atoms) const
     {
-      // Number of cluster atoms per cell
-      std::map<typename types::CellIteratorType<dim>, unsigned int> n_cluster_atoms_per_cell;
+      // Prepare energy atoms in this container.
+      types::CellAtomContainerType<dim> energy_atoms;
 
-      // Initialize n_cluster_atoms_per_cell
-      for ( typename types::CellAtomContainerType<dim>::iterator unique_key = energy_atoms.begin(); unique_key != energy_atoms.end(); unique_key = energy_atoms.upper_bound(unique_key->first))
-        n_cluster_atoms_per_cell[ unique_key->first] = (unsigned int) 0;
+      // Prepare the total number of atoms per cell in this container.
+      // The container should also contain the information of total number of
+      // atoms per cell for ghost cells on the current MPI process.
+      std::map<types::CellIteratorType<dim>, unsigned int> n_atoms_per_cell;
 
+      // Prepare the number of cluster atoms per cell in this container.
+      std::map<types::CellIteratorType<dim>, unsigned int> n_cluster_atoms_per_cell;
+
+      // Get the squared_energy_radius to identify energy atoms.
+      const double squared_energy_radius =
+        dealii::Utilities::fixed_power<2> (WeightsByBase<dim>::maximum_cutoff_radius +
+                                           WeightsByBase<dim>::cluster_radius);
+
+      // Get the squared_cluster_radius to identify cluster atoms.
       const double squared_cluster_radius =
-          dealii::Utilities::fixed_power<2>(WeightsByBase<dim>::cluster_radius);
+        dealii::Utilities::fixed_power<2>(WeightsByBase<dim>::cluster_radius);
 
-      // Loop over all energy_atoms to compute the number of cluster_atoms
-      for ( const auto &cell_atom : energy_atoms)
+      // Loop over all active cells of the mesh and initialize
+      // n_atoms_per_cell and n_cluster_atoms_per_cell.
+      for (types::CellIteratorType<dim>
+           cell  = mesh.begin_active();
+           cell != mesh.end();
+           cell++)
+        {
+          n_atoms_per_cell[cell]         = 0;
+          n_cluster_atoms_per_cell[cell] = 0;
+        }
+
+      // Loop over all atoms, see if a given atom is energy atom and
+      // if so if it's a cluster atom.
+      // While there, count the total number of atoms per cell and
+      // number of cluster atoms per cell.
+      for (const auto & cell_atom : atoms)
         {
           const auto &cell = cell_atom.first;
-          const Atom<dim> &atom  = cell_atom.second;
+          Atom<dim> atom   = cell_atom.second;
 
-          // TODO use is_cluster_atom from atom struct
-          // TODO When is_cluster_atom, one could remove cluster_radius member variable.
-          if (Utilities::find_closest_vertex(atom.position, cell).second
-              < squared_cluster_radius)
-            // Increment cluster atom count for this "cell"
-            n_cluster_atoms_per_cell[cell]++;
-        }
+          Assert (n_atoms_per_cell.find(cell) !=n_atoms_per_cell.end(),
+                  ExcMessage("Provided 'mesh' isn't consistent with "
+                             "the cell based atoms data structure."));
 
-      for ( const auto &cell_count : n_cluster_atoms_per_cell)
-        {
-          const auto &cell = cell_count.first;
-          const double n_cluster_atoms = cell_count.second;
+          n_atoms_per_cell[cell]++;
 
-          Assert ( n_thrown_atoms_per_cell.count(cell) > 0,
-                   ExcInternalError());
-
-          // The total number of atoms in a cell is the sum of thrown atoms
-          // and the energy_atoms in the cell.
-          const double n_cell_atoms = n_thrown_atoms_per_cell.at(cell) + energy_atoms.count(cell);
-
-          // Loop over all the energy atoms in the cell,
-          // if they are cluster atoms,
-          // update their weights (n_cell_atoms/n_cluster_atoms)
-          // if they are not cluster atoms,
-          // set their weights to zero.
-          auto cell_range = energy_atoms.equal_range(cell);
-          for ( auto &cell_atom = cell_range.first; cell_atom !=cell_range.second; ++cell_atom)
+          // Check the proximity of the atom to it's associated
+          // cell's vertices.
+          const auto closest_vertex =
+            Utilities::find_closest_vertex (cell_atom.second.position,
+                                            cell);
+          if (closest_vertex.second < squared_energy_radius)
             {
-              Atom<dim> &atom = cell_atom->second;
-
-              if (Utilities::find_closest_vertex(atom.position, cell).second
-                  < squared_cluster_radius)
-                atom.cluster_weight = n_cell_atoms / n_cluster_atoms;
+              if (closest_vertex.second < squared_cluster_radius)
+                {
+                  // Increment cluster atom count for this "cell"
+                  n_cluster_atoms_per_cell[cell]++;
+                  // atom is cluster atom
+                  atom.cluster_weight = 1.;
+                }
               else
+                // atom is not cluster atom
                 atom.cluster_weight = 0.;
+
+              // Insert atom into energy_atoms if it is within a distance of
+              // energy_radius to associated cell's vertices.
+              energy_atoms.insert(std::make_pair(cell,atom));
             }
         }
+
+      //---Finished adding energy atoms
+      //---Now update cluster weights with correct value
+
+      // Loop over all the energy atoms,
+      // update their weights by multiplying with the factor
+      // (n_atoms/n_cluster_atoms)
+      for (auto &energy_atom : energy_atoms)
+        {
+
+          Assert (n_cluster_atoms_per_cell.at(energy_atom.first) != 0,
+                  ExcInternalError());
+
+          // The cluster weight was previously set to 1. if the atom is
+          // cluster atom and 0. if the atom is not cluster atom.
+          energy_atom.second.cluster_weight *=
+              n_atoms_per_cell.at(energy_atom.first)
+              /
+              n_cluster_atoms_per_cell.at(energy_atom.first);
+        }
+
+      return energy_atoms;
     }
 
 

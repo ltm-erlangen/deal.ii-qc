@@ -91,7 +91,7 @@ namespace dealiiqc
       // we either need to make ConfigureQC templated with dim, or keep around
       // three different shared pointers.
       return std::make_shared<const Cluster::WeightsByCell<dim> >
-             (cluster_radius);
+             (cluster_radius, maximum_cutoff_radius);
     else
       AssertThrow (false, ExcInternalError());
 
