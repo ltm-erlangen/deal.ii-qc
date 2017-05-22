@@ -75,14 +75,18 @@ namespace dealiiqc
      * AtomData::energy_atoms which holds an association between the locally
      * relevant active cell of the underlying #triangulation and the energy
      * atoms in it.
+     */
+    void setup_atom_data();
+
+    /**
+     * Setup cluster weights of the AtomData::energy_atoms in #atom_data.
      *
-     * This function also updates cluster weights of the AtomData::energy_atoms
-     * in #atom_data. All cluster atoms get a non zero cluster weight while the
+     * All cluster atoms get a non zero cluster weight while the
      * other energy atoms get a zero cluster weight. #configure_qc creates a
      * shared pointer to the derived class of Cluster::WeightsByBase based on
      * the chosen method to update cluster weights of cluster atoms.
      */
-    void setup_atom_data();
+    void setup_cluster_weights();
 
     /**
      * Distribute degrees-of-freedom and initialise matrices and vectors.

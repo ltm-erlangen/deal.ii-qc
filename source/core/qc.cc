@@ -45,13 +45,11 @@ namespace dealiiqc
   {
     Assert( dim==configure_qc.get_dimension(), ExcInternalError());
 
-    // Load the mesh by reading from mesh file
+    // Load the mesh by reading from mesh file.
     setup_triangulation();
 
-    // Read atom data file and initialize atoms
+    // Read atom data file and initialize atoms.
     setup_atom_data();
-
-    setup_system();
 
   }
 
@@ -77,7 +75,13 @@ namespace dealiiqc
     // object. However, charges in PotentialType object aren't set yet.
     // Finish setting up PotentialType object here.
     configure_qc.get_potential()->set_charges(atom_data.charges);
+  }
 
+
+
+  template <int dim, typename PotentialType>
+  void QC<dim, PotentialType>::setup_cluster_weights()
+  {
     // It is ConfigureQC that actually creates a shared pointer to the derived
     // class object of the Cluster::WeightsByBase according to the parsed input.
     configure_qc.get_cluster_weights<dim>()->
@@ -457,6 +461,8 @@ namespace dealiiqc
   template <int dim, typename PotentialType>
   void QC<dim, PotentialType>::run ()
   {
+    setup_cluster_weights();
+    setup_system();
     setup_fe_values_objects();
     update_neighbor_lists();
     update_energy_atoms_positions();
