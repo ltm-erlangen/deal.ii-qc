@@ -134,9 +134,9 @@ int main (int argc, char *argv[])
           << "subsection Geometry"                            << std::endl
           << "  set Type = Box"                               << std::endl
           << "  subsection Box"                               << std::endl
-          << "    set X center = 1.5"                          << std::endl
-          << "    set Y center = 1.5"                          << std::endl
-          << "    set Z center = 1.5"                          << std::endl
+          << "    set X center = 1.5"                         << std::endl
+          << "    set Y center = 1.5"                         << std::endl
+          << "    set Z center = 1.5"                         << std::endl
           << "    set X extent = 3."                          << std::endl
           << "    set Y extent = 3."                          << std::endl
           << "    set Z extent = 3."                          << std::endl
@@ -148,13 +148,13 @@ int main (int argc, char *argv[])
           << "end"                                            << std::endl
 
           << "subsection Configure atoms"                     << std::endl
-          << "  set Maximum energy radius = 2.25"              << std::endl
+          << "  set Maximum cutoff radius = 2.255"            << std::endl
           << "  set Pair potential type = Coulomb Wolf"       << std::endl
           << "  set Pair global coefficients = 0.25, 2.25 "   << std::endl
           << "end"                                            << std::endl
 
           << "subsection Configure QC"                        << std::endl
-          << "  set Ghost cell layer thickness = 2."          << std::endl
+          << "  set Ghost cell layer thickness = 2.26"        << std::endl
           << "  set Cluster radius = 1.0"                     << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section"                      << std::endl
