@@ -98,6 +98,11 @@ namespace dealiiqc
     // For now just add the number of atoms being thrown.
     types::global_atom_index n_thrown_atoms=0;
 
+    // Get the energy_radius to identify energy atoms.
+    // TODO: Change maximum_energy_radius to maximum_cutoff_radius
+    const double energy_radius = configure_qc.get_maximum_energy_radius() +
+                                 configure_qc.get_cluster_radius();
+
     for ( auto atom : vector_atoms )
       {
         bool atom_associated_to_cell = false;
@@ -126,7 +131,7 @@ namespace dealiiqc
             atom.reference_position = GeometryInfo<dim>::project_to_unit_cell(my_pair.second);
             // TODO: Remove parent_cell
             atom.parent_cell = my_pair.first;
-            if ( Utilities::is_point_within_distance_from_cell_vertices( atom.position, my_pair.first, configure_qc.get_ghost_cell_layer_thickness() ))
+            if ( Utilities::is_point_within_distance_from_cell_vertices( atom.position, my_pair.first, energy_radius) )
               {
                 atom_associated_to_cell = true;
                 energy_atoms.insert( std::make_pair( my_pair.first, atom ));
