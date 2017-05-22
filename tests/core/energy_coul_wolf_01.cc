@@ -89,13 +89,13 @@ int main (int argc, char *argv[])
           << "end"                                            << std::endl
 
           << "subsection Configure atoms"                     << std::endl
-          << "  set Maximum energy radius = 2.0"              << std::endl
+          << "  set Maximum cutoff radius = 2.0"              << std::endl
           << "  set Pair potential type = Coulomb Wolf"       << std::endl
           << "  set Pair global coefficients = 0.25, 1.25 "   << std::endl
           << "end"                                            << std::endl
 
           << "subsection Configure QC"                        << std::endl
-          << "  set Ghost cell layer thickness = 2."          << std::endl
+          << "  set Ghost cell layer thickness = 2.01"        << std::endl
           << "  set Cluster radius = 2.0"                     << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section"                      << std::endl

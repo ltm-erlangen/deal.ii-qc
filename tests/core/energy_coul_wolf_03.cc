@@ -114,7 +114,7 @@ int main (int argc, char *argv[])
           << "end"                                            << std::endl
 
           << "subsection Configure atoms"                     << std::endl
-          << "  set Maximum energy radius = 100"              << std::endl
+          << "  set Maximum cutoff radius = 100"              << std::endl
           << "  set Pair potential type = Coulomb Wolf"       << std::endl
           << "  set Pair global coefficients = 0.4, 1.5"      << std::endl
           << "  set Atom data file = " << SOURCE_DIR "/../data/8_NaCl_atom.data"
@@ -122,7 +122,7 @@ int main (int argc, char *argv[])
           << "end"                                            << std::endl
 
           << "subsection Configure QC"                        << std::endl
-          << "  set Ghost cell layer thickness = 100."        << std::endl
+          << "  set Ghost cell layer thickness = 100.1"       << std::endl
           << "  set Cluster radius = 100"                     << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section"                      << std::endl;
