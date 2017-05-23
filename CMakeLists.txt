@@ -24,6 +24,7 @@ SET(TARGET_SRC
   source/atom/parse_atom_data.cc
   source/atom/sampling/cluster_weights_by_base.cc
   source/atom/sampling/cluster_weights_by_cell.cc
+  source/atom/sampling/cluster_weights_by_vertex.cc
   source/configure/configure_qc.cc
   source/configure/geometry/geometry_base.cc
   source/configure/geometry/geometry_box.cc
