@@ -63,26 +63,59 @@ namespace dealiiqc
     typedef LA::MPI::Vector vector_t;
 
     /**
-     * Setup triangulation
+     * Copy @p configure into #configure_qc member reconfigure QC without
+     * changing #atom_data.atoms.
+     * In doing so the association between the mesh and all the atoms is kept
+     * as is; energy atoms can be updated according to the new sampling rules
+     * and parameters given in @p configure.
+     *
+     * Typically, parsing atoms and assigning cells to the atoms for a given
+     * large atomistic system is one of the most time consuming part of a large
+     * QC simulation. For comparison of QC simulations with the same initially
+     * given atomistic system and the same #triangulation but slightly altered
+     * #configure_qc (say because of a slightly different
+     * ConfigureQC::cluster_radius or ConfigureQC::ghost_cell_layer_thickness),
+     * parsing atoms and assigning cells to the atoms again are redundant
+     * operations. Therefore, to avoided re-setting up of #atom_data.atoms
+     * the current QC object can be reconfiguring QC using this function.
+     */
+    void reconfigure_qc(const ConfigureQC &configure);
+
+    /**
+     * Setup triangulation.
      */
     void setup_triangulation();
 
     /**
-     * Setup #atom_data of the current MPI process.
+     * Setup few data members in #atom_data (namely: AtomData::atoms,
+     * AtomData::masses and AtomData::atomtype_to_atoms) of the current
+     * MPI process. However, this function doesn't update
+     * AtomData::energy_atoms in #atom_data, this is done by
+     * QC::setup_energy_atoms_with_cluster_weights().
      *
-     * This function initializes the cell based data structures of #atom_data.
-     * More importantly it initializes the primary data member
-     * AtomData::energy_atoms which holds an association between the locally
-     * relevant active cell of the underlying #triangulation and the energy
-     * atoms in it.
+     * This function initializes the primary data member AtomData::atoms
+     * which holds an association between the locally relevant active cells of
+     * the underlying #triangulation and all the atoms in it. This is
+     * accomplished by calling AtomHandler::parse_atoms_and_assign_to_cells().
      *
-     * This function also updates cluster weights of the AtomData::energy_atoms
-     * in #atom_data. All cluster atoms get a non zero cluster weight while the
-     * other energy atoms get a zero cluster weight. #configure_qc creates a
-     * shared pointer to the derived class of Cluster::WeightsByBase based on
-     * the chosen method to update cluster weights of cluster atoms.
+     * @note The primary data member AtomData::atoms in #atom_data should be
+     * used only to initialize AtomData::energy_atoms in #atom_data. And
+     * AtomData::energy_atoms in #atom_data should be used to compute energy or
+     * force using the quasicontinuum approach.
      */
-    void setup_atom_data();
+    void setup_atoms();
+
+    /**
+     * Setup AtomData::energy_atoms, with appropriate cluster weights,
+     * in #atom_data of the current MPI process.
+     *
+     * All the cluster atoms get a non zero cluster weight while the
+     * non-cluster atoms get a zero cluster weight. #configure_qc creates a
+     * shared pointer to the derived class of Cluster::WeightsByBase based on
+     * the chosen method (or sampling rule) to update cluster weights of
+     * cluster atoms.
+     */
+    void setup_energy_atoms_with_cluster_weights();
 
     /**
      * Distribute degrees-of-freedom and initialise matrices and vectors.

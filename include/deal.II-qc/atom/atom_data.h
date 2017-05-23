@@ -82,13 +82,14 @@ namespace dealiiqc
      */
     types::CellAtomContainerType<dim> atoms;
 
-    // TODO: * The function QC::setup_energy_atoms() is responsible for
-    //       * updating this data member.
     /**
      * The cell based data structure that contains cells and energy atoms
      * association for all the energy atoms in the system needed by a
      * current MPI core. This data member contains the central information for
      * energy and force computations.
+     *
+     * The function QC::setup_energy_atoms_with_cluster_weights() is
+     * responsible for updating this data member.
      */
     types::CellAtomContainerType<dim> energy_atoms;
 

@@ -87,7 +87,7 @@ namespace dealiiqc
       // if so if it's a cluster atom.
       // While there, count the total number of atoms per cell and
       // number of cluster atoms per cell.
-      for (const auto & cell_atom : atoms)
+      for (const auto &cell_atom : atoms)
         {
           const auto &cell = cell_atom.first;
           Atom<dim> atom   = cell_atom.second;
@@ -137,9 +137,9 @@ namespace dealiiqc
           // The cluster weight was previously set to 1. if the atom is
           // cluster atom and 0. if the atom is not cluster atom.
           energy_atom.second.cluster_weight *=
-              n_atoms_per_cell.at(energy_atom.first)
-              /
-              n_cluster_atoms_per_cell.at(energy_atom.first);
+            n_atoms_per_cell.at(energy_atom.first)
+            /
+            n_cluster_atoms_per_cell.at(energy_atom.first);
         }
 
       return energy_atoms;

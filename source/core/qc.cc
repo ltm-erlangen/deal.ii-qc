@@ -49,12 +49,34 @@ namespace dealiiqc
     setup_triangulation();
 
     // Read atom data file and initialize atoms
-    setup_atom_data();
-
-    setup_system();
-
+    setup_atoms();
   }
 
+
+
+  template <int dim, typename PotentialType>
+  void QC<dim, PotentialType>::run ()
+  {
+    setup_energy_atoms_with_cluster_weights();
+    setup_system();
+    setup_fe_values_objects();
+    update_neighbor_lists();
+    update_energy_atoms_positions();
+    const double e = calculate_energy_gradient(gradient);
+    (void)e;
+  }
+
+
+  template <int dim, typename PotentialType>
+  void QC<dim, PotentialType>::reconfigure_qc(const ConfigureQC &configure)
+  {
+    configure_qc = configure;
+    setup_energy_atoms_with_cluster_weights();
+    setup_system();
+    setup_fe_values_objects();
+    update_neighbor_lists();
+    update_energy_atoms_positions();
+  }
 
 
   template <int dim, typename PotentialType>
@@ -66,10 +88,10 @@ namespace dealiiqc
 
 
   template <int dim, typename PotentialType>
-  void QC<dim, PotentialType>::setup_atom_data()
+  void QC<dim, PotentialType>::setup_atoms()
   {
-    // TODO: Change timer description
-    TimerOutput::Scope t (computing_timer, "Parse atom data and associate atoms with cells");
+    TimerOutput::Scope t (computing_timer, "Parse and assign all atoms to cells");
+
     atom_handler.parse_atoms_and_assign_to_cells (dof_handler, atom_data);
 
     // It is ConfigureQC that actually creates a PotentialType object according
@@ -77,6 +99,12 @@ namespace dealiiqc
     // object. However, charges in PotentialType object aren't set yet.
     // Finish setting up PotentialType object here.
     configure_qc.get_potential()->set_charges(atom_data.charges);
+  }
+
+  template <int dim, typename PotentialType>
+  void QC<dim, PotentialType>::setup_energy_atoms_with_cluster_weights()
+  {
+    TimerOutput::Scope t (computing_timer, "Setup energy atoms with cluster weights");
 
     // It is ConfigureQC that actually creates a shared pointer to the derived
     // class object of the Cluster::WeightsByBase according to the parsed input.
@@ -160,6 +188,8 @@ namespace dealiiqc
   template <int dim, typename PotentialType>
   void QC<dim, PotentialType>::setup_fe_values_objects ()
   {
+    TimerOutput::Scope t (computing_timer, "Setup FEValues objects");
+
     // Container to store quadrature points and weights.
     std::vector<Point<dim>> points;
     std::vector<double> weights_per_atom;
@@ -260,6 +290,8 @@ namespace dealiiqc
   template <int dim, typename PotentialType>
   void QC<dim, PotentialType>::update_energy_atoms_positions()
   {
+    TimerOutput::Scope t (computing_timer, "Update energy atoms' positions");
+
     // First, loop over all cells and evaluate displacement field at quadrature
     // points. This is needed irrespectively of energy or gradient calculations.
     for (auto cell = dof_handler.begin_active(); cell != dof_handler.end(); cell++)
@@ -296,6 +328,7 @@ namespace dealiiqc
   template <int dim, typename PotentialType>
   void QC<dim, PotentialType>::update_neighbor_lists()
   {
+    TimerOutput::Scope t (computing_timer, "Update neighbor lists");
 
     // TODO: Update neighbor lists
     // if( (iter_count % neigh_modify_delay)==0 || (max_abs_displacement > neigh_skin)   )
@@ -309,6 +342,8 @@ namespace dealiiqc
   template <bool ComputeGradient>
   double QC<dim, PotentialType>::calculate_energy_gradient (vector_t &gradient) const
   {
+    TimerOutput::Scope t (computing_timer, "Compute energy and gradient");
+
     double energy_per_process = 0.;
 
     if (ComputeGradient)
@@ -455,18 +490,6 @@ namespace dealiiqc
 
 
 
-  template <int dim, typename PotentialType>
-  void QC<dim, PotentialType>::run ()
-  {
-    setup_fe_values_objects();
-    update_neighbor_lists();
-    update_energy_atoms_positions();
-    const double e = calculate_energy_gradient(gradient);
-    (void)e;
-  }
-
-
-
   /**
    * A macro that is used in instantiating QC class and it's functions
    * for 1d, 2d and 3d. Call this macro with the name of another macro that when
@@ -485,7 +508,10 @@ namespace dealiiqc
 #define INSTANTIATE(dim, PotentialType) \
   template QC<dim, PotentialType>::QC (const ConfigureQC&); \
   template QC<dim, PotentialType>::~QC (); \
+  template void QC<dim, PotentialType>::reconfigure_qc (const ConfigureQC&); \
   template void QC<dim, PotentialType>::run (); \
+  template void QC<dim, PotentialType>::setup_atoms (); \
+  template void QC<dim, PotentialType>::setup_energy_atoms_with_cluster_weights (); \
   template void QC<dim, PotentialType>::setup_system (); \
   template void QC<dim, PotentialType>::setup_triangulation(); \
   template void QC<dim, PotentialType>::write_mesh<std::ofstream> (std::ofstream &, const std::string &); \
