@@ -5,13 +5,14 @@
 #include <deal.II/base/subscriptor.h>
 #include <deal.II/base/parameter_handler.h>
 #include <deal.II/base/logstream.h>
+#include <deal.II-qc/atom/sampling/cluster_weights_by_cell.h>
 
 #include <fstream>
 #include <sstream>
 #include <utility>
 #include <memory>
 
-#include <deal.II-qc/atom/cluster_weights.h>
+#include <deal.II-qc/atom/sampling/cluster_weights_by_cell.h>
 #include <deal.II-qc/configure/geometry/geometry_box.h>
 #include <deal.II-qc/configure/geometry/geometry_gmsh.h>
 #include <deal.II-qc/potentials/pair_coul_wolf.h>
