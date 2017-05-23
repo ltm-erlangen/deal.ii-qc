@@ -86,11 +86,14 @@ namespace dealiiqc
   {
     AssertDimension(dim, dimension);
 
+    // It would be cleaner to store this object as a member variable, but then
+    // we either need to make ConfigureQC templated with dim, or keep around
+    // three different shared pointers.
     if (cluster_weights_type == "Cell")
-      // It would be cleaner to store this object as a member variable, but then
-      // we either need to make ConfigureQC templated with dim, or keep around
-      // three different shared pointers.
       return std::make_shared<const Cluster::WeightsByCell<dim> >
+             (cluster_radius, maximum_cutoff_radius);
+    else if (cluster_weights_type == "Vertex")
+      return std::make_shared<const Cluster::WeightsByVertex<dim> >
              (cluster_radius, maximum_cutoff_radius);
     else
       AssertThrow (false, ExcInternalError());
@@ -168,7 +171,7 @@ namespace dealiiqc
                         "Cluster radius used in "
                         "QC simulation");
       prm.declare_entry("Cluster weights by type", "Cell",
-                        Patterns::Selection("Cell"),
+                        Patterns::Selection("Cell|Vertex"),
                         "Select the way how cluster "
                         "weights are computed for "
                         "cluster atoms.");

@@ -13,6 +13,7 @@
 #include <memory>
 
 #include <deal.II-qc/atom/sampling/cluster_weights_by_cell.h>
+#include <deal.II-qc/atom/sampling/cluster_weights_by_vertex.h>
 #include <deal.II-qc/configure/geometry/geometry_box.h>
 #include <deal.II-qc/configure/geometry/geometry_gmsh.h>
 #include <deal.II-qc/potentials/pair_coul_wolf.h>
