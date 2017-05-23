@@ -157,9 +157,6 @@ namespace dealiiqc
     const double cutoff_radius  = configure_qc.get_maximum_cutoff_radius();
     const double squared_cutoff_radius  = dealii::Utilities::fixed_power<2>(cutoff_radius);
 
-    const double squared_cluster_radius =
-      dealii::Utilities::fixed_power<2>(configure_qc.get_cluster_radius());
-
     // For each locally owned cell, identify all the cells
     // whose associated atoms may interact.At this point we do not
     // check if there are indeed some interacting atoms,
@@ -283,7 +280,7 @@ namespace dealiiqc
                   atom_J.cluster_weight != 0;
 
                 if ( (atom_J_is_cluster_atom &&
-                       (atom_I.global_index > atom_J.global_index))
+                      (atom_I.global_index > atom_J.global_index))
                      ||
                      !atom_J_is_cluster_atom )
                   if (atom_I.position.distance_square(atom_J.position) < squared_cutoff_radius)
