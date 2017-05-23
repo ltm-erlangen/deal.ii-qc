@@ -60,10 +60,10 @@ namespace dealiiqc
 
     // Loop through all the locally owned cells and
     // mark (true) all the vertices of the locally owned cells.
-    for ( typename types::MeshType<dim>::active_cell_iterator
-          cell = mesh.begin_active();
-          cell != mesh.end(); ++cell)
-      if ( cell->is_locally_owned())
+    for (typename types::MeshType<dim>::active_cell_iterator
+         cell = mesh.begin_active();
+         cell != mesh.end(); ++cell)
+      if (cell->is_locally_owned())
         for (unsigned int v=0; v<GeometryInfo<dim>::vertices_per_cell; ++v)
           locally_active_vertices[cell->vertex_index(v)] = true;
 
@@ -81,7 +81,7 @@ namespace dealiiqc
     // Loop through all the ghost cells computed above and
     // mark (true) all the vertices of the locally owned and active
     // ghost cells within ConfigureQC::ghost_cell_layer_thickness.
-    for ( auto cell : ghost_cells)
+    for (auto cell : ghost_cells)
       for (unsigned int v=0; v<GeometryInfo<dim>::vertices_per_cell; ++v)
         locally_active_vertices[cell->vertex_index(v)] = true;
 
@@ -132,7 +132,7 @@ namespace dealiiqc
           n_thrown_atoms++;
       }
 
-    Assert( atoms.size()+n_thrown_atoms==vector_atoms.size(),
+    Assert (atoms.size()+n_thrown_atoms==vector_atoms.size(),
             ExcInternalError());
 
   }
@@ -141,8 +141,12 @@ namespace dealiiqc
 
   template<int dim>
   std::multimap< std::pair< types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > >
-      AtomHandler<dim>::get_neighbor_lists( const types::CellAtomContainerType<dim> &energy_atoms) const
+      AtomHandler<dim>::get_neighbor_lists (const types::CellAtomContainerType<dim> &energy_atoms) const
   {
+    // Check to see if energy_atoms is updated.
+    Assert (energy_atoms.size(),
+            ExcInternalError());
+
     std::multimap< std::pair< types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > >
         neighbor_lists;
 
@@ -168,9 +172,12 @@ namespace dealiiqc
     // use something like MappingQEulerian to work
     // with the deformed mesh.
     // TODO: optimize loop over unique keys ( mulitmap::upper_bound()'s complexity is O(nlogn) )
-    for ( types::CellAtomConstIteratorType<dim> unique_I = energy_atoms.cbegin(); unique_I != energy_atoms.cend(); unique_I = energy_atoms.upper_bound(unique_I->first))
+    for (types::CellAtomConstIteratorType<dim>
+         unique_I  = energy_atoms.cbegin();
+         unique_I != energy_atoms.cend();
+         unique_I  = energy_atoms.upper_bound(unique_I->first))
       // Only locally owned cells have cell neighbors
-      if ( unique_I->first->is_locally_owned()  )
+      if (unique_I->first->is_locally_owned())
         {
           types::ConstCellIteratorType<dim> cell_I = unique_I->first;
 
@@ -205,30 +212,28 @@ namespace dealiiqc
         range_of_cell_J = energy_atoms.equal_range(cell_J);
 
         // for each atom associated to locally owned cell_I
-        for ( types::CellAtomConstIteratorType<dim> cell_atom_I = range_of_cell_I.first; cell_atom_I != range_of_cell_I.second; ++cell_atom_I)
+        for (types::CellAtomConstIteratorType<dim>
+             cell_atom_I  = range_of_cell_I.first;
+             cell_atom_I != range_of_cell_I.second;
+             cell_atom_I++)
           {
             const Atom<dim> &atom_I = cell_atom_I->second;
 
-            // TODO: Once functions updating cluster weights of atoms is implemented
-            // add
-            // bool is_cluster() const
-            // {
-            //    return cluster_weigth != 0.;
-            // }
-            // to the atom struct and use it here !!!
             // Check if the atom_I is cluster atom,
             // only cluster atoms get to have neighbor lists
-            if (Utilities::find_closest_vertex(atom_I.position, cell_I).second < squared_cluster_radius)
-              for ( types::CellAtomConstIteratorType<dim> cell_atom_J = range_of_cell_J.first; cell_atom_J != range_of_cell_J.second; ++cell_atom_J )
+            if (atom_I.cluster_weight != 0)
+              for (types::CellAtomConstIteratorType<dim>
+                   cell_atom_J  = range_of_cell_J.first;
+                   cell_atom_J != range_of_cell_J.second;
+                   cell_atom_J++ )
                 {
                   const Atom<dim> &atom_J = cell_atom_J->second;
 
-                  // TODO: Once functions updating cluster weights of atoms is implemented
                   const bool atom_J_is_cluster_atom =
-                    Utilities::find_closest_vertex (atom_J.position, cell_J).second < squared_cluster_radius;
+                    atom_J.cluster_weight != 0;
 
                   // If atom_J is not cluster atom,
-                  // then add atom_J to atom_i's neighbor list.
+                  // then add atom_J to (cluster) atom_I's neighbor list.
 
                   // If atom_J is also a cluster atom,
                   // then atom_J is only added to atom_I's neighbor list
@@ -236,10 +241,11 @@ namespace dealiiqc
                   // that there is no double counting of energy
                   // contribution due to cluster atoms - atom_I and atom_J
 
-                  if ( (atom_J_is_cluster_atom && (atom_I.global_index > atom_J.global_index))
+                  if ( (atom_J_is_cluster_atom &&
+                        (atom_I.global_index > atom_J.global_index))
                        ||
                        !atom_J_is_cluster_atom )
-                    if ( atom_I.position.distance_square(atom_J.position) < squared_cutoff_radius)
+                    if (atom_I.position.distance_square(atom_J.position) < squared_cutoff_radius)
                       neighbor_lists.insert( std::make_pair( cell_pair_IJ, std::make_pair( cell_atom_I, cell_atom_J)) );
                 }
           }
@@ -265,28 +271,26 @@ namespace dealiiqc
       if (cell_atom_I.first->is_locally_owned())
         {
           const Atom<dim> &atom_I = cell_atom_I.second;
+
           // We are building neighbor lists for only atom_Is
           // so we can skip atom_I if it's not a cluster atom.
-          const bool atom_I_is_cluster_atom =
-            Utilities::find_closest_vertex (atom_I.position,
-                                            cell_atom_I.first).second < squared_cluster_radius;
-          if (atom_I_is_cluster_atom)
+          if (atom_I.cluster_weight != 0)
             for (auto cell_atom_J : energy_atoms)
               {
                 const Atom<dim> &atom_J = cell_atom_J.second;
-                // TODO: Once functions updating cluster weights of energy_atoms is implemented
-                // use is_cluster() member function in atom struct.
+
                 const bool atom_J_is_cluster_atom =
-                  Utilities::find_closest_vertex(atom_J.position, cell_atom_J.first).second
-                  < squared_cluster_radius;
-                if ( ( atom_J_is_cluster_atom && (atom_I.global_index > atom_J.global_index))
+                  atom_J.cluster_weight != 0;
+
+                if ( (atom_J_is_cluster_atom &&
+                       (atom_I.global_index > atom_J.global_index))
                      ||
                      !atom_J_is_cluster_atom )
-                  if ( atom_I.position.distance_square(atom_J.position) < squared_cutoff_radius)
+                  if (atom_I.position.distance_square(atom_J.position) < squared_cutoff_radius)
                     total_number_of_interactions++;
               }
         }
-    Assert( total_number_of_interactions == neighbor_lists.size(),
+    Assert (total_number_of_interactions == neighbor_lists.size(),
             ExcMessage("Some of the interactions are not accounted while updating neighbor lists"));
 #endif
 
