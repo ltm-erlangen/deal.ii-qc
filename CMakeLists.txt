@@ -20,9 +20,10 @@ INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR}/include)
 # page of the documentation.
 SET(TARGET_SRC
   source/atom/atom_handler.cc
-  source/atom/cluster_weights.cc
   source/atom/data_out_atom_data.cc
   source/atom/parse_atom_data.cc
+  source/atom/sampling/cluster_weights_by_base.cc
+  source/atom/sampling/cluster_weights_by_cell.cc
   source/configure/configure_qc.cc
   source/configure/geometry/geometry_base.cc
   source/configure/geometry/geometry_box.cc
