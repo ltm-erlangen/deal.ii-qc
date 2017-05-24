@@ -2,12 +2,13 @@
 #include <iostream>
 #include <sstream>
 
+#include <deal.II/base/utilities.h>
 #include <deal.II/distributed/shared_tria.h>
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_out.h>
 
 #include <deal.II-qc/atom/atom_handler.h>
-#include <deal.II-qc/atom/cluster_weights.h>
+#include <deal.II-qc/atom/sampling/cluster_weights_by_cell.h>
 
 using namespace dealii;
 using namespace dealiiqc;
@@ -38,9 +39,12 @@ public:
   {
     GridGenerator::hyper_cube( triangulation, 0., 8., true );
     AtomHandler<dim>::parse_atoms_and_assign_to_cells( dof_handler, atom_data);
-    const Cluster::WeightsByCell<dim> weights_by_cell(config.get_cluster_radius());
-    weights_by_cell.update_cluster_weights( atom_data.n_thrown_atoms_per_cell,
-                                            atom_data.energy_atoms);
+    const Cluster::WeightsByCell<dim>
+    weights_by_cell (config.get_cluster_radius(),
+                     config.get_maximum_cutoff_radius());
+    atom_data.energy_atoms =
+      weights_by_cell.update_cluster_weights (dof_handler,
+                                              atom_data.atoms);
     for ( const auto &cell_atom : atom_data.energy_atoms )
       std::cout << "Atom: " << cell_atom.second.position << " "
                 << "Cluster_Weight: "
@@ -61,16 +65,17 @@ int main (int argc, char **argv)
 {
   try
     {
-      dealii::Utilities::MPI::MPI_InitFinalize mpi_initialization (argc,
-          argv,
-          numbers::invalid_unsigned_int);
+      dealii::Utilities::MPI::MPI_InitFinalize mpi_initialization(argc,
+                                                                  argv,
+                                                                  numbers::invalid_unsigned_int);
+
       std::ostringstream oss;
       oss << "set Dimension = 3"                            << std::endl
           << "subsection Configure atoms"                   << std::endl
-          << "  set Maximum energy radius = 1.9"            << std::endl
+          << "  set Maximum cutoff radius = 1.9"            << std::endl
           << "end"                                          << std::endl
           << "subsection Configure QC"                      << std::endl
-          << "  set Ghost cell layer thickness = 1.9"       << std::endl
+          << "  set Ghost cell layer thickness = 1.91"       << std::endl
           << "  set Cluster radius = 1.9"                   << std::endl
           << "  set Cluster weights by type = Cell"         << std::endl
           << "end"                                          << std::endl
@@ -98,7 +103,6 @@ int main (int argc, char **argv)
 
       TestAtomHandler<3> problem (config);
       problem.run();
-
     }
   catch (std::exception &exc)
     {
