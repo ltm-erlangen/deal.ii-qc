@@ -56,7 +56,7 @@ void test_parse(const MPI_Comm &mpi_communicator, std::istream &is)
       MPI_Barrier(mpi_communicator);
     }
 
-};
+}
 
 int main( int argc, char **argv)
 {
