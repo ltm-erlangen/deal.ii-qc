@@ -62,6 +62,11 @@ void Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
   unsigned int n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(QC<dim, PotentialType>::mpi_communicator)),
            this_mpi_process(dealii::Utilities::MPI::this_mpi_process(QC<dim, PotentialType>::mpi_communicator));
 
+  QC<dim, PotentialType>::setup_energy_atoms_with_cluster_weights();
+  QC<dim, PotentialType>::setup_system();
+  QC<dim, PotentialType>::setup_fe_values_objects();
+  QC<dim, PotentialType>::update_neighbor_lists();
+
   for (unsigned int p = 0; p < n_mpi_processes; p++)
     {
       MPI_Barrier(QC<dim, PotentialType>::mpi_communicator);
@@ -74,8 +79,6 @@ void Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
       MPI_Barrier(QC<dim, PotentialType>::mpi_communicator);
     }
 
-  QC<dim, PotentialType>::setup_fe_values_objects();
-  QC<dim, PotentialType>::update_neighbor_lists();
   const double energy = QC<dim, PotentialType>::template
                         calculate_energy_gradient<false> (QC<dim, PotentialType>::gradient);
 

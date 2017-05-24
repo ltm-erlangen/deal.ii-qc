@@ -35,13 +35,15 @@ Problem<dim, PotentialType>::Problem (const ConfigureQC &config)
 template <int dim, typename PotentialType>
 void Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
 {
+  QC<dim, PotentialType>::setup_energy_atoms_with_cluster_weights();
+  QC<dim, PotentialType>::setup_system();
+  QC<dim, PotentialType>::setup_fe_values_objects();
+  QC<dim, PotentialType>::update_neighbor_lists();
+
   QC<dim, PotentialType>::pcout
       << "The number of energy atoms in the system: "
       << QC<dim, PotentialType>::atom_data.energy_atoms.size()
       << std::endl;
-
-  QC<dim, PotentialType>::setup_fe_values_objects();
-  QC<dim, PotentialType>::update_neighbor_lists();
 
   QC<dim, PotentialType>::pcout << "Neighbor lists: " << std::endl;
 
