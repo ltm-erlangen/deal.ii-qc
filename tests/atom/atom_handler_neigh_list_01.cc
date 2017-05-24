@@ -21,18 +21,23 @@ public:
   TestAtomHandler(const ConfigureQC &config)
     :
     AtomHandler<dim>( config),
+    config(config),
     triangulation (MPI_COMM_WORLD,
                    // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
                    Triangulation<dim>::limit_level_difference_at_vertices),
-    dof_handler    (triangulation),
-    mpi_communicator(MPI_COMM_WORLD)
+    dof_handler    (triangulation)
   {}
 
   void run()
   {
     GridGenerator::hyper_cube( triangulation, 0., 16., true );
     triangulation.refine_global (3);
-    AtomHandler<dim>::parse_atoms_and_assign_to_cells( dof_handler, atom_data);
+    AtomHandler<dim>::parse_atoms_and_assign_to_cells (dof_handler,
+                                                       atom_data);
+    atom_data.energy_atoms =
+      config.get_cluster_weights<dim>()->
+      update_cluster_weights (dof_handler,
+                              atom_data.atoms);
     auto neighbor_lists =
       AtomHandler<dim>::get_neighbor_lists( atom_data.energy_atoms);
     for ( auto entry : neighbor_lists)
@@ -42,9 +47,9 @@ public:
   }
 
 private:
+  const ConfigureQC &config;
   parallel::shared::Triangulation<dim> triangulation;
   DoFHandler<dim>      dof_handler;
-  MPI_Comm mpi_communicator;
   AtomData<dim> atom_data;
 
 };
@@ -61,10 +66,10 @@ int main (int argc, char **argv)
       oss
           << "set Dimension = 3"                              << std::endl
           << "subsection Configure atoms"                     << std::endl
-          << "  set Maximum energy radius = 16.0"             << std::endl
+          << "  set Maximum cutoff radius = 16.0"             << std::endl
           << "end"                                            << std::endl
           << "subsection Configure QC"                        << std::endl
-          << "  set Ghost cell layer thickness = 2."          << std::endl
+          << "  set Ghost cell layer thickness = 16.1"        << std::endl
           << "  set Cluster radius = 4.0"                     << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section" << std::endl

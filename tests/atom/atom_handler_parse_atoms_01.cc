@@ -21,6 +21,7 @@ public:
   TestAtomHandler(const ConfigureQC &config)
     :
     AtomHandler<dim>( config),
+    config(config),
     triangulation (MPI_COMM_WORLD,
                    // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
                    Triangulation<dim>::limit_level_difference_at_vertices),
@@ -31,7 +32,12 @@ public:
   {
     GridGenerator::hyper_cube( triangulation, 0., 8., true );
     triangulation.refine_global (1);
-    AtomHandler<dim>::parse_atoms_and_assign_to_cells( dof_handler, atom_data);
+    AtomHandler<dim>::parse_atoms_and_assign_to_cells (dof_handler,
+                                                       atom_data);
+    atom_data.energy_atoms =
+      config.get_cluster_weights<dim>()->
+      update_cluster_weights (dof_handler,
+                              atom_data.atoms);
 
     // Check that the number of atoms picked up and added to energy_atoms
     // is so and so and shouldn't change each time this test is run.
@@ -41,6 +47,7 @@ public:
   }
 
 private:
+  const ConfigureQC &config;
   parallel::shared::Triangulation<dim> triangulation;
   DoFHandler<dim>      dof_handler;
   AtomData<dim> atom_data;
@@ -58,12 +65,14 @@ int main (int argc, char **argv)
       oss
           << "set Dimension = 3"                              << std::endl
           << "subsection Configure atoms"                     << std::endl
+          << "  set Maximum cutoff radius = 0.01"            << std::endl
           << "  set Atom data file = "
           << SOURCE_DIR "/../data/8_NaCl_atom.data"           << std::endl
+          << "  set Pair global coefficients = .001"          << std::endl
           << "end" << std::endl
           << "subsection Configure QC"                        << std::endl
-          << "  set Ghost cell layer thickness = 2"           << std::endl
-          << "end" << std::endl;
+          << "  set Cluster radius = 1.99"                     << std::endl
+          << "end"                                            << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());
