@@ -24,6 +24,11 @@ namespace dealiiqc
     return dimension;
   }
 
+  std::string ConfigureQC::get_pair_potential_type() const
+  {
+    return pair_potential_type;
+  }
+
   template<>
   std::shared_ptr<const Geometry::Base<1>> ConfigureQC::get_geometry() const
   {
@@ -215,7 +220,7 @@ namespace dealiiqc
       atom_data_file = prm.get("Atom data file");
       maximum_cutoff_radius = prm.get_double("Maximum cutoff radius");
 
-      const std::string pair_potential_type = prm.get("Pair potential type");
+      pair_potential_type = prm.get("Pair potential type");
 
       std::vector<double> global_coeffs;
       {
