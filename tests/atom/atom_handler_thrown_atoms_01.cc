@@ -51,7 +51,7 @@ public:
                 << entry->first
                 << " has "
                 << atom_data.atoms.count(entry->first) -
-                   atom_data.energy_atoms.count(entry->first)
+                atom_data.energy_atoms.count(entry->first)
                 << " thrown atoms."
                 << std::endl;
 
