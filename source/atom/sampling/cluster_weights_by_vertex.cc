@@ -30,7 +30,7 @@ namespace dealiiqc
 
       const unsigned int n_vertices = mesh.get_triangulation().n_vertices();
 
-      const parallel::Triangulation<dim> * const ptria =
+      const parallel::Triangulation<dim> *const ptria =
         dynamic_cast<const parallel::Triangulation<dim> *>
         (&mesh.get_triangulation());
 

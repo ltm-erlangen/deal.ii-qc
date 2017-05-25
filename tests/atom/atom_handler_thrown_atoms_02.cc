@@ -48,7 +48,7 @@ public:
       std::cout << entry->first
                 << ":"
                 << atom_data.atoms.count(entry->first) -
-                   atom_data.energy_atoms.count(entry->first)
+                atom_data.energy_atoms.count(entry->first)
                 << std::endl;
     std::cout << std::endl;
   }
