@@ -28,7 +28,7 @@
                            ( Potential::PairLJCutManager, "LJ") \
                          )\
                         )\
-
+   
 // Accessors for potentials
 # define QC_POT_CLASS(TS) BOOST_PP_TUPLE_ELEM(2, 0, TS)
 # define QC_POT_NAME(TS)  BOOST_PP_TUPLE_ELEM(2, 1, TS)
@@ -43,7 +43,7 @@
       QC<QC_GDIM(DP), QC_POT_CLASS(QC_GTS(DP))> problem(config); \
       problem.run (); \
     } \
-
+   
 
 int main (int argc, char *argv[])
 {
