@@ -33,6 +33,7 @@ SET(TARGET_SRC
   source/potentials/pair_coul_wolf.cc
   source/potentials/pair_lj_cut.cc
   source/core/qc.cc
+  ${CMAKE_CURRENT_BINARY_DIR}/version.cc
   )
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.8)
@@ -49,6 +50,11 @@ IF(NOT ${deal.II_FOUND})
 ENDIF()
 
 DEAL_II_INITIALIZE_CACHED_VARIABLES()
+
+# Run macro to get Git info:
+DEAL_II_QUERY_GIT_INFORMATION()
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/source/version.cc.in
+               ${CMAKE_CURRENT_BINARY_DIR}/version.cc)
 
 #
 # PROJECT has to be called after DEAL_II_INITIALIZE_CACHED_VARIABLES
