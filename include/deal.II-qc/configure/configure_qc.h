@@ -45,6 +45,11 @@ namespace dealiiqc
     unsigned int get_dimension() const;
 
     /**
+     * Get pair potential type.
+     */
+    std::string get_pair_potential_type() const;
+
+    /**
      * Get a shared pointer to const dim dimensional Geometry object.
      *
      * The function returns one of #geometry_3d, #geometry_2d or #geometry_1d
@@ -109,6 +114,11 @@ namespace dealiiqc
      * Dimensionality of the problem
      */
     unsigned int dimension;
+
+    /**
+     * Pair potential type to be used.
+     */
+    std::string pair_potential_type;
 
     /**
      * Shared pointer to the three dimensional Geometry object.

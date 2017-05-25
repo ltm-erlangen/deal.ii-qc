@@ -9,6 +9,42 @@
 #include <deal.II-qc/core/qc.h>
 #include <deal.II-qc/version.h>
 
+// instantiations:
+# include <boost/preprocessor/facilities/empty.hpp>
+# include <boost/preprocessor/list/at.hpp>
+# include <boost/preprocessor/list/for_each_product.hpp>
+# include <boost/preprocessor/tuple/elem.hpp>
+# include <boost/preprocessor/tuple/to_list.hpp>
+
+// add supported dimensions
+#define QC_DIM BOOST_PP_TUPLE_TO_LIST(3,(1,2,3))
+
+// List of potentials
+#define QC_POT \
+  BOOST_PP_TUPLE_TO_LIST(\
+                         2,\
+                         ( \
+                           ( Potential::PairCoulWolfManager, "Coulomb Wolf"), \
+                           ( Potential::PairLJCutManager, "LJ") \
+                         )\
+                        )\
+
+// Accessors for potentials
+# define QC_POT_CLASS(TS) BOOST_PP_TUPLE_ELEM(2, 0, TS)
+# define QC_POT_NAME(TS)  BOOST_PP_TUPLE_ELEM(2, 1, TS)
+
+// Accessors for dimension and potential-string pairs
+# define QC_GDIM(DP) BOOST_PP_TUPLE_ELEM(2, 0, DP)
+# define QC_GTS(DP)  BOOST_PP_TUPLE_ELEM(2, 1, DP)
+
+#define DOIF(R, DP) \
+  else if ( (dim == QC_GDIM(DP)) && (pot.compare(QC_POT_NAME(QC_GTS(DP))) == 0) ) \
+    { \
+      QC<QC_GDIM(DP), QC_POT_CLASS(QC_GTS(DP))> problem(config); \
+      problem.run (); \
+    } \
+
+
 int main (int argc, char *argv[])
 {
   try
@@ -31,25 +67,13 @@ int main (int argc, char *argv[])
 
       ConfigureQC config(prm_stream);
       const unsigned int dim = config.get_dimension();
+      const std::string pot = config.get_pair_potential_type();
 
-      // FIXME: adding a dummy potential to compile
-      if (dim == 2)
+      if (dim > 3)
         {
-          QC<2, Potential::PairLJCutManager> problem(config);
-          problem.run ();
+          Assert(false, ExcNotImplemented());
         }
-      else if (dim == 3)
-        {
-          QC<3, Potential::PairLJCutManager> problem(config);
-          problem.run ();
-        }
-      else if (dim ==1)
-        {
-          QC<1, Potential::PairLJCutManager> problem(config);
-          problem.run ();
-        }
-      else
-        Assert(false, ExcNotImplemented());
+      BOOST_PP_LIST_FOR_EACH_PRODUCT(DOIF, 2, (QC_DIM,QC_POT))
 
     }
   catch (std::exception &exc)
