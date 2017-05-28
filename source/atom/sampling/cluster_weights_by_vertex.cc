@@ -140,9 +140,9 @@ namespace dealiiqc
           // The cluster weight was previously set to 1. if the atom is
           // cluster atom and 0. if the atom is not cluster atom.
           atom.cluster_weight *=
-            n_atoms_per_vertex[global_vertex_index]
+            static_cast<double>(n_atoms_per_vertex[global_vertex_index])
             /
-            n_cluster_atoms_per_vertex[global_vertex_index];
+            static_cast<double>(n_cluster_atoms_per_vertex[global_vertex_index]);
         }
 
       return energy_atoms;

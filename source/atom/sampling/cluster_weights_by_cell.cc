@@ -108,9 +108,9 @@ namespace dealiiqc
           // The cluster weight was previously set to 1. if the atom is
           // cluster atom and 0. if the atom is not cluster atom.
           energy_atom.second.cluster_weight *=
-            n_atoms_per_cell.at(energy_atom.first)
+            static_cast<double>(n_atoms_per_cell.at(energy_atom.first))
             /
-            n_cluster_atoms_per_cell.at(energy_atom.first);
+            static_cast<double>(n_cluster_atoms_per_cell.at(energy_atom.first));
         }
 
       return energy_atoms;
