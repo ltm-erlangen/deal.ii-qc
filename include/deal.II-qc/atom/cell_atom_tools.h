@@ -101,7 +101,7 @@ namespace dealiiqc
            cell_atom_iterator != cell_atom_range_end;
            cell_atom_iterator++)
         {
-          Assert (cell_atom_iterator->second.cluster_weight != number::invalid_cluster_weight,
+          Assert (cell_atom_iterator->second.cluster_weight != numbers::invalid_cluster_weight,
                   ExcMessage("At least one of the atom's cluster weight is "
                              "not initialized to a valid number."
                              "This function should be called only after "

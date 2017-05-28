@@ -52,8 +52,8 @@ int main (int argc, char *argv[])
       using namespace dealii;
       using namespace dealiiqc;
 
-      dealii::Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv,
-                                                                  numbers::invalid_unsigned_int);
+      dealii::Utilities::MPI::MPI_InitFinalize mpi_initialization (argc, argv,
+          dealii::numbers::invalid_unsigned_int);
       // if no input provided
       AssertThrow(argc > 1,ExcMessage("Parameter file is required as an input argument"));
 
