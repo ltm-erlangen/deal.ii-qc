@@ -47,7 +47,7 @@ namespace dealiiqc
      * A number representing invalid cluster weight.
      */
     static const double
-    invalid_cluster_weight = std::numeric_limits::signaling_NaN();
+    invalid_cluster_weight = std::numeric_limits<double>::signaling_NaN();
 
   } // numbers
 
