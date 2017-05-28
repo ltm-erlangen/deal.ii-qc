@@ -2,8 +2,7 @@
 #ifndef __dealii_qc_utility_h
 #define __dealii_qc_utility_h
 
-#include <algorithm>
-
+#include <deal.II/base/numbers.h>
 #include <deal.II/grid/tria_iterator.h>
 #include <deal.II/grid/tria_accessor.h>
 
@@ -36,6 +35,23 @@ namespace dealiiqc
     typedef unsigned char atom_type;
 
   } //typedefs
+
+
+
+  /**
+   * A namespace for certain fixed numbers.
+   */
+  namespace numbers
+  {
+    /**
+     * A number representing invalid cluster weight.
+     */
+    static const double
+    invalid_cluster_weight = std::numeric_limits::signaling_NaN();
+
+  } // numbers
+
+
 
   /**
    * Make sure that sscanf doesn't pickup spaces as unsigned char

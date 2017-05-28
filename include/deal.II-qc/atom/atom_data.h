@@ -46,6 +46,12 @@ namespace dealiiqc
     template<int dim>
     using CellAtomConstIteratorType = typename std::multimap<CellIteratorType<dim>, Atom<dim> >::const_iterator;
 
+    /**
+     * A typedef for a pair of const_iterators over CellAtomContainerType which
+     * could be used in the case of storing a iterator range.
+     */
+    template<int dim>
+    using CellAtomConstIteratorRangeType = typename std::pair<CellAtomConstIteratorType<dim>, CellAtomConstIteratorType<dim>>;
 
   } // types
 
@@ -96,7 +102,7 @@ namespace dealiiqc
   };
 
 
-}
+} // namespace dealiiqc
 
 
 #endif /* __dealii_qc_atom_data_h */
