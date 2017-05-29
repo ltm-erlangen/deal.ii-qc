@@ -24,6 +24,7 @@ SET(TARGET_SRC
   source/atom/parse_atom_data.cc
   source/atom/sampling/cluster_weights_by_base.cc
   source/atom/sampling/cluster_weights_by_cell.cc
+  source/atom/sampling/cluster_weights_by_lumped_vertex.cc
   source/atom/sampling/cluster_weights_by_vertex.cc
   source/configure/configure_qc.cc
   source/configure/geometry/geometry_base.cc
@@ -165,6 +166,7 @@ SET (TEST_TIME_LIMIT 900)
 #
 # tests for core functionality
 ADD_SUBDIRECTORY(tests/atom)
+ADD_SUBDIRECTORY(tests/atom/sampling)
 ADD_SUBDIRECTORY(tests/configure)
 ADD_SUBDIRECTORY(tests/core)
 ADD_SUBDIRECTORY(tests/potentials)

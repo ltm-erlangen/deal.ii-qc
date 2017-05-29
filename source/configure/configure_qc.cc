@@ -97,6 +97,9 @@ namespace dealiiqc
     if (cluster_weights_type == "Cell")
       return std::make_shared<const Cluster::WeightsByCell<dim> >
              (cluster_radius, maximum_cutoff_radius);
+    else if (cluster_weights_type == "LumpedVertex")
+      return std::make_shared<const Cluster::WeightsByLumpedVertex<dim> >
+             (cluster_radius, maximum_cutoff_radius);
     else if (cluster_weights_type == "Vertex")
       return std::make_shared<const Cluster::WeightsByVertex<dim> >
              (cluster_radius, maximum_cutoff_radius);
@@ -176,7 +179,7 @@ namespace dealiiqc
                         "Cluster radius used in "
                         "QC simulation");
       prm.declare_entry("Cluster weights by type", "Cell",
-                        Patterns::Selection("Cell|Vertex"),
+                        Patterns::Selection("Cell|LumpedVertex|Vertex"),
                         "Select the way how cluster "
                         "weights are computed for "
                         "cluster atoms.");
