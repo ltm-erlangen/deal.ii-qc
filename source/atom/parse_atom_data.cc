@@ -197,7 +197,11 @@ namespace dealiiqc
         i_atom = static_cast<types::global_atom_index>(i_atom_index) -1;
 
         atoms[i_atom].global_index = i_atom;
+
+        // Set some member variables of i_atom to invalid values as
+        // the current class cannot initialize to correct values.
         atoms[i_atom].cluster_weight = numbers::invalid_cluster_weight;
+        atoms[i_atom].local_index = dealii::numbers::invalid_unsigned_int;
 
         tmp_type = static_cast<types::atom_type> (i_atom_type) -1;
 

@@ -7,6 +7,7 @@
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/dofs/dof_tools.h>
 
+#include <deal.II-qc/atom/cell_atom_tools.h>
 #include <deal.II-qc/core/qc.h>
 
 namespace dealiiqc
@@ -197,6 +198,10 @@ namespace dealiiqc
     const unsigned int dofs_per_cell = fe.dofs_per_cell;
     std::vector<dealii::types::global_dof_index> local_dof_indices(dofs_per_cell);
 
+    // Get a non-constant reference to energy atoms to update
+    // local index (within a cell) of energy atoms.
+    auto &energy_atoms = atom_data.energy_atoms;
+
     // FIXME: Loop only over cells in energy_atoms
     for (types::CellIteratorType<dim> cell = dof_handler.begin_active(); cell != dof_handler.end(); ++cell)
       {
@@ -205,45 +210,35 @@ namespace dealiiqc
         // initialize fe_values object so as to evaluate the displacement
         // at the location of energy_atoms in the active cell.
 
-        // Non const iterators to update local indices of energy atoms.
-        std::pair<types::CellAtomIteratorType<dim>, types::CellAtomIteratorType<dim>>
-            cell_atom_range = atom_data.energy_atoms.equal_range(cell);
+        const auto energy_atoms_range =
+          CellAtomTools::atoms_range_in_cell (cell,
+                                              energy_atoms);
 
-        const types::CellAtomIteratorType<dim>
-        &cell_atom_range_begin = cell_atom_range.first,
-         &cell_atom_range_end  = cell_atom_range.second;
+        const unsigned int n_energy_atoms_in_cell = energy_atoms_range.second;
 
         // If this cell is not within the locally relevant active cells of the
         // current MPI process continue active cell loop
-        if (cell_atom_range_begin == cell_atom_range_end)
+        if (n_energy_atoms_in_cell == 0)
           continue;
-
-        // Faster to get the number of energy_atoms in the active cell by
-        // computing the distance between first and second iterators
-        // instead of calling count on energy_atoms.
-        // Here we implicitly cast to usngined int, but this should be OK as
-        // we check that the result is the same as calling count().s
-        const unsigned int
-        n_energy_atoms_in_cell = std::distance (cell_atom_range.first,
-                                                cell_atom_range.second);
-
-        AssertThrow (n_energy_atoms_in_cell > 0,
-                     ExcMessage("The number of energy atoms in the cell counted "
-                                "using the distance between the iterator ranges "
-                                "yields not positive value."));
-
-        Assert (n_energy_atoms_in_cell == atom_data.energy_atoms.count(cell),
-                ExcMessage("The number of energy atoms in the cell counted "
-                           "using the distance between the iterator ranges "
-                           "yields a different result than "
-                           "energy_atom.count(cell)"));
 
         // Resize containers to known number of energy atoms in cell.
         points.resize(n_energy_atoms_in_cell);
         weights_per_atom.resize(n_energy_atoms_in_cell);
 
         AssemblyData &data = cells_to_data[cell];
-        types::CellAtomIteratorType<dim> cell_atom_iterator = cell_atom_range_begin;
+
+        // We need non-const iterator to update local index of energy atom.
+        // TODO: Move the task of updating local index of energy atoms to
+        //       somewhere else? For now keeping it here.
+        // To get a non-const iterator to the beginning of energy atom range
+        // call erase with the same argument. Strictly no erase is performed
+        // but erase would return a non-const iterator.
+        // This is not exactly a hack as we are using how erase on containers
+        // must behave. Also, this is a constant time operation.
+        types::CellAtomIteratorType<dim>
+        cell_atom_iterator = energy_atoms.erase(energy_atoms_range.first.first,
+                                                energy_atoms_range.first.first);
+
         for (unsigned int q = 0; q < n_energy_atoms_in_cell; ++q, ++cell_atom_iterator)
           {
             // const_iter->second yields the actual atom
@@ -252,7 +247,7 @@ namespace dealiiqc
             cell_atom_iterator->second.local_index = q;
           }
 
-        Assert (cell_atom_iterator == cell_atom_range.second,
+        Assert (cell_atom_iterator == energy_atoms_range.first.second,
                 ExcMessage("The number of energy atoms in the cell counted "
                            "using the distance between the iterator ranges "
                            "yields a different result than "

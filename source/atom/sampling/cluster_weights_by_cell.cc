@@ -113,6 +113,35 @@ namespace dealiiqc
             static_cast<double>(n_cluster_atoms_per_cell.at(energy_atom.first));
         }
 
+      //---Check in Debug mode that n_atoms and n_energy_atoms computed here
+      //   are indeed similar to what CellAtomTools functions return.
+      //   The reason for not using CellAtomTools functions is that
+      //   the code here is already optimized and tested. So we assert that
+      //   CellAtomTools functions also yield same result.
+#ifdef Debug
+      for (types::CellIteratorType<dim>
+           cell  = mesh.begin_active();
+           cell != mesh.end();
+           cell++)
+        {
+          // Get n_atoms_in_cell using atoms_range.second
+          const auto atoms_range =
+            CellAtomTools::atoms_range_in_cell(cell, atoms);
+
+          // Get the number of cluster atoms in cell.
+          // It is legal to call this function as we have
+          // already updated cluster weights
+          const auto n_cluster_atoms_in_cell =
+            CellAtomTools::n_cluster_atoms_in_cell(cell, energy_atoms);
+
+          Assert (n_atoms_per_cell[cell] == atoms_range.second,
+                  ExcInternalError());
+
+          Assert (n_cluster_atoms_per_cell[cell] == n_cluster_atoms_in_cell,
+                  ExcInternalError());
+        }
+#endif
+
       return energy_atoms;
     }
 
