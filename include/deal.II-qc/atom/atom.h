@@ -12,9 +12,9 @@ namespace dealiiqc
   using namespace dealii;
 
   /**
-   * A class for atoms associated with FEM.
+   * A class for atoms embedded in a <tt>spacedim</tt>-dimensional space.
    */
-  template <int dim>
+  template <int spacedim>
   struct Atom
   {
 
@@ -23,6 +23,7 @@ namespace dealiiqc
      */
     types::global_atom_index global_index;
 
+    // TODO: Remove local_index from Atom class
     /**
      * Local atom index of this atom within the cell it is associated with.
      *
@@ -39,6 +40,7 @@ namespace dealiiqc
      */
     types::atom_type type;
 
+    // TODO: Remove cluster_weight from Atom class
     /**
      * Contribution to energy calculations in terms of cluster weight.
      * All the cluster_atoms have non-zero @p cluster_weight.
@@ -49,23 +51,25 @@ namespace dealiiqc
     double cluster_weight;
 
     /**
-     * Position in real space
+     * Current position in real space.
      */
-    Point<dim> position;
+    Point<spacedim> position;
 
+    // TODO: Remove reference_position from Atom class.
     /**
      * Position of the atom in reference coordinates of a cell it belongs to.
      */
-    Point<dim> reference_position;
+    Point<spacedim> reference_position;
 
+    // TODO: Remove parent_cell from Atom class
     /**
      * Iterator to a cell which owns this atom.
      */
-    typename DoFHandler<dim>::active_cell_iterator parent_cell;
+    typename DoFHandler<spacedim>::active_cell_iterator parent_cell;
 
   };
 
 
-}
+} // namespace dealiiqc
 
-#endif // __dealii_qc_qc_h
+#endif // __dealii_qc_atom_h

@@ -16,8 +16,8 @@ namespace dealiiqc
     /**
      * The type used for global indices of atoms.
      * In order to have 64-bit unsigned integers (more than 4 billion),
-     *  build deal.II with support for 64-bit integers.
-     *  The data type always indicates an unsigned integer type.
+     * build deal.II with support for 64-bit integers.
+     * The data type always indicates an unsigned integer type.
      */
     typedef  dealii::types::global_dof_index global_atom_index;
 
