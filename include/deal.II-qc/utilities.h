@@ -5,6 +5,8 @@
 #include <deal.II/base/numbers.h>
 #include <deal.II/grid/tria_iterator.h>
 #include <deal.II/grid/tria_accessor.h>
+#include <deal.II/dofs/dof_accessor.h>
+#include <deal.II/dofs/dof_handler.h>
 
 namespace dealiiqc
 {
@@ -33,6 +35,20 @@ namespace dealiiqc
      * from 0.
      */
     typedef unsigned char atom_type;
+
+    /**
+     * A typedef for DoFHandler's active_cell_iterator for ease of use.
+     */
+    template<int dim, int spacedim=dim>
+    using CellIteratorType =
+        typename dealii::DoFHandler<dim, spacedim>::active_cell_iterator;
+
+    /**
+     * A typedef for DoFHandler's const active_cell_iterator for ease of use.
+     */
+    template<int dim, int spacedim=dim>
+    using ConstCellIteratorType =
+        const typename dealii::DoFHandler<dim, spacedim>::active_cell_iterator;
 
   } //typedefs
 
