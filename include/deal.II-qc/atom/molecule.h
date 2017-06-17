@@ -12,17 +12,21 @@ namespace dealiiqc
 
   /**
    * A class for molecules embedded in a <tt>spacedim</tt>-dimensional space.
+   *
+   * The <tt>atomicity</tt> of a molecule, that is the number of atoms it
+   * contains, must be known at compile time.
    */
-  template<int stamps, int spacedim>
+  template<int spacedim, int atomicity>
   struct Molecule
   {
 
     /**
-     * A list of atoms that constitute this molecule. Each atom in the molecule
+     * A list of atoms that constitute this molecule. The size of the list is
+     * equal to the atomicity of the molecule. Each atom in the molecule
      * is given a different stamp and therefore the order of atoms is important
      * and is according to their stamp.
      */
-    std::array<Atom<spacedim>, stamps> atoms;
+    std::array<Atom<spacedim>, atomicity> atoms;
 
     /**
      * Position of the molecule in reference coordinates of the cell to which
