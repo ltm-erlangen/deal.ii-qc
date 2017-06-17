@@ -73,7 +73,7 @@ int main (int argc, char *argv[])
         {
           Assert(false, ExcNotImplemented());
         }
-      BOOST_PP_LIST_FOR_EACH_PRODUCT(DOIF, 2, (QC_DIM,QC_POT))
+      //BOOST_PP_LIST_FOR_EACH_PRODUCT(DOIF, 2, (QC_DIM,QC_POT))
 
     }
   catch (std::exception &exc)
