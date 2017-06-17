@@ -15,7 +15,7 @@ namespace dealiiqc
 
   template<int dim>
   void ParseAtomData<dim>::parse( std::istream &is,
-                                  std::vector<Atom<dim>> &atoms,
+                                  std::vector<Molecule<dim,1>> &molecules,
                                   std::vector<types::charge> &charges,
                                   std::vector<double> &masses)
   {
@@ -140,7 +140,7 @@ namespace dealiiqc
         else if ( dealii::Utilities::match_at_string_start(line,"Atoms"))
           {
             // parse_atoms is allowed to be executed multiple times.
-            parse_atoms(is, atoms, charges);
+            parse_atoms(is, molecules, charges);
           }
         ++line_no;
       }
@@ -151,12 +151,12 @@ namespace dealiiqc
 
   template< int dim>
   void ParseAtomData<dim>::parse_atoms( std::istream &is,
-                                        std::vector<Atom<dim>> &atoms,
+                                        std::vector<Molecule<dim,1>> &molecules,
                                         std::vector<types::charge> &charges)
   {
     std::string line;
 
-    atoms.resize(n_atoms);
+    molecules.resize(n_atoms);
     charges.resize(n_atom_types);
 
     // i_atom = i_atom_index-1
@@ -196,19 +196,19 @@ namespace dealiiqc
 
         i_atom = static_cast<types::global_atom_index>(i_atom_index) -1;
 
-        atoms[i_atom].global_index = i_atom;
+        molecules[i_atom].atoms[0].global_index = i_atom;
 
         // Set some member variables of i_atom to invalid values as
         // the current class cannot initialize to correct values.
-        atoms[i_atom].cluster_weight = numbers::invalid_cluster_weight;
-        atoms[i_atom].local_index = dealii::numbers::invalid_unsigned_int;
+        molecules[i_atom].local_index    = dealii::numbers::invalid_unsigned_int;
+        molecules[i_atom].cluster_weight = numbers::invalid_cluster_weight;
 
         tmp_type = static_cast<types::atom_type> (i_atom_type) -1;
 
         Assert(tmp_type>=0 && tmp_type < 256,
                ExcInvalidValue(line_no, "atom type attribute"));
 
-        atoms[i_atom].type = tmp_type;
+        molecules[i_atom].atoms[0].type = tmp_type;
 
         if (std::find(unique_types.begin(), unique_types.end(), tmp_type) == unique_types.end())
           {
@@ -222,23 +222,23 @@ namespace dealiiqc
         // TODO: 1 and 2 dim cases could be potentially incorrect
         // Possible way to correct this is to ask user axes dimensionality
         if (dim==1)
-          atoms[i_atom].position[0] = i_x;
+          molecules[i_atom].atoms[0].position[0] = i_x;
         else if (dim==2)
           {
-            atoms[i_atom].position[0] = i_x;
-            atoms[i_atom].position[1] = i_y;
+            molecules[i_atom].atoms[0].position[0] = i_x;
+            molecules[i_atom].atoms[0].position[1] = i_y;
           }
         else if (dim==3)
           {
-            atoms[i_atom].position[0] = i_x;
-            atoms[i_atom].position[1] = i_y;
-            atoms[i_atom].position[2] = i_z;
+            molecules[i_atom].atoms[0].position[0] = i_x;
+            molecules[i_atom].atoms[0].position[1] = i_y;
+            molecules[i_atom].atoms[0].position[2] = i_z;
           }
         ++i;
       }
     Assert( unique_types.size()==n_atom_types,
             ExcInternalError());
-    Assert( i==atoms.size(),
+    Assert( i==n_atoms,
             ExcMessage("The number of atoms "
                        "do not match the number of entries "
                        "under Atoms keyword section"));

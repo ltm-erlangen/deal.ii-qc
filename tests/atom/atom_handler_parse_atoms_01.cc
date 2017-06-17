@@ -34,15 +34,15 @@ public:
     triangulation.refine_global (1);
     AtomHandler<dim>::parse_atoms_and_assign_to_cells (dof_handler,
                                                        atom_data);
-    atom_data.energy_atoms =
+    atom_data.cell_energy_molecules =
       config.get_cluster_weights<dim>()->
       update_cluster_weights (dof_handler,
-                              atom_data.atoms);
+                              atom_data.cell_molecules);
 
     // Check that the number of atoms picked up and added to energy_atoms
     // is so and so and shouldn't change each time this test is run.
     std::cout << "The number of energy atoms picked up : "
-              << atom_data.energy_atoms.size()
+              << atom_data.cell_energy_molecules.size()
               << std::endl;
   }
 

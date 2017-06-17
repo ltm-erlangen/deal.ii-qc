@@ -60,8 +60,8 @@ namespace dealiiqc
       // number of cluster atoms per cell.
       for (const auto &cell_atom : atoms)
         {
-          const auto &cell = cell_atom.first;
-          Atom<dim> atom   = cell_atom.second;
+          const auto &cell         = cell_atom.first;
+          Molecule<dim,1> molecule = cell_atom.second;
 
           Assert (n_atoms_per_cell.find(cell) !=n_atoms_per_cell.end(),
                   ExcMessage("Provided 'mesh' isn't consistent with "
@@ -72,7 +72,7 @@ namespace dealiiqc
           // Check the proximity of the atom to it's associated
           // cell's vertices.
           const auto closest_vertex =
-            Utilities::find_closest_vertex (cell_atom.second.position,
+            Utilities::find_closest_vertex (molecule.atoms[0].position,
                                             cell);
           if (closest_vertex.second < squared_energy_radius)
             {
@@ -81,15 +81,15 @@ namespace dealiiqc
                   // Increment cluster atom count for this "cell"
                   n_cluster_atoms_per_cell[cell]++;
                   // atom is cluster atom
-                  atom.cluster_weight = 1.;
+                  molecule.cluster_weight = 1.;
                 }
               else
                 // atom is not cluster atom
-                atom.cluster_weight = 0.;
+                molecule.cluster_weight = 0.;
 
               // Insert atom into energy_atoms if it is within a distance of
               // energy_radius to associated cell's vertices.
-              energy_atoms.insert(std::make_pair(cell,atom));
+              energy_atoms.insert(std::make_pair(cell,molecule));
             }
         }
 

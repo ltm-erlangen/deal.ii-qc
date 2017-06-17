@@ -40,21 +40,21 @@ public:
     const Cluster::WeightsByCell<dim>
     weights_by_cell (config.get_cluster_radius(),
                      config.get_maximum_cutoff_radius());
-    atom_data.energy_atoms =
+    atom_data.cell_energy_molecules =
       weights_by_cell.update_cluster_weights (dof_handler,
-                                              atom_data.atoms);
+                                              atom_data.cell_molecules);
     for (auto
-         entry  = atom_data.energy_atoms.begin();
-         entry != atom_data.energy_atoms.end();
-         entry  = atom_data.energy_atoms.upper_bound(entry->first))
+         entry  = atom_data.cell_energy_molecules.begin();
+         entry != atom_data.cell_energy_molecules.end();
+         entry  = atom_data.cell_energy_molecules.upper_bound(entry->first))
       {
 
         const unsigned int n_atoms =
           CellAtomTools::atoms_range_in_cell(entry->first,
-                                             atom_data.atoms).second;
+                                             atom_data.cell_molecules).second;
         const unsigned int n_energy_atoms =
           CellAtomTools::atoms_range_in_cell(entry->first,
-                                             atom_data.energy_atoms).second;
+                                             atom_data.cell_energy_molecules).second;
 
         std::cout << "Cell: "
                   << entry->first
@@ -64,13 +64,13 @@ public:
                   << std::endl;
 
         std::cout << "Number of energy atoms: "
-                  << atom_data.energy_atoms.size() << std::endl;
+                  << atom_data.cell_energy_molecules.size() << std::endl;
 
         std::cout << std::endl;
 
-        AssertThrow(atom_data.atoms.count(entry->first) == n_atoms,
+        AssertThrow(atom_data.cell_molecules.count(entry->first) == n_atoms,
                     ExcInternalError());
-        AssertThrow(atom_data.energy_atoms.count(entry->first) == n_energy_atoms,
+        AssertThrow(atom_data.cell_energy_molecules.count(entry->first) == n_energy_atoms,
                     ExcInternalError())
       }
   }

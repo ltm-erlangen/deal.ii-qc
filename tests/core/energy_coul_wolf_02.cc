@@ -73,7 +73,7 @@ void Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
       if (p == this_mpi_process)
         std::cout << "Process: " << p
                   << " picked up : "
-                  << QC<dim, PotentialType>::atom_data.energy_atoms.size()
+                  << QC<dim, PotentialType>::atom_data.cell_energy_molecules.size()
                   << " number of energy atoms."
                   << std::endl;
       MPI_Barrier(QC<dim, PotentialType>::mpi_communicator);
@@ -102,12 +102,12 @@ void Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
         {
           for ( auto entry : QC<dim, PotentialType>::neighbor_lists)
             std::cout << "Atom I: "
-                      << entry.second.first->second.global_index
+                      << entry.second.first->second.atoms[0].global_index
                       << " Cluster weight: "
                       << entry.second.first->second.cluster_weight << " "
 
                       << "Atom J: "
-                      << entry.second.second->second.global_index
+                      << entry.second.second->second.atoms[0].global_index
                       << " Cluster weight: "
                       << entry.second.second->second.cluster_weight << std::endl;
         }

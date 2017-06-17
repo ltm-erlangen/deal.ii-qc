@@ -117,11 +117,11 @@ namespace dealiiqc
                q < n_atoms_in_current_cell;
                q++, cell_atom_iterator++)
             {
-              Atom<dim> atom = cell_atom_iterator->second;
-              const Point<dim> &position = atom.position;
+              Molecule<dim,1> molecule = cell_atom_iterator->second;
+              const Point<dim> &position = molecule.atoms[0].position;
 
               // update quadrature point
-              points[q] = atom.reference_position;
+              points[q] = molecule.position_inside_reference_cell;
 
               // Check the proximity of the atom to it's associated
               // cell's vertices.
@@ -134,19 +134,19 @@ namespace dealiiqc
                   if (closest_vertex.second < squared_cluster_radius)
                     {
                       // atom is cluster atom
-                      atom.cluster_weight = 1.;
+                      molecule.cluster_weight = 1.;
                       weights_per_atom[q] = 1.;
                     }
                   else
                     {
                       // atom is not cluster atom
-                      atom.cluster_weight = 0.;
+                      molecule.cluster_weight = 0.;
                       weights_per_atom[q] = 0.;
                     }
 
                   // Insert atom into energy_atoms if it is within a distance of
                   // energy_radius to associated cell's vertices.
-                  energy_atoms.insert(std::make_pair(cell, atom));
+                  energy_atoms.insert(std::make_pair(cell, molecule));
                 }
 
             }
@@ -209,11 +209,11 @@ namespace dealiiqc
       for (auto &energy_atom : energy_atoms)
         {
           const auto &cell = energy_atom.first;
-          Atom<dim>  &atom = energy_atom.second;
+          Molecule<dim,1>  &molecule = energy_atom.second;
 
           // Get the closest vertex (of this cell) to the atom.
           const auto vertex_and_squared_distance =
-            Utilities::find_closest_vertex (atom.position,
+            Utilities::find_closest_vertex (molecule.atoms[0].position,
                                             cell);
 
           // We need to get the global dof index from the local index of

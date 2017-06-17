@@ -38,17 +38,17 @@ public:
     const Cluster::WeightsByCell<dim>
     weights_by_cell (config.get_cluster_radius(),
                      config.get_maximum_cutoff_radius());
-    atom_data.energy_atoms =
+    atom_data.cell_energy_molecules =
       weights_by_cell.update_cluster_weights (dof_handler,
-                                              atom_data.atoms);
+                                              atom_data.cell_molecules);
     for (auto
-         entry  = atom_data.energy_atoms.begin();
-         entry != atom_data.energy_atoms.end();
-         entry  = atom_data.energy_atoms.upper_bound(entry->first))
+         entry  = atom_data.cell_energy_molecules.begin();
+         entry != atom_data.cell_energy_molecules.end();
+         entry  = atom_data.cell_energy_molecules.upper_bound(entry->first))
       std::cout << entry->first
                 << ":"
-                << atom_data.atoms.count(entry->first) -
-                atom_data.energy_atoms.count(entry->first)
+                << atom_data.cell_molecules.count(entry->first) -
+                atom_data.cell_energy_molecules.count(entry->first)
                 << std::endl;
     std::cout << std::endl;
   }

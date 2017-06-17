@@ -236,7 +236,7 @@ namespace dealiiqc
       // If dim < 3, fill other dimensions with 0s.
       for ( const auto &cell_atom : cell_atom_container)
         if ( cell_atom.first->is_locally_owned() )
-          vtp_out.write_point( cell_atom.second.position);
+          vtp_out.write_point( cell_atom.second.atoms[0].position);
 
 
       vtp_out.flush();

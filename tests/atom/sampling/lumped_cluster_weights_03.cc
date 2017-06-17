@@ -68,19 +68,19 @@ public:
     weights_by_lumped_vertex (config.get_cluster_radius(),
                               config.get_maximum_cutoff_radius());
 
-    atom_data.energy_atoms =
+    atom_data.cell_energy_molecules =
       weights_by_lumped_vertex.update_cluster_weights (dof_handler,
-                                                       atom_data.atoms);
+                                                       atom_data.cell_molecules);
 
     unsigned int this_mpi_process =
-        dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
+      dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
 
     dealii::ConditionalOStream pcout (std::cout,
                                       this_mpi_process == 0);
 
-    for ( const auto &cell_atom : atom_data.energy_atoms )
-      if(this_mpi_process==0)
-        pcout << "Atom: " << cell_atom.second.position << " : "
+    for ( const auto &cell_atom : atom_data.cell_energy_molecules )
+      if (this_mpi_process==0)
+        pcout << "Atom: " << cell_atom.second.atoms[0].position << " : "
               << "Cluster_Weight: "
               << cell_atom.second.cluster_weight << std::endl;
   }
