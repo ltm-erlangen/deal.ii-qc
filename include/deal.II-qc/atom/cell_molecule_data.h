@@ -12,31 +12,36 @@ namespace dealiiqc
     /**
      * A typedef for container that holds cell and associated molecules.
      */
-    template<int dim, int spacedim=dim>
+    template<int dim, int atomicity, int spacedim=dim>
     using CellMoleculeContainerType =
-      typename std::multimap<CellIteratorType<dim>, Molecule<spacedim>>;
+      typename std::multimap<CellIteratorType<dim, spacedim>, Molecule<spacedim, atomicity>>;
 
     /**
      * A typedef for iterator over CellMoleculeContainerType.
      */
-    template<int dim, int spacedim=dim>
+    template<int dim, int atomicity, int spacedim=dim>
     using CellMoleculeIteratorType =
-      typename std::multimap<CellIteratorType<dim>, Molecule<spacedim>>::iterator;
+      typename CellMoleculeContainerType<dim, atomicity, spacedim>::iterator;
 
     /**
      * A typedef for const_iterator over CellMoleculeContainerType.
      */
-    template<int dim, int spacedim=dim>
+    template<int dim, int atomicity, int spacedim=dim>
     using CellMoleculeConstIteratorType =
-      typename std::multimap<CellIteratorType<dim>, Molecule<spacedim>>::const_iterator;
+      typename CellMoleculeContainerType<dim, atomicity, spacedim>::const_iterator;
 
     /**
      * A typedef for a pair of const_iterators over CellMoleculeContainerType
      * which could be used in the case of storing a iterator range.
      */
-    template<int dim, int spacedim=dim>
+    template<int dim, int atomicity, int spacedim=dim>
     using CellMoleculeConstIteratorRangeType =
-      typename std::pair<CellMoleculeConstIteratorType<dim,spacedim>, CellMoleculeConstIteratorType<dim,spacedim>>;
+      typename
+      std::pair
+      <
+      CellMoleculeConstIteratorType<dim, atomicity, spacedim>,
+      CellMoleculeConstIteratorType<dim, atomicity, spacedim>
+      >;
 
   } // types
 
@@ -45,7 +50,7 @@ namespace dealiiqc
    * Primary class that holds cell based molecule data structures with the
    * association between molecules and mesh.
    */
-  template<int stamps, int int dim, int spacedim=dim>
+  template<int dim, int atomicity, int spacedim=dim>
   struct CellMoleculeData
   {
 
@@ -73,7 +78,7 @@ namespace dealiiqc
      * check whether the molecule's location lies inside the bounding box of
      * the current processor's set of locally relevant cells.
      */
-    types::CellMoleculeContainerType<dim, spacedim> cell_molecules;
+    types::CellMoleculeContainerType<dim, atomicity, spacedim> cell_molecules;
 
     /**
      * The cell based data structure that contains cells and energy molecules
@@ -84,7 +89,7 @@ namespace dealiiqc
      * The function QC::setup_energy_molecules_with_cluster_weights() is
      * responsible for updating this data member.
      */
-    types::CellMoleculeContainerType<dim, spacedim> cell_energy_molecules;
+    types::CellMoleculeContainerType<dim, atomicity, spacedim> cell_energy_molecules;
 
   };
 

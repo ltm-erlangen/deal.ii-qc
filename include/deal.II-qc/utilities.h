@@ -41,14 +41,14 @@ namespace dealiiqc
      */
     template<int dim, int spacedim=dim>
     using CellIteratorType =
-        typename dealii::DoFHandler<dim, spacedim>::active_cell_iterator;
+      typename dealii::DoFHandler<dim, spacedim>::active_cell_iterator;
 
     /**
      * A typedef for DoFHandler's const active_cell_iterator for ease of use.
      */
     template<int dim, int spacedim=dim>
     using ConstCellIteratorType =
-        const typename dealii::DoFHandler<dim, spacedim>::active_cell_iterator;
+      const typename dealii::DoFHandler<dim, spacedim>::active_cell_iterator;
 
   } //typedefs
 
