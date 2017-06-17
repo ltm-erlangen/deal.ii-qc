@@ -17,18 +17,6 @@ namespace dealiiqc
     using MeshType = dealii::DoFHandler<dim>;
 
     /**
-     * A typedef for active_cell_iterator for ease of use
-     */
-    template<int dim>
-    using CellIteratorType = typename MeshType<dim>::active_cell_iterator;
-
-    /**
-     * A typedef for active_cell_iterator for ease of use
-     */
-    template<int dim>
-    using ConstCellIteratorType = const typename MeshType<dim>::active_cell_iterator;
-
-    /**
      * A typedef for container that holds cell and associated atoms
      */
     template<int dim>
