@@ -29,6 +29,17 @@ namespace dealiiqc
     std::array<Atom<spacedim>, atomicity> atoms;
 
     /**
+     * Local index of the molecule within the cell it is associated to.
+     *
+     * @note During constructing FEValues object for the cell associated to this
+     * molecule, the local_index of this molecule can be used as the index for
+     * the quadrature point corresponding to this molecule. It is convenient to
+     * have the index of the quadrature point while calling the value function
+     * of the FEValues object.
+     */
+    unsigned int local_index;
+
+    /**
      * Position of the molecule in reference coordinates of the cell to which
      * it is associated to.
      */
