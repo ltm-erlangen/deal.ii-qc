@@ -19,7 +19,7 @@ INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR}/include)
 # in the "CMake in user projects" page accessible from the "User info"
 # page of the documentation.
 SET(TARGET_SRC
-  source/atom/atom_handler.cc
+  source/atom/molecule_handler.cc
   source/atom/data_out_atom_data.cc
   source/atom/parse_atom_data.cc
   source/atom/sampling/cluster_weights_by_base.cc
