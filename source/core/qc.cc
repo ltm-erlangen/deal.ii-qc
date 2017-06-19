@@ -308,6 +308,7 @@ namespace dealiiqc
         for (unsigned int i = 0;
              i < displacements.size();
              i++, ++cell_atom_range.first)
+          // FIXME: loop over all atoms and use BlockVector for displacements
           cell_atom_range.first->second.atoms[0].position += displacements[i];
 
         // The loop over displacements must have exhausted all the energy_atoms
@@ -381,6 +382,7 @@ namespace dealiiqc
                            "Either cell_I or cell_J doesn't contain "
                            "cell_atom_I or cell_atom_J, respectively."));
 
+        // FIXME: loop over all atoms
         const Tensor<1,dim> rIJ = cell_atom_I->second.atoms[0].position -
                                   cell_atom_J->second.atoms[0].position;
 

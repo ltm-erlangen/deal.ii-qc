@@ -21,6 +21,11 @@ namespace dealiiqc
   {
 
     /**
+     * The initial position of the molecule.
+     */
+    Point<spacedim> initial_position;
+
+    /**
      * A list of atoms that constitute this molecule. The size of the list is
      * equal to the atomicity of the molecule. Each atom in the molecule
      * is given a different stamp and therefore the order of atoms is important

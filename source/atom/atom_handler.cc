@@ -88,18 +88,23 @@ namespace dealiiqc
     // TODO: If/when required collect all non-relevant atoms
     // (those that are not within a ConfigureQC::ghost_cell_layer_thickness
     // for this MPI process energy computation)
-    // For now just add the number of atoms being thrown.
-    types::global_atom_index n_thrown_atoms=0;
+    // For now just add the number of molecules being thrown.
+    // TODO: Add another typedef for molecules index?
+    types::global_atom_index n_thrown_molecules=0;
 
     for ( auto molecule : vector_molecules )
       {
         bool atom_associated_to_cell = false;
         try
           {
+            // The initial position of the first atom of a molecule is
+            // considered as the initial location of the molecule.
+            // TODO: Update documentation in relevant places
+            molecule.initial_position = molecule.atoms[0].position;
             std::pair<typename types::MeshType<dim>::active_cell_iterator, Point<dim> >
             my_pair = GridTools::find_active_cell_around_point( MappingQ1<dim>(),
                                                                 mesh,
-                                                                molecule.atoms[0].position,
+                                                                molecule.initial_position,
                                                                 locally_active_vertices);
 
             // Since in locally_active_vertices all the vertices of
@@ -112,7 +117,7 @@ namespace dealiiqc
             if (!my_pair.first->is_locally_owned() &&
                 (std::find(ghost_cells.begin(), ghost_cells.end(), my_pair.first)==ghost_cells.end()))
               {
-                n_thrown_atoms++;
+                n_thrown_molecules++;
                 continue;
               }
 
@@ -129,10 +134,10 @@ namespace dealiiqc
           }
 
         if ( !atom_associated_to_cell )
-          n_thrown_atoms++;
+          n_thrown_molecules++;
       }
 
-    Assert (cell_molecules.size()+n_thrown_atoms==vector_molecules.size(),
+    Assert (cell_molecules.size()+n_thrown_molecules==vector_molecules.size(),
             ExcInternalError());
 
   }
@@ -217,6 +222,10 @@ namespace dealiiqc
              cell_molecule_I != range_of_cell_I.second;
              cell_molecule_I++)
           {
+            // FIXME: Check distances between all atoms of one molecule to
+            //        all atoms of the other molecule. If any two atoms of
+            //        different molecules interact, then the molecules are in
+            //        neighbor lists.
             const Atom<dim> &atom_I = cell_molecule_I->second.atoms[0];
 
             // Check if the atom_I is cluster atom,
@@ -227,6 +236,7 @@ namespace dealiiqc
                    cell_molecule_J != range_of_cell_J.second;
                    cell_molecule_J++ )
                 {
+                  // FIXME: Check for all atoms in molecule.
                   const Atom<dim> &atom_J = cell_molecule_J->second.atoms[0];
 
                   const bool atom_J_is_cluster_atom =
@@ -270,6 +280,7 @@ namespace dealiiqc
     for (auto cell_molecule_I : cell_energy_molecules)
       if (cell_molecule_I.first->is_locally_owned())
         {
+          // FIXME: here (loop over atoms in molecule)
           const Atom<dim> &atom_I = cell_molecule_I.second.atoms[0];
 
           // We are building neighbor lists for only atom_Is
@@ -277,6 +288,7 @@ namespace dealiiqc
           if (cell_molecule_I.second.cluster_weight != 0)
             for (auto cell_molecule_J : cell_energy_molecules)
               {
+                // FIXME: here (loop over atoms in molecule)
                 const Atom<dim> &atom_J = cell_molecule_J.second.atoms[0];
 
                 const bool atom_J_is_cluster_atom =

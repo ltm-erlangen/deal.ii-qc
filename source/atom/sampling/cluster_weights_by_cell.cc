@@ -72,7 +72,7 @@ namespace dealiiqc
           // Check the proximity of the atom to it's associated
           // cell's vertices.
           const auto closest_vertex =
-            Utilities::find_closest_vertex (molecule.atoms[0].position,
+            Utilities::find_closest_vertex (molecule.initial_position,
                                             cell);
           if (closest_vertex.second < squared_energy_radius)
             {

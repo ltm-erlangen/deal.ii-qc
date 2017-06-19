@@ -118,7 +118,6 @@ namespace dealiiqc
                q++, cell_atom_iterator++)
             {
               Molecule<dim,1> molecule = cell_atom_iterator->second;
-              const Point<dim> &position = molecule.atoms[0].position;
 
               // update quadrature point
               points[q] = molecule.position_inside_reference_cell;
@@ -126,7 +125,7 @@ namespace dealiiqc
               // Check the proximity of the atom to it's associated
               // cell's vertices.
               const auto closest_vertex =
-                Utilities::find_closest_vertex (position,
+                Utilities::find_closest_vertex (molecule.initial_position,
                                                 cell);
 
               if (closest_vertex.second < squared_energy_radius)
@@ -213,7 +212,7 @@ namespace dealiiqc
 
           // Get the closest vertex (of this cell) to the atom.
           const auto vertex_and_squared_distance =
-            Utilities::find_closest_vertex (molecule.atoms[0].position,
+            Utilities::find_closest_vertex (molecule.initial_position,
                                             cell);
 
           // We need to get the global dof index from the local index of

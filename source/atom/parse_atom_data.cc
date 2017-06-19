@@ -156,6 +156,8 @@ namespace dealiiqc
   {
     std::string line;
 
+    // FIXME: n_atoms/atomicity
+    // TODO: Add assert n_atoms%atomicity==0?
     molecules.resize(n_atoms);
     charges.resize(n_atom_types);
 
@@ -196,6 +198,7 @@ namespace dealiiqc
 
         i_atom = static_cast<types::global_atom_index>(i_atom_index) -1;
 
+        // FIXME: use i_atom % atomicity for atom stamps.
         molecules[i_atom].atoms[0].global_index = i_atom;
 
         // Set some member variables of i_atom to invalid values as
@@ -208,6 +211,7 @@ namespace dealiiqc
         Assert(tmp_type>=0 && tmp_type < 256,
                ExcInvalidValue(line_no, "atom type attribute"));
 
+        // FIXME: use i_atom % atomicity for atom stamps.
         molecules[i_atom].atoms[0].type = tmp_type;
 
         if (std::find(unique_types.begin(), unique_types.end(), tmp_type) == unique_types.end())

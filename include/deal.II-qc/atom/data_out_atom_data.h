@@ -20,12 +20,6 @@ namespace dealiiqc
   public:
 
     /**
-     * A typedef for container that carries
-     * cell and atom association information
-     */
-    using CellAtomContainerType = typename std::multimap< typename DoFHandler<dim>::active_cell_iterator, Atom<dim> >;
-
-    /**
      * Write out into ostream @p out the atom data contained in
      * @p cell_atom_container in the XML vtp format.
      *
@@ -37,7 +31,7 @@ namespace dealiiqc
      * associated to it's locally owned cells. In doing so, each
      * process writes out disjoint sets of atom data.
      */
-    void write_vtp ( const CellAtomContainerType &cell_atom_container,
+    void write_vtp ( const types::CellAtomContainerType<dim> &cell_atom_container,
                      const dealii::DataOutBase::VtkFlags &flags,
                      std::ostream &out);
 

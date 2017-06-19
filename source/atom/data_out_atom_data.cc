@@ -207,7 +207,7 @@ namespace dealiiqc
 
 
     template<int dim>
-    void write_vtp_main( const typename DataOutAtomData<dim>::CellAtomContainerType &cell_atom_container,
+    void write_vtp_main( const types::CellAtomContainerType<dim> &cell_atom_container,
                          const DataOutBase::VtkFlags &flags,
                          std::ostream &out)
     {
@@ -226,6 +226,8 @@ namespace dealiiqc
         if ( cell_atom.first->is_locally_owned() )
           n_locally_owned_atoms++;
 
+      // FIXME: The number of atoms can be obtained by multiplying with
+      // atomicity. Adjust n_locally_owned_atoms accordingly.
       out << "<Piece NumberOfPoints=\"" << n_locally_owned_atoms << "\" >\n";
       out << "  <Points>\n";
       out << "    <DataArray type=\"Float64\" NumberOfComponents=\"3\" format=\""
@@ -234,10 +236,10 @@ namespace dealiiqc
       // Fill Points: the number of components
       // is set to 3.
       // If dim < 3, fill other dimensions with 0s.
-      for ( const auto &cell_atom : cell_atom_container)
-        if ( cell_atom.first->is_locally_owned() )
-          vtp_out.write_point( cell_atom.second.atoms[0].position);
-
+      for ( const auto &cell_molecule : cell_atom_container)
+        if ( cell_molecule.first->is_locally_owned() )
+          for (const auto &atom : cell_molecule.second.atoms)
+            vtp_out.write_point (atom.position);
 
       vtp_out.flush();
 
@@ -265,7 +267,7 @@ namespace dealiiqc
 
   //----------------------------------------------------------------------//
   template<int dim>
-  void DataOutAtomData<dim>::write_vtp( const CellAtomContainerType &cell_atom_container,
+  void DataOutAtomData<dim>::write_vtp( const types::CellAtomContainerType<dim> &cell_atom_container,
                                         const dealii::DataOutBase::VtkFlags &flags,
                                         std::ostream &out)
   {

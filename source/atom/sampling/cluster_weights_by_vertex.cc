@@ -68,7 +68,7 @@ namespace dealiiqc
 
           // Get the closest vertex (of this cell) to the atom.
           const auto vertex_and_squared_distance =
-            Utilities::find_closest_vertex (molecule.atoms[0].position,
+            Utilities::find_closest_vertex (molecule.initial_position,
                                             cell);
 
           const unsigned int global_vertex_index =
@@ -128,7 +128,7 @@ namespace dealiiqc
 
           // Get the closest vertex (of this cell) to the atom.
           const auto vertex_and_squared_distance =
-            Utilities::find_closest_vertex (molecule.atoms[0].position,
+            Utilities::find_closest_vertex (molecule.initial_position,
                                             cell);
 
           const unsigned int global_vertex_index =
