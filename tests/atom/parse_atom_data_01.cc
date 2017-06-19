@@ -6,7 +6,6 @@
 #include <deal.II/base/conditional_ostream.h>
 
 #include <deal.II-qc/atom/parse_atom_data.h>
-#include <deal.II-qc/configure/configure_qc.h>
 
 using namespace dealii;
 using namespace dealiiqc;
@@ -18,7 +17,8 @@ void test_parse(const MPI_Comm &mpi_communicator, std::istream &is)
   unsigned int n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_communicator)),
            this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_communicator));
 
-  std::vector<Atom<dim>> atoms;
+  // In this test, molecules are mono-atomic.
+  std::vector<Molecule<dim,1>> atoms;
   std::vector<dealiiqc::types::charge> charges;
   std::vector<double> masses;
 
@@ -64,19 +64,8 @@ int main( int argc, char **argv)
     {
       dealii::Utilities::MPI::MPI_InitFinalize mpi_initialization (argc, argv,
           dealii::numbers::invalid_unsigned_int);
-      std::ostringstream oss;
-      oss
-          << "set Dimension = 3"                                  << std::endl
-          << "subsection Configure atoms"                         << std::endl
-          << "  set Atom data file = " << SOURCE_DIR "/../data/16_NaCl_atom.data" << std::endl
-          << "end"                                                << std::endl;
 
-      std::shared_ptr<std::istream> prm_stream =
-        std::make_shared<std::istringstream>(oss.str().c_str());
-
-      ConfigureQC config( prm_stream );
-
-      const std::string atom_data_file = config.get_atom_data_file();
+      const std::string atom_data_file = SOURCE_DIR "/../data/16_NaCl_atom.data";
       std::fstream fin (atom_data_file, std::fstream::in);
 
       test_parse<3>(MPI_COMM_WORLD, fin);

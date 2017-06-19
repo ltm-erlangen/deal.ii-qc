@@ -54,14 +54,14 @@ void Problem<dim, PotentialType>::partial_run(const ConfigureQC &config)
   QC<dim, PotentialType>::configure_qc = config;
   QC<dim, PotentialType>::setup_energy_atoms_with_cluster_weights();
 
-  const auto &energy_atoms =  QC<dim, PotentialType>::atom_data.energy_atoms;
+  const auto &cell_energy_molecules =  QC<dim, PotentialType>::atom_data.cell_energy_molecules;
 
   const double cluster_radius =
     QC<dim, PotentialType>::configure_qc.get_cluster_radius();
 
   double mass = 0.;
 
-  for (const auto &cell_atom : energy_atoms)
+  for (const auto &cell_atom : cell_energy_molecules)
     if (cell_atom.first->is_locally_owned())
       mass += cell_atom.second.cluster_weight;
 

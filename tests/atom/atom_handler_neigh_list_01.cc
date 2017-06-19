@@ -34,15 +34,15 @@ public:
     triangulation.refine_global (3);
     AtomHandler<dim>::parse_atoms_and_assign_to_cells (dof_handler,
                                                        atom_data);
-    atom_data.energy_atoms =
+    atom_data.cell_energy_molecules =
       config.get_cluster_weights<dim>()->
       update_cluster_weights (dof_handler,
-                              atom_data.atoms);
+                              atom_data.cell_molecules);
     auto neighbor_lists =
-      AtomHandler<dim>::get_neighbor_lists( atom_data.energy_atoms);
+      AtomHandler<dim>::get_neighbor_lists( atom_data.cell_energy_molecules);
     for ( auto entry : neighbor_lists)
-      std::cout << "Atom I: "  << entry.second.first->second.global_index << " "
-                << "Atom J: "  << entry.second.second->second.global_index << std::endl;
+      std::cout << "Atom I: "  << entry.second.first->second.atoms[0].global_index << " "
+                << "Atom J: "  << entry.second.second->second.atoms[0].global_index << std::endl;
     std::cout << std::endl;
   }
 

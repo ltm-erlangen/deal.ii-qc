@@ -64,11 +64,11 @@ namespace dealiiqc
       for (const auto &cell_atom : atoms)
         {
           const auto &cell = cell_atom.first;
-          Atom<dim> atom   = cell_atom.second;
+          Molecule<dim,1> molecule   = cell_atom.second;
 
           // Get the closest vertex (of this cell) to the atom.
           const auto vertex_and_squared_distance =
-            Utilities::find_closest_vertex (cell_atom.second.position,
+            Utilities::find_closest_vertex (molecule.initial_position,
                                             cell);
 
           const unsigned int global_vertex_index =
@@ -92,15 +92,15 @@ namespace dealiiqc
                     // Increment cluster atom count for this "vertex"
                     n_cluster_atoms_per_vertex[global_vertex_index]++;
                   // atom is cluster atom
-                  atom.cluster_weight = 1.;
+                  molecule.cluster_weight = 1.;
                 }
               else
                 // atom is not cluster atom
-                atom.cluster_weight = 0.;
+                molecule.cluster_weight = 0.;
 
               // Insert atom into energy_atoms if it is within a distance of
               // energy_radius to associated cell's vertices.
-              energy_atoms.insert(std::make_pair(cell,atom));
+              energy_atoms.insert(std::make_pair(cell,molecule));
             }
         }
 
@@ -124,11 +124,11 @@ namespace dealiiqc
       for (auto &energy_atom : energy_atoms)
         {
           const auto &cell = energy_atom.first;
-          Atom<dim>  &atom = energy_atom.second;
+          Molecule<dim,1>  &molecule = energy_atom.second;
 
           // Get the closest vertex (of this cell) to the atom.
           const auto vertex_and_squared_distance =
-            Utilities::find_closest_vertex (atom.position,
+            Utilities::find_closest_vertex (molecule.initial_position,
                                             cell);
 
           const unsigned int global_vertex_index =
@@ -139,7 +139,7 @@ namespace dealiiqc
 
           // The cluster weight was previously set to 1. if the atom is
           // cluster atom and 0. if the atom is not cluster atom.
-          atom.cluster_weight *=
+          molecule.cluster_weight *=
             static_cast<double>(n_atoms_per_vertex[global_vertex_index])
             /
             static_cast<double>(n_cluster_atoms_per_vertex[global_vertex_index]);

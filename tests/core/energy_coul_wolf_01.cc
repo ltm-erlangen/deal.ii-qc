@@ -42,14 +42,14 @@ void Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
 
   QC<dim, PotentialType>::pcout
       << "The number of energy atoms in the system: "
-      << QC<dim, PotentialType>::atom_data.energy_atoms.size()
+      << QC<dim, PotentialType>::atom_data.cell_energy_molecules.size()
       << std::endl;
 
   QC<dim, PotentialType>::pcout << "Neighbor lists: " << std::endl;
 
   for ( auto entry : QC<dim, PotentialType>::neighbor_lists)
-    std::cout << "Atom I: "  << entry.second.first->second.global_index  << " "
-              << "Atom J: "  << entry.second.second->second.global_index << std::endl;
+    std::cout << "Atom I: "  << entry.second.first->second.atoms[0].global_index  << " "
+              << "Atom J: "  << entry.second.second->second.atoms[0].global_index << std::endl;
 
   const double energy = QC<dim, PotentialType>::template calculate_energy_gradient<false> (QC<dim, PotentialType>::gradient);
   QC<dim, PotentialType>::pcout

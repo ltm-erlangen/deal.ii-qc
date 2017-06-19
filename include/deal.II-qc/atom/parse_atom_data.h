@@ -9,7 +9,7 @@
 
 #include <deal.II/base/point.h>
 
-#include <deal.II-qc/atom/atom.h>
+#include <deal.II-qc/atom/molecule.h>
 
 namespace dealiiqc
 {
@@ -59,7 +59,7 @@ namespace dealiiqc
      * @param[out] masses container to store masses of different atom species
      */
     void parse( std::istream &is,
-                std::vector<Atom<dim>> &atoms,
+                std::vector<Molecule<dim,1>> &molecules,
                 std::vector<types::charge> &charges,
                 std::vector<double> &masses);
 
@@ -81,7 +81,7 @@ namespace dealiiqc
      * @param[out] charges container to charges of different atom species
      */
     void parse_atoms( std::istream &is,
-                      std::vector<Atom<dim>> &atoms,
+                      std::vector<Molecule<dim,1>> &molecules,
                       std::vector<types::charge> &charges);
 
     /**

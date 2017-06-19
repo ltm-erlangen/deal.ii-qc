@@ -21,17 +21,17 @@ namespace dealiiqc
 
   template<int dim>
   void AtomHandler<dim>::parse_atoms_and_assign_to_cells( const types::MeshType<dim> &mesh,
-                                                          AtomData<dim> &atom_data) const
+                                                          AtomData<dim> &cell_molecule_data) const
   {
     // TODO: Assign atoms to cells as we parse atom data ?
     //       relevant for when we have a large collection of atoms.
-    std::vector<Atom<dim>> vector_atoms;
+    std::vector<Molecule<dim,1>> vector_molecules;
     ParseAtomData<dim> atom_parser;
 
-    atom_data.charges = NULL;
+    cell_molecule_data.charges = NULL;
     std::vector<types::charge> charges;
-    auto &masses  = atom_data.masses;
-    auto &atoms = atom_data.atoms;
+    auto &masses         = cell_molecule_data.masses;
+    auto &cell_molecules = cell_molecule_data.cell_molecules;
 
     const unsigned int n_vertices =  mesh.get_triangulation().n_vertices();
 
@@ -39,18 +39,18 @@ namespace dealiiqc
       {
         const std::string atom_data_file = configure_qc.get_atom_data_file();
         std::fstream fin(atom_data_file, std::fstream::in );
-        atom_parser.parse( fin, vector_atoms, charges, masses);
+        atom_parser.parse( fin, vector_molecules, charges, masses);
       }
     else if ( !(* configure_qc.get_stream()).eof() )
       {
-        atom_parser.parse( *configure_qc.get_stream(), vector_atoms, charges, masses);
+        atom_parser.parse( *configure_qc.get_stream(), vector_molecules, charges, masses);
       }
     else
       AssertThrow(false,
                   ExcMessage("Atom data was not provided neither as an auxiliary "
                              "data file nor at the end of the parameter file!"));
 
-    atom_data.charges = std::make_shared<std::vector<types::charge>>(charges);
+    cell_molecule_data.charges = std::make_shared<std::vector<types::charge>>(charges);
 
     // In order to speed-up finding an active cell around atoms through
     // find_active_cell_around_point(), we will need to construct a
@@ -88,18 +88,23 @@ namespace dealiiqc
     // TODO: If/when required collect all non-relevant atoms
     // (those that are not within a ConfigureQC::ghost_cell_layer_thickness
     // for this MPI process energy computation)
-    // For now just add the number of atoms being thrown.
-    types::global_atom_index n_thrown_atoms=0;
+    // For now just add the number of molecules being thrown.
+    // TODO: Add another typedef for molecules index?
+    types::global_atom_index n_thrown_molecules=0;
 
-    for ( auto atom : vector_atoms )
+    for ( auto molecule : vector_molecules )
       {
         bool atom_associated_to_cell = false;
         try
           {
+            // The initial position of the first atom of a molecule is
+            // considered as the initial location of the molecule.
+            // TODO: Update documentation in relevant places
+            molecule.initial_position = molecule.atoms[0].position;
             std::pair<typename types::MeshType<dim>::active_cell_iterator, Point<dim> >
             my_pair = GridTools::find_active_cell_around_point( MappingQ1<dim>(),
                                                                 mesh,
-                                                                atom.position,
+                                                                molecule.initial_position,
                                                                 locally_active_vertices);
 
             // Since in locally_active_vertices all the vertices of
@@ -112,14 +117,14 @@ namespace dealiiqc
             if (!my_pair.first->is_locally_owned() &&
                 (std::find(ghost_cells.begin(), ghost_cells.end(), my_pair.first)==ghost_cells.end()))
               {
-                n_thrown_atoms++;
+                n_thrown_molecules++;
                 continue;
               }
 
-            atom.reference_position = GeometryInfo<dim>::project_to_unit_cell(my_pair.second);
-            // TODO: Remove parent_cell
-            atom.parent_cell = my_pair.first;
-            atoms.insert( std::make_pair( my_pair.first, atom ));
+            molecule.position_inside_reference_cell =
+              GeometryInfo<dim>::project_to_unit_cell(my_pair.second);
+
+            cell_molecules.insert( std::make_pair( my_pair.first, molecule ));
             atom_associated_to_cell = true;
           }
         catch ( dealii::GridTools::ExcPointNotFound<dim> &)
@@ -129,10 +134,10 @@ namespace dealiiqc
           }
 
         if ( !atom_associated_to_cell )
-          n_thrown_atoms++;
+          n_thrown_molecules++;
       }
 
-    Assert (atoms.size()+n_thrown_atoms==vector_atoms.size(),
+    Assert (cell_molecules.size()+n_thrown_molecules==vector_molecules.size(),
             ExcInternalError());
 
   }
@@ -141,10 +146,10 @@ namespace dealiiqc
 
   template<int dim>
   std::multimap< std::pair< types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > >
-      AtomHandler<dim>::get_neighbor_lists (const types::CellAtomContainerType<dim> &energy_atoms) const
+      AtomHandler<dim>::get_neighbor_lists (const types::CellAtomContainerType<dim> &cell_energy_molecules) const
   {
     // Check to see if energy_atoms is updated.
-    Assert (energy_atoms.size(),
+    Assert (cell_energy_molecules.size(),
             ExcInternalError());
 
     std::multimap< std::pair< types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > >
@@ -170,9 +175,9 @@ namespace dealiiqc
     // with the deformed mesh.
     // TODO: optimize loop over unique keys ( mulitmap::upper_bound()'s complexity is O(nlogn) )
     for (types::CellAtomConstIteratorType<dim>
-         unique_I  = energy_atoms.cbegin();
-         unique_I != energy_atoms.cend();
-         unique_I  = energy_atoms.upper_bound(unique_I->first))
+         unique_I  = cell_energy_molecules.cbegin();
+         unique_I != cell_energy_molecules.cend();
+         unique_I  = cell_energy_molecules.upper_bound(unique_I->first))
       // Only locally owned cells have cell neighbors
       if (unique_I->first->is_locally_owned())
         {
@@ -181,7 +186,10 @@ namespace dealiiqc
           // Get center and the radius of the enclosing ball of cell_I
           const auto enclosing_ball_I = cell_I->enclosing_ball();
 
-          for ( types::CellAtomConstIteratorType<dim> unique_J = energy_atoms.cbegin(); unique_J != energy_atoms.cend(); unique_J = energy_atoms.upper_bound(unique_J->first))
+          for (types::CellAtomConstIteratorType<dim>
+               unique_J  = cell_energy_molecules.cbegin();
+               unique_J != cell_energy_molecules.cend();
+               unique_J  = cell_energy_molecules.upper_bound(unique_J->first))
             {
               types::ConstCellIteratorType<dim> cell_J = unique_J->first;
 
@@ -205,29 +213,34 @@ namespace dealiiqc
         types::ConstCellIteratorType<dim> cell_J = cell_pair_IJ.second;
 
         std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> >
-        range_of_cell_I = energy_atoms.equal_range(cell_I),
-        range_of_cell_J = energy_atoms.equal_range(cell_J);
+        range_of_cell_I = cell_energy_molecules.equal_range(cell_I),
+        range_of_cell_J = cell_energy_molecules.equal_range(cell_J);
 
         // for each atom associated to locally owned cell_I
         for (types::CellAtomConstIteratorType<dim>
-             cell_atom_I  = range_of_cell_I.first;
-             cell_atom_I != range_of_cell_I.second;
-             cell_atom_I++)
+             cell_molecule_I  = range_of_cell_I.first;
+             cell_molecule_I != range_of_cell_I.second;
+             cell_molecule_I++)
           {
-            const Atom<dim> &atom_I = cell_atom_I->second;
+            // FIXME: Check distances between all atoms of one molecule to
+            //        all atoms of the other molecule. If any two atoms of
+            //        different molecules interact, then the molecules are in
+            //        neighbor lists.
+            const Atom<dim> &atom_I = cell_molecule_I->second.atoms[0];
 
             // Check if the atom_I is cluster atom,
             // only cluster atoms get to have neighbor lists
-            if (atom_I.cluster_weight != 0)
+            if (cell_molecule_I->second.cluster_weight != 0)
               for (types::CellAtomConstIteratorType<dim>
-                   cell_atom_J  = range_of_cell_J.first;
-                   cell_atom_J != range_of_cell_J.second;
-                   cell_atom_J++ )
+                   cell_molecule_J  = range_of_cell_J.first;
+                   cell_molecule_J != range_of_cell_J.second;
+                   cell_molecule_J++ )
                 {
-                  const Atom<dim> &atom_J = cell_atom_J->second;
+                  // FIXME: Check for all atoms in molecule.
+                  const Atom<dim> &atom_J = cell_molecule_J->second.atoms[0];
 
                   const bool atom_J_is_cluster_atom =
-                    atom_J.cluster_weight != 0;
+                    cell_molecule_J->second.cluster_weight != 0;
 
                   // If atom_J is not cluster atom,
                   // then add atom_J to (cluster) atom_I's neighbor list.
@@ -243,7 +256,7 @@ namespace dealiiqc
                        ||
                        !atom_J_is_cluster_atom )
                     if (atom_I.position.distance_square(atom_J.position) < squared_cutoff_radius)
-                      neighbor_lists.insert( std::make_pair( cell_pair_IJ, std::make_pair( cell_atom_I, cell_atom_J)) );
+                      neighbor_lists.insert( std::make_pair( cell_pair_IJ, std::make_pair( cell_molecule_I, cell_molecule_J)) );
                 }
           }
 
@@ -264,20 +277,22 @@ namespace dealiiqc
     //     loop over all atoms
     //       if within distance
     //         total_number_of_interactions++;
-    for (auto cell_atom_I : energy_atoms)
-      if (cell_atom_I.first->is_locally_owned())
+    for (auto cell_molecule_I : cell_energy_molecules)
+      if (cell_molecule_I.first->is_locally_owned())
         {
-          const Atom<dim> &atom_I = cell_atom_I.second;
+          // FIXME: here (loop over atoms in molecule)
+          const Atom<dim> &atom_I = cell_molecule_I.second.atoms[0];
 
           // We are building neighbor lists for only atom_Is
           // so we can skip atom_I if it's not a cluster atom.
-          if (atom_I.cluster_weight != 0)
-            for (auto cell_atom_J : energy_atoms)
+          if (cell_molecule_I.second.cluster_weight != 0)
+            for (auto cell_molecule_J : cell_energy_molecules)
               {
-                const Atom<dim> &atom_J = cell_atom_J.second;
+                // FIXME: here (loop over atoms in molecule)
+                const Atom<dim> &atom_J = cell_molecule_J.second.atoms[0];
 
                 const bool atom_J_is_cluster_atom =
-                  atom_J.cluster_weight != 0;
+                  cell_molecule_J.second.cluster_weight != 0;
 
                 if ( (atom_J_is_cluster_atom &&
                       (atom_I.global_index > atom_J.global_index))

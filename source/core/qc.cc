@@ -109,10 +109,10 @@ namespace dealiiqc
 
     // It is ConfigureQC that actually creates a shared pointer to the derived
     // class object of the Cluster::WeightsByBase according to the parsed input.
-    atom_data.energy_atoms =
+    atom_data.cell_energy_molecules =
       configure_qc.get_cluster_weights<dim>()->
       update_cluster_weights (dof_handler,
-                              atom_data.atoms);
+                              atom_data.cell_molecules);
   }
 
 
@@ -200,7 +200,7 @@ namespace dealiiqc
 
     // Get a non-constant reference to energy atoms to update
     // local index (within a cell) of energy atoms.
-    auto &energy_atoms = atom_data.energy_atoms;
+    auto &energy_atoms = atom_data.cell_energy_molecules;
 
     // FIXME: Loop only over cells in energy_atoms
     for (types::CellIteratorType<dim> cell = dof_handler.begin_active(); cell != dof_handler.end(); ++cell)
@@ -242,7 +242,7 @@ namespace dealiiqc
         for (unsigned int q = 0; q < n_energy_atoms_in_cell; ++q, ++cell_atom_iterator)
           {
             // const_iter->second yields the actual atom
-            points[q]           = cell_atom_iterator->second.reference_position;
+            points[q]           = cell_atom_iterator->second.position_inside_reference_cell;
             weights_per_atom[q] = cell_atom_iterator->second.cluster_weight;
             cell_atom_iterator->second.local_index = q;
           }
@@ -301,14 +301,15 @@ namespace dealiiqc
         const auto &displacements = it->second.displacements;
 
         std::pair<types::CellAtomIteratorType<dim>, types::CellAtomIteratorType<dim> >
-        cell_atom_range = atom_data.energy_atoms.equal_range(cell);
+        cell_atom_range = atom_data.cell_energy_molecules.equal_range(cell);
 
         // update energy atoms positions
         // TODO: write test to check if positions are updated correctly.
         for (unsigned int i = 0;
              i < displacements.size();
              i++, ++cell_atom_range.first)
-          cell_atom_range.first->second.position += displacements[i];
+          // FIXME: loop over all atoms and use BlockVector for displacements
+          cell_atom_range.first->second.atoms[0].position += displacements[i];
 
         // The loop over displacements must have exhausted all the energy_atoms
         // on a per cell basis (and the converse also should be true).
@@ -328,7 +329,7 @@ namespace dealiiqc
     // TODO: Update neighbor lists
     // if( (iter_count % neigh_modify_delay)==0 || (max_abs_displacement > neigh_skin)   )
     //   update_neighbour_lists();
-    neighbor_lists = atom_handler.get_neighbor_lists(atom_data.energy_atoms);
+    neighbor_lists = atom_handler.get_neighbor_lists(atom_data.cell_energy_molecules);
   }
 
 
@@ -381,8 +382,9 @@ namespace dealiiqc
                            "Either cell_I or cell_J doesn't contain "
                            "cell_atom_I or cell_atom_J, respectively."));
 
-        const Tensor<1,dim> rIJ = cell_atom_I->second.position -
-                                  cell_atom_J->second.position;
+        // FIXME: loop over all atoms
+        const Tensor<1,dim> rIJ = cell_atom_I->second.atoms[0].position -
+                                  cell_atom_J->second.atoms[0].position;
 
         const double r_square = rIJ.norm_square();
 
@@ -409,8 +411,8 @@ namespace dealiiqc
         // atom I and  atom J:
         const std::pair<double, double> pair =
           (*potential_ptr).template
-          energy_and_gradient<ComputeGradient> (cell_atom_I->second.type,
-                                                cell_atom_J->second.type,
+          energy_and_gradient<ComputeGradient> (cell_atom_I->second.atoms[0].type,
+                                                cell_atom_J->second.atoms[0].type,
                                                 r_square);
 
         // Now we scale the energy according to cluster weights of the atoms.

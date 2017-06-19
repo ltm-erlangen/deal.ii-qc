@@ -48,7 +48,7 @@ namespace dealiiqc
      * away.
      */
     void parse_atoms_and_assign_to_cells( const types::MeshType<dim> &mesh,
-                                          AtomData<dim> &atom_data) const;
+                                          AtomData<dim> &cell_molecule_data) const;
 
     /**
      * Return the neighbor lists of AtomData::energy_atoms.
@@ -58,7 +58,7 @@ namespace dealiiqc
      * are exactly the same as that of reference (undeformed) configuration.
      */
     std::multimap< std::pair<types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair<types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > >
-        get_neighbor_lists( const types::CellAtomContainerType<dim> &energy_atoms) const;
+        get_neighbor_lists( const types::CellAtomContainerType<dim> &cell_energy_molecules) const;
 
 
   protected:
