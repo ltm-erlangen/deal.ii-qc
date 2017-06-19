@@ -2,8 +2,6 @@
 #define __dealii_qc_atom_h
 
 #include <deal.II/base/point.h>
-#include <deal.II/dofs/dof_accessor.h>
-#include <deal.II/dofs/dof_handler.h>
 
 #include <deal.II-qc/utilities.h>
 
@@ -13,6 +11,14 @@ namespace dealiiqc
 
   /**
    * A class for atoms embedded in a <tt>spacedim</tt>-dimensional space.
+   *
+   * This class does not contain some more atom attributes such as charge and
+   * mass etc. This is because the number of different atom types in an
+   * atomistic system is far less than the number of atoms. The charges and
+   * masses of different atom types can be stored elsewhere in a central pool.
+   *
+   * A drude particles can be constructed using two Atom objects. One object for
+   * the charged core and another for the charged shell.
    */
   template <int spacedim>
   struct Atom
@@ -29,7 +35,12 @@ namespace dealiiqc
     types::atom_type type;
 
     /**
-     * Current position in real space.
+     * Initial position of the atom in <tt>spacedim</tt>-dimensional space.
+     */
+    Point<spacedim> initial_position;
+
+    /**
+     * Current position of the atom in <tt>spacedim</tt>-dimensional space.
      */
     Point<spacedim> position;
 
