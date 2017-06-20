@@ -56,6 +56,7 @@ namespace dealiiqc
   };
 
 
+
   // TODO: Move this function to a different place?
   /**
    * Return the initial location of @p molecule.
@@ -73,6 +74,7 @@ namespace dealiiqc
     //        Need to add asserts that the molecule's atoms are ordered.
     return molecule.atoms[0].initial_position;
   }
+
 
 
 } // namespace dealiiqc

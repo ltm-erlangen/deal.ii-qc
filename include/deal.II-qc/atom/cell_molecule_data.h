@@ -86,8 +86,10 @@ namespace dealiiqc
    * A principal class that holds cell based molecule data structures with the
    * association between molecules and mesh.
    *
-   * The cell based molecule data structures in this class can be initialized
-   * using CellMoleculeDataHandler class member functions.
+   * The association between molecules and cells allows for accessing each
+   * molecule through its associated cell. The cell based molecule data
+   * structures in this class can be initialized using MoleculeHandler
+   * class member functions.
    */
   template<int dim, int atomicity=1, int spacedim=dim>
   struct CellMoleculeData
@@ -103,27 +105,25 @@ namespace dealiiqc
      */
     std::vector<double> masses;
 
+    // TODO: Const Molecule?
     /**
-     * The cell based data structure that contains cells and molecules
-     * association for all the molecules in the system.
-     *
-     * The following optimization technique is employed while associating
-     * molecules to cells.
-     * For each molecule in the system, before going over all locally owned
-     * cells to find if the molecule's location lies within it, we can first
-     * check whether the molecule's location lies inside the bounding box of
-     * the current processor's set of locally relevant cells.
+     * The cell based data member that contains cells and molecules
+     * association in the Lagrangian (undeformed) configuration of the system.
+     * More specifically, #cell_molecules contains association between locally
+     * relevant cells and locally relevant molecules in the Lagrangian
+     * (undeformed) configuration of the system.
      */
     types::CellMoleculeContainerType<dim, atomicity, spacedim> cell_molecules;
 
     /**
-     * The cell based data structure that contains cells and energy molecules
-     * association for all the energy molecules in the system needed by a
-     * current MPI core. This data member contains the central information for
-     * energy and force computations.
+     * The cell based data member that contains cells and energy molecules
+     * association of the system.
      *
-     * The function QC::setup_energy_molecules_with_cluster_weights() is
-     * responsible for updating this data member.
+     * This data member contains energy molecules with the current atoms'
+     * positions. This information is the central information for
+     * energy and force computations. Each MPI process would then be
+     * responsible to compute energy and forces only of its locally owned
+     * sampling (or cluster) molecules.
      */
     types::CellMoleculeContainerType<dim, atomicity, spacedim> cell_energy_molecules;
 

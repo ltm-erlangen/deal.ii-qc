@@ -1,7 +1,7 @@
 
 #include <deal.II/distributed/shared_tria.h>
 
-#include <deal.II-qc/atom/atom_handler.h>
+#include <deal.II-qc/atom/molecule_handler.h>
 
 
 
@@ -11,7 +11,7 @@ namespace dealiiqc
 
 
   template<int dim>
-  AtomHandler<dim>::AtomHandler( const ConfigureQC &configure_qc)
+  MoleculeHandler<dim>::MoleculeHandler (const ConfigureQC &configure_qc)
     :
     configure_qc(configure_qc)
   {
@@ -20,13 +20,16 @@ namespace dealiiqc
 
 
   template<int dim>
-  void AtomHandler<dim>::parse_atoms_and_assign_to_cells( const types::MeshType<dim> &mesh,
-                                                          AtomData<dim> &cell_molecule_data) const
+  CellMoleculeData<dim>
+  MoleculeHandler<dim>::get_cell_molecule_data (const types::MeshType<dim> &mesh) const
   {
     // TODO: Assign atoms to cells as we parse atom data ?
     //       relevant for when we have a large collection of atoms.
     std::vector<Molecule<dim,1>> vector_molecules;
     ParseAtomData<dim> atom_parser;
+
+    // Prepare cell molecule data in this container.
+    CellMoleculeData<dim> cell_molecule_data;
 
     cell_molecule_data.charges = NULL;
     std::vector<types::charge> charges;
@@ -75,7 +78,7 @@ namespace dealiiqc
     // If the total number of MPI processes is just one,
     // the size of ghost_cells vector is zero.
     const std::vector<typename types::MeshType<dim>::active_cell_iterator> ghost_cells =
-      GridTools::compute_ghost_cell_layer_within_distance( mesh,
+      GridTools::compute_ghost_cell_layer_within_distance (mesh,
                                                            configure_qc.get_ghost_cell_layer_thickness());
 
     // Loop through all the ghost cells computed above and
@@ -97,14 +100,12 @@ namespace dealiiqc
         bool atom_associated_to_cell = false;
         try
           {
-            // The initial position of the first atom of a molecule is
-            // considered as the initial location of the molecule.
-            // TODO: Update documentation in relevant places
-            molecule.initial_position = molecule.atoms[0].position;
+            // Find the locally active cell of the provided mesh which
+            // surrounds the initial location of the molecule.
             std::pair<typename types::MeshType<dim>::active_cell_iterator, Point<dim> >
-            my_pair = GridTools::find_active_cell_around_point( MappingQ1<dim>(),
+            my_pair = GridTools::find_active_cell_around_point (MappingQ1<dim>(),
                                                                 mesh,
-                                                                molecule.initial_position,
+                                                                molecule_initial_location(molecule),
                                                                 locally_active_vertices);
 
             // Since in locally_active_vertices all the vertices of
@@ -140,20 +141,20 @@ namespace dealiiqc
     Assert (cell_molecules.size()+n_thrown_molecules==vector_molecules.size(),
             ExcInternalError());
 
+    return cell_molecule_data;
   }
 
 
 
   template<int dim>
-  std::multimap< std::pair< types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > >
-      AtomHandler<dim>::get_neighbor_lists (const types::CellAtomContainerType<dim> &cell_energy_molecules) const
+  types::CellMoleculeNeighborLists<dim>
+  MoleculeHandler<dim>::get_neighbor_lists (const types::CellMoleculeContainerType<dim> &cell_energy_molecules) const
   {
     // Check to see if energy_atoms is updated.
     Assert (cell_energy_molecules.size(),
             ExcInternalError());
 
-    std::multimap< std::pair< types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> > >
-        neighbor_lists;
+    types::CellMoleculeNeighborLists<dim> neighbor_lists;
 
     // cell_neighbor_lists contains all the pairs of cell
     // whose atoms interact with each other.
@@ -174,7 +175,7 @@ namespace dealiiqc
     // use something like MappingQEulerian to work
     // with the deformed mesh.
     // TODO: optimize loop over unique keys ( mulitmap::upper_bound()'s complexity is O(nlogn) )
-    for (types::CellAtomConstIteratorType<dim>
+    for (types::CellMoleculeConstIteratorType<dim>
          unique_I  = cell_energy_molecules.cbegin();
          unique_I != cell_energy_molecules.cend();
          unique_I  = cell_energy_molecules.upper_bound(unique_I->first))
@@ -186,7 +187,7 @@ namespace dealiiqc
           // Get center and the radius of the enclosing ball of cell_I
           const auto enclosing_ball_I = cell_I->enclosing_ball();
 
-          for (types::CellAtomConstIteratorType<dim>
+          for (types::CellMoleculeConstIteratorType<dim>
                unique_J  = cell_energy_molecules.cbegin();
                unique_J != cell_energy_molecules.cend();
                unique_J  = cell_energy_molecules.upper_bound(unique_J->first))
@@ -212,12 +213,12 @@ namespace dealiiqc
         types::ConstCellIteratorType<dim> cell_I = cell_pair_IJ.first;
         types::ConstCellIteratorType<dim> cell_J = cell_pair_IJ.second;
 
-        std::pair< types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim> >
+        std::pair< types::CellMoleculeConstIteratorType<dim>, types::CellMoleculeConstIteratorType<dim> >
         range_of_cell_I = cell_energy_molecules.equal_range(cell_I),
         range_of_cell_J = cell_energy_molecules.equal_range(cell_J);
 
         // for each atom associated to locally owned cell_I
-        for (types::CellAtomConstIteratorType<dim>
+        for (types::CellMoleculeConstIteratorType<dim>
              cell_molecule_I  = range_of_cell_I.first;
              cell_molecule_I != range_of_cell_I.second;
              cell_molecule_I++)
@@ -231,7 +232,7 @@ namespace dealiiqc
             // Check if the atom_I is cluster atom,
             // only cluster atoms get to have neighbor lists
             if (cell_molecule_I->second.cluster_weight != 0)
-              for (types::CellAtomConstIteratorType<dim>
+              for (types::CellMoleculeConstIteratorType<dim>
                    cell_molecule_J  = range_of_cell_J.first;
                    cell_molecule_J != range_of_cell_J.second;
                    cell_molecule_J++ )
@@ -311,9 +312,9 @@ namespace dealiiqc
 
 
 
-  template class AtomHandler<1>;
-  template class AtomHandler<2>;
-  template class AtomHandler<3>;
+  template class MoleculeHandler<1>;
+  template class MoleculeHandler<2>;
+  template class MoleculeHandler<3>;
 
 
 } // dealiiqc namespace
