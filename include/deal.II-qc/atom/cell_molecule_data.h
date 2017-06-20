@@ -10,23 +10,39 @@ namespace dealiiqc
   {
 
     /**
+     * A typedef for a pair of cell and molecule.
+     */
+    template<int dim, int atomicity=1, int spacedim=dim>
+    using CellMolecule =
+      typename
+      std::pair<CellIteratorType<dim, spacedim>, Molecule<spacedim, atomicity>>;
+
+    /**
+     * A typedef for a const pair of cell and molecule.
+     */
+    template<int dim, int atomicity=1, int spacedim=dim>
+    using ConstCellMolecule =
+      const typename
+      std::pair<CellIteratorType<dim, spacedim>, Molecule<spacedim, atomicity>>;
+
+    /**
      * A typedef for container that holds cell and associated molecules.
      */
-    template<int dim, int atomicity, int spacedim=dim>
+    template<int dim, int atomicity=1, int spacedim=dim>
     using CellMoleculeContainerType =
       typename std::multimap<CellIteratorType<dim, spacedim>, Molecule<spacedim, atomicity>>;
 
     /**
      * A typedef for iterator over CellMoleculeContainerType.
      */
-    template<int dim, int atomicity, int spacedim=dim>
+    template<int dim, int atomicity=1, int spacedim=dim>
     using CellMoleculeIteratorType =
       typename CellMoleculeContainerType<dim, atomicity, spacedim>::iterator;
 
     /**
      * A typedef for const_iterator over CellMoleculeContainerType.
      */
-    template<int dim, int atomicity, int spacedim=dim>
+    template<int dim, int atomicity=1, int spacedim=dim>
     using CellMoleculeConstIteratorType =
       typename CellMoleculeContainerType<dim, atomicity, spacedim>::const_iterator;
 
@@ -34,7 +50,7 @@ namespace dealiiqc
      * A typedef for a pair of const_iterators over CellMoleculeContainerType
      * which could be used in the case of storing a iterator range.
      */
-    template<int dim, int atomicity, int spacedim=dim>
+    template<int dim, int atomicity=1, int spacedim=dim>
     using CellMoleculeConstIteratorRangeType =
       typename
       std::pair
@@ -43,14 +59,37 @@ namespace dealiiqc
       CellMoleculeConstIteratorType<dim, atomicity, spacedim>
       >;
 
+    /**
+     * A typedef for neighbor lists, a multimap of a pair of cells and a pair of
+     * molecules in a cell based data structure.
+     */
+    template<int dim, int atomicity=1, int spacedim=dim>
+    using CellMoleculeNeighborLists =
+      typename std::multimap <
+      std::pair
+      <
+      ConstCellIteratorType<dim, spacedim>,
+      ConstCellIteratorType<dim, spacedim>
+      >,
+      std::pair
+      <
+      CellMoleculeConstIteratorType<dim, atomicity, spacedim>,
+      CellMoleculeConstIteratorType<dim, atomicity, spacedim>
+      >>;
+
+
   } // types
 
 
+
   /**
-   * Primary class that holds cell based molecule data structures with the
+   * A principal class that holds cell based molecule data structures with the
    * association between molecules and mesh.
+   *
+   * The cell based molecule data structures in this class can be initialized
+   * using CellMoleculeDataHandler class member functions.
    */
-  template<int dim, int atomicity, int spacedim=dim>
+  template<int dim, int atomicity=1, int spacedim=dim>
   struct CellMoleculeData
   {
 
@@ -64,12 +103,9 @@ namespace dealiiqc
      */
     std::vector<double> masses;
 
-    // TODO: Change which function will update this member
     /**
      * The cell based data structure that contains cells and molecules
-     * association for all the molecules in the system. The function
-     * AtomHandler::parse_atoms_and_assign_to_cells() is responsible for
-     * updating this data member.
+     * association for all the molecules in the system.
      *
      * The following optimization technique is employed while associating
      * molecules to cells.
