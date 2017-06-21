@@ -1,23 +1,26 @@
 
+#include <algorithm>
+
 #include <deal.II-qc/atom/parse_atom_data.h>
 
 namespace dealiiqc
 {
   using namespace dealii;
 
-  template<int dim>
-  ParseAtomData<dim>::ParseAtomData()
+  template<int spacedim, int atomicity>
+  ParseAtomData<spacedim, atomicity>::ParseAtomData()
     :
     n_atoms(0),
     n_atom_types(0),
     line_no(0)
   {}
 
-  template<int dim>
-  void ParseAtomData<dim>::parse( std::istream &is,
-                                  std::vector<Molecule<dim,1>> &molecules,
-                                  std::vector<types::charge> &charges,
-                                  std::vector<double> &masses)
+  template<int spacedim, int atomicity>
+  void
+  ParseAtomData<spacedim, atomicity>::parse (std::istream                               &is,
+                                             std::vector<Molecule<spacedim, atomicity>> &molecules,
+                                             std::vector<types::charge>                 &charges,
+                                             std::vector<double>                        &masses)
   {
     AssertThrow (is, ExcIO());
 
@@ -66,8 +69,11 @@ namespace dealiiqc
               AssertThrow( false,
                            ExcMessage("The number of atoms specified "
                                       "is more than what `typedefs::global_atom_index` can work with "
-                                      "try building deal.II with 64bit index space"))
-            }
+                                      "try building deal.II with 64bit index space"));
+            Assert (n_atoms % atomicity == 0,
+                    ExcMessage("The total number of atoms provided in the "
+                               "atom data do not form integer molecules. "));
+          }
         else if (line.find("bonds") != std::string::npos)
           {
             if (sscanf(line.c_str(), "%u", &nbonds) != 1)
@@ -126,6 +132,10 @@ namespace dealiiqc
     // TODO: Extra Asserts with dim and simulation box dimensions
     // TODO: copy simulation box dimensions, check for inconsistent mesh?
 
+    molecules.resize(n_atoms/atomicity);
+    charges.resize(n_atom_types);
+    masses.resize(n_atom_types, 0.);
+
     // line has been read by previous while loop but wasn't parsed for keyword sections
     --line_no;
     do
@@ -149,35 +159,49 @@ namespace dealiiqc
     return;
   }
 
-  template< int dim>
-  void ParseAtomData<dim>::parse_atoms( std::istream &is,
-                                        std::vector<Molecule<dim,1>> &molecules,
-                                        std::vector<types::charge> &charges)
+
+
+  template<int spacedim, int atomicity>
+  void
+  ParseAtomData<spacedim, atomicity>::parse_atoms (std::istream                               &is,
+                                                   std::vector<Molecule<spacedim, atomicity>> &molecules,
+                                                   std::vector<types::charge>                 &charges)
   {
     std::string line;
 
-    // FIXME: n_atoms/atomicity
-    // TODO: Add assert n_atoms%atomicity==0?
-    molecules.resize(n_atoms);
-    charges.resize(n_atom_types);
-
-    // i_atom = i_atom_index-1
-    // atom data counts atoms starting from 1 and
-    // the vector container with 0
+    // Atom counting starts from 1 in the atom data and
+    // we count from 0.
     unsigned long long int  i_atom_index;
-    types::global_atom_index i_atom;
 
-    unsigned int molecule_id;
+    // Molecule count begins from 1 in the atom data and
+    // we count from with 0.
+    // i_molecule = i_molecule_index-1
+    unsigned long long int i_molecule_index;
+    types::global_atom_index i_molecule;
 
-    unsigned char i_atom_type;
-    types::atom_type tmp_type;
+    // i_atom_type = i_atom_char_type -1
+    // atom type count begins from 1 in atom data and
+    // we count from 0.
+    unsigned char i_atom_char_type;
+    types::atom_type i_atom_type;
 
-    // temporary variable to count number of atom types
+    // Temporary variable to count number of atom types.
     std::vector<types::atom_type> unique_types;
 
-    double i_q, i_x, i_y, i_z;
+    // Charges read for each atom.
+    double i_q;
 
-    // Store atom attributes and positions
+    // Prepare position of the atom in this container.
+    std::array<double, 3> position;
+
+    // Since we cannot push_back atoms into molecules, we need to keep track
+    // of the number of atoms already inserted into molecules.
+    std::vector<int> n_atoms_added_per_molecule(n_atoms/atomicity, 0);
+
+    // Prepare an atom in this container for each line read.
+    Atom<spacedim> temporary_atom;
+
+    // Store atom attributes and positions.
     types::global_atom_index i=0;
     while ( std::getline(is,line) && i < n_atoms)
       {
@@ -187,73 +211,116 @@ namespace dealiiqc
           continue;
 
         // Not reading molecular_id
-        if (sscanf(line.c_str(), "%llu  %u " UC_SCANF_STR " %lf %lf %lf %lf",
-                   &i_atom_index, &molecule_id, &i_atom_type, &i_q, &i_x, &i_y, &i_z ) !=7)
-          AssertThrow( false,
+        if (sscanf(line.c_str(), "%llu  %llu " UC_SCANF_STR " %lf %lf %lf %lf",
+                   &i_atom_index,
+                   &i_molecule_index,
+                   &i_atom_char_type,
+                   &i_q,
+                   &position[0],
+                   &position[1],
+                   &position[2]) !=7)
+          AssertThrow (false,
                        ExcInvalidValue( line_no,
                                         "atom attributes under Atom keyword section"));
-        Assert( i_atom_index<=n_atoms && i_atom_index>0,
+
+        Assert (i_atom_index<=n_atoms && i_atom_index>0,
                 ExcInvalidValue( line_no,
                                  "atom index (> number of atoms or <=0"));
 
-        i_atom = static_cast<types::global_atom_index>(i_atom_index) -1;
+        temporary_atom.global_index =
+          static_cast<types::global_atom_index>(i_atom_index) - 1;
 
-        // FIXME: use i_atom % atomicity for atom stamps.
-        molecules[i_atom].atoms[0].global_index = i_atom;
+        i_atom_type = static_cast<types::atom_type> (i_atom_char_type) - 1;
+        temporary_atom.type = i_atom_type;
 
-        // Set some member variables of i_atom to invalid values as
-        // the current class cannot initialize to correct values.
-        molecules[i_atom].local_index    = dealii::numbers::invalid_unsigned_int;
-        molecules[i_atom].cluster_weight = numbers::invalid_cluster_weight;
-
-        tmp_type = static_cast<types::atom_type> (i_atom_type) -1;
-
-        Assert(tmp_type>=0 && tmp_type < 256,
-               ExcInvalidValue(line_no, "atom type attribute"));
-
-        // FIXME: use i_atom % atomicity for atom stamps.
-        molecules[i_atom].atoms[0].type = tmp_type;
-
-        if (std::find(unique_types.begin(), unique_types.end(), tmp_type) == unique_types.end())
-          {
-            unique_types.push_back( tmp_type);
-            charges[tmp_type] = static_cast<types::charge>(i_q);
-          }
-        else
-          Assert( charges[tmp_type]==static_cast<types::charge>(i_q),
-                  ExcInvalidValue(line_no,"charge attribute"));
+        Assert (i_atom_type >= 0 && i_atom_type < 256,
+                ExcInvalidValue(line_no, "atom type attribute"));
 
         // TODO: 1 and 2 dim cases could be potentially incorrect
         // Possible way to correct this is to ask user axes dimensionality
-        if (dim==1)
-          molecules[i_atom].atoms[0].position[0] = i_x;
-        else if (dim==2)
+        Assert (spacedim <=3, ExcNotImplemented());
+
+        for (int d = 0; d < spacedim; ++d)
+          temporary_atom.position[d] = position[d];
+
+        temporary_atom.initial_position = temporary_atom.position;
+
+        //---Atom attributes are prepared for temporary_atom.
+
+        //---Prepare charges.
+
+        if (std::find(unique_types.begin(), unique_types.end(), i_atom_type) == unique_types.end())
           {
-            molecules[i_atom].atoms[0].position[0] = i_x;
-            molecules[i_atom].atoms[0].position[1] = i_y;
+            unique_types.push_back(i_atom_type);
+            charges[i_atom_type] = static_cast<types::charge>(i_q);
           }
-        else if (dim==3)
-          {
-            molecules[i_atom].atoms[0].position[0] = i_x;
-            molecules[i_atom].atoms[0].position[1] = i_y;
-            molecules[i_atom].atoms[0].position[2] = i_z;
-          }
+        else
+          Assert (charges[i_atom_type]==static_cast<types::charge>(i_q),
+                  ExcInvalidValue(line_no, "charge attribute"));
+
+        //---Ready to insert atom into molecule.
+
+        i_molecule = static_cast<types::global_atom_index>(i_molecule_index) - 1;
+
+        // Add atom to the molecule.
+        molecules[i_molecule].atoms[n_atoms_added_per_molecule[i_molecule]] =
+          temporary_atom;
+
+        // Increment the number of atoms added to ith molecule.
+        n_atoms_added_per_molecule[i_molecule]++;
+
+        // Set some member variables of i_molecule to invalid values as
+        // the current class cannot initialize to correct values.
+        molecules[i_molecule].local_index    = dealii::numbers::invalid_unsigned_int;
+        molecules[i_molecule].cluster_weight = numbers::invalid_cluster_weight;
+
         ++i;
       }
-    Assert( unique_types.size()==n_atom_types,
+
+    Assert (unique_types.size()==n_atom_types,
             ExcInternalError());
-    Assert( i==n_atoms,
-            ExcMessage("The number of atoms "
-                       "do not match the number of entries "
+
+    Assert (i==n_atoms,
+            ExcMessage("The number of atoms do not match the number of entries "
                        "under Atoms keyword section"));
+
+    //---At this point atoms in molecules are not sorted according to their
+    //   stamps.
+
+    //---For now it is not possible to ensure correct order of stamps for
+    //   repeated atom types.
+    //   Example: A2B molecule could have two possible stamp orderings.
+    //
+    //   case 1:  0 1 2         ----------> stamp order
+    //            0 0 1         ----------> type order
+    //
+    //   case 2:  1 0 2         ----------> stamp order
+    //            0 0 1         ----------> type order
+
+    // Making a lambda for atom type comparision
+    auto comparator_atom_type = [] (const decltype(temporary_atom) &a,
+                                    const decltype(temporary_atom) &b)
+    {
+      return a.type < b.type;
+    };
+
+    for (auto &molecule : molecules)
+      {
+        std::sort (molecule.atoms.begin(),
+                   molecule.atoms.end(),
+                   comparator_atom_type);
+      }
+
     return;
   }
 
-  template< int dim>
-  void ParseAtomData<dim>::parse_masses( std::istream &is,
-                                         std::vector<double> &masses )
+
+
+  template<int spacedim, int atomicity>
+  void
+  ParseAtomData<spacedim, atomicity>::parse_masses (std::istream        &is,
+                                                    std::vector<double> &masses)
   {
-    masses.resize(n_atom_types, 0.);
     std::string line;
     size_t i_atom_type;
     double i_mass;
@@ -279,15 +346,18 @@ namespace dealiiqc
         ++i;
       }
     line_no++;
-    Assert( i==masses.size(),
+    Assert (i==masses.size(),
             ExcMessage("The number of different atom types "
                        "do not match the number of entries "
-                       "under Masses keyword section") );
+                       "under Masses keyword section"));
     return;
   }
 
-  template< int dim>
-  std::string ParseAtomData<dim>::strip( const std::string &input )
+
+
+  template<int spacedim, int atomicity>
+  std::string
+  ParseAtomData<spacedim, atomicity>::strip (const std::string &input)
   {
     std::string line(input);
 
@@ -304,8 +374,11 @@ namespace dealiiqc
     return line;
   }
 
-  template class ParseAtomData<1>;
-  template class ParseAtomData<2>;
-  template class ParseAtomData<3>;
+
+#define PARSE_ATOM_DATA(R, X) \
+  template class ParseAtomData< FIRST_OF_TWO_IS_SAPCEDIM(X), \
+                                SECOND_OF_TWO_IS_ATOMICITY(X)>;
+
+  INSTANTIATE_WITH_SAPCEDIM_AND_ATOMICITY(R, PARSE_ATOM_DATA, (SAPCEDIM, ATOMICITY))
 
 } /* namespace dealiiqc */

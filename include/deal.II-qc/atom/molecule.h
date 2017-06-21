@@ -13,7 +13,7 @@ namespace dealiiqc
    * The <tt>atomicity</tt> of a molecule, that is the number of atoms it
    * contains, must be known at compile time.
    */
-  template<int spacedim, int atomicity>
+  template<int spacedim, int atomicity=1>
   struct Molecule
   {
 
@@ -68,7 +68,7 @@ namespace dealiiqc
   inline
   Point<spacedim> molecule_initial_location (const Molecule<spacedim, atomicity> &molecule)
   {
-    Assert (atoms.size()>0, ExcInternalError());
+    Assert (molecule.atoms.size()>0, ExcInternalError());
     // FIXME: It is assumed here that the list of atoms of the molecule are
     //        already sorted according to their stamps.
     //        Need to add asserts that the molecule's atoms are ordered.

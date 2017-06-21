@@ -1,0 +1,12 @@
+This is process: 0
+The number of different charged atom types parsed: 3
+The number of different atom types parsed: 3
+Molecule location: 0 0 0 Atom: 0 Atom position 0 0 0
+Molecule location: 0 0 0 Atom: 5 Atom position 0 0 1
+Molecule location: 0 0 0 Atom: 7 Atom position 1 1 1
+Molecule location: 1 0 1 Atom: 4 Atom position 1 0 1
+Molecule location: 1 0 1 Atom: 6 Atom position 0 1 1
+Molecule location: 1 0 1 Atom: 1 Atom position 1 0 0
+Molecule location: 0 0 2 Atom: 8 Atom position 0 0 2
+Molecule location: 0 0 2 Atom: 2 Atom position 1 1 0
+Molecule location: 0 0 2 Atom: 3 Atom position 0 1 0

@@ -2,11 +2,55 @@
 #ifndef __dealii_qc_utility_h
 #define __dealii_qc_utility_h
 
+# include <boost/preprocessor/facilities/empty.hpp>
+# include <boost/preprocessor/list/at.hpp>
+# include <boost/preprocessor/list/for_each_product.hpp>
+# include <boost/preprocessor/tuple/elem.hpp>
+# include <boost/preprocessor/tuple/to_list.hpp>
+
 #include <deal.II/base/numbers.h>
 #include <deal.II/grid/tria_iterator.h>
 #include <deal.II/grid/tria_accessor.h>
 #include <deal.II/dofs/dof_accessor.h>
 #include <deal.II/dofs/dof_handler.h>
+
+
+
+// Preprocessor definitions for instantiations.
+#define       DIM  BOOST_PP_TUPLE_TO_LIST(3, (1,2,3))
+#define  SAPCEDIM  BOOST_PP_TUPLE_TO_LIST(3, (1,2,3))
+#define ATOMICITY  BOOST_PP_TUPLE_TO_LIST(5,(1,2,3,5,10))
+
+
+
+// Accessors for SPACEDIM, ATOMICITY in (two element tuple) X.
+#define  FIRST_OF_TWO_IS_SAPCEDIM(X)    BOOST_PP_TUPLE_ELEM(2, 0, X)
+#define SECOND_OF_TWO_IS_ATOMICITY(X)   BOOST_PP_TUPLE_ELEM(2, 1, X)
+
+
+
+// Accessors for DIM SPACEDIM, and ATOMICITY in (three element tuple) X.
+#define  FIRST_OF_THREE_IS_DIM(X)       BOOST_PP_TUPLE_ELEM(3, 0, X)
+#define SECOND_OF_THREE_IS_SAPCEDIM(X)  BOOST_PP_TUPLE_ELEM(3, 1, X)
+#define  THIRD_OF_THREE_IS_ATOMICITY(X) BOOST_PP_TUPLE_ELEM(3, 2, X)
+
+
+
+/**
+ * A macro to expand CLASS macro using (SPACEDIM, ATOMICITY) tuples.
+ */
+#define INSTANTIATE_WITH_SAPCEDIM_AND_ATOMICITY(R, CLASS, SAPCEDIM_AND_ATOMICITY) \
+  BOOST_PP_LIST_FOR_EACH_PRODUCT(CLASS, 2, SAPCEDIM_AND_ATOMICITY)
+
+
+
+/**
+ * A macro to expand CLASS macro using (DIM, SPACEDIM, ATOMICITY) tuples.
+ */
+#define INSTANTIATE_WITH_DIM_SAPCEDIM_AND_ATOMICITY(R, CLASS, DIM_SAPCEDIM_AND_ATOMICITY) \
+  BOOST_PP_LIST_FOR_EACH_PRODUCT(CLASS, 3, DIM_SAPCEDIM_AND_ATOMICITY)
+
+
 
 namespace dealiiqc
 {
@@ -54,7 +98,7 @@ namespace dealiiqc
      */
     template<int dim, int spacedim=dim>
     using ConstCellIteratorType =
-      const typename CellIteratorType<dim, spacedim>;
+      const CellIteratorType<dim, spacedim>;
 
   } //typedefs
 
@@ -191,6 +235,6 @@ namespace dealiiqc
 
   } // Utilities
 
-}
+} // namespace dealiiqc
 
 #endif /* __dealii_qc_utility_h */
