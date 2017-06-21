@@ -188,8 +188,11 @@ namespace dealiiqc
     // Temporary variable to count number of atom types.
     std::vector<types::atom_type> unique_types;
 
-    // Charges and positions read for each atom.
-    double i_q, i_x, i_y, i_z;
+    // Charges read for each atom.
+    double i_q;
+
+    // Prepare position of the atom in this container.
+    std::array<double, 3> position;
 
     // Since we cannot push_back atoms into molecules, we need to keep track
     // of the number of atoms already inserted into molecules.
@@ -209,7 +212,13 @@ namespace dealiiqc
 
         // Not reading molecular_id
         if (sscanf(line.c_str(), "%llu  %llu " UC_SCANF_STR " %lf %lf %lf %lf",
-                   &i_atom_index, &i_molecule_index, &i_atom_char_type, &i_q, &i_x, &i_y, &i_z ) !=7)
+                   &i_atom_index,
+                   &i_molecule_index,
+                   &i_atom_char_type,
+                   &i_q,
+                   &position[0],
+                   &position[1],
+                   &position[2]) !=7)
           AssertThrow (false,
                        ExcInvalidValue( line_no,
                                         "atom attributes under Atom keyword section"));
@@ -219,42 +228,26 @@ namespace dealiiqc
                                  "atom index (> number of atoms or <=0"));
 
         temporary_atom.global_index =
-          static_cast<types::global_atom_index>(i_atom_index) -1;
+          static_cast<types::global_atom_index>(i_atom_index) - 1;
 
-        i_atom_type =
-          temporary_atom.type =
-            static_cast<types::atom_type> (i_atom_char_type) -1;
+        i_atom_type = static_cast<types::atom_type> (i_atom_char_type) - 1;
+        temporary_atom.type = i_atom_type;
 
         Assert (i_atom_type >= 0 && i_atom_type < 256,
                 ExcInvalidValue(line_no, "atom type attribute"));
 
         // TODO: 1 and 2 dim cases could be potentially incorrect
         // Possible way to correct this is to ask user axes dimensionality
-        if (spacedim==1)
-          {
-            temporary_atom.position[0]         = i_x;
-            temporary_atom.initial_position[0] = i_x;
-          }
-        else if (spacedim==2)
-          {
-            temporary_atom.position[0]         = i_x;
-            temporary_atom.position[1]         = i_y;
-            temporary_atom.initial_position[0] = i_x;
-            temporary_atom.initial_position[1] = i_y;
-          }
-        else if (spacedim==3)
-          {
-            temporary_atom.position[0]         = i_x;
-            temporary_atom.position[1]         = i_y;
-            temporary_atom.position[2]         = i_z;
-            temporary_atom.initial_position[0] = i_x;
-            temporary_atom.initial_position[1] = i_y;
-            temporary_atom.initial_position[2] = i_z;
-          }
+        Assert (spacedim <=3, ExcNotImplemented());
+
+        for (int d = 0; d < spacedim; ++d)
+          temporary_atom.position[d] = position[d];
+
+        temporary_atom.initial_position = temporary_atom.position;
 
         //---Atom attributes are prepared for temporary_atom.
 
-        //---Prepare chagres.
+        //---Prepare charges.
 
         if (std::find(unique_types.begin(), unique_types.end(), i_atom_type) == unique_types.end())
           {
@@ -265,9 +258,9 @@ namespace dealiiqc
           Assert (charges[i_atom_type]==static_cast<types::charge>(i_q),
                   ExcInvalidValue(line_no, "charge attribute"));
 
-        //---Ready to insert atom to into molecule.
+        //---Ready to insert atom into molecule.
 
-        i_molecule = static_cast<types::global_atom_index>(i_molecule_index) -1;
+        i_molecule = static_cast<types::global_atom_index>(i_molecule_index) - 1;
 
         // Add atom to the molecule.
         molecules[i_molecule].atoms[n_atoms_added_per_molecule[i_molecule]] =
@@ -291,11 +284,12 @@ namespace dealiiqc
             ExcMessage("The number of atoms do not match the number of entries "
                        "under Atoms keyword section"));
 
-    //---At this point atoms in molecules are not according to their stamps.
-    //   For now it is not possible to ensure correct order of stamps for
+    //---At this point atoms in molecules are not sorted according to their
+    //   stamps.
+
+    //---For now it is not possible to ensure correct order of stamps for
     //   repeated atom types.
-    //   Example: A2B molecule could have two possible stamp orderings are
-    //            possible.
+    //   Example: A2B molecule could have two possible stamp orderings.
     //
     //   case 1:  0 1 2         ----------> stamp order
     //            0 0 1         ----------> type order

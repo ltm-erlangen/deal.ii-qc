@@ -72,10 +72,10 @@ int main( int argc, char **argv)
       dealii::Utilities::MPI::MPI_InitFinalize mpi_initialization (argc, argv,
           dealii::numbers::invalid_unsigned_int);
 
-      const std::string atom_data_file = SOURCE_DIR "/../data/01_disordered_atom.data";
+      const std::string atom_data_file = SOURCE_DIR "/../data/02_disordered_atom.data";
       std::fstream fin (atom_data_file, std::fstream::in);
 
-      test_parse<3,5>(MPI_COMM_WORLD, fin);
+      test_parse<3,3>(MPI_COMM_WORLD, fin);
     }
   catch (std::exception &exc)
     {
