@@ -5,26 +5,32 @@
 #include <deal.II/distributed/shared_tria.h>
 #include <deal.II/grid/grid_generator.h>
 
-#include <deal.II-qc/atom/atom_handler.h>
-#include <deal.II-qc/atom/cell_atom_tools.h>
+#include <deal.II-qc/atom/molecule_handler.h>
+#include <deal.II-qc/atom/cell_molecule_tools.h>
 #include <deal.II-qc/atom/sampling/cluster_weights_by_cell.h>
 
 using namespace dealii;
 using namespace dealiiqc;
 
-// This test is a close copy of atom_handler_thrown_atoms_01
-// and the blessed output is exactly the same.
-// Short test to compute the number of locally relevant thrown atoms.
-// The maximum cutoff radius is large enough that none of the atoms are thrown.
+
+
+// Short test to compute the number of thrown and energy molecules per cell
+// using CellMoleculeTools functions.
+
+// The tria consists of only one cell
+// 8 thrown molecules
+// 1 energy molecule
+
+
 
 template<int dim>
-class TestAtomHandler : public AtomHandler<dim>
+class TestMoleculeHandler : public MoleculeHandler<dim>
 {
 public:
 
-  TestAtomHandler(const ConfigureQC &config)
+  TestMoleculeHandler(const ConfigureQC &config)
     :
-    AtomHandler<dim>( config),
+    MoleculeHandler<dim>( config),
     config(config),
     triangulation (MPI_COMM_WORLD,
                    // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
@@ -36,41 +42,40 @@ public:
   void run()
   {
     GridGenerator::hyper_cube( triangulation, 0., 8., true );
-    AtomHandler<dim>::parse_atoms_and_assign_to_cells( dof_handler, atom_data);
-    const Cluster::WeightsByCell<dim>
-    weights_by_cell (config.get_cluster_radius(),
-                     config.get_maximum_cutoff_radius());
-    atom_data.cell_energy_molecules =
-      weights_by_cell.update_cluster_weights (dof_handler,
-                                              atom_data.cell_molecules);
+
+    cell_molecule_data =
+      MoleculeHandler<dim>::get_cell_molecule_data (dof_handler);
+
     for (auto
-         entry  = atom_data.cell_energy_molecules.begin();
-         entry != atom_data.cell_energy_molecules.end();
-         entry  = atom_data.cell_energy_molecules.upper_bound(entry->first))
+         entry  = cell_molecule_data.cell_energy_molecules.begin();
+         entry != cell_molecule_data.cell_energy_molecules.end();
+         entry  = cell_molecule_data.cell_energy_molecules.upper_bound(entry->first))
       {
 
-        const unsigned int n_atoms =
-          CellAtomTools::atoms_range_in_cell(entry->first,
-                                             atom_data.cell_molecules).second;
-        const unsigned int n_energy_atoms =
-          CellAtomTools::atoms_range_in_cell(entry->first,
-                                             atom_data.cell_energy_molecules).second;
+        const unsigned int n_molecules =
+          CellMoleculeTools::molecules_range_in_cell<dim> (entry->first,
+                                                           cell_molecule_data.cell_molecules).second;
+        const unsigned int n_energy_molecules =
+          CellMoleculeTools::molecules_range_in_cell<dim> (entry->first,
+                                                           cell_molecule_data.cell_energy_molecules).second;
 
         std::cout << "Cell: "
                   << entry->first
                   << " has "
-                  << n_atoms-n_energy_atoms
+                  << n_molecules-n_energy_molecules
                   << " thrown atoms."
                   << std::endl;
 
+        // Since we have mono-atomic molecules, we can say that the energy
+        // molecules are the energy atoms.
         std::cout << "Number of energy atoms: "
-                  << atom_data.cell_energy_molecules.size() << std::endl;
+                  << cell_molecule_data.cell_energy_molecules.size() << std::endl;
 
         std::cout << std::endl;
 
-        AssertThrow(atom_data.cell_molecules.count(entry->first) == n_atoms,
+        AssertThrow(cell_molecule_data.cell_molecules.count(entry->first) == n_molecules,
                     ExcInternalError());
-        AssertThrow(atom_data.cell_energy_molecules.count(entry->first) == n_energy_atoms,
+        AssertThrow(cell_molecule_data.cell_energy_molecules.count(entry->first) == n_energy_molecules,
                     ExcInternalError())
       }
   }
@@ -80,7 +85,7 @@ private:
   parallel::shared::Triangulation<dim> triangulation;
   DoFHandler<dim>      dof_handler;
   MPI_Comm mpi_communicator;
-  AtomData<dim> atom_data;
+  CellMoleculeData<dim> cell_molecule_data;
 
 };
 
@@ -99,6 +104,7 @@ int main (int argc, char **argv)
           << "subsection Configure QC"                        << std::endl
           << "  set Ghost cell layer thickness = 1.9"         << std::endl
           << "  set Cluster radius = 1.1"                     << std::endl
+          << "  set Cluster weights by type = Cell"         << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section" << std::endl
           << "LAMMPS Description"        << std::endl         << std::endl
@@ -122,7 +128,7 @@ int main (int argc, char **argv)
 
       ConfigureQC config( prm_stream );
 
-      TestAtomHandler<3> problem (config);
+      TestMoleculeHandler<3> problem (config);
       problem.run();
 
     }
