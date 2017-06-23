@@ -13,8 +13,8 @@ namespace dealiiqc
     /**
      * A derived class for updating cluster weights using the cell approach.
      */
-    template <int dim>
-    class WeightsByCell : public WeightsByBase <dim>
+    template <int dim, int atomicity=1, int spacedim=dim>
+    class WeightsByCell : public WeightsByBase <dim, atomicity, spacedim>
     {
     public:
 
@@ -25,16 +25,15 @@ namespace dealiiqc
                      const double &maximum_energy_radius);
 
       /**
-       * @copydoc WeightsByBase::update_cluster_weights()
+       * @see WeightsByBase::update_cluster_weights().
        *
-       * The approach of WeightsByCell counts the number of non-energy atoms
-       * (i.e., the atoms in locally relevant cells but are not close enough
-       * to cell's vertices that they are not energy atoms) which is then used
-       * to compute cluster weights of the cluster atoms.
+       * The approach of WeightsByCell counts the total number of molecules and
+       * the number of cluster molecules within each cell; their ratio is used
+       * as cluster weights.
        */
-      types::CellAtomContainerType<dim>
-      update_cluster_weights (const types::MeshType<dim> &mesh,
-                              const types::CellAtomContainerType<dim> &atoms) const;
+      types::CellMoleculeContainerType<dim, atomicity, spacedim>
+      update_cluster_weights (const types::MeshType<dim, spacedim> &mesh,
+                              const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const;
 
     };
 

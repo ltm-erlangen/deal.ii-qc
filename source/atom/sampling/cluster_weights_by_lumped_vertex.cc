@@ -2,8 +2,8 @@
 #include <deal.II/distributed/shared_tria.h>
 #include <deal.II/fe/fe_values.h>
 #include <deal.II/fe/mapping_q1.h>
+#include <deal.II-qc/atom/cell_molecule_tools.h>
 
-#include <deal.II-qc/atom/cell_atom_tools.h>
 #include <deal.II-qc/atom/sampling/cluster_weights_by_lumped_vertex.h>
 
 namespace dealiiqc
@@ -14,35 +14,41 @@ namespace dealiiqc
 
 
 
-    template <int dim>
-    WeightsByLumpedVertex<dim>::WeightsByLumpedVertex (const double &cluster_radius,
-                                                       const double &maximum_cutoff_radius)
+    template <int dim, int atomicity, int spacedim>
+    WeightsByLumpedVertex<dim, atomicity, spacedim>::
+    WeightsByLumpedVertex (const double &cluster_radius,
+                           const double &maximum_cutoff_radius)
       :
-      WeightsByBase<dim>(cluster_radius, maximum_cutoff_radius)
+      WeightsByBase<dim, atomicity, spacedim> (cluster_radius,
+                                               maximum_cutoff_radius)
     {}
 
 
 
-    template <int dim>
-    types::CellAtomContainerType<dim>
-    WeightsByLumpedVertex<dim>::update_cluster_weights (const types::MeshType<dim> &mesh,
-                                                        const types::CellAtomContainerType<dim> &atoms) const
+    template <int dim, int atomicity, int spacedim>
+    types::CellMoleculeContainerType<dim, atomicity, spacedim>
+    WeightsByLumpedVertex<dim, atomicity, spacedim>::
+    update_cluster_weights (const types::MeshType<dim, spacedim> &mesh,
+                            const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const
     {
-      // Prepare energy atoms in this container.
-      types::CellAtomContainerType<dim> energy_atoms;
+      // Prepare energy molecules in this container.
+      types::CellMoleculeContainerType<dim, atomicity, spacedim>
+      cell_energy_molecules;
 
-      // Get the squared_energy_radius to identify energy atoms.
+      // Get the squared_energy_radius to identify energy molecules.
       const double squared_energy_radius =
-        dealii::Utilities::fixed_power<2> (WeightsByBase<dim>::maximum_cutoff_radius +
-                                           WeightsByBase<dim>::cluster_radius);
+        dealii::Utilities::fixed_power<2>
+        (WeightsByBase<dim, atomicity, spacedim>::maximum_cutoff_radius +
+         WeightsByBase<dim, atomicity, spacedim>::cluster_radius);
 
-      // Get the squared_cluster_radius to identify cluster atoms.
+      // Get the squared_cluster_radius to identify cluster molecules.
       const double squared_cluster_radius =
-        dealii::Utilities::fixed_power<2>(WeightsByBase<dim>::cluster_radius);
+        dealii::Utilities::fixed_power<2>
+        (WeightsByBase<dim, atomicity, spacedim>::cluster_radius);
 
       // Get underlying p::Triangulation to construct DoFHandler
-      const parallel::Triangulation<dim> *const ptria =
-        dynamic_cast<const parallel::Triangulation<dim> *>
+      const parallel::Triangulation<dim, spacedim> *const ptria =
+        dynamic_cast<const parallel::Triangulation<dim, spacedim> *>
         (&mesh.get_triangulation());
 
       // Get a consistent MPI_Comm.
@@ -53,10 +59,10 @@ namespace dealiiqc
                                          MPI_COMM_SELF;
 
       // using linear mapping and linear scalar-valued FE
-      MappingQ1<dim> mapping;
-      FE_Q<dim> fe(1);
+      MappingQ1<dim, spacedim> mapping;
+      FE_Q<dim, spacedim> fe(1);
 
-      DoFHandler<dim> dof_handler(*ptria);
+      DoFHandler<dim, spacedim> dof_handler(*ptria);
       dof_handler.distribute_dofs(fe);
 
       // Get the total number of dofs, in the current case of using linear
@@ -71,94 +77,102 @@ namespace dealiiqc
       std::vector<double> A(n_dofs,0);
 
       // Container to store quadrature points and weights.
+      // The quadrature points live in dim-dimensional space.
       std::vector<Point<dim>> points;
-      std::vector<double> weights_per_atom;
+      std::vector<double> weights_per_molecule;
 
       const unsigned int dofs_per_cell = fe.dofs_per_cell;
 
       // Gather global indices of the local dofs here for a given cell.
       std::vector<dealii::types::global_dof_index> local_dofs(dofs_per_cell);
 
-      for (types::CellIteratorType<dim>
+      for (types::CellIteratorType<dim, spacedim>
            cell  = dof_handler.begin_active();
            cell != dof_handler.end();
            cell++)
         {
-          // Include all the atoms associated to this active cell as quadrature
-          // points. The quadrature points will be then used to
+          // Include all the molecules associated to this active cell as
+          // quadrature points. The quadrature points will be then used to
           // initialize fe_values object so as to evaluate the shape function
           // values at the all the lattice sites in the atomistic system.
 
-          // Get cell atoms range
-          const auto cell_atoms_range =
-            CellAtomTools::atoms_range_in_cell (cell, atoms);
+          // Get cell molecules range
+          const auto cell_molecules_range =
+            CellMoleculeTools::
+            molecules_range_in_cell<dim, atomicity, spacedim> (cell,
+                                                               cell_molecules);
 
-          const types::CellAtomConstIteratorType<dim>
-          &cell_atoms_range_begin = cell_atoms_range.first.first,
-           &cell_atoms_range_end  = cell_atoms_range.first.second;
+          const types::CellMoleculeConstIteratorType<dim, atomicity, spacedim>
+          &cell_molecules_range_begin = cell_molecules_range.first.first,
+           &cell_molecules_range_end  = cell_molecules_range.first.second;
 
-          // Prepare the total number of atoms in this cell here.
+          // Prepare the total number of molecules in this cell here.
           // This is also the total number of quadrature points in this cell.
-          const unsigned int n_atoms_in_current_cell = cell_atoms_range.second;
+          const unsigned int n_molecules_in_current_cell =
+            cell_molecules_range.second;
 
           // If this cell is not within the locally relevant active cells of the
           // current MPI process continue active cell loop
-          if (n_atoms_in_current_cell == 0)
+          if (n_molecules_in_current_cell == 0)
             continue;
 
-          // Resize containers to known number of energy atoms in cell.
-          points.resize(n_atoms_in_current_cell);
-          weights_per_atom.resize(n_atoms_in_current_cell);
+          // Resize containers to known number of energy molecules in cell.
+          points.resize(n_molecules_in_current_cell);
+          weights_per_molecule.resize(n_molecules_in_current_cell);
 
-          types::CellAtomConstIteratorType<dim>
-          cell_atom_iterator = cell_atoms_range_begin;
+          types::CellMoleculeConstIteratorType<dim, atomicity, spacedim>
+          cell_molecule_iterator = cell_molecules_range_begin;
           for (unsigned int
                q = 0;
-               q < n_atoms_in_current_cell;
-               q++, cell_atom_iterator++)
+               q < n_molecules_in_current_cell;
+               q++, cell_molecule_iterator++)
             {
-              Molecule<dim,1> molecule = cell_atom_iterator->second;
+              Molecule<spacedim, atomicity> molecule =
+                cell_molecule_iterator->second;
 
-              // update quadrature point
-              points[q] = molecule.position_inside_reference_cell;
+              // Update dim-dimensional quadrature point using
+              // pseudo spacedim-dimensional
+              // molecule.position_inside_reference_cell.
+              for (int d = 0; d < dim; ++d)
+                points[q][d] = molecule.position_inside_reference_cell[d];
 
-              // Check the proximity of the atom to it's associated
+              // Check the proximity of the molecule to it's associated
               // cell's vertices.
               const auto closest_vertex =
-                Utilities::find_closest_vertex (molecule.initial_position,
+                Utilities::find_closest_vertex (molecule_initial_location(molecule),
                                                 cell);
 
               if (closest_vertex.second < squared_energy_radius)
                 {
                   if (closest_vertex.second < squared_cluster_radius)
                     {
-                      // atom is cluster atom
+                      // molecule is cluster molecule
                       molecule.cluster_weight = 1.;
-                      weights_per_atom[q] = 1.;
+                      weights_per_molecule[q] = 1.;
                     }
                   else
                     {
-                      // atom is not cluster atom
+                      // molecule is not cluster molecule
                       molecule.cluster_weight = 0.;
-                      weights_per_atom[q] = 0.;
+                      weights_per_molecule[q] = 0.;
                     }
 
-                  // Insert atom into energy_atoms if it is within a distance of
+                  // Insert molecule into cell_energy_molecules if it is within a distance of
                   // energy_radius to associated cell's vertices.
-                  energy_atoms.insert(std::make_pair(cell, molecule));
+                  cell_energy_molecules.insert(std::make_pair(cell, molecule));
                 }
 
             }
 
-          Assert (cell_atom_iterator == cell_atoms_range_end,
-                  ExcMessage("The number of energy atoms in the cell counted "
+          Assert (cell_molecule_iterator == cell_molecules_range_end,
+                  ExcMessage("The number of energy molecules in the cell counted "
                              "using the distance between the iterator ranges "
                              "yields a different result than "
-                             "incrementing the iterator to energy_atoms."
+                             "incrementing the iterator to cell_energy_molecules."
                              "Why wasn't this error thrown earlier?"));
 
-          Assert (points.size() == weights_per_atom.size(),
-                  ExcDimensionMismatch(points.size(), weights_per_atom.size()));
+          Assert (points.size() == weights_per_molecule.size(),
+                  ExcDimensionMismatch(points.size(), weights_per_molecule.size()));
 
           // Do not need to compute b_I and A_I for ghost cells as we will
           // later sum contributions from all the processes.
@@ -167,12 +181,13 @@ namespace dealiiqc
 
           // Now we are ready to initialize FEValues object for this cell.
           // Unfortunately, we need to set up a new FEValues object
-          // as location of atoms associated to the cell is generally different
+          // as location of molecules associated to the cell is generally different
           // for each cell.
-          FEValues<dim> fe_values (mapping,
-                                   fe,
-                                   Quadrature<dim>(points, weights_per_atom),
-                                   update_values);
+          FEValues<dim, spacedim>
+          fe_values (mapping,
+                     fe,
+                     Quadrature<dim> (points, weights_per_molecule),
+                     update_values);
           fe_values.reinit (cell);
 
           cell->get_dof_indices(local_dofs);
@@ -180,7 +195,7 @@ namespace dealiiqc
           for (unsigned int i=0; i<local_dofs.size(); ++i)
             {
               const dealii::types::global_dof_index I = local_dofs[i];
-              for (unsigned int q = 0; q < n_atoms_in_current_cell; q++)
+              for (unsigned int q = 0; q < n_molecules_in_current_cell; q++)
                 {
                   b[I] += fe_values.shape_value(i,q);
                   A[I] += fe_values.shape_value(i,q)*
@@ -190,7 +205,7 @@ namespace dealiiqc
 
         } // end of the loop over all active cells
 
-      //---Finished adding energy atoms
+      //---Finished adding energy molecules
 
       // Accumulate b entries per vertex from all MPI processes.
       dealii::Utilities::MPI::sum (b, mpi_communicator, b);
@@ -202,17 +217,17 @@ namespace dealiiqc
 
       //---Now update cluster weights with correct value
 
-      // Loop over all the energy atoms,
+      // Loop over all the energy molecules,
       // update their weights by multiplying with the factor
       // (b_per_cell/A_per_cell)
-      for (auto &energy_atom : energy_atoms)
+      for (auto &energy_molecule : cell_energy_molecules)
         {
-          const auto &cell = energy_atom.first;
-          Molecule<dim,1>  &molecule = energy_atom.second;
+          const auto &cell = energy_molecule.first;
+          Molecule<spacedim, atomicity>  &molecule = energy_molecule.second;
 
-          // Get the closest vertex (of this cell) to the atom.
+          // Get the closest vertex (of this cell) to the molecule.
           const auto vertex_and_squared_distance =
-            Utilities::find_closest_vertex (molecule.initial_position,
+            Utilities::find_closest_vertex (molecule_initial_location(molecule),
                                             cell);
 
           // We need to get the global dof index from the local index of
@@ -226,22 +241,31 @@ namespace dealiiqc
 
           Assert (A[I] != 0, ExcInternalError());
 
-          // The cluster weight was previously set to 1. if the atom is
-          // cluster atom and 0. if the atom is not cluster atom.
-          energy_atom.second.cluster_weight *= b[I]
-                                               /
-                                               A[I];
+          // The cluster weight was previously set to 1. if the molecule is
+          // cluster molecule and 0. if the molecule is not cluster molecule.
+          energy_molecule.second.cluster_weight *= b[I]
+                                                   /
+                                                   A[I];
         }
 
-      return energy_atoms;
+      return cell_energy_molecules;
     }
 
 
 
-    // Instantiations.
-    template class WeightsByLumpedVertex<1>;
-    template class WeightsByLumpedVertex<2>;
-    template class WeightsByLumpedVertex<3>;
+#define SINGLE_WEIGHTS_BY_LUMPED_VERTEX_INSTANTIATION(DIM, ATOMICITY, SPACEDIM)\
+  template class WeightsByLumpedVertex< DIM, ATOMICITY, SPACEDIM >;            \
+   
+#define WEIGHTS_BY_LUMPED_VERTEX(R, X)                       \
+  BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,                  \
+              SINGLE_WEIGHTS_BY_LUMPED_VERTEX_INSTANTIATION, \
+              BOOST_PP_TUPLE_EAT(3)) X                       \
+   
+    // WeightsByLumpedVertex class Instantiations.
+    INSTANTIATE_CLASS_WITH_DIM_ATOMICITY_AND_SPACEDIM(WEIGHTS_BY_LUMPED_VERTEX)
+
+#undef SINGLE_WEIGHTS_BY_LUMPED_VERTEX_INSTANTIATION
+#undef WEIGHTS_BY_LUMPED_VERTEX
 
 
   } // namespace Cluster

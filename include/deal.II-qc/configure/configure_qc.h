@@ -5,7 +5,6 @@
 #include <deal.II/base/subscriptor.h>
 #include <deal.II/base/parameter_handler.h>
 #include <deal.II/base/logstream.h>
-#include <deal.II-qc/atom/sampling/cluster_weights_by_cell.h>
 
 #include <fstream>
 #include <sstream>
@@ -96,8 +95,9 @@ namespace dealiiqc
      * Create and return a shared pointer to the derived class object of
      * WeightsByBase.
      */
-    template <int dim>
-    std::shared_ptr<const Cluster::WeightsByBase<dim>> get_cluster_weights() const;
+    template <int dim, int atomicity, int spacedim>
+    std::shared_ptr<const Cluster::WeightsByBase<dim, atomicity, spacedim>>
+        get_cluster_weights() const;
 
   private:
 

@@ -11,30 +11,34 @@ namespace dealiiqc
   {
 
     /**
-     * A class which creates a cluster around each vertex and calculates cluster
-     * weights using the ratio of atoms within each cluster (vertex) to the
-     * number of atoms that are closest to each vertex. The latter is nothing
-     * else but the number of atoms in Voronoi cell associated with a given
-     * vertex.
+     * A derived class for updating cluster weights using the vertex approach,
+     * in other words using Voronoi tessellation of the cluster's sampling
+     * points.
      */
-    template <int dim>
-    class WeightsByVertex : public WeightsByBase <dim>
+    template <int dim, int atomicity=1, int spacedim=dim>
+    class WeightsByVertex : public WeightsByBase <dim, atomicity, spacedim>
     {
     public:
 
       /**
-       * Constructor
+       * Constructor.
        */
       WeightsByVertex (const double &cluster_radius,
                        const double &maximum_energy_radius);
 
       /**
-       * @see WeightsByBase::update_cluster_weights()
-       * and WeightsByVertex class description.
+       * @see WeightsByBase::update_cluster_weights().
+       *
+       * The approach of WeightsByVertex counts the total number of molecules
+       * associated to each sampling point and the number of molecules
+       * within the cluster of the sampling points; their ratio is used as
+       * cluster weights. The former of the two numbers is nothing else but
+       * the number of molecules in Voronoi cell associated to a given sampling
+       * point.
        */
-      types::CellAtomContainerType<dim>
-      update_cluster_weights (const types::MeshType<dim> &mesh,
-                              const types::CellAtomContainerType<dim> &atoms) const;
+      types::CellMoleculeContainerType<dim, atomicity, spacedim>
+      update_cluster_weights (const types::MeshType<dim, spacedim> &mesh,
+                              const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const;
 
     };
 
