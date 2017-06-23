@@ -85,8 +85,8 @@ namespace dealiiqc
     return pair_potential;
   }
 
-  template<int dim>
-  std::shared_ptr<const Cluster::WeightsByBase<dim> >
+  template<int dim, int atomicity, int spacedim>
+  std::shared_ptr<const Cluster::WeightsByBase<dim, atomicity, spacedim> >
   ConfigureQC::get_cluster_weights() const
   {
     AssertDimension(dim, dimension);
@@ -95,13 +95,13 @@ namespace dealiiqc
     // we either need to make ConfigureQC templated with dim, or keep around
     // three different shared pointers.
     if (cluster_weights_type == "Cell")
-      return std::make_shared<const Cluster::WeightsByCell<dim> >
+      return std::make_shared<const Cluster::WeightsByCell<dim, atomicity, spacedim> >
              (cluster_radius, maximum_cutoff_radius);
     else if (cluster_weights_type == "LumpedVertex")
-      return std::make_shared<const Cluster::WeightsByLumpedVertex<dim> >
+      return std::make_shared<const Cluster::WeightsByLumpedVertex<dim, atomicity, spacedim> >
              (cluster_radius, maximum_cutoff_radius);
     else if (cluster_weights_type == "Vertex")
-      return std::make_shared<const Cluster::WeightsByVertex<dim> >
+      return std::make_shared<const Cluster::WeightsByVertex<dim, atomicity, spacedim> >
              (cluster_radius, maximum_cutoff_radius);
     else
       AssertThrow (false, ExcInternalError());
@@ -311,10 +311,22 @@ namespace dealiiqc
   template std::shared_ptr<const Geometry::Base<1>> ConfigureQC::get_geometry() const;
   template std::shared_ptr<const Geometry::Base<2>> ConfigureQC::get_geometry() const;
   template std::shared_ptr<const Geometry::Base<3>> ConfigureQC::get_geometry() const;
-  template std::shared_ptr<const Cluster::WeightsByBase<1>> ConfigureQC::get_cluster_weights() const;
-  template std::shared_ptr<const Cluster::WeightsByBase<2>> ConfigureQC::get_cluster_weights() const;
-  template std::shared_ptr<const Cluster::WeightsByBase<3>> ConfigureQC::get_cluster_weights() const;
 
+#define SINGLE_CONFIGURE_QC_INSTANTIATION(DIM, ATOMICITY, SPACEDIM)       \
+  template                                                                \
+  std::shared_ptr<const Cluster::WeightsByBase<DIM, ATOMICITY, SPACEDIM>> \
+  ConfigureQC::get_cluster_weights() const;                               \
+   
+#define CONFIGURE_QC(R, X)                       \
+  BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,      \
+              SINGLE_CONFIGURE_QC_INSTANTIATION, \
+              BOOST_PP_TUPLE_EAT(3)) X           \
+   
+  // ConfigureQC::get_cluster_weights instantiations
+  INSTANTIATE_CLASS_WITH_DIM_ATOMICITY_AND_SPACEDIM(CONFIGURE_QC)
+
+#undef SINGLE_CONFIGURE_QC_INSTANTIATION
+#undef CONFIGURE_QC
 
 
 } // namespace dealiiqc

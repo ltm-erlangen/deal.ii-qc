@@ -105,7 +105,6 @@ namespace dealiiqc
      */
     std::vector<double> masses;
 
-    // TODO: Const Molecule?
     /**
      * The cell based data member that contains cells and molecules
      * association in the Lagrangian (undeformed) configuration of the system.
