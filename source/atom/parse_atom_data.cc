@@ -376,9 +376,9 @@ namespace dealiiqc
 
 
 #define PARSE_ATOM_DATA(R, X) \
-  template class ParseAtomData< FIRST_OF_TWO_IS_SAPCEDIM(X), \
+  template class ParseAtomData< FIRST_OF_TWO_IS_SPACEDIM(X), \
                                 SECOND_OF_TWO_IS_ATOMICITY(X)>;
 
-  INSTANTIATE_WITH_SAPCEDIM_AND_ATOMICITY(R, PARSE_ATOM_DATA, (SAPCEDIM, ATOMICITY))
+  INSTANTIATE_WITH_SPACEDIM_AND_ATOMICITY(R, PARSE_ATOM_DATA, (SPACEDIM, ATOMICITY))
 
 } /* namespace dealiiqc */
