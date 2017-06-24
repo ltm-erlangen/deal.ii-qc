@@ -2,121 +2,90 @@
 #ifndef __dealii_qc_atom_cell_atom_tools_h
 #define __dealii_qc_atom_cell_atom_tools_h
 
-#include<deal.II-qc/atom/atom_data.h>
+
+
+#include<deal.II-qc/atom/cell_molecule_data.h>
 
 namespace dealiiqc
 {
 
 
   /**
-   * A namespace for utility functions for CellAtomContainerType.
+   * A namespace for cell based data structures' utility functions.
    */
-  namespace CellAtomTools
+  namespace CellMoleculeTools
   {
-
-
 
     /**
      * Return a pair of range of constant iterators to
      * CellAtomContainerType object @p atoms and the number of atoms of @p atoms
      * in a given @p cell
      *
-     * If no atoms are in the queried cell then the function return the pair of
-     * (pair of) end iterators and zero. If an empty CellAtomContainer is
-     * passed, then the function throws an error that the CellAtomContainer is
-     * empty.
+     * If no molecules are in the queried cell then the function return the
+     * pair of (pair of) end iterators and zero. If @p cell_molecules is an
+     * empty CellMoleculeContainer, then the function throws an error that
+     * the provided CellMoleculeContainer is empty.
      */
-    template<int dim>
-    inline
-    std::pair<types::CellAtomConstIteratorRangeType<dim>, unsigned int>
-    atoms_range_in_cell (const types::CellIteratorType<dim> &cell,
-                         const types::CellAtomContainerType<dim> &atoms)
-    {
-      AssertThrow (!atoms.empty(),
-                   ExcMessage("The given CellAtomContainer is empty!"));
-
-      const types::CellAtomConstIteratorRangeType<dim>
-      cell_atom_range = atoms.equal_range(cell);
-
-      const types::CellAtomConstIteratorType<dim>
-      &cell_atom_range_begin = cell_atom_range.first,
-       &cell_atom_range_end  = cell_atom_range.second;
-
-      if (cell_atom_range_begin == cell_atom_range_end)
-        // Quickly return the following if cell is not
-        // found in the CellAtomContainerType object
-        return std::make_pair(std::make_pair(cell_atom_range_begin,
-                                             cell_atom_range_end),
-                              0);
-
-      // Faster to get the number of atoms in the active cell by
-      // computing the distance between first and second iterators
-      // instead of calling count on energy_atoms.
-      // Here we implicitly cast to usngined int, but this should be OK as
-      // we check that the result is the same as calling count()
-      const unsigned int
-      n_atoms_in_cell = std::distance (cell_atom_range.first,
-                                       cell_atom_range.second);
-
-      Assert (n_atoms_in_cell == atoms.count(cell),
-              ExcMessage("The number of atoms or energy atoms in the cell "
-                         "counted using the distance between the iterator "
-                         "ranges yields a different result than "
-                         "atoms.count(cell) or"
-                         "energy_atoms.count(cell)."));
-
-      return std::make_pair(std::make_pair(cell_atom_range_begin,
-                                           cell_atom_range_end),
-                            n_atoms_in_cell);
-    }
-
-
+    template<int dim, int atomicity=1, int spacedim=dim>
+    std::pair
+    <
+    types::CellMoleculeConstIteratorRangeType<dim, atomicity, spacedim>
+    ,
+    unsigned int
+    >
+    molecules_range_in_cell (const types::CellIteratorType<dim, spacedim> &cell,
+                             const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules);
 
     /**
-     * Return the number of atoms in @p energy_atoms, associated to @p cell,
+     * Return the number of molecules in @p cell_energy_molecules, associated to @p cell,
      * which have non-zero cluster weights.
      */
-    template<int dim>
-    inline
+    template<int dim, int atomicity=1, int spacedim=dim>
     unsigned int
-    n_cluster_atoms_in_cell (const types::CellIteratorType<dim> &cell,
-                             const types::CellAtomContainerType<dim> &energy_atoms)
-    {
-      const types::CellAtomConstIteratorRangeType<dim>
-      cell_atom_range = energy_atoms.equal_range(cell);
+    n_cluster_molecules_in_cell (const types::CellIteratorType<dim, spacedim> &cell,
+                                 const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_energy_molecules);
 
-      const types::CellAtomConstIteratorType<dim>
-      &cell_atom_range_begin = cell_atom_range.first,
-       &cell_atom_range_end  = cell_atom_range.second;
+    /**
+     * Prepare and return a CellMoleculeData object based on the given @p mesh
+     * by parsing the atom data information in @p is using a
+     * @p ghost_cell_layer_thickness distance to identify locally relevant
+     * cells for each MPI process. All the data members of the returned object
+     * are initialized except CellMoleculeData::cell_energy_molecules, which
+     * can be obtained using MoleculeHandler::get_cell_energy_molecules().
+     *
+     * <h5>Association between locally relevant cells and molecules</h5>
+     *
+     * For each MPI process, locally relevant cells (see MoleculeHandler) are
+     * identified using a distance of @p ghost_cell_layer_thickness from the
+     * locally owned cells of the MPI process.
+     *
+     * To associate locally relevant cells and molecules, each MPI process does
+     * the following. For each molecule in the system look for a locally
+     * relevant cell of the @p mesh which contains the molecule in the
+     * Lagrangian (undeformed) configuration (also referred to as the molecule's
+     * initial location which can be obtained from the
+     * molecule_initial_location() helper function). If such a cell is found
+     * which is locally relevant from the perspective of the current MPI
+     * process, the molecule is locally relevant and is associated to the
+     * cell and kept by the current MPI process. Otherwise the current MPI
+     * process disregards the molecule as it should be picked up by another
+     * MPI process.
+     *
+     * The following optimization technique is employed while associating
+     * molecules to cells.
+     * For each molecule in the system, before going over all locally relevant
+     * cells to find if the molecule's location lies within it, we can first
+     * check whether the molecule's location lies inside the bounding box of
+     * the current processor's set of locally relevant cells.
+     */
+    template<int dim, int atomicity=1, int spacedim=dim>
+    CellMoleculeData<dim, atomicity, spacedim>
+    build_cell_molecule_data (std::istream                         &is,
+                              const types::MeshType<dim, spacedim> &mesh,
+                              double          ghost_cell_layer_thickness);
 
-      if (cell_atom_range_begin == cell_atom_range_end)
-        // Quickly return the following if cell is not
-        // found in the CellAtomContainerType object
-        return 0;
 
-      unsigned int n_cluster_atoms_in_this_cell = 0;
-
-      for (types::CellAtomConstIteratorType<dim>
-           cell_atom_iterator  = cell_atom_range_begin;
-           cell_atom_iterator != cell_atom_range_end;
-           cell_atom_iterator++)
-        {
-          Assert (cell_atom_iterator->second.cluster_weight != numbers::invalid_cluster_weight,
-                  ExcMessage("At least one of the atom's cluster weight is "
-                             "not initialized to a valid number."
-                             "This function should be called only after "
-                             "setting up correct cluster weights."));
-          if (cell_atom_iterator->second.cluster_weight != 0)
-            n_cluster_atoms_in_this_cell++;
-        }
-
-
-      return n_cluster_atoms_in_this_cell;
-    }
-
-
-
-  } // namespace CellAtomTools
+  } // namespace CellMoleculeTools
 
 
 } // namespace dealiiqc

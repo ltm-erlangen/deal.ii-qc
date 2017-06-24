@@ -95,7 +95,7 @@ namespace dealiiqc
      * Create and return a shared pointer to the derived class object of
      * WeightsByBase.
      */
-    template <int dim, int atomicity, int spacedim>
+    template <int dim, int atomicity=1, int spacedim=dim>
     std::shared_ptr<const Cluster::WeightsByBase<dim, atomicity, spacedim>>
         get_cluster_weights() const;
 
