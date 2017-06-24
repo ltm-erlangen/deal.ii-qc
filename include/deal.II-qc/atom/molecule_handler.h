@@ -3,7 +3,6 @@
 
 #include <deal.II/grid/grid_tools.h>
 
-#include <deal.II-qc/atom/parse_atom_data.h>
 #include <deal.II-qc/configure/configure_qc.h>
 
 namespace dealiiqc
@@ -67,7 +66,7 @@ namespace dealiiqc
    * (refer to deal.II documentation for further details about
    * parallel::shared::Triangulation).
    */
-  template<int dim>
+  template<int dim, int atomicity=1, int spacedim=dim>
   class MoleculeHandler
   {
   public:
@@ -78,49 +77,14 @@ namespace dealiiqc
     MoleculeHandler (const ConfigureQC &configure_qc);
 
     /**
-     * Return a CellMoleculeData object based on the given @p mesh by parsing
-     * the atom data information provided through #configure_qc.
-     *
-     * For each MPI process, locally relevant cells (see MoleculeHandler) are
-     * obtained using a distance of ConfigureQC::ghost_cell_layer_thickness
-     * from the locally owned cells of the MPI process.
-     *
-     * For each molecule in the system we look for a cell which contains the
-     * molecule in the Lagrangian (undeformed) configuration. If we found a
-     * cell which is either locally owned or locally relevant from the
-     * perspective of the current MPI process, the molecule is locally relevant
-     * and is kept by the current MPI process. Otherwise the current MPI
-     * process disregards the molecule as it should be picked up by another
-     * MPI process.
-     *
-     * For each locally relevant molecule
-     * in the system a locally relevant cell of the @p mesh
-     * which surrounds its initial location (see molecule_initial_location())
-     * is found. In the case when a locally relevant cell is found, it is
-     * inserted into CellMoleculeData::cell_molecules. If a locally relevant
-     * cell is not found, then the molecule is thrown away as it doesn't belong
-     * to any of the locally relevant cells and it would be picked up by
-     * another MPI process.
-     *
-     * The following optimization technique is employed while associating
-     * molecules to cells.
-     * For each molecule in the system, before going over all locally relevant
-     * cells to find if the molecule's location lies within it, we can first
-     * check whether the molecule's location lies inside the bounding box of
-     * the current processor's set of locally relevant cells.
-     */
-    CellMoleculeData<dim>
-    get_cell_molecule_data (const types::MeshType<dim> &mesh) const;
-
-    /**
      * Return the neighbor lists of @p cell_energy_molecules.
      *
      * This function can be called as often as one deems necessary. The function
      * currently assumes that the deformation is small that the neighbor lists
      * are exactly the same as that of reference (undeformed) configuration.
      */
-    types::CellMoleculeNeighborLists<dim>
-    get_neighbor_lists (const types::CellMoleculeContainerType<dim> &cell_energy_molecules) const;
+    types::CellMoleculeNeighborLists<dim, atomicity, spacedim>
+    get_neighbor_lists (const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_energy_molecules) const;
 
 
   protected:
