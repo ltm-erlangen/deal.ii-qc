@@ -6,7 +6,6 @@
 #include <deal.II/grid/grid_generator.h>
 
 #include <deal.II-qc/atom/cell_molecule_tools.h>
-#include <deal.II-qc/atom/sampling/cluster_weights_by_cell.h>
 #include <deal.II-qc/configure/configure_qc.h>
 
 using namespace dealii;
@@ -114,6 +113,7 @@ int main (int argc, char **argv)
           << "subsection Configure QC"                        << std::endl
           << "  set Ghost cell layer thickness = 16.1"        << std::endl
           << "  set Cluster radius = 4.0"                     << std::endl
+          << "  set Cluster weights by type = Cell"           << std::endl
           << "end"                                            << std::endl;
 
 

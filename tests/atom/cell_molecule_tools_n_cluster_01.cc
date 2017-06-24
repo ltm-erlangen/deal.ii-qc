@@ -7,7 +7,6 @@
 #include <deal.II/grid/grid_out.h>
 
 #include <deal.II-qc/atom/cell_molecule_tools.h>
-#include <deal.II-qc/atom/sampling/cluster_weights_by_cell.h>
 #include <deal.II-qc/configure/configure_qc.h>
 
 using namespace dealii;
