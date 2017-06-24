@@ -59,19 +59,28 @@ namespace dealiiqc
 
   // TODO: Move this function to a different place?
   /**
-   * Return the initial location of @p molecule.
+   * Return the initial location of @p molecule. The initial location is
+   * nothing but its location in the Lagrangian (undeformed) configuration of
+   * the atomistic system. By convention, the initial location of the molecule
+   * is the initial position of the first atom of the molecule.
    *
-   * The initial location of the molecule is the initial position of the first
-   * atom of the molecule.
+   * @note It is assumed here that the atoms of the molecule are already sorted
+   * according to their stamps.
    */
   template<int spacedim, int atomicity>
   inline
   Point<spacedim> molecule_initial_location (const Molecule<spacedim, atomicity> &molecule)
   {
     Assert (molecule.atoms.size()>0, ExcInternalError());
-    // FIXME: It is assumed here that the list of atoms of the molecule are
-    //        already sorted according to their stamps.
-    //        Need to add asserts that the molecule's atoms are ordered.
+
+#ifdef DEBUG
+    for (int a=0; a<atomicity; a++)
+      for (int b=a+1; b<atomicity; b++)
+        Assert(molecule.atoms[a].type <= molecule.atoms[b].type,
+               ExcMessage("Atoms in the molecule are not sorted according "
+                          "to their atom types."));
+#endif
+
     return molecule.atoms[0].initial_position;
   }
 
