@@ -6,31 +6,33 @@
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_out.h>
 
-#include <deal.II-qc/atom/atom_handler.h>
-#include <deal.II-qc/atom/cell_atom_tools.h>
+#include <deal.II-qc/atom/molecule_handler.h>
+#include <deal.II-qc/atom/cell_molecule_tools.h>
 #include <deal.II-qc/atom/sampling/cluster_weights_by_cell.h>
 
 using namespace dealii;
 using namespace dealiiqc;
 
-// Short test to compute the number of locally relevant thrown atoms.
-// The tria consists of only one cell
-// 0 thrown atoms
-// 10 cluster atom
-// Cluster_Weight is 1 for all (cluster) atoms.
 
-// This test is a close copy of atom_handler_cluster_weight_02
+
+// Short test to compute the number of thrown molecules per cell using
+// CellMoleculeTools functions.
+//
+// The tria consists of only one cell
+// 0 thrown molecules
+// 10 cluster molecule
+// Cluster_Weight is 1 for all (cluster) molecules.
 
 
 
 template<int dim>
-class TestAtomHandler : public AtomHandler<dim>
+class TestMoleculeHandler : public MoleculeHandler<dim>
 {
 public:
 
-  TestAtomHandler(const ConfigureQC &config)
+  TestMoleculeHandler(const ConfigureQC &config)
     :
-    AtomHandler<dim>( config),
+    MoleculeHandler<dim>( config),
     config(config),
     triangulation (MPI_COMM_WORLD,
                    // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
@@ -44,22 +46,19 @@ public:
   void run()
   {
     GridGenerator::hyper_cube( triangulation, 0., 8., true );
-    AtomHandler<dim>::parse_atoms_and_assign_to_cells( dof_handler, atom_data);
-    const Cluster::WeightsByCell<dim>
-    weights_by_cell(config.get_cluster_radius(),
-                    config.get_maximum_cutoff_radius());
-    atom_data.cell_energy_molecules =
-      weights_by_cell.update_cluster_weights (dof_handler,
-                                              atom_data.cell_molecules);
-    for ( const auto &cell_atom : atom_data.cell_energy_molecules )
-      std::cout << "Atom: " << cell_atom.second.atoms[0].position << " "
-                << "Cluster_Weight: "
-                << cell_atom.second.cluster_weight << std::endl;
 
-    const unsigned int n_cluster_atoms =
-      CellAtomTools::n_cluster_atoms_in_cell(dof_handler.begin_active(),
-                                             atom_data.cell_energy_molecules);
-    AssertThrow(n_cluster_atoms == 10,
+    cell_molecule_data =
+      MoleculeHandler<dim>::get_cell_molecule_data (dof_handler);
+
+    for ( const auto &cell_molecule : cell_molecule_data.cell_energy_molecules )
+      std::cout << "Atom: " << cell_molecule.second.atoms[0].position << " "
+                << "Cluster_Weight: "
+                << cell_molecule.second.cluster_weight << std::endl;
+
+    const unsigned int n_cluster_molecules =
+      CellMoleculeTools::n_cluster_molecules_in_cell<dim> (dof_handler.begin_active(),
+                                                           cell_molecule_data.cell_energy_molecules);
+    AssertThrow(n_cluster_molecules == 10,
                 ExcInternalError());
   }
 
@@ -68,7 +67,7 @@ private:
   parallel::shared::Triangulation<dim> triangulation;
   DoFHandler<dim>      dof_handler;
   MPI_Comm mpi_communicator;
-  AtomData<dim> atom_data;
+  CellMoleculeData<dim> cell_molecule_data;
 
 };
 
@@ -112,7 +111,7 @@ int main (int argc, char **argv)
 
       ConfigureQC config( prm_stream );
 
-      TestAtomHandler<3> problem (config);
+      TestMoleculeHandler<3> problem (config);
       problem.run();
 
     }
