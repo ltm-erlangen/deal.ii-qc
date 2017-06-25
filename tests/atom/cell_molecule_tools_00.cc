@@ -1,65 +1,67 @@
-
 #include <iostream>
 #include <sstream>
 
 #include <deal.II/distributed/shared_tria.h>
 #include <deal.II/grid/grid_generator.h>
 
-#include <deal.II-qc/atom/atom_handler.h>
-#include <deal.II-qc/atom/sampling/cluster_weights_by_cell.h>
+#include <deal.II-qc/atom/cell_molecule_tools.h>
+#include <deal.II-qc/configure/configure_qc.h>
 
 using namespace dealii;
 using namespace dealiiqc;
 
-// Short test to compute the number of locally relevant thrown atoms.
-// The max energy radius is large enough that none of the atoms are thrown.
+
+
+// Short test to check functions of CellMoleculeTools doesn't throw any errors.
+
+
 
 template<int dim>
-class TestAtomHandler : public AtomHandler<dim>
+class TestCellMoleculeTools
 {
 public:
 
-  TestAtomHandler(const ConfigureQC &config)
+  TestCellMoleculeTools(const ConfigureQC &config)
     :
-    AtomHandler<dim>( config),
     config(config),
     triangulation (MPI_COMM_WORLD,
                    // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
                    Triangulation<dim>::limit_level_difference_at_vertices),
-    dof_handler    (triangulation),
-    mpi_communicator(MPI_COMM_WORLD)
+    dof_handler    (triangulation)
   {}
 
   void run()
   {
-    GridGenerator::hyper_cube( triangulation, 0., 16., true );
-    triangulation.refine_global (3);
-    AtomHandler<dim>::parse_atoms_and_assign_to_cells( dof_handler, atom_data);
-    const Cluster::WeightsByCell<dim>
-    weights_by_cell (config.get_cluster_radius(),
-                     config.get_maximum_cutoff_radius());
-    atom_data.cell_energy_molecules =
-      weights_by_cell.update_cluster_weights (dof_handler,
-                                              atom_data.cell_molecules);
-    for (auto
-         entry  = atom_data.cell_energy_molecules.begin();
-         entry != atom_data.cell_energy_molecules.end();
-         entry  = atom_data.cell_energy_molecules.upper_bound(entry->first))
-      std::cout << entry->first
-                << ":"
-                << atom_data.cell_molecules.count(entry->first) -
-                atom_data.cell_energy_molecules.count(entry->first)
-                << std::endl;
-    std::cout << std::endl;
+    GridGenerator::hyper_cube( triangulation, 0., 8., true );
+    triangulation.refine_global (1);
+
+    const std::string atom_data_file = config.get_atom_data_file();
+    std::fstream fin(atom_data_file, std::fstream::in );
+
+    cell_molecule_data =
+      CellMoleculeTools::
+      build_cell_molecule_data<dim> (fin,
+                                     dof_handler,
+                                     config.get_ghost_cell_layer_thickness());
+
+    cell_molecule_data.cell_energy_molecules =
+      config.get_cluster_weights<dim>()->
+      update_cluster_weights (dof_handler,
+                              cell_molecule_data.cell_molecules);
+
+    // Check that the number of energy molecules picked up.
+    // Since atomicity is 1, energy molecules are energy atoms.
+    // is so and so and shouldn't change each time this test is run.
+    std::cout << "The number of energy atoms picked up : "
+              << cell_molecule_data.cell_energy_molecules.size()
+              << std::endl;
   }
 
 private:
   const ConfigureQC &config;
   parallel::shared::Triangulation<dim> triangulation;
   DoFHandler<dim>      dof_handler;
-  MPI_Comm mpi_communicator;
-  AtomData<dim> atom_data;
-
+  CellMoleculeData<dim> cell_molecule_data;
 };
 
 
@@ -70,17 +72,18 @@ int main (int argc, char **argv)
       dealii::Utilities::MPI::MPI_InitFinalize mpi_initialization (argc, argv,
           dealii::numbers::invalid_unsigned_int);
       std::ostringstream oss;
-      oss << "set Dimension = 3"                              << std::endl
+      oss
+          << "set Dimension = 3"                              << std::endl
           << "subsection Configure atoms"                     << std::endl
+          << "  set Maximum cutoff radius = 0.01"             << std::endl
           << "  set Atom data file = "
-          << SOURCE_DIR "/../data/16_NaCl_atom.data"          << std::endl
-          << "  set Maximum cutoff radius = 16.0"             << std::endl
-          << "end"                                            << std::endl
+          << SOURCE_DIR "/../data/8_NaCl_atom.data"           << std::endl
+          << "  set Pair global coefficients = .001"          << std::endl
+          << "end" << std::endl
           << "subsection Configure QC"                        << std::endl
-          << "  set Ghost cell layer thickness = 16.1"        << std::endl
-          << "  set Cluster radius = 4.0"                     << std::endl
+          << "  set Cluster radius = 1.99"                    << std::endl
+          << "  set Cluster weights by type = Cell"           << std::endl
           << "end"                                            << std::endl;
-
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());
@@ -88,8 +91,10 @@ int main (int argc, char **argv)
 
       ConfigureQC config( prm_stream );
 
-      TestAtomHandler<3> problem (config);
+      TestCellMoleculeTools<3> problem (config);
       problem.run();
+
+      std::cout << "OK" << std::endl;
 
     }
   catch (std::exception &exc)

@@ -4,23 +4,27 @@
 #include <deal.II/distributed/shared_tria.h>
 #include <deal.II/grid/grid_generator.h>
 
-#include <deal.II-qc/atom/atom_handler.h>
+#include <deal.II-qc/atom/cell_molecule_tools.h>
+#include <deal.II-qc/atom/molecule_handler.h>
 #include <deal.II-qc/configure/configure_qc.h>
 
 using namespace dealii;
 using namespace dealiiqc;
 
-// Short test to check parse_atoms_and_assign_to_cells() function of AtomHandler
-// doesn't throw any errors.
+
+
+// Short test to check MoleculeHandler::get_neighbor_lists() function.
+// All atoms are interacting with each other.
+
+
 
 template<int dim>
-class TestAtomHandler : public AtomHandler<dim>
+class TestMoleculeHandler
 {
 public:
 
-  TestAtomHandler(const ConfigureQC &config)
+  TestMoleculeHandler(const ConfigureQC &config)
     :
-    AtomHandler<dim>( config),
     config(config),
     triangulation (MPI_COMM_WORLD,
                    // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
@@ -32,15 +36,24 @@ public:
   {
     GridGenerator::hyper_cube( triangulation, 0., 16., true );
     triangulation.refine_global (3);
-    AtomHandler<dim>::parse_atoms_and_assign_to_cells (dof_handler,
-                                                       atom_data);
-    atom_data.cell_energy_molecules =
+
+    cell_molecule_data =
+      CellMoleculeTools::
+      build_cell_molecule_data<dim> (*config.get_stream(),
+                                     dof_handler,
+                                     config.get_ghost_cell_layer_thickness());
+
+    cell_molecule_data.cell_energy_molecules =
       config.get_cluster_weights<dim>()->
       update_cluster_weights (dof_handler,
-                              atom_data.cell_molecules);
+                              cell_molecule_data.cell_molecules);
+
+    MoleculeHandler<dim> molecule_handler(config);
+
     auto neighbor_lists =
-      AtomHandler<dim>::get_neighbor_lists( atom_data.cell_energy_molecules);
-    for ( auto entry : neighbor_lists)
+        molecule_handler.get_neighbor_lists (cell_molecule_data.cell_energy_molecules);
+
+    for (const auto &entry : neighbor_lists)
       std::cout << "Atom I: "  << entry.second.first->second.atoms[0].global_index << " "
                 << "Atom J: "  << entry.second.second->second.atoms[0].global_index << std::endl;
     std::cout << std::endl;
@@ -50,7 +63,7 @@ private:
   const ConfigureQC &config;
   parallel::shared::Triangulation<dim> triangulation;
   DoFHandler<dim>      dof_handler;
-  AtomData<dim> atom_data;
+  CellMoleculeData<dim> cell_molecule_data;
 
 };
 
@@ -70,6 +83,7 @@ int main (int argc, char **argv)
           << "subsection Configure QC"                        << std::endl
           << "  set Ghost cell layer thickness = 16.1"        << std::endl
           << "  set Cluster radius = 4.0"                     << std::endl
+          << "  set Cluster weights by type = Cell"           << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section" << std::endl
           << "LAMMPS Description"        << std::endl << std::endl
@@ -92,7 +106,7 @@ int main (int argc, char **argv)
 
       ConfigureQC config( prm_stream );
 
-      TestAtomHandler<3> problem (config);
+      TestMoleculeHandler<3> problem (config);
       problem.run();
 
     }

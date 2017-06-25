@@ -117,7 +117,7 @@ int main (int argc, char **argv)
           << "subsection Configure QC"                        << std::endl
           << "  set Ghost cell layer thickness = 1.9"         << std::endl
           << "  set Cluster radius = 1.1"                     << std::endl
-          << "  set Cluster weights by type = Cell"         << std::endl
+          << "  set Cluster weights by type = Cell"           << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section" << std::endl
           << "LAMMPS Description"        << std::endl         << std::endl
