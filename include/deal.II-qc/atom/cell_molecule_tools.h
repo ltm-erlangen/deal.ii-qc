@@ -1,6 +1,6 @@
 
-#ifndef __dealii_qc_atom_cell_atom_tools_h
-#define __dealii_qc_atom_cell_atom_tools_h
+#ifndef __dealii_qc_atom_cell_molecule_tools_h
+#define __dealii_qc_atom_cell_molecule_tools_h
 
 
 
@@ -17,9 +17,9 @@ namespace dealiiqc
   {
 
     /**
-     * Return a pair of range of constant iterators to
-     * CellAtomContainerType object @p atoms and the number of atoms of @p atoms
-     * in a given @p cell
+     * Return a pair of range of constant iterators to CellMoleculeContainerType
+     * object of atoms @p cell_molecules and the number of atoms of @p atoms in
+     * a given @p cell.
      *
      * If no molecules are in the queried cell then the function return the
      * pair of (pair of) end iterators and zero. If @p cell_molecules is an
@@ -33,8 +33,9 @@ namespace dealiiqc
     ,
     unsigned int
     >
-    molecules_range_in_cell (const types::CellIteratorType<dim, spacedim> &cell,
-                             const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules);
+    molecules_range_in_cell
+    (const types::CellIteratorType<dim, spacedim>                     &cell,
+     const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules);
 
     /**
      * Return the number of molecules in @p cell_energy_molecules, associated to @p cell,
@@ -42,8 +43,9 @@ namespace dealiiqc
      */
     template<int dim, int atomicity=1, int spacedim=dim>
     unsigned int
-    n_cluster_molecules_in_cell (const types::CellIteratorType<dim, spacedim> &cell,
-                                 const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_energy_molecules);
+    n_cluster_molecules_in_cell
+    (const types::CellIteratorType<dim, spacedim>                     &cell,
+     const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_energy_molecules);
 
     /**
      * Prepare and return a CellMoleculeData object based on the given @p mesh
@@ -90,4 +92,4 @@ namespace dealiiqc
 
 } // namespace dealiiqc
 
-#endif /* __dealii_qc_atom_cell_atom_tools_h */
+#endif /* __dealii_qc_atom_cell_molecule_tools_h */
