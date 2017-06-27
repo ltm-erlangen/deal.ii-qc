@@ -262,6 +262,9 @@ namespace dealiiqc
 
         i_molecule = static_cast<types::global_atom_index>(i_molecule_index) - 1;
 
+        // Set molecule global id
+        molecules[i_molecule].global_index = i_molecule;
+
         // Add atom to the molecule.
         molecules[i_molecule].atoms[n_atoms_added_per_molecule[i_molecule]] =
           temporary_atom;
