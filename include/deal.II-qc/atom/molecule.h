@@ -18,6 +18,11 @@ namespace dealiiqc
   {
 
     /**
+     * Molecule's global index in the atomistic system.
+     */
+    types::global_molecule_index global_index;
+
+    /**
      * A list of atoms that constitute this molecule. The size of the list is
      * equal to the atomicity of the molecule. Each atom in the molecule
      * is given a different stamp and therefore the order of atoms is important
@@ -57,7 +62,7 @@ namespace dealiiqc
 
 
 
-  // TODO: Move this function to a different place?
+  // TODO: Move the following functions to a different place?
   /**
    * Return the initial location of @p molecule. The initial location is
    * nothing but its location in the Lagrangian (undeformed) configuration of
@@ -82,6 +87,33 @@ namespace dealiiqc
 #endif
 
     return molecule.atoms[0].initial_position;
+  }
+
+
+
+  /**
+   * Return the least distance squared between atoms of @p molecule_A and
+   * @p molecule_B.
+   */
+  template<int spacedim, int atomicity>
+  inline
+  double
+  least_distance_squared (const Molecule<spacedim, atomicity> &molecule_A,
+                          const Molecule<spacedim, atomicity> &molecule_B)
+  {
+    double squared_distance = std::numeric_limits<double>::max();
+
+    for (const auto &atom_A : molecule_A.atoms)
+      for (const auto &atom_B : molecule_B.atoms)
+        {
+          const double tmp_squared_distance =
+            atom_A.position.distance_square(atom_B.position);
+
+          if (tmp_squared_distance < squared_distance)
+            squared_distance = tmp_squared_distance;
+        }
+
+    return squared_distance;
   }
 
 

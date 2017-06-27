@@ -56,6 +56,7 @@
 
 namespace dealiiqc
 {
+
   /**
    * Custom types used inside dealiiqc.
    */
@@ -68,6 +69,11 @@ namespace dealiiqc
      * The data type always indicates an unsigned integer type.
      */
     typedef  dealii::types::global_dof_index global_atom_index;
+
+    /**
+     * The type used for global indices of molecules.
+     */
+    typedef  global_atom_index global_molecule_index;
 
     // TODO: Use of correct charge units; Use charge_t for book keeping.
     /**
@@ -146,8 +152,9 @@ namespace dealiiqc
     {
       // Throw exception if the given cell is is not in a valid
       // cell iterator state.
-      AssertThrow( cell->state() == IteratorState::valid,
-                   ExcMessage( "The given cell iterator is not in a valid iterator state"));
+      AssertThrow (cell->state() == IteratorState::valid,
+                   ExcMessage ("The given cell iterator is not in a "
+                               "valid iterator state"));
 
       // Assume the first vertex is the closest at first.
       double squared_distance = p.distance_square(cell->vertex(0));
@@ -169,8 +176,8 @@ namespace dealiiqc
 
 
     /**
-     * Utility function that returns true if a point @p p is outside a bounding box.
-     * The box is specified by two points @p minp and @p maxp (the order of
+     * Utility function that returns true if a point @p p is outside a bounding
+     * box. The box is specified by two points @p minp and @p maxp (the order of
      * specifying points is important).
      */
     template<int dim>
@@ -199,17 +206,20 @@ namespace dealiiqc
      * The input string can end without specifying any delimiters (possibly
      * followed by an arbitrary amount of whitespace). For example,
      * @code
-     *   Utilities::split_list_of_string_lists("abc, def; ghi; j, k, l; ", ';', ',');
+     *   Utilities::split_list_of_string_lists
+     *   ("abc, def; ghi; j, k, l; ", ';', ',');
      * @endcode
      * yields the same 3-element list of sub-lists output
      * <code>{ {"abc", "def"},{"ghi"}, {"j", "k", "l"}}</code>
      * as you would get if the input had been
      * @code
-     *   Utilities::split_list_of_string_lists("abc, def; ghi; j, k, l", ';', ',');
+     *   Utilities::split_list_of_string_lists
+     *   ("abc, def; ghi; j, k, l", ';', ',');
      * @endcode
      * or
      * @code
-     *   Utilities::split_list_of_string_lists("abc, def; ghi; j, k, l;", ';', ',');
+     *   Utilities::split_list_of_string_lists
+     *   ("abc, def; ghi; j, k, l;", ';', ',');
      * @endcode
      */
     inline
