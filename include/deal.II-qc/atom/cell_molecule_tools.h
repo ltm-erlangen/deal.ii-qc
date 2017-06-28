@@ -3,12 +3,11 @@
 #define __dealii_qc_atom_cell_molecule_tools_h
 
 
-
 #include<deal.II-qc/atom/cell_molecule_data.h>
+
 
 namespace dealiiqc
 {
-
 
   /**
    * A namespace for cell based data structures' utility functions.
@@ -85,6 +84,20 @@ namespace dealiiqc
     build_cell_molecule_data (std::istream                         &is,
                               const types::MeshType<dim, spacedim> &mesh,
                               double          ghost_cell_layer_thickness);
+
+    /**
+     * Return the set of global DoF indices of the locally relevant DoFs on the
+     * current MPI process. The set of locally relevant DoF indices is the union
+     * of all the DoF indices enumerated on the @ref LocallyRelevantCells
+     * "locally relevant cells" i.e., the union of
+     * DoFHandler::locally_owned_dofs() and the DoF indices on all locally
+     * relevant ghost cells.
+     */
+    template <int dim, int atomicity, int spacedim>
+    IndexSet
+    extract_locally_relevant_dofs
+    (const types::MeshType<dim, spacedim>                             &dof_handler,
+     const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules);
 
 
   } // namespace CellMoleculeTools
