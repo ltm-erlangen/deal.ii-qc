@@ -5,7 +5,6 @@
 #include <deal.II-qc/atom/parse_atom_data.h>
 
 
-
 namespace dealiiqc
 {
 
@@ -237,6 +236,47 @@ namespace dealiiqc
     }
 
 
+
+    template <int dim, int atomicity, int spacedim>
+    IndexSet
+    extract_locally_relevant_dofs
+    (const dealii::DoFHandler<dim, spacedim>                          &dof_handler,
+     const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules)
+    {
+      // Prepare dof index set in this container.
+      IndexSet dof_set = dof_handler.locally_owned_dofs();
+
+      // Note: The logic here is similar to that of
+      // DoFTools::extract_locally_relevant_dofs().
+      std::vector<dealii::types::global_dof_index> dof_indices;
+      std::vector<dealii::types::global_dof_index> dofs_on_ghosts;
+
+      // Loop over unique locally relevant cells.
+      for (types::CellMoleculeConstIteratorType<dim, atomicity, spacedim>
+           unique_key  = cell_molecules.cbegin();
+           unique_key != cell_molecules.cend();
+           unique_key  = cell_molecules.upper_bound(unique_key->first))
+        {
+          const auto &cell = unique_key->first;
+
+          dof_indices.resize(cell->get_fe().dofs_per_cell);
+          cell->get_dof_indices(dof_indices);
+          for (unsigned int i=0; i<dof_indices.size(); ++i)
+            if (!dof_set.is_element(dof_indices[i]))
+              dofs_on_ghosts.push_back(dof_indices[i]);
+        }
+
+      // Sort, fill into index set and compress out duplicates.
+      std::sort(dofs_on_ghosts.begin(), dofs_on_ghosts.end());
+      dof_set.add_indices (dofs_on_ghosts.begin(),
+                           std::unique (dofs_on_ghosts.begin(),
+                                        dofs_on_ghosts.end()));
+      dof_set.compress();
+
+      return dof_set;
+    }
+
+
 #define SINGLE_CELL_MOLECULE_TOOLS_INSTANTIATION(DIM, ATOMICITY, SPACEDIM) \
   \
   template                                                                 \
@@ -255,7 +295,13 @@ namespace dealiiqc
   CellMoleculeData<DIM, ATOMICITY, SPACEDIM>                             \
   build_cell_molecule_data (std::istream                         &,      \
                             const types::MeshType<DIM, SPACEDIM> &,      \
-                            double                               );
+                            double                               );      \
+  \
+  template                                                               \
+  IndexSet                                                               \
+  extract_locally_relevant_dofs<DIM, ATOMICITY, SPACEDIM>                \
+  (const types::MeshType<DIM, SPACEDIM>                             &,   \
+   const types::CellMoleculeContainerType<DIM, ATOMICITY, SPACEDIM> &);
 
 #define CELL_MOLECULE_TOOLS(R, X)                       \
   BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,             \
