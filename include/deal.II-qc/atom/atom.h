@@ -5,48 +5,50 @@
 
 #include <deal.II-qc/utilities.h>
 
-namespace dealiiqc
+
+DEAL_II_QC_NAMESPACE_OPEN
+
+
+using namespace dealii;
+
+/**
+ * A class for atoms embedded in a <tt>spacedim</tt>-dimensional space.
+ *
+ * This class does not contain some more atom attributes such as charge and
+ * mass etc. This is because the number of different atom types in an
+ * atomistic system is far less than the number of atoms. The charges and
+ * masses of different atom types can be stored elsewhere in a central pool.
+ *
+ * A drude particles can be constructed using two Atom objects. One object for
+ * the charged core and another for the charged shell.
+ */
+template <int spacedim>
+struct Atom
 {
-  using namespace dealii;
 
   /**
-   * A class for atoms embedded in a <tt>spacedim</tt>-dimensional space.
-   *
-   * This class does not contain some more atom attributes such as charge and
-   * mass etc. This is because the number of different atom types in an
-   * atomistic system is far less than the number of atoms. The charges and
-   * masses of different atom types can be stored elsewhere in a central pool.
-   *
-   * A drude particles can be constructed using two Atom objects. One object for
-   * the charged core and another for the charged shell.
+   * Global atom index of this atom.
    */
-  template <int spacedim>
-  struct Atom
-  {
+  types::global_atom_index global_index;
 
-    /**
-     * Global atom index of this atom.
-     */
-    types::global_atom_index global_index;
+  /**
+   * Atom species type.
+   */
+  types::atom_type type;
 
-    /**
-     * Atom species type.
-     */
-    types::atom_type type;
+  /**
+   * Initial position of the atom in <tt>spacedim</tt>-dimensional space.
+   */
+  Point<spacedim> initial_position;
 
-    /**
-     * Initial position of the atom in <tt>spacedim</tt>-dimensional space.
-     */
-    Point<spacedim> initial_position;
+  /**
+   * Current position of the atom in <tt>spacedim</tt>-dimensional space.
+   */
+  Point<spacedim> position;
 
-    /**
-     * Current position of the atom in <tt>spacedim</tt>-dimensional space.
-     */
-    Point<spacedim> position;
-
-  };
+};
 
 
-} // namespace dealiiqc
+DEAL_II_QC_NAMESPACE_CLOSE
 
 #endif // __dealii_qc_atom_h
