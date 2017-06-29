@@ -29,8 +29,11 @@ int main (int argc, char **argv)
 {
   try
     {
-      dealii::Utilities::MPI::MPI_InitFinalize mpi_initialization (argc, argv,
-                                                                   dealii::numbers::invalid_unsigned_int);
+      dealii::Utilities::MPI::MPI_InitFinalize
+      mpi_initialization (argc,
+                          argv,
+                          dealii::numbers::invalid_unsigned_int);
+
       std::ostringstream oss;
       oss
           << "set Dimension = 3"                              << std::endl

@@ -4,7 +4,7 @@
 
 #include <deal.II/base/data_out_base.h>
 
-#include <deal.II-qc/atom/atom_handler.h>
+#include <deal.II-qc/atom/molecule_handler.h>
 
 
 namespace dealiiqc
@@ -14,14 +14,14 @@ namespace dealiiqc
   /**
    * A class to write atom data into output streams.
    */
-  template< int dim>
+  template <int dim>
   class DataOutAtomData
   {
   public:
 
     /**
      * Write out into ostream @p out the atom data contained in
-     * @p cell_atom_container in the XML vtp format.
+     * @p cell_molcules in the XML vtp format.
      *
      * The function writes out atoms as Points in the vtp format.
      * All the atom attributes are appended to the vtk file as Scalars
@@ -31,16 +31,16 @@ namespace dealiiqc
      * associated to it's locally owned cells. In doing so, each
      * process writes out disjoint sets of atom data.
      */
-    void write_vtp ( const types::CellAtomContainerType<dim> &cell_atom_container,
-                     const dealii::DataOutBase::VtkFlags &flags,
-                     std::ostream &out);
+    void write_vtp (const types::CellMoleculeContainerType<dim> &cell_molecules,
+                    const dealii::DataOutBase::VtkFlags &flags,
+                    std::ostream &out);
 
     /**
      * Write a pvtp file in order to tell Paraview to group together multiple
      * vtp files that each describe a portion of the data
      * to parallelize visualization.
      */
-    void write_pvtp_record( const std::vector<std::string> &vtp_file_names,
+    void write_pvtp_record (const std::vector<std::string> &vtp_file_names,
                             const dealii::DataOutBase::VtkFlags &flags,
                             std::ostream &out);
 

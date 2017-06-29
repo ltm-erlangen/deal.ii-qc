@@ -42,7 +42,7 @@ void Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
 
   QC<dim, PotentialType>::pcout
       << "The number of energy atoms in the system: "
-      << QC<dim, PotentialType>::atom_data.cell_energy_molecules.size()
+      << QC<dim, PotentialType>::cell_molecule_data.cell_energy_molecules.size()
       << std::endl;
 
   QC<dim, PotentialType>::pcout << "Neighbor lists: " << std::endl;
@@ -67,8 +67,10 @@ int main (int argc, char *argv[])
 {
   try
     {
-      dealii::Utilities::MPI::MPI_InitFinalize mpi_initialization (argc, argv,
-                                                                   dealii::numbers::invalid_unsigned_int);
+      dealii::Utilities::MPI::MPI_InitFinalize
+      mpi_initialization (argc,
+                          argv,
+                          dealii::numbers::invalid_unsigned_int);
 
       // Allow the restriction that user must provide Dimension of the problem
       const unsigned int dim = 3;

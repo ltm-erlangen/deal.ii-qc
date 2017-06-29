@@ -8,7 +8,8 @@
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_out.h>
 
-#include <deal.II-qc/atom/atom_handler.h>
+#include <deal.II-qc/atom/cell_molecule_tools.h>
+#include <deal.II-qc/atom/molecule_handler.h>
 #include <deal.II-qc/atom/sampling/cluster_weights_by_cell.h>
 
 using namespace dealii;
@@ -27,13 +28,12 @@ using namespace dealiiqc;
 //
 
 template<int dim>
-class TestAtomHandler : public AtomHandler<dim>
+class Test
 {
 public:
 
-  TestAtomHandler(const ConfigureQC &config)
+  Test(const ConfigureQC &config)
     :
-    AtomHandler<dim>( config),
     config(config),
     triangulation (MPI_COMM_WORLD,
                    // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
@@ -63,14 +63,21 @@ public:
                                                p2,
                                                true );
 
-    AtomHandler<dim>::parse_atoms_and_assign_to_cells( dof_handler, atom_data);
+    cell_molecule_data =
+      CellMoleculeTools::
+      build_cell_molecule_data<dim> (*config.get_stream(),
+                                     dof_handler,
+                                     config.get_ghost_cell_layer_thickness());
+
     const Cluster::WeightsByLumpedVertex<dim>
     weights_by_lumped_vertex (config.get_cluster_radius(),
                               config.get_maximum_cutoff_radius());
 
-    atom_data.cell_energy_molecules =
+    const auto &cell_molecules = cell_molecule_data.cell_molecules;
+
+    cell_molecule_data.cell_energy_molecules =
       weights_by_lumped_vertex.update_cluster_weights (dof_handler,
-                                                       atom_data.cell_molecules);
+                                                       cell_molecules);
 
     unsigned int this_mpi_process =
       dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
@@ -78,11 +85,11 @@ public:
     dealii::ConditionalOStream pcout (std::cout,
                                       this_mpi_process == 0);
 
-    for ( const auto &cell_atom : atom_data.cell_energy_molecules )
+    for ( const auto &cell_molecule : cell_molecule_data.cell_energy_molecules )
       if (this_mpi_process==0)
-        pcout << "Atom: " << cell_atom.second.atoms[0].position << " : "
+        pcout << "Atom: " << cell_molecule.second.atoms[0].position << " : "
               << "Cluster_Weight: "
-              << cell_atom.second.cluster_weight << std::endl;
+              << cell_molecule.second.cluster_weight << std::endl;
   }
 
 private:
@@ -90,8 +97,7 @@ private:
   parallel::shared::Triangulation<dim> triangulation;
   DoFHandler<dim>      dof_handler;
   MPI_Comm mpi_communicator;
-  AtomData<dim> atom_data;
-
+  CellMoleculeData<dim> cell_molecule_data;
 };
 
 
@@ -127,7 +133,7 @@ int main (int argc, char **argv)
 
       ConfigureQC config( prm_stream );
 
-      TestAtomHandler<3> problem (config);
+      Test<3> problem (config);
       problem.run();
     }
   catch (std::exception &exc)

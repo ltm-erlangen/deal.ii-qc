@@ -51,7 +51,7 @@ public:
     MoleculeHandler<dim> molecule_handler(config);
 
     auto neighbor_lists =
-        molecule_handler.get_neighbor_lists (cell_molecule_data.cell_energy_molecules);
+      molecule_handler.get_neighbor_lists (cell_molecule_data.cell_energy_molecules);
 
     for (const auto &entry : neighbor_lists)
       std::cout << "Atom I: "  << entry.second.first->second.atoms[0].global_index << " "

@@ -7,7 +7,7 @@
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/dofs/dof_tools.h>
 
-#include <deal.II-qc/atom/cell_atom_tools.h>
+#include <deal.II-qc/atom/cell_molecule_tools.h>
 #include <deal.II-qc/core/qc.h>
 
 namespace dealiiqc
@@ -38,7 +38,7 @@ namespace dealiiqc
     fe (FE_Q<dim>(1),dim),
     u_fe (0),
     dof_handler (triangulation),
-    atom_handler (configure_qc),
+    molecule_handler (configure_qc),
     computing_timer (mpi_communicator,
                      pcout,
                      TimerOutput::never,
@@ -93,13 +93,32 @@ namespace dealiiqc
   {
     TimerOutput::Scope t (computing_timer, "Parse and assign all atoms to cells");
 
-    atom_handler.parse_atoms_and_assign_to_cells (dof_handler, atom_data);
+    if (!(configure_qc.get_atom_data_file()).empty() )
+      {
+        const std::string atom_data_file = configure_qc.get_atom_data_file();
+        std::fstream fin(atom_data_file, std::fstream::in );
+        cell_molecule_data =
+          CellMoleculeTools::build_cell_molecule_data<dim>
+          (fin,
+           dof_handler,
+           configure_qc.get_ghost_cell_layer_thickness());
+      }
+    else if ( !(* configure_qc.get_stream()).eof() )
+      cell_molecule_data =
+        CellMoleculeTools::build_cell_molecule_data<dim>
+        (*configure_qc.get_stream(),
+         dof_handler,
+         configure_qc.get_ghost_cell_layer_thickness());
+    else
+      AssertThrow(false,
+                  ExcMessage("Atom data was not provided neither as an auxiliary "
+                             "data file nor at the end of the parameter file!"));
 
     // It is ConfigureQC that actually creates a PotentialType object according
     // to the parsed input and can return a shared pointer to the PotentialType
     // object. However, charges in PotentialType object aren't set yet.
     // Finish setting up PotentialType object here.
-    configure_qc.get_potential()->set_charges(atom_data.charges);
+    configure_qc.get_potential()->set_charges(cell_molecule_data.charges);
   }
 
   template <int dim, typename PotentialType>
@@ -109,10 +128,10 @@ namespace dealiiqc
 
     // It is ConfigureQC that actually creates a shared pointer to the derived
     // class object of the Cluster::WeightsByBase according to the parsed input.
-    atom_data.cell_energy_molecules =
+    cell_molecule_data.cell_energy_molecules =
       configure_qc.get_cluster_weights<dim>()->
       update_cluster_weights (dof_handler,
-                              atom_data.cell_molecules);
+                              cell_molecule_data.cell_molecules);
   }
 
 
@@ -175,7 +194,7 @@ namespace dealiiqc
     //        Initializing it with all the cells is perhaps not necessary.
     // Initialize cells_to_data with all the cells in energy_atoms
     auto &energy_atoms = atom_data.energy_atoms;
-    types::CellAtomConstIteratorType<dim> unique_key;
+    types::CellMoleculeConstIteratorType<dim> unique_key;
     for (unique_key  = energy_atoms.cbegin();
          unique_key != energy_atoms.cend();
          unique_key  = energy_atoms.upper_bound(unique_key->first))
@@ -200,7 +219,7 @@ namespace dealiiqc
 
     // Get a non-constant reference to energy atoms to update
     // local index (within a cell) of energy atoms.
-    auto &energy_atoms = atom_data.cell_energy_molecules;
+    auto &energy_atoms = cell_molecule_data.cell_energy_molecules;
 
     // FIXME: Loop only over cells in energy_atoms
     for (types::CellIteratorType<dim> cell = dof_handler.begin_active(); cell != dof_handler.end(); ++cell)
@@ -211,8 +230,8 @@ namespace dealiiqc
         // at the location of energy_atoms in the active cell.
 
         const auto energy_atoms_range =
-          CellAtomTools::atoms_range_in_cell (cell,
-                                              energy_atoms);
+          CellMoleculeTools::molecules_range_in_cell<dim> (cell,
+                                                           energy_atoms);
 
         const unsigned int n_energy_atoms_in_cell = energy_atoms_range.second;
 
@@ -235,7 +254,7 @@ namespace dealiiqc
         // but erase would return a non-const iterator.
         // This is not exactly a hack as we are using how erase on containers
         // must behave. Also, this is a constant time operation.
-        types::CellAtomIteratorType<dim>
+        types::CellMoleculeIteratorType<dim>
         cell_atom_iterator = energy_atoms.erase(energy_atoms_range.first.first,
                                                 energy_atoms_range.first.first);
 
@@ -300,8 +319,8 @@ namespace dealiiqc
                                                                    it->second.displacements);
         const auto &displacements = it->second.displacements;
 
-        std::pair<types::CellAtomIteratorType<dim>, types::CellAtomIteratorType<dim> >
-        cell_atom_range = atom_data.cell_energy_molecules.equal_range(cell);
+        std::pair<types::CellMoleculeIteratorType<dim>, types::CellMoleculeIteratorType<dim> >
+        cell_atom_range = cell_molecule_data.cell_energy_molecules.equal_range(cell);
 
         // update energy atoms positions
         // TODO: write test to check if positions are updated correctly.
@@ -329,7 +348,7 @@ namespace dealiiqc
     // TODO: Update neighbor lists
     // if( (iter_count % neigh_modify_delay)==0 || (max_abs_displacement > neigh_skin)   )
     //   update_neighbour_lists();
-    neighbor_lists = atom_handler.get_neighbor_lists(atom_data.cell_energy_molecules);
+    neighbor_lists = molecule_handler.get_neighbor_lists(cell_molecule_data.cell_energy_molecules);
   }
 
 
@@ -372,7 +391,7 @@ namespace dealiiqc
         &cell_I  = cell_pair_cell_atom_pair.first.first,
          &cell_J = cell_pair_cell_atom_pair.first.second;
 
-        const types::CellAtomConstIteratorType<dim>
+        const types::CellMoleculeConstIteratorType<dim>
         &cell_atom_I  = cell_pair_cell_atom_pair.second.first,
          &cell_atom_J = cell_pair_cell_atom_pair.second.second;
 
