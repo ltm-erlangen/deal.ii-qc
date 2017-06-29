@@ -62,7 +62,7 @@ namespace CellMoleculeTools
 
 
 
-  template<int dim, int atomicity=1, int spacedim=dim>
+  template<int dim, int atomicity, int spacedim>
   unsigned int
   n_cluster_molecules_in_cell
   (const types::CellIteratorType<dim, spacedim> &cell,
