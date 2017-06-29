@@ -54,7 +54,7 @@ void Problem<dim, PotentialType>::partial_run(const ConfigureQC &config)
   QC<dim, PotentialType>::configure_qc = config;
   QC<dim, PotentialType>::setup_energy_atoms_with_cluster_weights();
 
-  const auto &energy_atoms =  QC<dim, PotentialType>::atom_data.cell_energy_molecules;
+  const auto &energy_atoms =  QC<dim, PotentialType>::cell_molecule_data.cell_energy_molecules;
 
   const double cluster_radius =
     QC<dim, PotentialType>::configure_qc.get_cluster_radius();

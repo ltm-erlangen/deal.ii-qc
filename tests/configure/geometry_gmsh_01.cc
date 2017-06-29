@@ -35,8 +35,11 @@ int main (int argc, char *argv[])
 {
   try
     {
-      dealii::Utilities::MPI::MPI_InitFinalize mpi_initialization (argc, argv,
-                                                                   dealii::numbers::invalid_unsigned_int);
+      dealii::Utilities::MPI::MPI_InitFinalize
+      mpi_initialization (argc,
+                          argv,
+                          dealii::numbers::invalid_unsigned_int);
+
       MPI_Comm mpi_communicator(MPI_COMM_WORLD);
       std::ostringstream oss;
       oss

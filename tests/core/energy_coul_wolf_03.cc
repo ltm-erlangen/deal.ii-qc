@@ -53,7 +53,7 @@ void Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
       if (p == this_mpi_process)
         std::cout << "Process: " << p
                   << " picked up : "
-                  << QC<dim, PotentialType>::atom_data.cell_energy_molecules.size()
+                  << QC<dim, PotentialType>::cell_molecule_data.cell_energy_molecules.size()
                   << " number of energy atoms."
                   << std::endl;
     }
