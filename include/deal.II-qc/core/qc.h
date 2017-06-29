@@ -27,7 +27,7 @@ namespace LA
 #endif
 }
 
-#include <deal.II-qc/atom/atom_handler.h>
+#include <deal.II-qc/atom/molecule_handler.h>
 #include <deal.II-qc/configure/configure_qc.h>
 #include <deal.II-qc/potentials/pair_lj_cut.h>
 #include <deal.II-qc/potentials/pair_coul_wolf.h>
@@ -293,19 +293,18 @@ namespace dealiiqc
      * Cell based atom data structures rely on the association between atoms
      * and mesh.
      */
-    AtomData<dim> atom_data;
+    CellMoleculeData<dim> cell_molecule_data;
 
     /**
      * AtomHandler object to manage the cell based atom data mainly through
      * initializing or updating atom_data.
      */
-    AtomHandler<dim> atom_handler;
+    MoleculeHandler<dim> molecule_handler;
 
     /**
      * Neighbor lists using cell approach.
      */
-    std::multimap<std::pair<types::ConstCellIteratorType<dim>, types::ConstCellIteratorType<dim>>, std::pair<types::CellAtomConstIteratorType<dim>, types::CellAtomConstIteratorType<dim>>>
-        neighbor_lists;
+    types::CellMoleculeNeighborLists<dim> neighbor_lists;
 
     /**
      * A time object

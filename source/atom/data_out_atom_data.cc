@@ -207,11 +207,12 @@ namespace dealiiqc
 
 
     template<int dim>
-    void write_vtp_main( const types::CellAtomContainerType<dim> &cell_atom_container,
-                         const DataOutBase::VtkFlags &flags,
-                         std::ostream &out)
+    void
+    write_vtp_main (const types::CellMoleculeContainerType<dim> &cell_molecules,
+                    const DataOutBase::VtkFlags &flags,
+                    std::ostream &out)
     {
-      AssertThrow( cell_atom_container.size() > 0,
+      AssertThrow (cell_molecules.size() > 0,
                    ExcMessage("No atom data to write"));
 
       DataOutBase::VtpStream vtp_out( out, flags);
@@ -222,8 +223,8 @@ namespace dealiiqc
       const char *ascii_or_binary = "ascii";
 #endif
       types::global_atom_index n_locally_owned_atoms =0;
-      for ( const auto &cell_atom : cell_atom_container)
-        if ( cell_atom.first->is_locally_owned() )
+      for ( const auto &cell_molecule : cell_molecules)
+        if ( cell_molecule.first->is_locally_owned() )
           n_locally_owned_atoms++;
 
       // FIXME: The number of atoms can be obtained by multiplying with
@@ -236,7 +237,7 @@ namespace dealiiqc
       // Fill Points: the number of components
       // is set to 3.
       // If dim < 3, fill other dimensions with 0s.
-      for ( const auto &cell_molecule : cell_atom_container)
+      for ( const auto &cell_molecule : cell_molecules)
         if ( cell_molecule.first->is_locally_owned() )
           for (const auto &atom : cell_molecule.second.atoms)
             vtp_out.write_point (atom.position);
@@ -250,7 +251,7 @@ namespace dealiiqc
           << "    <DataArray type=\"Float64\" Name= \"Cluster_Weights\" format=\""
           << ascii_or_binary << "\">\n";
 
-      for ( const auto &cell_atom : cell_atom_container)
+      for ( const auto &cell_atom : cell_molecules)
         if ( cell_atom.first->is_locally_owned() )
           vtp_out.write_scalar( cell_atom.second.cluster_weight);
 
@@ -267,17 +268,18 @@ namespace dealiiqc
 
   //----------------------------------------------------------------------//
   template<int dim>
-  void DataOutAtomData<dim>::write_vtp( const types::CellAtomContainerType<dim> &cell_atom_container,
-                                        const dealii::DataOutBase::VtkFlags &flags,
-                                        std::ostream &out)
+  void
+  DataOutAtomData<dim>::write_vtp (const types::CellMoleculeContainerType<dim> &cell_molecules,
+                                   const dealii::DataOutBase::VtkFlags &flags,
+                                   std::ostream &out)
   {
-    write_vtp_header( out, flags);
-    write_vtp_main<dim>( cell_atom_container, flags, out);
-    write_vtp_footer( out);
+    write_vtp_header (out, flags);
+    write_vtp_main<dim> (cell_molecules, flags, out);
+    write_vtp_footer (out);
   }
 
   template<int dim>
-  void DataOutAtomData<dim>::write_pvtp_record( const std::vector<std::string> &vtp_file_names,
+  void DataOutAtomData<dim>::write_pvtp_record (const std::vector<std::string> &vtp_file_names,
                                                 const dealii::DataOutBase::VtkFlags &flags,
                                                 std::ostream &out)
   {
