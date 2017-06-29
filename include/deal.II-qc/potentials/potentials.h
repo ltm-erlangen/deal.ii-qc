@@ -6,56 +6,59 @@
 
 #include <deal.II-qc/utilities.h>
 
-namespace dealiiqc
+
+DEAL_II_QC_NAMESPACE_OPEN
+
+
+/**
+ * A namespace to define all interaction potentials of the atomistic
+ * system and related data members.
+ */
+namespace Potential
 {
 
   /**
-   * A namespace to define all interaction potentials of the atomistic
-   * system and related data members.
+   * An enumeration of all the pair potentials implemented in
+   * Potentials namespace.
    */
-  namespace Potential
+  enum InteractionTypes
   {
+    /**
+     * Truncated Lenard-Jones contribution to the potential
+     * (see, for example, PairLJCutManager class).
+     */
+    LJ = 0,
 
     /**
-     * An enumeration of all the pair potentials implemented in
-     * Potentials namespace.
+     * Coulomb pair potential computed using Wolf summation method.
+     * (see PairCoulWolfManager class).
      */
-    enum InteractionTypes
-    {
-      /**
-       * Truncated Lenard-Jones contribution to the potential
-       * (see, for example, PairLJCutManager class).
-       */
-      LJ = 0,
+    Coul_Wolf=1
 
-      /**
-       * Coulomb pair potential computed using Wolf summation method.
-       * (see PairCoulWolfManager class).
-       */
-      Coul_Wolf=1
-
-    };
+  };
 
 
-    /**
-     * Return a pair of atom type such that the first element is less than
-     * or equal to that of the second element given the two atom types
-     * @p i_atom_type and @p j_atom_type.
-     */
-    inline
-    std::pair<types::atom_type, types::atom_type>
-    get_pair (const types::atom_type i_atom_type,
-              const types::atom_type j_atom_type)
-    {
-      return ( i_atom_type <= j_atom_type)
-             ?
-             std::make_pair( i_atom_type, j_atom_type)
-             :
-             std::make_pair( j_atom_type, i_atom_type);
-    }
+  /**
+   * Return a pair of atom type such that the first element is less than
+   * or equal to that of the second element given the two atom types
+   * @p i_atom_type and @p j_atom_type.
+   */
+  inline
+  std::pair<types::atom_type, types::atom_type>
+  get_pair (const types::atom_type i_atom_type,
+            const types::atom_type j_atom_type)
+  {
+    return ( i_atom_type <= j_atom_type)
+           ?
+           std::make_pair( i_atom_type, j_atom_type)
+           :
+           std::make_pair( j_atom_type, i_atom_type);
+  }
 
-  } // namespace Potential
+} // namespace Potential
 
-} // dealiiqc
+
+DEAL_II_QC_NAMESPACE_CLOSE
+
 
 #endif /* __dealii_qc_potentials_h */

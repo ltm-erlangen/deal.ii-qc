@@ -7,49 +7,52 @@
 
 #include <deal.II-qc/configure/geometry/geometry_base.h>
 
-namespace dealiiqc
+
+DEAL_II_QC_NAMESPACE_OPEN
+
+
+namespace Geometry
 {
-
-  namespace Geometry
+  /**
+   * Geometry defined by a box.
+   */
+  template <int dim>
+  class Box : public Base<dim>
   {
+  public:
+
+    Box ();
+
+    virtual ~Box ();
+
+    virtual void create_mesh (dealii::parallel::shared::Triangulation<dim> &tria) const;
+
+    virtual void parse_parameters (ParameterHandler &prm);
+
+    static void declare_parameters (ParameterHandler &prm);
+
+  private:
+
     /**
-     * Geometry defined by a box.
+     * Extent of the box in x-, y-, and z-direction (in 3d).
      */
-    template <int dim>
-    class Box : public Base<dim>
-    {
-    public:
+    Point<dim> extents;
 
-      Box ();
+    /**
+     * Center of the box in x, y, and z (in 3d) coordinates.
+     */
+    Point<dim> center;
 
-      virtual ~Box ();
+    /**
+     * The number of cells in each coordinate direction
+     */
+    unsigned int repetitions[dim];
+  };
 
-      virtual void create_mesh (dealii::parallel::shared::Triangulation<dim> &tria) const;
+} // namespace Geometry
 
-      virtual void parse_parameters (ParameterHandler &prm);
 
-      static void declare_parameters (ParameterHandler &prm);
+DEAL_II_QC_NAMESPACE_CLOSE
 
-    private:
-
-      /**
-       * Extent of the box in x-, y-, and z-direction (in 3d).
-       */
-      Point<dim> extents;
-
-      /**
-       * Center of the box in x, y, and z (in 3d) coordinates.
-       */
-      Point<dim> center;
-
-      /**
-       * The number of cells in each coordinate direction
-       */
-      unsigned int repetitions[dim];
-    };
-
-  } // namespace Geometry
-
-} // namespace dealiiqc
 
 #endif /* __dealii_qc_geometry_box_h */

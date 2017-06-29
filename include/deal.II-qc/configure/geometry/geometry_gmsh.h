@@ -6,41 +6,45 @@
 
 #include <deal.II-qc/configure/geometry/geometry_base.h>
 
-namespace dealiiqc
+
+DEAL_II_QC_NAMESPACE_OPEN
+
+
+using namespace dealii;
+
+namespace Geometry
 {
-  using namespace dealii;
-
-  namespace Geometry
+  /**
+   * Geometry defined by a Gmsh input file.
+   */
+  template <int dim>
+  class Gmsh : public Base<dim>
   {
+  public:
+
+    Gmsh ();
+
+    virtual ~Gmsh ();
+
+    virtual void create_mesh (parallel::shared::Triangulation<dim> &tria) const;
+
+    virtual void parse_parameters (ParameterHandler &prm);
+
+    static void declare_parameters (ParameterHandler &prm);
+
+  private:
+
     /**
-     * Geometry defined by a Gmsh input file.
+     * Path to the mesh.
      */
-    template <int dim>
-    class Gmsh : public Base<dim>
-    {
-    public:
-
-      Gmsh ();
-
-      virtual ~Gmsh ();
-
-      virtual void create_mesh (parallel::shared::Triangulation<dim> &tria) const;
-
-      virtual void parse_parameters (ParameterHandler &prm);
-
-      static void declare_parameters (ParameterHandler &prm);
-
-    private:
-
-      /**
-       * Path to the mesh.
-       */
-      std::string mesh_file;
-    };
+    std::string mesh_file;
+  };
 
 
-  } // namesapce Geometry
+} // namesapce Geometry
 
-} //namespace dealiiqc
+
+DEAL_II_QC_NAMESPACE_CLOSE
+
 
 #endif /* __dealii_qc_geometry_gmsh_h */
