@@ -77,6 +77,7 @@ void Problem<dim, PotentialType>::partial_run()
     {
       // for 2 mpi core partition is different, output in the same order as
       // for serial version (using the Gnuplot output below)
+      // Note that gnuplot output is not sorted component-wise.
       std::vector<unsigned int> dof_map = {0,1,6,2,3,4,7,5,8,9,10,11};
       for (unsigned int i = 0; i < n_dofs; i+=dim)
         {
@@ -171,7 +172,6 @@ int main (int argc, char *argv[])
       ConfigureQC config( prm_stream );
 
       // Define Problem
-      // FIXME: PotentialType
       Problem<dim, Potential::PairCoulWolfManager> problem(config);
       problem.partial_run ();
 
@@ -202,33 +202,3 @@ int main (int argc, char *argv[])
 
   return 0;
 }
-
-
-
-/*
- Maxima input script for this test QC::calculate_energy_gradient()
-
-
- Algebraically defining shifted_energy;
- Verified the algebraic result with that from [Wolf et al 1999]
- Vishal Boddu 08.05.2017
-
- // actual code below
- <
- erfcc(r,alpha) := erfc(alpha*r)/r;
-
- derfcc(r,alpha) := diff( erfcc(r,alpha),r);
-
- derfcc_explicit(r,alpha) := -erfc(alpha*r)/r^2
-                             - 2*alpha*(%e^(-alpha^2*r^2))/(sqrt(%pi)*r);
-
- shifted_energy(p,q,r,rc,alpha) := 14.399645*p*q*( erfcc(r,alpha)
-                                   - limit( erfcc(r, alpha), r, rc)  );
-
- print("Energy : ");
-
- 3*at(shifted_energy(p,q,r,rc,alpha), [p=1.,q=-1.,r=.25,rc=1.25,alpha=0.25]) +
- 2*at(shifted_energy(p,q,r,rc,alpha), [p=1.,q= 1.,r=.50,rc=1.25,alpha=0.25]) +
-   at(shifted_energy(p,q,r,rc,alpha), [p=1.,q=-1.,r=.75,rc=1.25,alpha=0.25]);
- >
-*/

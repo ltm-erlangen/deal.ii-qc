@@ -249,9 +249,10 @@ protected:
              ExcMessage("use count: " + std::to_string(fe_values.use_count())));
     }
 
-    // FIXME: can we avoid doing using them completely and do things manually
+    // FIXME: can we avoid using FEValues completely and do things manually
     // like in Aspect's World<dim>::local_advect_particles()
     // https://github.com/geodynamics/aspect/blob/master/source/particle/world.cc#L1265
+    // Aspect's developers saw x2 speedup for their particles in this step
     /**
      * FEValues object to evaluate fields and shape function values at
      * quadrature points.

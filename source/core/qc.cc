@@ -478,9 +478,6 @@ double QC<dim, PotentialType>::calculate_energy_gradient (vector_t &gradient) co
           qJ = cell_atom_J->second.local_index;
 
           const double r = std::sqrt(r_square);
-
-          // TODO: Write test for update_energy_atoms_positions()
-          // TODO: Complete gradient computation.
           const double force_multiplier  = scale_energy * pair.second / r;
 
           // Finally, we evaluated local contribution to the gradient of
