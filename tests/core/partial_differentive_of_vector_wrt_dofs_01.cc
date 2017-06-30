@@ -29,7 +29,7 @@ using namespace dealii;
 
 template<int dim>
 using CellPointType =
-    std::pair<typename DoFHandler<dim>::active_cell_iterator, Point<dim>>;
+  std::pair<typename DoFHandler<dim>::active_cell_iterator, Point<dim>>;
 
 template<int dim>
 class Test
@@ -85,8 +85,8 @@ public:
 
     const CellPointType<dim> my_pair_1 =
       GridTools::find_active_cell_around_point (mapping,
-                                               dof_handler,
-                                               p1);
+                                                dof_handler,
+                                                p1);
 
     const CellPointType<dim> my_pair_2 =
       GridTools::find_active_cell_around_point (mapping,
@@ -135,10 +135,10 @@ public:
                   fe,
                   Quadrature<dim>(std::vector<Point<dim>> (1, {my_pair_1.second})),
                   update_values),
-      fe_value_b (mapping,
-                  fe,
-                  Quadrature<dim>(std::vector<Point<dim>> (1, {my_pair_2.second})),
-                  update_values);
+                  fe_value_b (mapping,
+                              fe,
+                              Quadrature<dim>(std::vector<Point<dim>> (1, {my_pair_2.second})),
+                              update_values);
 
       fe_value_a.reinit(my_pair_1.first);
       fe_value_b.reinit(my_pair_2.first);

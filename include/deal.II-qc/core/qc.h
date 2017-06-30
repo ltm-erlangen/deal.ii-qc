@@ -249,6 +249,10 @@ protected:
              ExcMessage("use count: " + std::to_string(fe_values.use_count())));
     }
 
+    // FIXME: can we avoid using FEValues completely and do things manually
+    // like in Aspect's World<dim>::local_advect_particles()
+    // https://github.com/geodynamics/aspect/blob/master/source/particle/world.cc#L1265
+    // Aspect's developers saw x2 speedup for their particles in this step
     /**
      * FEValues object to evaluate fields and shape function values at
      * quadrature points.
@@ -275,14 +279,6 @@ protected:
      * the energy atoms are stored in energy_atoms on a per cell basis.
      */
     mutable std::vector<Tensor<1,dim>> displacements;
-
-    /**
-     * A map for each cell to related global degree-of-freedom, to those
-     * defined on the cell. Essentially, the reverse of
-     * cell->get_dof_indices().
-     */
-    std::map<unsigned int, unsigned int> global_to_local_dof;
-
   };
 
   /**
