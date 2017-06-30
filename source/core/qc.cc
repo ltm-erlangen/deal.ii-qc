@@ -178,6 +178,9 @@ void QC<dim, PotentialType>::setup_system ()
   */
   constraints.close ();
 
+  gradient.reinit(dof_handler.locally_owned_dofs(), mpi_communicator);
+  gradient = 0.;
+
   displacement.reinit(dof_handler.locally_owned_dofs(), mpi_communicator);
   locally_relevant_displacement.reinit(locally_relevant_set, mpi_communicator);
 
@@ -290,13 +293,6 @@ void QC<dim, PotentialType>::setup_fe_values_objects ()
       data.fe_values->reinit(cell);
 
       data.displacements.resize(points.size());
-
-      // store global DoF -> local DoF map:
-      cell->get_dof_indices(local_dof_indices);
-
-      data.global_to_local_dof.clear();
-      for (unsigned int i = 0; i < local_dof_indices.size(); i++)
-        data.global_to_local_dof[local_dof_indices[i]] = i;
     }
 }
 
@@ -383,6 +379,12 @@ double QC<dim, PotentialType>::calculate_energy_gradient (vector_t &gradient) co
   cell_data_I = cells_to_data.begin(),
   cell_data_J = cells_to_data.begin();
 
+  local_gradient_I = 0.;
+  local_gradient_J = 0.;
+
+  cell_data_I->first->get_dof_indices (local_dof_indices_I);
+  cell_data_J->first->get_dof_indices (local_dof_indices_J);
+
   // TODO: parallelize using using TBB by looping over pairs of cells.
   // Rework neighbor list as std::map<std::pair<Cell,Cell>,....>
   for (const auto &cell_pair_cell_atom_pair : neighbor_lists)
@@ -444,20 +446,26 @@ double QC<dim, PotentialType>::calculate_energy_gradient (vector_t &gradient) co
           // the cell data and get dof indices.
           if (cell_data_I->first != cell_I)
             {
+              // FIXME: this is quite awkward, as we need to flash-out
+              // local contributions here
+              constraints.distribute_local_to_global(local_gradient_I,
+                                                     local_dof_indices_I,
+                                                     gradient);
+
               cell_data_I = cells_to_data.find(cell_I);
               cell_I->get_dof_indices (local_dof_indices_I);
               local_gradient_I = 0.;
             }
           if (cell_data_J->first != cell_J)
             {
+              constraints.distribute_local_to_global(local_gradient_J,
+                                                     local_dof_indices_J,
+                                                     gradient);
+
               cell_data_J = cells_to_data.find(cell_J);
               cell_J->get_dof_indices (local_dof_indices_J);
               local_gradient_J = 0.;
             }
-
-          // TODO: Write test for update_energy_atoms_positions()
-          // TODO: Complete gradient computation.
-          const double deriv  = scale_energy * pair.second;
 
           // Get quadrature point index from the local_index of atom pairs
           const unsigned int
@@ -466,40 +474,42 @@ double QC<dim, PotentialType>::calculate_energy_gradient (vector_t &gradient) co
 
           const double r = std::sqrt(r_square);
 
+          // TODO: Write test for update_energy_atoms_positions()
+          // TODO: Complete gradient computation.
+          const double force_multiplier  = scale_energy * pair.second / r;
+
           // Finally, we evaluated local contribution to the gradient of
-          // energy. Here we need to distinguish between two cases:
-          // 1. N_k(X_j) is non-zero on (possibly) neighboring cell
-          // 2. N_k(X_j) is zero, i.e. X_j does not belong to the support
-          // of N_k.
-          // Here k is the index of local shape function on the cell
-          // where atom I belongs.
-          // TODO: fix missing evaluation of forces on DoFs at cell J
+          // energy. The main ingredient in forces is
+          // r^{ab}_{,k} = n^{ab} * [N_k(X^a) - N_k(X^b)]
+          // where k is global dof. So for a given pair of atoms a and b,
+          // we can add force contributions from
+          // F(local_dofs(i)) +=  n^{ab}*N_{local_dof{i}}(X^a)
+          // F(local_dofs(j)) -=  n^{ab}*N_{local_dof{j}}(X^b)
+          // Below we utilize the fact that we work with primitive vector-valued
+          // shape functions which are non-zero at a single compoent only.
           for (unsigned int k = 0; k < dofs_per_cell; ++k)
             {
-              const auto k_neigh = cell_data_J->second.global_to_local_dof.find(local_dof_indices_I[k]);
-              if (k_neigh == cell_data_J->second.global_to_local_dof.end())
-                {
-                  local_gradient_I[k] += (deriv / r) * rIJ *
-                                         cell_data_I->second.fe_values->operator[](u_fe).value(k, qI);
-                }
-              else
-                {
-                  local_gradient_I[k] += (deriv / r) * rIJ *
-                                         (cell_data_I->second.fe_values->operator[](u_fe).value(k, qI) -
-                                          cell_data_J->second.fe_values->operator[](u_fe).value(k_neigh->second, qJ));
-                }
-            }
+              const unsigned int nonzero_comp = fe.system_to_component_index(k).first;
 
-          // FIXME: distribute local gradients to the RHS ONLY when cells change!!
-          constraints.distribute_local_to_global(local_gradient_I,
-                                                 local_dof_indices_I,
-                                                 gradient);
-          constraints.distribute_local_to_global(local_gradient_J,
-                                                 local_dof_indices_J,
-                                                 gradient);
+              local_gradient_I[k] += force_multiplier *
+                                     rIJ[nonzero_comp] *
+                                     cell_data_I->second.fe_values->shape_value(k, qI);
+
+              local_gradient_J[k] -= force_multiplier *
+                                     rIJ[nonzero_comp] *
+                                     cell_data_J->second.fe_values->shape_value(k, qJ);
+            }
         }
 
-    }
+    } // loop over neighbour lists
+
+  // Flush out contributions from the last pair of cells
+  constraints.distribute_local_to_global(local_gradient_I,
+                                         local_dof_indices_I,
+                                         gradient);
+  constraints.distribute_local_to_global(local_gradient_J,
+                                         local_dof_indices_J,
+                                         gradient);
 
   // sum contributions from all MPI cores and return the result:
   return dealii::Utilities::MPI::sum(energy_per_process, mpi_communicator);
