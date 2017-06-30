@@ -159,6 +159,7 @@ void QC<dim, PotentialType>::setup_system ()
 
   dof_handler.distribute_dofs (fe);
 
+  // FIXME: use CellMoleculeTools::extract_locally_relevant_dofs()
   DoFTools::extract_locally_relevant_dofs (dof_handler,
                                            locally_relevant_set);
 
@@ -178,9 +179,13 @@ void QC<dim, PotentialType>::setup_system ()
   */
   constraints.close ();
 
-  gradient.reinit(dof_handler.locally_owned_dofs(), mpi_communicator);
+  gradient.reinit(dof_handler.locally_owned_dofs(),
+                  locally_relevant_set,
+                  mpi_communicator,
+                  true);
   gradient = 0.;
 
+  // FIXME: switch to a single writable ghost vector (IndexSet,IndexSet,Comm,true);
   displacement.reinit(dof_handler.locally_owned_dofs(), mpi_communicator);
   locally_relevant_displacement.reinit(locally_relevant_set, mpi_communicator);
 
@@ -486,7 +491,7 @@ double QC<dim, PotentialType>::calculate_energy_gradient (vector_t &gradient) co
           // F(local_dofs(i)) +=  n^{ab}*N_{local_dof{i}}(X^a)
           // F(local_dofs(j)) -=  n^{ab}*N_{local_dof{j}}(X^b)
           // Below we utilize the fact that we work with primitive vector-valued
-          // shape functions which are non-zero at a single compoent only.
+          // shape functions which are non-zero at a single component only.
           for (unsigned int k = 0; k < dofs_per_cell; ++k)
             {
               const unsigned int nonzero_comp = fe.system_to_component_index(k).first;
@@ -510,6 +515,8 @@ double QC<dim, PotentialType>::calculate_energy_gradient (vector_t &gradient) co
   constraints.distribute_local_to_global(local_gradient_J,
                                          local_dof_indices_J,
                                          gradient);
+
+  gradient.compress(VectorOperation::add);
 
   // sum contributions from all MPI cores and return the result:
   return dealii::Utilities::MPI::sum(energy_per_process, mpi_communicator);

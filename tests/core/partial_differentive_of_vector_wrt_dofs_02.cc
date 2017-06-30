@@ -9,6 +9,8 @@
 #include <sstream>
 
 #include <deal.II-qc/core/qc.h>
+#include <deal.II/dofs/dof_tools.h>
+#include <deal.II/grid/grid_out.h>
 
 using namespace dealii;
 using namespace dealiiqc;
@@ -42,21 +44,74 @@ void Problem<dim, PotentialType>::partial_run()
   QC<dim, PotentialType>::update_neighbor_lists();
 
   const double energy = QC<dim, PotentialType>::template calculate_energy_gradient<true> (QC<dim, PotentialType>::gradient);
+  QC<dim, PotentialType>::pcout << energy << std::endl;
 
   // serial vector with all forces:
   const unsigned int n_dofs = QC<dim, PotentialType>::dof_handler.n_dofs();
   dealii::Vector<double> gradient(n_dofs);
-  gradient = QC<dim, PotentialType>::gradient;
+  // manually copy parallel vector:
+  const IndexSet locally_owned_dofs = QC<dim, PotentialType>::dof_handler.locally_owned_dofs();
+  gradient = 0.;
+  for (unsigned int i = 0; i < locally_owned_dofs.n_elements(); ++i)
+    {
+      const unsigned int ind = locally_owned_dofs.nth_index_in_set(i);
+      gradient(ind) = QC<dim, PotentialType>::gradient(ind);
+    }
+  dealii::Utilities::MPI::sum(gradient, QC<dim, PotentialType>::mpi_communicator, gradient);
+
   // derivative of energy for this potential and the given distance
   // (cluster weights are 1)
   const double derivative = -6.148223356137124;
   gradient *= 1./derivative;
-  for (unsigned int i = 0; i < n_dofs; i+=dim)
+  QC<dim, PotentialType>::pcout << gradient.l2_norm() << std::endl;
+  if (dealii::Utilities::MPI::n_mpi_processes(QC<dim, PotentialType>::mpi_communicator)==1)
     {
-      for (int d = 0; d < dim; ++d)
-        QC<dim, PotentialType>::pcout << gradient[i+d] <<  "\t";
-      QC<dim, PotentialType>::pcout << std::endl;
+      for (unsigned int i = 0; i < n_dofs; i+=dim)
+        {
+          for (int d = 0; d < dim; ++d)
+            QC<dim, PotentialType>::pcout << gradient[i+d] <<  "\t";
+          QC<dim, PotentialType>::pcout << std::endl;
+        }
     }
+  else
+    {
+      // for 2 mpi core partition is different, output in the same order as
+      // for serial version (using the Gnuplot output below)
+      std::vector<unsigned int> dof_map = {0,1,6,2,3,4,7,5,8,9,10,11};
+      for (unsigned int i = 0; i < n_dofs; i+=dim)
+        {
+          for (int d = 0; d < dim; ++d)
+            QC<dim, PotentialType>::pcout << gradient[dof_map[i+d]] <<  "\t";
+          QC<dim, PotentialType>::pcout << std::endl;
+        }
+    }
+
+  if (dealii::Utilities::MPI::this_mpi_process(QC<dim, PotentialType>::mpi_communicator)==0)
+    {
+      std::map<dealii::types::global_dof_index, Point<dim> > support_points;
+      DoFTools::map_dofs_to_support_points (QC<dim, PotentialType>::mapping,
+                                            QC<dim, PotentialType>::dof_handler,
+                                            support_points);
+
+      const std::string filename =
+        "grid" + dealii::Utilities::int_to_string(dim) + ".gp";
+      std::ofstream f(filename.c_str());
+
+      f << "set terminal png size 400,410 enhanced font \"Helvetica,8\"" << std::endl
+        << "set output \"grid" << dealii::Utilities::int_to_string(dim) << ".png\"" << std::endl
+        << "set size square" << std::endl
+        << "set view equal xy" << std::endl
+        << "unset xtics" << std::endl
+        << "unset ytics" << std::endl
+        << "plot '-' using 1:2 with lines notitle, '-' with labels point pt 2 offset 1,1 notitle" << std::endl;
+      GridOut().write_gnuplot (QC<dim, PotentialType>::triangulation, f);
+      f << "e" << std::endl;
+
+      DoFTools::write_gnuplot_dof_support_point_info(f,
+                                                     support_points);
+      f << "e" << std::endl;
+    }
+
 }
 
 
