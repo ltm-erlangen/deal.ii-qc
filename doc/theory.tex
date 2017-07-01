@@ -192,5 +192,183 @@ The hanging nodes constrains are accounted only at the local contribution to the
 
 {\color{red}TODO}: discuss parallelization via MPI + TBB within locally owned cells. Also discuss why distributed triangulation can't be used and why each MPI core needs to know the whole geometry.
 
+\subsection{A multi-field approach for ionic crystals}
 
+Consider an atomistic system consisting of a single type of molecules.
+Let $\bsf X_I$ be the location of molecule $I \in \mcl M$ in the initial 
+configuration, where $\mcl M$ is the index set of all the molecules in the 
+atomistic system. $\bsf X_I$ can the center of mass or center of geometry of 
+the molecule $M$ or any other convenient convention to identify the location of 
+the molecule $M$ in the initial configuration of the atomistic system. Let the 
+atoms of a molecule of the ionic compound be enumerated or stamped as $i \in 
+\mcl A$. The cardinality of the set $\mcl A$ is the atomicity of the molecule. 
+For example, in the case of O$_2$ molecule the set $\mcl A := \left\lbrace 0,1 
+\right\rbrace$. The initial position of the atom stamped $i$ of the molecule 
+$I$ is
+\begin{align}
+ \bsf X_I ^i = \bsf X_I + \bsf R^i,
+\end{align}
+where $\bsf R^i$ is the shift vector of the atom stamped $i$ within the 
+molecule $I$, i.e., the relative position vector from the location of the 
+molecule $I$ to its atom stamped $i$.
+
+To define the displacements of different atoms within a molecule we define
+multiple displacement field variables in the finite element space. The 
+displacement of atom stamped $i$ in the molecule $I$ can be 
+evaluated as
+\begin{align}
+ \bsf x_I^i = \bsf X_I^i + \gz u^i(\bsf X_I),
+ \label{eq:current_atom_pos}
+\end{align}
+where $\gz u^i( \gz x)$ is the unknown displacement field of atoms that are 
+stamped as $a$,
+\begin{align}
+ \gz u^i (\gz x) = \sum_{d \, \in \, \mcl D} u^i_d \,\, \gz N_d (\gz x),
+\end{align}
+where $\gz N_d (\gz x)$ are vector-valued shape functions and $\mcl D$ is the 
+set of all degrees of freedom enumerated at the mesh nodes, one set for each 
+atom stamp.
+Note that in \refeq{current_atom_pos} we evaluate the displacement fields at 
+the location of the molecule. This allows us to place the mesh nodes at the 
+location of molecules in the atomistic region and enumerate all the degrees of 
+freedoms for atoms at the mesh nodes. It is as if we identify representative 
+molecules (rep-molecules) in the entire atomistic system and place mesh nodes 
+at the location of rep-molecules.
+
+The total energy would then read as,
+\begin{align}
+ E^{tot} = &\sum_{I \, \in \, \mcl C} w^{}_I \,\,
+            \left[
+		  E^{}_{II} +
+		  \sum_{\mcl M \, \ni \, J < I} 
+                  E^{}_{IJ} 
+            \right]
+\end{align}
+where $\mcl C$ is the set of all sampling molecules, $w^{}_I$ is the cluster 
+weight of sampling molecule $I$ and $E^{}_{IJ}$ is the contribution of energy 
+due to the two interacting molecules $I$ and $J$ given as,
+\begin{equation}
+ E^{}_{IJ} =  \begin{cases}                   \,\,
+               \sum\limits_{i \, \in \, I}    \,\,
+               \sum\limits_{j \, \in \, J}    \,
+		\phi^{}_{ij}(r^{jk}),
+		& \text{if } \,  I \neq J \\[1em] \,\,
+
+               \sum\limits_{i \, \in \, I}    \,\,
+               \sum\limits_{J \, \ni \, j \, < \, i} \,
+               \phi^{}_{ij}(r^{jk}), 
+               & \text{otherwise}.
+              \end{cases}
+\label{eq:inter_and_intra}
+\end{equation}
+where $\phi^{}_{ij}(r^{jk})$ describes the interaction potential between two 
+atoms with atom stamps $i$ and $j$ as a function of their separation distance 
+$r^{jk} = \norm{\bsf r^{jk}} = \norm{ \bsf x^{i}_{I} - \bsf x^{j}_{J} }$. 
+The gradient of the total energy with respect to the degree of freedom $d \in 
+\mcl D$ of the atoms with atom stamp $k \in \mcl A$ is
+\begin{align}
+ g^k_d = &\sum_{I \, \in \, \mcl C}  \, w^{}_I \,\, 
+	  \left[
+		\frac{\partial E^{}_{II}}{\partial u^k_d}
+		+
+		\sum_{\mcl M \, \ni \, J < I}  \,
+		\frac{\partial E^{}_{IJ}}{\partial u^k_d}
+	   \right].
+\end{align}
+Using \refeq{inter_and_intra},
+\begin{align}
+ g^k_d = \sum_{I \, \in \, \mcl C}  \, w^{}_I
+          \Bigg[
+            \,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,
+	    \sum_{i \, \in \, I}                          \,\,
+	    \sum_{I \, \ni \, j \, < \, i}                \,
+             &\frac{\partial \phi^{}_{ij}(r^{jk})}{\partial r} \, 
+               \frac{\partial r^{jk}}{\partial \bsf r^{jk}} \cdot
+               \frac{\partial \bsf r^{jk}}{\partial u^k_d}     \\
+	    +
+	    \sum_{\mcl M \, \ni \, J < I}  \,\,
+            \sum_{i \, \in \, I}           \,\,
+	    \sum_{j \, \in \, J}           \,
+               &\frac{\partial \phi^{}_{ij}(r^{jk})}{\partial r^{jk}} \, 
+                 \frac{\partial r^{jk}}{\partial \bsf r^{jk}} \cdot
+                 \frac{\partial \bsf r^{jk}}{\partial u^k_d}
+           \Bigg],
+\end{align}
+and on using \refeq{current_atom_pos},
+\begin{align}
+ g^k_d = \sum_{I \, \in \, \mcl C}  \, w^{}_I
+	  \Bigg[
+		\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,
+		\sum_{i \, \in \, I}       \,\,\,
+		\sum_{I \, \ni \, j \, < \, i}       \,
+		  &{\phi}^\prime_{ij} (r^{jk})\, \, 
+		    \frac {\bsf r^{jk}}{r^{jk}}
+		    \cdot
+		    \bigg[
+		      \delta_{ik} \,\, \gz N_d( \bsf X_{I})  
+		      - 
+		      \delta_{jk} \,\, \gz N_d( \bsf X_{I})
+		    \bigg] \\
+	      +
+	      \sum_{\mcl M \, \ni \, J < I}  \,
+	      \sum_{i \, \in \, I}       \,\,\,
+	      \sum_{j \, \in \, J}       \,
+		&{\phi}^\prime_{ij} (r^{jk})\, \, 
+		  \frac {\bsf r^{jk}}{r^{jk}}
+		  \cdot
+		  \bigg[
+		    \delta_{ik} \,\, \gz N_d( \bsf X_{I})  
+		    - 
+		    \delta_{jk} \,\, \gz N_d( \bsf X_{J})
+		  \bigg]
+	 \Bigg],
+\end{align}
+factoring out the shape function evaluations at molecules' locations we have
+\begin{align}
+ g^k_d = \sum_{I \, \in \, \mcl C}  \, w^{}_I
+	  \Bigg[
+		\,\,\,\,\,\,\,\,\,\,\,\,
+		\,\,\,\,\,\,\,\,\,\,\,\,
+		\,\,\,\,\,\,\,\,\,\,\,\,
+		\,\,\,\,\,\,\,\,\,\,\,\,
+		\gz N_d( \bsf X_{I})
+		&\cdot
+		  \sum_{i \, \in \, I}            \,\,\,
+		  \sum_{I \, \ni \, j \, < \, i} \,
+		  \frac {\bsf r^{jk}}{r^{jk}}               \,
+		    {\phi}^\prime_{ij} (r^{jk})        \,
+		      \Big(
+			\delta_{ik} 
+			- 
+			\delta_{jk}
+		      \Big)
+		\\
+	      + \,
+		\sum_{\mcl M \, \ni \, J < I}  \,
+		\Bigg\{
+		  \,\,\,\,\,\,\,
+		  \gz N_d( \bsf X_{I})
+		  &\cdot
+		    \sum_{i \, \in \, I}    \,\,\,\,\,
+		    \sum_{j \, \in \, J}   \,
+		    \frac {\bsf r^{jk}}{r^{jk}}       \,
+		      {\phi}^\prime_{ij}(r^{jk}) \,
+		      \delta_{ik}           \,
+		    \\
+		  -
+		  \gz N_d( \bsf X_{J})
+		  &\cdot
+		    \sum_{i \, \in \, I}    \,\,\,\,\,
+		    \sum_{j \, \in \, J}   \,
+		    \frac{\bsf r^{jk}}{r^{jk}}
+		      {\phi}^\prime_{ij}(r^{jk}) \,
+		      \delta_{jk}           \,
+		\,\,\,
+		\Bigg\}
+		\,\,\,\,\,\,\,\,\,\,\,\,
+		\,\,\,\,\,\,\,\,\,\,\,\,
+		\,\,\,\,\,\,\,\,\,\,\,\,
+	 \Bigg],
+\end{align}
+where $r^{jk} = \norm{\bsf r^{jk}} = \norm{ \bsf x^{i}_{I} - \bsf x^{j}_{J} }$.
 \end{document}
