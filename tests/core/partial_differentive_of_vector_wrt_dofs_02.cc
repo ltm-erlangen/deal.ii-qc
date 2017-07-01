@@ -44,7 +44,9 @@ void Problem<dim, PotentialType>::partial_run()
   QC<dim, PotentialType>::update_neighbor_lists();
 
   const double energy = QC<dim, PotentialType>::template calculate_energy_gradient<true> (QC<dim, PotentialType>::gradient);
-  QC<dim, PotentialType>::pcout << energy << std::endl;
+  QC<dim, PotentialType>::pcout << "energy      = "
+                                << energy
+                                << std::endl;
 
   // serial vector with all forces:
   const unsigned int n_dofs = QC<dim, PotentialType>::dof_handler.n_dofs();
@@ -63,7 +65,16 @@ void Problem<dim, PotentialType>::partial_run()
   // (cluster weights are 1)
   const double derivative = -6.148223356137124;
   gradient *= 1./derivative;
-  QC<dim, PotentialType>::pcout << gradient.l2_norm() << std::endl;
+  QC<dim, PotentialType>::pcout << "l1 norm     = "
+                                << gradient.l1_norm ()
+                                << std::endl
+                                << "l2 norm     = "
+                                << gradient.l2_norm()
+                                << std::endl
+                                << "linfty norm = "
+                                << gradient.linfty_norm ()
+                                << std::endl;
+
   if (dealii::Utilities::MPI::n_mpi_processes(QC<dim, PotentialType>::mpi_communicator)==1)
     {
       for (unsigned int i = 0; i < n_dofs; i+=dim)
@@ -75,16 +86,8 @@ void Problem<dim, PotentialType>::partial_run()
     }
   else
     {
-      // for 2 mpi core partition is different, output in the same order as
-      // for serial version (using the Gnuplot output below)
-      // Note that gnuplot output is not sorted component-wise.
-      std::vector<unsigned int> dof_map = {0,1,6,2,3,4,7,5,8,9,10,11};
-      for (unsigned int i = 0; i < n_dofs; i+=dim)
-        {
-          for (int d = 0; d < dim; ++d)
-            QC<dim, PotentialType>::pcout << gradient[dof_map[i+d]] <<  "\t";
-          QC<dim, PotentialType>::pcout << std::endl;
-        }
+      // for more than one MPI cores dof numbering could be different,
+      // just check l2, l1 and l infinity norm for correctness.
     }
 
   if (dealii::Utilities::MPI::this_mpi_process(QC<dim, PotentialType>::mpi_communicator)==0)
