@@ -35,7 +35,7 @@ Problem<dim, PotentialType>::Problem (const ConfigureQC &config)
 template <int dim, typename PotentialType>
 void Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
 {
-  QC<dim, PotentialType>::setup_energy_atoms_with_cluster_weights();
+  QC<dim, PotentialType>::setup_cell_energy_molecules();
   QC<dim, PotentialType>::setup_system();
   QC<dim, PotentialType>::setup_fe_values_objects();
   QC<dim, PotentialType>::update_neighbor_lists();
@@ -51,7 +51,7 @@ void Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
     std::cout << "Atom I: "  << entry.second.first->second.atoms[0].global_index  << " "
               << "Atom J: "  << entry.second.second->second.atoms[0].global_index << std::endl;
 
-  const double energy = QC<dim, PotentialType>::template calculate_energy_gradient<false> (QC<dim, PotentialType>::gradient);
+  const double energy = QC<dim, PotentialType>::template compute<false> (QC<dim, PotentialType>::gradient);
   QC<dim, PotentialType>::pcout
       << "The energy computed using PairCoulWolfManager of 4 charged atom system is: "
       << energy << " eV" << std::endl;

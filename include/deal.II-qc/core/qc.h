@@ -91,7 +91,6 @@ protected:
    */
   void setup_triangulation();
 
-  // TODO: rename it to setup_cell_molecules()?
   /**
    * Setup few data members in #cell_molecule_data (namely:
    * CellMoleculeData::cell_molecules,
@@ -107,9 +106,8 @@ protected:
    * CellMoleculeData::cell_energy_molecules in #cell_molecule_data should be
    * used to compute energy or force using the quasicontinuum approach.
    */
-  void setup_atoms();
+  void setup_cell_molecules();
 
-  // TODO: rename it to setup_cell_energy_molecules()
   /**
    * Setup CellMoleculeData::cell_energy_molecules of #cel_molecule_data of
    * the current MPI process with appropriate cluster weights.
@@ -120,14 +118,13 @@ protected:
    * class of Cluster::WeightsByBase based on the chosen method
    * (or sampling rule) to update cluster weights of energy molecules.
    */
-  void setup_energy_atoms_with_cluster_weights();
+  void setup_cell_energy_molecules();
 
   /**
    * Distribute degrees-of-freedom and initialise matrices and vectors.
    */
   void setup_system ();
 
-  // TODO: rename it to update_positions()?
   /**
    * Update positions of the atoms of energy molecules
    * (CellMoleculeData::cell_energy molecules) according to the given
@@ -137,11 +134,10 @@ protected:
    * after each iterate is formed. Internally in ROL, update() function of the
    * objective class is called after each iterate is formed and is responsible
    * for updating the data members of the objective class. Therefore,
-   * the current function is separated from calculate_energy_gradient().
+   * the current function is separated from compute().
    */
-  void update_energy_atoms_positions();
+  void update_positions();
 
-  // TODO : rename to just compute()?
   /**
    * Return the computed energy of the atomistic system using QC approach, and
    * update the its @p gradient if @tparam ComputeGradient is set true.
@@ -151,7 +147,7 @@ protected:
    * is set false only the value of the energy is computed.
    */
   template<bool ComputeGradient=true>
-  double calculate_energy_gradient (vector_t &gradient) const;
+  double compute (vector_t &gradient) const;
 
   /**
    * Given cells and dof handler, for each cell set-up FEValues object with
