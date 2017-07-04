@@ -154,25 +154,25 @@ namespace Potential
 
     const double energy = qiqj * ( erfc_a_distance - energy_shift ) * qqrd2e;
 
-    const double force = ComputeGradient
-                         ?
-                         qqrd2e * qiqj *
-                         ( distance_inverse *
-                           (
-                             erfc_a_distance + alpha*M_2_SQRTPI *
-                             std::exp(-alpha*alpha*squared_distance)
-                           )
-                           -
-                           cutoff_radius_inverse *
-                           (
-                             energy_shift + alpha * M_2_SQRTPI *
-                             compound_exp_value
-                           )
-                         )
-                         :
-                         std::numeric_limits<double>::signaling_NaN();
+    const double gradient = ComputeGradient
+                            ?
+                            qqrd2e * qiqj *
+                            ( distance_inverse *
+                              (
+                                erfc_a_distance + alpha*M_2_SQRTPI *
+                                std::exp(-alpha*alpha*squared_distance)
+                              )
+                              -
+                              cutoff_radius_inverse *
+                              (
+                                energy_shift + alpha * M_2_SQRTPI *
+                                compound_exp_value
+                              )
+                            )
+                            :
+                            std::numeric_limits<double>::signaling_NaN();
 
-    return std::make_pair(energy,force);
+    return std::make_pair(energy, gradient);
   }
 
 #endif /* DOXYGEN */

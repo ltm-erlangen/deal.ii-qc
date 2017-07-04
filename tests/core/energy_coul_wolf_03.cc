@@ -39,7 +39,7 @@ Problem<dim, PotentialType>::Problem (const ConfigureQC &config)
 template <int dim, typename PotentialType>
 void Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
 {
-  QC<dim, PotentialType>::setup_energy_atoms_with_cluster_weights();
+  QC<dim, PotentialType>::setup_cell_energy_molecules();
   QC<dim, PotentialType>::setup_system();
   QC<dim, PotentialType>::setup_fe_values_objects();
   QC<dim, PotentialType>::update_neighbor_lists();
@@ -60,7 +60,7 @@ void Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
   MPI_Barrier(QC<dim, PotentialType>::mpi_communicator);
 
   const double energy = QC<dim, PotentialType>::template
-                        calculate_energy_gradient<false> (QC<dim, PotentialType>::gradient);
+                        compute<false> (QC<dim, PotentialType>::gradient);
 
   QC<dim, PotentialType>::pcout
       << "The energy computed using PairCoulWolfManager "

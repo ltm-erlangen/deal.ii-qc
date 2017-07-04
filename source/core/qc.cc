@@ -51,7 +51,7 @@ QC<dim, PotentialType>::QC ( const ConfigureQC &config )
   setup_triangulation();
 
   // Read atom data file and initialize atoms
-  setup_atoms();
+  setup_cell_molecules();
 }
 
 
@@ -59,12 +59,12 @@ QC<dim, PotentialType>::QC ( const ConfigureQC &config )
 template <int dim, typename PotentialType>
 void QC<dim, PotentialType>::run ()
 {
-  setup_energy_atoms_with_cluster_weights();
+  setup_cell_energy_molecules();
   setup_system();
   setup_fe_values_objects();
   update_neighbor_lists();
-  update_energy_atoms_positions();
-  const double e = calculate_energy_gradient(gradient);
+  update_positions();
+  const double e = compute(gradient);
   (void)e;
 }
 
@@ -73,11 +73,11 @@ template <int dim, typename PotentialType>
 void QC<dim, PotentialType>::reconfigure_qc(const ConfigureQC &configure)
 {
   configure_qc = configure;
-  setup_energy_atoms_with_cluster_weights();
+  setup_cell_energy_molecules();
   setup_system();
   setup_fe_values_objects();
   update_neighbor_lists();
-  update_energy_atoms_positions();
+  update_positions();
 }
 
 
@@ -90,7 +90,7 @@ void QC<dim, PotentialType>::setup_triangulation()
 
 
 template <int dim, typename PotentialType>
-void QC<dim, PotentialType>::setup_atoms()
+void QC<dim, PotentialType>::setup_cell_molecules()
 {
   TimerOutput::Scope t (computing_timer, "Parse and assign all atoms to cells");
 
@@ -123,7 +123,7 @@ void QC<dim, PotentialType>::setup_atoms()
 }
 
 template <int dim, typename PotentialType>
-void QC<dim, PotentialType>::setup_energy_atoms_with_cluster_weights()
+void QC<dim, PotentialType>::setup_cell_energy_molecules()
 {
   TimerOutput::Scope t (computing_timer,
                         "Setup energy molecules with cluster weights");
@@ -313,7 +313,7 @@ void QC<dim, PotentialType>::setup_fe_values_objects ()
 
 
 template <int dim, typename PotentialType>
-void QC<dim, PotentialType>::update_energy_atoms_positions()
+void QC<dim, PotentialType>::update_positions()
 {
   TimerOutput::Scope t (computing_timer, "Update energy molecules' positions");
 
@@ -370,7 +370,7 @@ void QC<dim, PotentialType>::update_neighbor_lists()
 
 template <int dim, typename PotentialType>
 template <bool ComputeGradient>
-double QC<dim, PotentialType>::calculate_energy_gradient (vector_t &gradient) const
+double QC<dim, PotentialType>::compute (vector_t &gradient) const
 {
   TimerOutput::Scope t (computing_timer, "Compute energy and gradient");
 
@@ -405,57 +405,57 @@ double QC<dim, PotentialType>::calculate_energy_gradient (vector_t &gradient) co
 
   // TODO: parallelize using using TBB by looping over pairs of cells.
   // Rework neighbor list as std::map<std::pair<Cell,Cell>,....>
-  for (const auto &cell_pair_cell_atom_pair : neighbor_lists)
+  for (const auto &cell_pair_cell_molecule_pair : neighbor_lists)
     {
-      // get reference to current cell pair and atom pair
+      // get reference to current cell pair and molecule pair
       const types::CellIteratorType<dim>
-      &cell_I  = cell_pair_cell_atom_pair.first.first,
-       &cell_J = cell_pair_cell_atom_pair.first.second;
+      &cell_I  = cell_pair_cell_molecule_pair.first.first,
+       &cell_J = cell_pair_cell_molecule_pair.first.second;
 
       const types::CellMoleculeConstIteratorType<dim>
-      &cell_atom_I  = cell_pair_cell_atom_pair.second.first,
-       &cell_atom_J = cell_pair_cell_atom_pair.second.second;
+      &cell_molecule_I  = cell_pair_cell_molecule_pair.second.first,
+       &cell_molecule_J = cell_pair_cell_molecule_pair.second.second;
 
-      Assert ((cell_I == cell_atom_I->first) &&
-              (cell_J == cell_atom_J->first),
+      Assert ((cell_I == cell_molecule_I->first) &&
+              (cell_J == cell_molecule_J->first),
               ExcMessage("Incorrect neighbor lists."
                          "Either cell_I or cell_J doesn't contain "
-                         "cell_atom_I or cell_atom_J, respectively."));
+                         "cell_molecule_I or cell_molecule_J, respectively."));
 
       // FIXME: loop over all atoms
-      const Tensor<1,dim> rIJ = cell_atom_I->second.atoms[0].position -
-                                cell_atom_J->second.atoms[0].position;
+      const Tensor<1,dim> rIJ = cell_molecule_I->second.atoms[0].position -
+                                cell_molecule_J->second.atoms[0].position;
 
       const double r_square = rIJ.norm_square();
 
-      // If atoms I and J interact with each other while belonging to
+      // If molecules I and J interact with each other while belonging to
       // different clusters. In this case, we need to account for
       // different weights associated with the clusters by
       // scaling E_{IJ} with (n_I + n_J)/2, which is exactly how
       // this contribution would be added had we followed assembly
       // from clusters perspective.
-      // Since atoms not attributed to clusters have zero weights,
+      // Since molecules not attributed to clusters have zero weights,
       // we can directly use the scaling above without the need to find out
-      // whether or not one of the two atoms do not belong to any cluster.
+      // whether or not one of the two molecules do not belong to any cluster.
 
       // Compute scaling of energy due to cluster weights.
-      const double scale_energy = 0.5 * (cell_atom_I->second.cluster_weight +
-                                         cell_atom_J->second.cluster_weight );
+      const double scale_energy = 0.5 * (cell_molecule_I->second.cluster_weight +
+                                         cell_molecule_J->second.cluster_weight );
 
       // Assert that the scaling factor of energy, due to clustering, is
-      // non-zero. One of the atom must be a cluster atom and
+      // non-zero. One of the molecule must be a cluster molecule and
       // therefore have non-zero (more specifically positive) cluster_weight.
       Assert (scale_energy > 0, ExcInternalError());
 
       // Compute energy and gradient for a purely pair-wise interaction of
-      // atom I and  atom J:
+      // molecule I and  molecule J:
       const std::pair<double, double> pair =
         (*potential_ptr).template
-        energy_and_gradient<ComputeGradient> (cell_atom_I->second.atoms[0].type,
-                                              cell_atom_J->second.atoms[0].type,
+        energy_and_gradient<ComputeGradient> (cell_molecule_I->second.atoms[0].type,
+                                              cell_molecule_J->second.atoms[0].type,
                                               r_square);
 
-      // Now we scale the energy according to cluster weights of the atoms.
+      // Now we scale the energy according to cluster weights of the molecules.
       energy_per_process += scale_energy * pair.first ;
 
       if (ComputeGradient)
@@ -485,14 +485,15 @@ double QC<dim, PotentialType>::calculate_energy_gradient (vector_t &gradient) co
               local_gradient_J = 0.;
             }
 
-          // Get quadrature point index from the local_index of atom pairs
+          // Get quadrature point index from the local_index of molecule pairs
           const unsigned int
-          qI = cell_atom_I->second.local_index,
-          qJ = cell_atom_J->second.local_index;
+          qI = cell_molecule_I->second.local_index,
+          qJ = cell_molecule_J->second.local_index;
 
           const double r = std::sqrt(r_square);
           const double force_multiplier  = scale_energy * pair.second / r;
 
+          // FIXME: evaluate gradients for all atoms in molecules.
           // Finally, we evaluated local contribution to the gradient of
           // energy. The main ingredient in forces is
           // r^{ab}_{,k} = n^{ab} * [N_k(X^a) - N_k(X^b)]
@@ -540,29 +541,29 @@ double QC<dim, PotentialType>::calculate_energy_gradient (vector_t &gradient) co
  * called with an integer argument and a PotentialType instantiates the
  * respective classes and functions in the given space dimension.
  */
-#define DEAL_II_QC_INSTANTIATE(INSTANTIATIONS) \
-  INSTANTIATIONS(1, Potential::PairLJCutManager) \
-  INSTANTIATIONS(2, Potential::PairLJCutManager) \
-  INSTANTIATIONS(3, Potential::PairLJCutManager) \
+#define DEAL_II_QC_INSTANTIATE(INSTANTIATIONS)      \
+  INSTANTIATIONS(1, Potential::PairLJCutManager)    \
+  INSTANTIATIONS(2, Potential::PairLJCutManager)    \
+  INSTANTIATIONS(3, Potential::PairLJCutManager)    \
   INSTANTIATIONS(1, Potential::PairCoulWolfManager) \
   INSTANTIATIONS(2, Potential::PairCoulWolfManager) \
   INSTANTIATIONS(3, Potential::PairCoulWolfManager)
 
 // Instantiations
-#define INSTANTIATE(dim, PotentialType) \
-  template QC<dim, PotentialType>::QC (const ConfigureQC&); \
-  template QC<dim, PotentialType>::~QC (); \
+#define INSTANTIATE(dim, PotentialType)                                      \
+  template QC<dim, PotentialType>::QC (const ConfigureQC&);                  \
+  template QC<dim, PotentialType>::~QC ();                                   \
   template void QC<dim, PotentialType>::reconfigure_qc (const ConfigureQC&); \
-  template void QC<dim, PotentialType>::run (); \
-  template void QC<dim, PotentialType>::setup_atoms (); \
-  template void QC<dim, PotentialType>::setup_energy_atoms_with_cluster_weights (); \
-  template void QC<dim, PotentialType>::setup_system (); \
-  template void QC<dim, PotentialType>::setup_triangulation(); \
-  template void QC<dim, PotentialType>::write_mesh<std::ofstream> (std::ofstream &, const std::string &); \
-  template void QC<dim, PotentialType>::setup_fe_values_objects (); \
-  template void QC<dim, PotentialType>::update_energy_atoms_positions(); \
-  template double QC<dim, PotentialType>::calculate_energy_gradient<true >(TrilinosWrappers::MPI::Vector &) const; \
-  template double QC<dim, PotentialType>::calculate_energy_gradient<false>(TrilinosWrappers::MPI::Vector &) const;
+  template void QC<dim, PotentialType>::run ();                              \
+  template void QC<dim, PotentialType>::setup_cell_molecules ();             \
+  template void QC<dim, PotentialType>::setup_cell_energy_molecules ();      \
+  template void QC<dim, PotentialType>::setup_system ();                     \
+  template void QC<dim, PotentialType>::setup_triangulation();               \
+  template void QC<dim, PotentialType>::write_mesh (std::ofstream &, const std::string &);        \
+  template void QC<dim, PotentialType>::setup_fe_values_objects ();          \
+  template void QC<dim, PotentialType>::update_positions();                  \
+  template double QC<dim, PotentialType>::compute<true >(TrilinosWrappers::MPI::Vector &) const;  \
+  template double QC<dim, PotentialType>::compute<false>(TrilinosWrappers::MPI::Vector &) const;
 
 DEAL_II_QC_INSTANTIATE(INSTANTIATE)
 

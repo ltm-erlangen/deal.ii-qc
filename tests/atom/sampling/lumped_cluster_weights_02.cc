@@ -52,7 +52,7 @@ template <int dim, typename PotentialType>
 void Problem<dim, PotentialType>::partial_run(const ConfigureQC &config)
 {
   QC<dim, PotentialType>::configure_qc = config;
-  QC<dim, PotentialType>::setup_energy_atoms_with_cluster_weights();
+  QC<dim, PotentialType>::setup_cell_energy_molecules();
 
   const auto &cell_energy_molecules =  QC<dim, PotentialType>::cell_molecule_data.cell_energy_molecules;
 

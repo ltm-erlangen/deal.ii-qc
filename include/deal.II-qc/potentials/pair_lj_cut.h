@@ -132,13 +132,13 @@ namespace Potential
     const double rm_by_r6 = rm6 / dealii::Utilities::fixed_power<3>(squared_distance);
 
     const double energy = eps * rm_by_r6 * ( rm_by_r6 - 2.);
-    const double force  = ComputeGradient
-                          ?
-                          -12. * eps * rm_by_r6 * ( 1. - rm_by_r6) / sqrt(squared_distance)
-                          :
-                          std::numeric_limits<double>::signaling_NaN();
+    const double gradient  = ComputeGradient
+                             ?
+                             -12. * eps * rm_by_r6 * ( 1. - rm_by_r6) / sqrt(squared_distance)
+                             :
+                             std::numeric_limits<double>::signaling_NaN();
 
-    return std::make_pair(energy, force);
+    return std::make_pair(energy, gradient);
   }
 
 #endif /* DOXYGEN */

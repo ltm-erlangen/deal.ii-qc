@@ -1,16 +1,26 @@
 
-// Same as partial_differentive_of_vector_wrt_dofs_01
-// but compute gradient using QC class for 2 Coulomb particles.
-// The output is made exactly the same (gradient) as in _01 test by multiplying
-// the actual gradient with inverse of the potential derivative.
+// Check the gradient of the total energy.
+// Calculate the gradient using QC class for 2 Coulomb particles.
+//
+// *-------o
+// |       |          o,*  - vertices
+// |       |          *    - atoms
+// |       |          o    - dof sites at which gradient value is zero
+// o-------*
+//
+// 4 entries of the gradient of the total energy are zeros.
+
+
 
 #include <iostream>
 #include <fstream>
 #include <sstream>
 
+#include <deal.II-qc/atom/cell_molecule_tools.h>
 #include <deal.II-qc/core/qc.h>
 #include <deal.II/dofs/dof_tools.h>
 #include <deal.II/grid/grid_out.h>
+#include <deal.II/grid/tria_accessor.h>
 
 using namespace dealii;
 using namespace dealiiqc;
@@ -49,18 +59,31 @@ void Problem<dim, PotentialType>::partial_run()
     QC<dim, PotentialType>::template
     compute<true> (QC<dim, PotentialType>::gradient);
 
-  QC<dim, PotentialType>::pcout << "energy      = "
+  QC<dim, PotentialType>::pcout << "energy       = "
                                 << energy
                                 << std::endl;
 
-  // Get the total number of dofs.
+  // Get total number of dofs.
   const unsigned int n_dofs = QC<dim, PotentialType>::dof_handler.n_dofs();
+
+  // Get locally owned dofs and count the number of zero entries in gradient.
+  const IndexSet locally_owned_dofs = QC<dim, PotentialType>::dof_handler.locally_owned_dofs();
+
+  // Sum number of zero entries in gradient by going through mutually exclusive
+  // locally owned dofs.
+  unsigned int n_zeros = 0;
+  for (unsigned int i = 0; i < locally_owned_dofs.n_elements(); ++i)
+    if (QC<dim, PotentialType>::
+        gradient(locally_owned_dofs.nth_index_in_set(i)) == 0.)
+      n_zeros++;
+
+  // Get global number of zero entries in gradient.
+  n_zeros =
+    dealii::Utilities::MPI::
+    sum(n_zeros, QC<dim, PotentialType>::mpi_communicator);
 
   // derivative of energy for this potential and the given distance
   // (cluster weights are 1)
-  const double derivative = -6.148223356137124;
-  QC<dim, PotentialType>::gradient *= 1./derivative;
-
   QC<dim, PotentialType>::pcout
       << "l1 norm      = "
       << QC<dim, PotentialType>::gradient.l1_norm ()
@@ -71,6 +94,14 @@ void Problem<dim, PotentialType>::partial_run()
       << "linfty norm  = "
       << QC<dim, PotentialType>::gradient.linfty_norm ()
       << std::endl;
+
+  QC<dim, PotentialType>::pcout << "n_dofs       = "
+                                <<  n_dofs
+                                << std::endl;
+
+  QC<dim, PotentialType>::pcout << "n_grad_zeros = "
+                                <<  n_zeros
+                                << std::endl;
 
   // For tests with more than one MPI processes dof numbering could be
   // different, so we only check l2, l1 and linfty norm for correctness.
@@ -128,19 +159,20 @@ int main (int argc, char *argv[])
 
       // Allow the restriction that user must provide Dimension of the problem
       const unsigned int dim = 2;
+
       std::ostringstream oss;
       oss << "set Dimension = " << dim                        << std::endl
 
           << "subsection Geometry"                            << std::endl
           << "  set Type = Box"                               << std::endl
           << "  subsection Box"                               << std::endl
-          << "    set X center = 1."                          << std::endl
+          << "    set X center = .5"                          << std::endl
           << "    set Y center = .5"                          << std::endl
           << "    set Z center = .5"                          << std::endl
-          << "    set X extent = 2."                          << std::endl
+          << "    set X extent = 1."                          << std::endl
           << "    set Y extent = 1."                          << std::endl
           << "    set Z extent = 1."                          << std::endl
-          << "    set X repetitions = 2"                      << std::endl
+          << "    set X repetitions = 1"                      << std::endl
           << "    set Y repetitions = 1"                      << std::endl
           << "    set Z repetitions = 1"                      << std::endl
           << "  end"                                          << std::endl
@@ -163,16 +195,13 @@ int main (int argc, char *argv[])
           << "2 atoms"                         << std::endl   << std::endl
           << "2  atom types"                   << std::endl   << std::endl
           << "Atoms #"                         << std::endl   << std::endl
-          << "1 1 1  1.0 0.23 0.37 0."                        << std::endl
-          << "2 2 2 -1.0 1.73 0.43 0."                        << std::endl;
+          << "1 1 1  1.0 0.0 1.0 0."                        << std::endl
+          << "2 2 2 -1.0 1.0 0.0 0."                        << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());
 
-      ConfigureQC config( prm_stream );
-
-      // Define Problem
-      Problem<dim, Potential::PairCoulWolfManager> problem(config);
+      Problem<dim, Potential::PairCoulWolfManager> problem(prm_stream);
       problem.partial_run ();
 
     }
@@ -202,3 +231,52 @@ int main (int argc, char *argv[])
 
   return 0;
 }
+
+
+/*
+ Maxima input script for this test QC::calculate_energy_gradient()
+
+
+ Algebraically defining shifted_energy and its derivative;
+ Verified the algebraic result with that from [Wolf et al 1999]
+
+ // actual code below
+ <
+ erfcc(r,alpha) := erfc(alpha*r)/r;
+
+ derfcc(r,alpha) := diff( erfcc(r,alpha),r);
+
+ derfcc_explicit(r,alpha) := -erfc(alpha*r)/r^2
+                             - 2*alpha*(%e^(-alpha^2*r^2))/(sqrt(%pi)*r);
+
+ shifted_energy(p,q,r,rc,alpha) := 14.399645*p*q*( erfcc(r,alpha)
+                                   - limit( erfcc(r, alpha), r, rc)  );
+
+ grad_r(p,q,r,rc,alpha) := 14.399645*p*q*( derfcc_explicit(r,alpha)
+                                          - derfcc_explicit(rc,alpha) );
+
+ grad_x(p,q,r,rc,alpha) := grad_r(p,q,r,rc,alpha)/r;
+
+ print("Energy : ");
+ float(at(shifted_energy(p,q,r,rc,alpha), [p=1.,q=-1.,r=sqrt(2),rc=8.25,alpha=0.25]));
+
+ print("Derivative with respect to r : ");
+ float(at(grad_r(p,q,r,rc,alpha), [p=1.,q=-1.,r=sqrt(2),rc=8.25,alpha=0.25]));
+
+ print("Derivative with respect to r divided by r: ");
+ float(at(grad_x(p,q,r,rc,alpha), [p=1.,q=-1.,r=sqrt(2),rc=8.25,alpha=0.25]));
+
+ >
+ // end of code
+ Output:
+
+ "Energy : "
+ (%o7) "Energy : "
+ (%o8) −6.276939683528505
+ "Derivative with respect to r : "
+ (%o9) "Derivative with respect to r : "
+ (%o10) 6.969894820319487
+ "Derivative with respect to r divided by r: "
+ (%o11) "Derivative with respect to r divided by r: "
+ (%o12) 4.928459891604901
+ */
