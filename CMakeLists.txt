@@ -171,6 +171,7 @@ ADD_SUBDIRECTORY(tests/atom/sampling)
 ADD_SUBDIRECTORY(tests/configure)
 ADD_SUBDIRECTORY(tests/core)
 ADD_SUBDIRECTORY(tests/potentials)
+ADD_SUBDIRECTORY(tests/statics)
 ADD_SUBDIRECTORY(tests/utilities)
 
 
