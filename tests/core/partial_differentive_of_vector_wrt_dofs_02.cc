@@ -1,8 +1,8 @@
 
-// same as partial_differentive_of_vector_wrt_dofs_01
-// but calcualte forces using QC class for 2 Coulomb particles.
-// The output is made exactly the same (forces) as in _01 test by multiplying
-// the actual forces with inverse of the potential derivative.
+// Same as partial_differentive_of_vector_wrt_dofs_01
+// but compute gradient using QC class for 2 Coulomb particles.
+// The output is made exactly the same (gradient) as in _01 test by multiplying
+// the actual gradient with inverse of the potential derivative.
 
 #include <iostream>
 #include <fstream>
@@ -14,6 +14,8 @@
 
 using namespace dealii;
 using namespace dealiiqc;
+
+// #define WRITE_GRID
 
 
 
@@ -43,53 +45,47 @@ void Problem<dim, PotentialType>::partial_run()
   QC<dim, PotentialType>::setup_fe_values_objects();
   QC<dim, PotentialType>::update_neighbor_lists();
 
-  const double energy = QC<dim, PotentialType>::template compute<true> (QC<dim, PotentialType>::gradient);
+  const double energy =
+    QC<dim, PotentialType>::template
+    compute<true> (QC<dim, PotentialType>::gradient);
+
   QC<dim, PotentialType>::pcout << "energy      = "
                                 << energy
                                 << std::endl;
 
-  // serial vector with all forces:
+  // Get the total number of dofs.
   const unsigned int n_dofs = QC<dim, PotentialType>::dof_handler.n_dofs();
-  dealii::Vector<double> gradient(n_dofs);
-  // manually copy parallel vector:
-  const IndexSet locally_owned_dofs = QC<dim, PotentialType>::dof_handler.locally_owned_dofs();
-  gradient = 0.;
-  for (unsigned int i = 0; i < locally_owned_dofs.n_elements(); ++i)
-    {
-      const unsigned int ind = locally_owned_dofs.nth_index_in_set(i);
-      gradient(ind) = QC<dim, PotentialType>::gradient(ind);
-    }
-  dealii::Utilities::MPI::sum(gradient, QC<dim, PotentialType>::mpi_communicator, gradient);
 
   // derivative of energy for this potential and the given distance
   // (cluster weights are 1)
   const double derivative = -6.148223356137124;
-  gradient *= 1./derivative;
-  QC<dim, PotentialType>::pcout << "l1 norm     = "
-                                << gradient.l1_norm ()
-                                << std::endl
-                                << "l2 norm     = "
-                                << gradient.l2_norm()
-                                << std::endl
-                                << "linfty norm = "
-                                << gradient.linfty_norm ()
-                                << std::endl;
+  QC<dim, PotentialType>::gradient *= 1./derivative;
 
+  QC<dim, PotentialType>::pcout
+      << "l1 norm      = "
+      << QC<dim, PotentialType>::gradient.l1_norm ()
+      << std::endl
+      << "l2 norm      = "
+      << QC<dim, PotentialType>::gradient.l2_norm()
+      << std::endl
+      << "linfty norm  = "
+      << QC<dim, PotentialType>::gradient.linfty_norm ()
+      << std::endl;
+
+  // For tests with more than one MPI processes dof numbering could be
+  // different, so we only check l2, l1 and linfty norm for correctness.
+  // For the test with one MPI process, output the gradient entries and
+  // compare with blessed output.
   if (dealii::Utilities::MPI::n_mpi_processes(QC<dim, PotentialType>::mpi_communicator)==1)
-    {
-      for (unsigned int i = 0; i < n_dofs; i+=dim)
-        {
-          for (int d = 0; d < dim; ++d)
-            QC<dim, PotentialType>::pcout << gradient[i+d] <<  "\t";
-          QC<dim, PotentialType>::pcout << std::endl;
-        }
-    }
-  else
-    {
-      // for more than one MPI cores dof numbering could be different,
-      // just check l2, l1 and l infinity norm for correctness.
-    }
+    for (unsigned int i = 0; i < n_dofs; i+=dim)
+      {
+        for (int d = 0; d < dim; ++d)
+          QC<dim, PotentialType>::pcout << QC<dim, PotentialType>::gradient[i+d]
+                                        <<  "\t";
+        QC<dim, PotentialType>::pcout << std::endl;
+      }
 
+#ifdef WRITE_GRID
   if (dealii::Utilities::MPI::this_mpi_process(QC<dim, PotentialType>::mpi_communicator)==0)
     {
       std::map<dealii::types::global_dof_index, Point<dim> > support_points;
@@ -115,6 +111,7 @@ void Problem<dim, PotentialType>::partial_run()
                                                      support_points);
       f << "e" << std::endl;
     }
+#endif
 
 }
 
