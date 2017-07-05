@@ -178,20 +178,17 @@ namespace statics
 
     using real_type = typename VectorType::real_type;
 
-    VectorType *v, *g;
+    typename VectorMemory<VectorType>::Pointer v(this->memory);
+    typename VectorMemory<VectorType>::Pointer g(this->memory);
 
-    v = this->memory.alloc();
-    g = this->memory.alloc();
+    // Set velocities to zero but not gradients
+    // as we are going to compute them soon.
+    v->reinit(u,false);
+    g->reinit(u,true);
 
     // Refer to v and g with some readable names.
     VectorType &velocities = *v;
     VectorType &gradients  = *g;
-
-    // Set velocities to zero.
-    velocities.reinit(u, false);
-
-    // Don't set Gradients to zero.
-    gradients.reinit(u, true);
 
     // Update gradients for the new u.
     compute(gradients, u);
@@ -206,97 +203,86 @@ namespace statics
     const auto &max_timestep   = additional_data.max_timestep;
     double timestep       = additional_data.timestep;
 
-    try
+    // First scaling factor.
+    double alpha = ALPHA_0;
+
+    unsigned int previous_iter_with_positive_v_dot_g = 0;
+    double minimal_timestep = timestep;
+
+    unsigned int iter = 0;
+
+    while (conv == SolverControl::iterate)
       {
-        // First scaling factor.
-        double alpha = ALPHA_0;
+        // Euler integration step.
+        u.sadd (minimal_timestep, velocities);         // U += dt * V
+        inverse_masses->vmult(gradients, gradients);   // G  =      G / M
+        velocities.sadd(-minimal_timestep, gradients); // V -= dt * G
 
-        unsigned int previous_iter_with_positive_v_dot_g = 0;
-        double minimal_timestep = timestep;
+        gradients = 0.; //FIXME: QC::compute() should probably also do this?
 
-        unsigned int iter = 0;
+        // Update gradients for the new u.
+        compute(gradients, u);
 
-        while (conv == SolverControl::iterate)
+        const real_type gradient_norm_squared = gradients * gradients;
+        conv = this->iteration_status(iter, gradient_norm_squared, u);
+        if (conv != SolverControl::iterate)
+          break;
+
+        // v_dot_g = V * G
+        const real_type v_dot_g = velocities * gradients;
+
+        // if (v_dot_g) < 0:
+        //   V = (1-alpha) V - alpha |V|/|G| G
+        //   |V| = length of V,
+        //   if more than DELAYSTEP since v dot g was positive:
+        //     increase timestep and decrease alpha
+        if (v_dot_g < 0.)
           {
-            // Euler integration step.
-            u.sadd (minimal_timestep, velocities);         // U  = dt * V
-            inverse_masses->vmult(gradients, gradients);   // G  =      G / M
-            velocities.sadd(-minimal_timestep, gradients); // V -= dt * G
+            const real_type velocities_norm_squared =
+              velocities * velocities;
 
-            gradients = 0.; //FIXME: QC::compute() should probably also do this?
+            // Check if we devide by zero in DEBUG mode.
+            Assert (gradient_norm_squared > 0., ExcInternalError());
 
-            // Update gradients for the new u.
-            compute(gradients, u);
+            // beta = - alpha |V|/|G|
+            const real_type beta = -alpha *
+                                   std::sqrt (velocities_norm_squared
+                                              /
+                                              gradient_norm_squared);
 
-            const real_type gradient_norm_squared = gradients * gradients;
-            conv = this->iteration_status(iter, gradient_norm_squared, u);
-            if (conv != SolverControl::iterate)
-              break;
+            // V = (1-alpha) V + beta G.
+            velocities.sadd (1. - alpha, beta, gradients);
 
-            // v_dot_g = V * G
-            const real_type v_dot_g = velocities * gradients;
-
-            // if (v_dot_g) < 0:
-            //   V = (1-alpha) V - alpha |V|/|G| G
-            //   |V| = length of V,
-            //   if more than DELAYSTEP since v dot g was positive:
-            //     increase timestep and decrease alpha
-            if (v_dot_g < 0.)
+            if (iter - previous_iter_with_positive_v_dot_g > DELAYSTEP)
               {
-                const real_type velocities_norm_squared =
-                  velocities * velocities;
-
-                // Check if we devide by zero in DEBUG mode.
-                Assert (gradient_norm_squared > 0., ExcInternalError());
-
-                // beta = - alpha |V|/|G|
-                const real_type beta = -alpha *
-                                       std::sqrt (velocities_norm_squared
-                                                  /
-                                                  gradient_norm_squared);
-
-                // V = (1-alpha) V + beta G.
-                velocities.sadd (1. - alpha, beta, gradients);
-
-                if (iter - previous_iter_with_positive_v_dot_g > DELAYSTEP)
-                  {
-                    timestep = std::min (timestep*TIMESTEP_GROW, max_timestep);
-                    alpha *= ALPHA_SHRINK;
-                  }
+                timestep = std::min (timestep*TIMESTEP_GROW, max_timestep);
+                alpha *= ALPHA_SHRINK;
               }
-            // else
-            // decrease timestep, reset alpha and set V = 0
-            else
-              {
-                previous_iter_with_positive_v_dot_g = iter;
-                timestep *= TIMESTEP_SHRINK;
-                alpha = ALPHA_0;
-                velocities = 0.;
-              }
+          }
+        // else
+        // decrease timestep, reset alpha and set V = 0
+        else
+          {
+            previous_iter_with_positive_v_dot_g = iter;
+            timestep *= TIMESTEP_SHRINK;
+            alpha = ALPHA_0;
+            velocities = 0.;
+          }
 
-            // Change timestep if any dof would move more than dmax?
-            minimal_timestep = additional_data.dmax
-                               /
-                               velocities.linfty_norm();
+        // Change timestep if any dof would move more than dmax?
+        minimal_timestep = additional_data.dmax
+                           /
+                           velocities.linfty_norm();
 
-            if (timestep < minimal_timestep)
-              minimal_timestep = timestep;
+        if (timestep < minimal_timestep)
+          minimal_timestep = timestep;
 
-            ++iter;
+        ++iter;
 
-            print_vectors(iter, u, velocities, gradients);
+        print_vectors(iter, u, velocities, gradients);
 
-          } // while didn't converge
-      }
-    catch (...)
-      {
-        this->memory.free(v);
-        this->memory.free(g);
-        throw;
-      }
+      } // while didn't converge
 
-    this->memory.free(v);
-    this->memory.free(g);
   }
 
 
