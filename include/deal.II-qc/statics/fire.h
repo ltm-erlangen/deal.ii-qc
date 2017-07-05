@@ -37,7 +37,7 @@ namespace statics
    *                             \forall \,\, i \in \mathcal D.
    * \f]
    */
-  template<typename VectorType, typename PreconditionerType = DiagonalMatrix<VectorType>>
+  template<typename VectorType>
   class SolverFIRE : public Solver<VectorType>
   {
 
@@ -45,16 +45,15 @@ namespace statics
 
     struct AdditionalData
     {
-      //FIXME: Introduce units for timestep and umax.
       explicit
-      AdditionalData (const double  given_timestep = 1e-12,
-                      const double  maximum_timestep   = 1e-9,
-                      const double  umax               = 1e-10);
+      AdditionalData (const double  initial_timestep    = 1e-12,
+                      const double  maximum_timestep    = 1e-9,
+                      const double  maximum_linfty_norm = 1e-10);
 
       /**
-       * Suggested time step.
+       * Initial time step.
        */
-      const double given_timestep;
+      const double initial_timestep;
 
       /**
        * Maximum time step.
@@ -64,7 +63,7 @@ namespace statics
       /**
        * Maximum change allowed in any degree of freedom.
        */
-      const double umax;
+      const double maximum_linfty_norm;
 
     };
 
@@ -75,6 +74,10 @@ namespace statics
                 VectorMemory<VectorType> &vector_memory,
                 const AdditionalData     &data          );
 
+    /**
+     * Constructor. Use an object of type GrowingVectorMemory as a default to
+     * allocate memory.
+     */
     SolverFIRE (SolverControl         &solver_control,
                 const AdditionalData  &data          );
 
@@ -91,6 +94,7 @@ namespace statics
      * argument and returns a pair of objective function's value and
      * objective function's gradient (with respect to the variables).
      */
+    template<typename PreconditionerType = DiagonalMatrix<VectorType>>
     void solve
     (std::function<double(VectorType &, const VectorType &)>  compute,
      VectorType                                              &u,
@@ -118,21 +122,28 @@ namespace statics
   /* --------------------- Inline and template functions ------------------- */
 #ifndef DOXYGEN
 
-  template<typename VectorType, typename PreconditionerType>
-  SolverFIRE<VectorType, PreconditionerType>::AdditionalData::
-  AdditionalData (const double  given_timestep,
+  template<typename VectorType>
+  SolverFIRE<VectorType>::AdditionalData::
+  AdditionalData (const double  initial_timestep,
                   const double  maximum_timestep,
-                  const double  umax)
+                  const double  maximum_linfty_norm)
     :
-    given_timestep(given_timestep),
+    initial_timestep(initial_timestep),
     maximum_timestep(maximum_timestep),
-    umax(umax)
-  {}
+    maximum_linfty_norm(maximum_linfty_norm)
+  {
+    AssertThrow (initial_timestep    > 0. &&
+                 maximum_timestep    > 0. &&
+                 maximum_linfty_norm > 0.,
+                 ExcMessage("Expected positive values for initial_timestep, "
+                            "maximum_timestep and maximum_linfty_norm but one or more of the "
+                            "these values are not positive."));
+  }
 
 
 
-  template<typename VectorType, typename PreconditionerType>
-  SolverFIRE<VectorType, PreconditionerType>::
+  template<typename VectorType>
+  SolverFIRE<VectorType>::
   SolverFIRE (SolverControl            &solver_control,
               VectorMemory<VectorType> &vector_memory,
               const AdditionalData     &data          )
@@ -143,8 +154,8 @@ namespace statics
 
 
 
-  template<typename VectorType, typename PreconditionerType>
-  SolverFIRE<VectorType, PreconditionerType>::
+  template<typename VectorType>
+  SolverFIRE<VectorType>::
   SolverFIRE (SolverControl         &solver_control,
               const AdditionalData  &data          )
     :
@@ -154,15 +165,16 @@ namespace statics
 
 
 
-  template<typename VectorType, typename PreconditionerType>
-  SolverFIRE<VectorType, PreconditionerType>::~SolverFIRE()
+  template<typename VectorType>
+  SolverFIRE<VectorType>::~SolverFIRE()
   {}
 
 
 
-  template<typename VectorType, typename PreconditionerType>
+  template<typename VectorType>
+  template<typename PreconditionerType>
   void
-  SolverFIRE<VectorType, PreconditionerType>::solve
+  SolverFIRE<VectorType>::solve
   (std::function<double(VectorType &, const VectorType &)>  compute,
    VectorType                                              &u,
    const PreconditionerType                                &inverse_masses)
@@ -200,7 +212,7 @@ namespace statics
 
     // Refer to additional data members with some readable names.
     const auto &maximum_timestep   = additional_data.maximum_timestep;
-    double timestep                = additional_data.given_timestep;
+    double timestep                = additional_data.initial_timestep;
 
     // First scaling factor.
     double alpha = ALPHA_0;
@@ -209,6 +221,7 @@ namespace statics
 
     while (conv == SolverControl::iterate)
       {
+        ++iter;
         // Euler integration step.
         u.sadd (timestep, velocities);               // U += dt     * V
         inverse_masses.vmult(gradients, gradients);  // G  = M^{-1} * G
@@ -260,17 +273,15 @@ namespace statics
 
         real_type vmax = velocities.linfty_norm();
 
-        // Change timestep if any dof would move more than umax?
+        // Change timestep if any dof would move more than maximum_linfty_norm.
         if (vmax > 0.)
           {
-            const double minimal_timestep = additional_data.umax
+            const double minimal_timestep = additional_data.maximum_linfty_norm
                                             /
                                             vmax;
             if (minimal_timestep < timestep)
               timestep = minimal_timestep;
           }
-
-        ++iter;
 
         print_vectors(iter, u, velocities, gradients);
 
@@ -285,9 +296,9 @@ namespace statics
 
 
 
-  template <typename VectorType, typename PreconditionerType>
+  template <typename VectorType>
   void
-  SolverFIRE<VectorType, PreconditionerType>::
+  SolverFIRE<VectorType>::
   print_vectors (const unsigned int,
                  const VectorType &,
                  const VectorType &,
