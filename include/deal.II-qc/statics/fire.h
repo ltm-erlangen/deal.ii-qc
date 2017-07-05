@@ -97,13 +97,13 @@ namespace statics
      */
     void solve
     (std::function<double(VectorType &, const VectorType &)>  compute,
-     VectorType                                              &u   );
+     VectorType                                              &u      );
 
   protected:
 
     /**
      * Interface for derived class. This function gets the current iteration
-     * u, dof's time derivative and the gradient in each step. It can be used
+     * u, u's time derivative and the gradient in each step. It can be used
      * for a graphical output of the convergence history.
      */
     void print_vectors (const unsigned int,
@@ -139,7 +139,7 @@ namespace statics
   template<typename VectorType>
   SolverFIRE<VectorType>::SolverFIRE (SolverControl            &solver_control,
                                       VectorMemory<VectorType> &vector_memory,
-                                      const AdditionalData             &data)
+                                      const AdditionalData             &data  )
     :
     Solver<VectorType>(solver_control, vector_memory),
     additional_data(data)
@@ -167,7 +167,7 @@ namespace statics
   void
   SolverFIRE<VectorType>::solve
   (std::function<double(VectorType &, const VectorType &)>  compute,
-   VectorType                                              &u   )
+   VectorType                                              &u      )
   {
     // FIRE algorithm constants
     const double DELAYSTEP       = 5;
