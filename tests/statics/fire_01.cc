@@ -39,26 +39,22 @@ void test (const double x,
   // Use this to initialize DiagonalMatrix
   X = 1.;
 
+  // Create inverse diagonal matrix.
   DiagonalMatrix<vector_t> inv_mass;
   inv_mass.reinit(X);
-
-  // Create inverse diagonal matrix.
-  std::shared_ptr<const DiagonalMatrix<vector_t> >
-  inverse_mass =
-    std::make_shared<const DiagonalMatrix<vector_t>>(inv_mass);
 
   // Set initial iterate.
   X(0) = x;
   X(1) = y;
 
   auto additional_data =
-    statics::SolverFIRE<vector_t>::AdditionalData(1e-3, 1e-1, 0.1, inverse_mass);
+    statics::SolverFIRE<vector_t>::AdditionalData(1e-3, 1e-1, 0.1);
 
   SolverControl solver_control (1e05, tol);
 
   statics::SolverFIRE<vector_t> fire (solver_control, additional_data);
 
-  fire.solve(compute, X);
+  fire.solve(compute, X, inv_mass);
 
   X.print(std::cout);
 

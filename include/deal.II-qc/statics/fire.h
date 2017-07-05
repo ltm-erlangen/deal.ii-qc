@@ -37,7 +37,7 @@ namespace statics
    *                             \forall \,\, i \in \mathcal D.
    * \f]
    */
-  template<typename VectorType>
+  template<typename VectorType, typename PreconditionerType = DiagonalMatrix<VectorType>>
   class SolverFIRE : public Solver<VectorType>
   {
 
@@ -45,31 +45,26 @@ namespace statics
 
     struct AdditionalData
     {
+      //FIXME: Introduce units for timestep and umax.
       explicit
-      AdditionalData (const double  timestep     = 1e-12,
-                      const double  max_timestep = 1e-9,
-                      const double  dmax         = 1e-10,
-                      std::shared_ptr<const typename dealii::DiagonalMatrix<VectorType>> inverse_masses = nullptr);
+      AdditionalData (const double  given_timestep = 1e-12,
+                      const double  maximum_timestep   = 1e-9,
+                      const double  umax               = 1e-10);
 
       /**
-       * Time step.
+       * Suggested time step.
        */
-      const double timestep;
+      const double given_timestep;
 
       /**
-       * Maximum timestep.
+       * Maximum time step.
        */
-      const double max_timestep;
+      const double maximum_timestep;
 
       /**
        * Maximum change allowed in any degree of freedom.
        */
-      const double dmax;
-
-      /**
-       * A const reference to the masses in the system.
-       */
-      const std::shared_ptr<const dealii::DiagonalMatrix<VectorType>> inverse_masses;
+      const double umax;
 
     };
 
@@ -90,14 +85,16 @@ namespace statics
 
     /**
      * Obtain a set of #p u (variables) that minimize an objective function
-     * described by the polymorphic function wrapper @p compute. The function
-     * @p compute takes in the state of the (u) variables as argument and
-     * returns a pair of objective function's value and objective function's
-     * gradient (with respect to the variables).
+     * described by the polymorphic function wrapper @p compute, with a given
+     * preconditioner @p inverse_masses and initial @p u values.
+     * The function @p compute takes in the state of the (u) variables as
+     * argument and returns a pair of objective function's value and
+     * objective function's gradient (with respect to the variables).
      */
     void solve
     (std::function<double(VectorType &, const VectorType &)>  compute,
-     VectorType                                              &u      );
+     VectorType                                              &u,
+     const PreconditionerType                                &inverse_masses);
 
   protected:
 
@@ -121,25 +118,24 @@ namespace statics
   /* --------------------- Inline and template functions ------------------- */
 #ifndef DOXYGEN
 
-  template<typename VectorType>
-  SolverFIRE<VectorType>::AdditionalData::
-  AdditionalData (const double  timestep,
-                  const double  max_timestep,
-                  const double  dmax,
-                  std::shared_ptr<const typename dealii::DiagonalMatrix<VectorType>> inverse_masses)
+  template<typename VectorType, typename PreconditionerType>
+  SolverFIRE<VectorType, PreconditionerType>::AdditionalData::
+  AdditionalData (const double  given_timestep,
+                  const double  maximum_timestep,
+                  const double  umax)
     :
-    timestep(timestep),
-    max_timestep(max_timestep),
-    dmax(dmax),
-    inverse_masses(inverse_masses)
+    given_timestep(given_timestep),
+    maximum_timestep(maximum_timestep),
+    umax(umax)
   {}
 
 
 
-  template<typename VectorType>
-  SolverFIRE<VectorType>::SolverFIRE (SolverControl            &solver_control,
-                                      VectorMemory<VectorType> &vector_memory,
-                                      const AdditionalData             &data  )
+  template<typename VectorType, typename PreconditionerType>
+  SolverFIRE<VectorType, PreconditionerType>::
+  SolverFIRE (SolverControl            &solver_control,
+              VectorMemory<VectorType> &vector_memory,
+              const AdditionalData     &data          )
     :
     Solver<VectorType>(solver_control, vector_memory),
     additional_data(data)
@@ -147,9 +143,10 @@ namespace statics
 
 
 
-  template<typename VectorType>
-  SolverFIRE<VectorType>::SolverFIRE (SolverControl         &solver_control,
-                                      const AdditionalData  &data          )
+  template<typename VectorType, typename PreconditionerType>
+  SolverFIRE<VectorType, PreconditionerType>::
+  SolverFIRE (SolverControl         &solver_control,
+              const AdditionalData  &data          )
     :
     Solver<VectorType>(solver_control),
     additional_data(data)
@@ -157,17 +154,18 @@ namespace statics
 
 
 
-  template<typename VectorType>
-  SolverFIRE<VectorType>::~SolverFIRE()
+  template<typename VectorType, typename PreconditionerType>
+  SolverFIRE<VectorType, PreconditionerType>::~SolverFIRE()
   {}
 
 
 
-  template<typename VectorType>
+  template<typename VectorType, typename PreconditionerType>
   void
-  SolverFIRE<VectorType>::solve
+  SolverFIRE<VectorType, PreconditionerType>::solve
   (std::function<double(VectorType &, const VectorType &)>  compute,
-   VectorType                                              &u      )
+   VectorType                                              &u,
+   const PreconditionerType                                &inverse_masses)
   {
     // FIRE algorithm constants
     const double DELAYSTEP       = 5;
@@ -193,34 +191,30 @@ namespace statics
     // Update gradients for the new u.
     compute(gradients, u);
 
+    unsigned int iter = 0;
+
     SolverControl::State conv = SolverControl::iterate;
-    conv = this->iteration_status (0, gradients * gradients, u);
+    conv = this->iteration_status (iter, gradients * gradients, u);
     if (conv != SolverControl::iterate)
       return;
 
     // Refer to additional data members with some readable names.
-    const auto &inverse_masses = additional_data.inverse_masses;
-    const auto &max_timestep   = additional_data.max_timestep;
-    double timestep       = additional_data.timestep;
+    const auto &maximum_timestep   = additional_data.maximum_timestep;
+    double timestep                = additional_data.given_timestep;
 
     // First scaling factor.
     double alpha = ALPHA_0;
 
     unsigned int previous_iter_with_positive_v_dot_g = 0;
-    double minimal_timestep = timestep;
-
-    unsigned int iter = 0;
 
     while (conv == SolverControl::iterate)
       {
         // Euler integration step.
-        u.sadd (minimal_timestep, velocities);         // U += dt * V
-        inverse_masses->vmult(gradients, gradients);   // G  =      G / M
-        velocities.sadd(-minimal_timestep, gradients); // V -= dt * G
+        u.sadd (timestep, velocities);               // U += dt     * V
+        inverse_masses.vmult(gradients, gradients);  // G  = M^{-1} * G
+        velocities.sadd(-timestep, gradients);       // V -= dt     * G
 
-        gradients = 0.; //FIXME: QC::compute() should probably also do this?
-
-        // Update gradients for the new u.
+        // Compute gradients for the new u.
         compute(gradients, u);
 
         const real_type gradient_norm_squared = gradients * gradients;
@@ -231,17 +225,12 @@ namespace statics
         // v_dot_g = V * G
         const real_type v_dot_g = velocities * gradients;
 
-        // if (v_dot_g) < 0:
-        //   V = (1-alpha) V - alpha |V|/|G| G
-        //   |V| = length of V,
-        //   if more than DELAYSTEP since v dot g was positive:
-        //     increase timestep and decrease alpha
         if (v_dot_g < 0.)
           {
             const real_type velocities_norm_squared =
               velocities * velocities;
 
-            // Check if we devide by zero in DEBUG mode.
+            // Check if we divide by zero in DEBUG mode.
             Assert (gradient_norm_squared > 0., ExcInternalError());
 
             // beta = - alpha |V|/|G|
@@ -255,44 +244,54 @@ namespace statics
 
             if (iter - previous_iter_with_positive_v_dot_g > DELAYSTEP)
               {
-                timestep = std::min (timestep*TIMESTEP_GROW, max_timestep);
+                // Increase timestep and decrease alpha.
+                timestep = std::min (timestep*TIMESTEP_GROW, maximum_timestep);
                 alpha *= ALPHA_SHRINK;
               }
           }
-        // else
-        // decrease timestep, reset alpha and set V = 0
         else
           {
+            // Decrease timestep, reset alpha and set V = 0.
             previous_iter_with_positive_v_dot_g = iter;
             timestep *= TIMESTEP_SHRINK;
             alpha = ALPHA_0;
             velocities = 0.;
           }
 
-        // Change timestep if any dof would move more than dmax?
-        minimal_timestep = additional_data.dmax
-                           /
-                           velocities.linfty_norm();
+        real_type vmax = velocities.linfty_norm();
 
-        if (timestep < minimal_timestep)
-          minimal_timestep = timestep;
+        // Change timestep if any dof would move more than umax?
+        if (vmax > 0.)
+          {
+            const double minimal_timestep = additional_data.umax
+                                            /
+                                            vmax;
+            if (minimal_timestep < timestep)
+              timestep = minimal_timestep;
+          }
 
         ++iter;
 
         print_vectors(iter, u, velocities, gradients);
 
-      } // while didn't converge
+      } // While we need to iterate.
+
+    // In the case of failure: throw exception.
+    if (conv != SolverControl::success)
+      AssertThrow (false,
+                   SolverControl::NoConvergence (iter, gradients * gradients));
 
   }
 
 
 
-  template <typename VectorType>
+  template <typename VectorType, typename PreconditionerType>
   void
-  SolverFIRE<VectorType>::print_vectors(const unsigned int,
-                                        const VectorType &,
-                                        const VectorType &,
-                                        const VectorType &) const
+  SolverFIRE<VectorType, PreconditionerType>::
+  print_vectors (const unsigned int,
+                 const VectorType &,
+                 const VectorType &,
+                 const VectorType &) const
   {}
 
 } // namespace statics
