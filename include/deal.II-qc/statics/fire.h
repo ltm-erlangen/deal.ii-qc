@@ -223,9 +223,9 @@ namespace statics
       {
         ++iter;
         // Euler integration step.
-        u.sadd (timestep, velocities);               // U += dt     * V
+        u.add (timestep, velocities);                // U += dt     * V
         inverse_masses.vmult(gradients, gradients);  // G  = M^{-1} * G
-        velocities.sadd(-timestep, gradients);       // V -= dt     * G
+        velocities.add (-timestep, gradients);       // V -= dt     * G
 
         // Compute gradients for the new u.
         compute(gradients, u);
