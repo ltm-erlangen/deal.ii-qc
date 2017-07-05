@@ -1,6 +1,7 @@
 #ifndef __dealii_qc_minimizer_fire_h
 #define __dealii_qc_minimizer_fire_h
 
+#include <deal.II/lac/diagonal_matrix.h>
 #include <deal.II/lac/solver.h>
 
 #include <deal.II-qc/utilities.h>
@@ -14,11 +15,16 @@ DEAL_II_QC_NAMESPACE_OPEN
 namespace statics
 {
 
+  using namespace dealii;
+
+
   // TODO: Complete the description.
   /**
    * A class implementation of FIRE (Fast Inertial Relaxation Engine) algorithm
    * which is a damped dynamics method described in <a href="">Structural
-   * Relaxation Made Simple</a> by Bitzek et al. 2006 explained below.
+   * Relaxation Made Simple</a> by Bitzek et al. 2006 and <a href="">
+   * Energy-Minimization in Atomic-to-Continuum Scale-Bridging Methods
+   * </a> by Eidel et al. 2011, explained below.
    *
    * The strategy to descent to a minimum of the total energy is to follow an
    * equation of motion given by:
@@ -32,7 +38,7 @@ namespace statics
    * \f]
    */
   template<typename VectorType>
-  class SolverFIRE : public dealii::Solver<VectorType>
+  class SolverFIRE : public Solver<VectorType>
   {
 
   public:
@@ -40,20 +46,20 @@ namespace statics
     struct AdditionalData
     {
       explicit
-      AdditionalData (const double  dt     = 1e-12,
-                      const double  dt_max = 1e-9,
-                      const double  dmax   = 1e-10,
+      AdditionalData (const double  timestep     = 1e-12,
+                      const double  max_timestep = 1e-9,
+                      const double  dmax         = 1e-10,
                       std::shared_ptr<const typename dealii::DiagonalMatrix<VectorType>> inverse_masses = nullptr);
 
       /**
        * Time step.
        */
-      double dt;
+      const double timestep;
 
       /**
        * Maximum timestep.
        */
-      const double dt_max;
+      const double max_timestep;
 
       /**
        * Maximum change allowed in any degree of freedom.
@@ -63,19 +69,19 @@ namespace statics
       /**
        * A const reference to the masses in the system.
        */
-      const std::shared_ptr<const typename dealii::DiagonalMatrix<VectorType>> inverse_masses;
+      const std::shared_ptr<const dealii::DiagonalMatrix<VectorType>> inverse_masses;
 
     };
 
     /**
      * Constructor.
      */
-    SolverFIRE (dealii::SolverControl            &solver_control,
-                dealii::VectorMemory<VectorType> &vector_memory,
-                const AdditionalData             &data);
+    SolverFIRE (SolverControl            &solver_control,
+                VectorMemory<VectorType> &vector_memory,
+                const AdditionalData     &data          );
 
-    SolverFIRE (dealii::SolverControl &solver_control,
-                const AdditionalData  &data);
+    SolverFIRE (SolverControl         &solver_control,
+                const AdditionalData  &data          );
 
     /**
      * Virtual destructor.
@@ -83,22 +89,32 @@ namespace statics
     virtual ~SolverFIRE();
 
     /**
-     * Obtain a set of #p dofs (variables) that minimize an objective function
+     * Obtain a set of #p u (variables) that minimize an objective function
      * described by the polymorphic function wrapper @p compute. The function
-     * @p compute takes in the state of the (dofs) variables as argument and
+     * @p compute takes in the state of the (u) variables as argument and
      * returns a pair of objective function's value and objective function's
      * gradient (with respect to the variables).
      */
     void solve
     (std::function<double(VectorType &, const VectorType &)>  compute,
-     VectorType                                              &dofs);
+     VectorType                                              &u   );
 
   protected:
 
     /**
+     * Interface for derived class. This function gets the current iteration
+     * u, dof's time derivative and the gradient in each step. It can be used
+     * for a graphical output of the convergence history.
+     */
+    void print_vectors (const unsigned int,
+                        const VectorType &,
+                        const VectorType &,
+                        const VectorType &) const;
+
+    /**
      * Additional parameters.
      */
-    AdditionalData additional_data;
+    const AdditionalData additional_data;
 
   };
 
@@ -107,13 +123,13 @@ namespace statics
 
   template<typename VectorType>
   SolverFIRE<VectorType>::AdditionalData::
-  AdditionalData (const double  dt,
-                  const double  dt_max,
+  AdditionalData (const double  timestep,
+                  const double  max_timestep,
                   const double  dmax,
                   std::shared_ptr<const typename dealii::DiagonalMatrix<VectorType>> inverse_masses)
     :
-    dt(dt),
-    dt_max(dt_max),
+    timestep(timestep),
+    max_timestep(max_timestep),
     dmax(dmax),
     inverse_masses(inverse_masses)
   {}
@@ -121,21 +137,21 @@ namespace statics
 
 
   template<typename VectorType>
-  SolverFIRE<VectorType>::SolverFIRE (dealii::SolverControl            &solver_control,
-                                      dealii::VectorMemory<VectorType> &vector_memory,
+  SolverFIRE<VectorType>::SolverFIRE (SolverControl            &solver_control,
+                                      VectorMemory<VectorType> &vector_memory,
                                       const AdditionalData             &data)
     :
-    dealii::Solver<VectorType>(solver_control, vector_memory),
+    Solver<VectorType>(solver_control, vector_memory),
     additional_data(data)
   {}
 
 
 
   template<typename VectorType>
-  SolverFIRE<VectorType>::SolverFIRE (dealii::SolverControl &solver_control,
-                                      const AdditionalData  &data)
+  SolverFIRE<VectorType>::SolverFIRE (SolverControl         &solver_control,
+                                      const AdditionalData  &data          )
     :
-    dealii::Solver<VectorType>(solver_control),
+    Solver<VectorType>(solver_control),
     additional_data(data)
   {}
 
@@ -151,84 +167,100 @@ namespace statics
   void
   SolverFIRE<VectorType>::solve
   (std::function<double(VectorType &, const VectorType &)>  compute,
-   VectorType                                              &dofs)
+   VectorType                                              &u   )
   {
     // FIRE algorithm constants
-    const double DELAYSTEP    = 5;
-    const double DT_GROW      = 1.1;
-    const double DT_SHRINK    = 0.5;
-    const double ALPHA_0      = 0.1;
-    const double ALPHA_SHRINK = 0.99;
-    const double TMAX         = 10.0;
+    const double DELAYSTEP       = 5;
+    const double TIMESTEP_GROW   = 1.1;
+    const double TIMESTEP_SHRINK = 0.5;
+    const double ALPHA_0         = 0.1;
+    const double ALPHA_SHRINK    = 0.99;
 
     using real_type = typename VectorType::real_type;
-    using namespace dealii;
 
     VectorType *v, *g;
 
     v = this->memory.alloc();
     g = this->memory.alloc();
 
+    // Refer to v and g with some readable names.
     VectorType &velocities = *v;
     VectorType &gradients  = *g;
 
-    //FIXME: Initialize velocities adopting a normal distribution?
-    velocities.reinit(dofs, false); // V = 0
-    gradients.reinit(dofs, true);
+    // Set velocities to zero.
+    velocities.reinit(u, false);
 
-    compute(dofs, gradients);
+    // Don't set Gradients to zero.
+    gradients.reinit(u, true);
 
-    unsigned int iter = 0;
+    // Update gradients for the new u.
+    compute(gradients, u);
 
     SolverControl::State conv = SolverControl::iterate;
-    real_type gradient_norm_squared = gradients * gradients;
-
-    // Check whether tolerance criteria is satisfied already.
-    conv = this->iteration_status(0, gradient_norm_squared, dofs);
+    conv = this->iteration_status (0, gradients * gradients, u);
     if (conv != SolverControl::iterate)
       return;
+
+    // Refer to additional data members with some readable names.
+    const auto &inverse_masses = additional_data.inverse_masses;
+    const auto &max_timestep   = additional_data.max_timestep;
+    double timestep       = additional_data.timestep;
 
     try
       {
         // First scaling factor.
         double alpha = ALPHA_0;
 
-        // Scaling factors.
-        double
-        a = std::numeric_limits<double>::signaling_NaN(),
-        b = std::numeric_limits<double>::signaling_NaN();
-
         unsigned int previous_iter_with_positive_v_dot_g = 0;
+        double minimal_timestep = timestep;
+
+        unsigned int iter = 0;
 
         while (conv == SolverControl::iterate)
           {
+            // Euler integration step.
+            u.sadd (minimal_timestep, velocities);         // U  = dt * V
+            inverse_masses->vmult(gradients, gradients);   // G  =      G / M
+            velocities.sadd(-minimal_timestep, gradients); // V -= dt * G
+
+            gradients = 0.; //FIXME: QC::compute() should probably also do this?
+
+            // Update gradients for the new u.
+            compute(gradients, u);
+
+            const real_type gradient_norm_squared = gradients * gradients;
+            conv = this->iteration_status(iter, gradient_norm_squared, u);
+            if (conv != SolverControl::iterate)
+              break;
 
             // v_dot_g = V * G
-            real_type v_dot_g = velocities * gradients;
+            const real_type v_dot_g = velocities * gradients;
 
             // if (v_dot_g) < 0:
-            //   V = (1-alpha) V - alpha |V| Ghat
-            //   |V| = length of V, Ghat = unit G
+            //   V = (1-alpha) V - alpha |V|/|G| G
+            //   |V| = length of V,
             //   if more than DELAYSTEP since v dot g was positive:
             //     increase timestep and decrease alpha
             if (v_dot_g < 0.)
               {
-                real_type velocities_norm_squared =
+                const real_type velocities_norm_squared =
                   velocities * velocities;
 
-                a = 1. - alpha;
-                if (gradient_norm_squared == 0.)
-                  b = 0.;
-                else
-                  b = alpha * std::sqrt (velocities_norm_squared
-                                         /
-                                         gradient_norm_squared);
+                // Check if we devide by zero in DEBUG mode.
+                Assert (gradient_norm_squared > 0., ExcInternalError());
 
-                velocities.sadd (a, b, gradients);
+                // beta = - alpha |V|/|G|
+                const real_type beta = -alpha *
+                                       std::sqrt (velocities_norm_squared
+                                                  /
+                                                  gradient_norm_squared);
+
+                // V = (1-alpha) V + beta G.
+                velocities.sadd (1. - alpha, beta, gradients);
 
                 if (iter - previous_iter_with_positive_v_dot_g > DELAYSTEP)
                   {
-                    additional_data.dt = std::min (additional_data.dt*DT_GROW, additional_data.dt_max);
+                    timestep = std::min (timestep*TIMESTEP_GROW, max_timestep);
                     alpha *= ALPHA_SHRINK;
                   }
               }
@@ -237,38 +269,22 @@ namespace statics
             else
               {
                 previous_iter_with_positive_v_dot_g = iter;
-                additional_data.dt *= DT_SHRINK;
+                timestep *= TIMESTEP_SHRINK;
                 alpha = ALPHA_0;
                 velocities = 0.;
               }
 
-            // Check whether energy tolerance criteria is satisfied?
-            //
+            // Change timestep if any dof would move more than dmax?
+            minimal_timestep = additional_data.dmax
+                               /
+                               velocities.linfty_norm();
 
-            // Change timestep if any dof would be changed more than dmax.
-            double minimal_timestep =
-              additional_data.dmax
-              /
-              dealii::Utilities::MPI::max (velocities.max(),
-                                           dofs.get_mpi_communicator());
-
-            if (additional_data.dt < minimal_timestep)
-              minimal_timestep = additional_data.dt;
-
-            // Euler integration step.
-            dofs.sadd (minimal_timestep, velocities);
-            additional_data.inverse_masses->vmult(gradients, gradients);
-            velocities.sadd(-minimal_timestep, gradients);
-
-            // Update gradients for the new dofs.
-            compute(dofs, gradients);
+            if (timestep < minimal_timestep)
+              minimal_timestep = timestep;
 
             ++iter;
-            //print_vectors(iter, dofs, gradients);
 
-            conv = this->iteration_status(iter, gradient_norm_squared, dofs);
-            if (conv != SolverControl::iterate)
-              break;
+            print_vectors(iter, u, velocities, gradients);
 
           } // while didn't converge
       }
@@ -282,6 +298,16 @@ namespace statics
     this->memory.free(v);
     this->memory.free(g);
   }
+
+
+
+  template <typename VectorType>
+  void
+  SolverFIRE<VectorType>::print_vectors(const unsigned int,
+                                        const VectorType &,
+                                        const VectorType &,
+                                        const VectorType &) const
+  {}
 
 } // namespace statics
 

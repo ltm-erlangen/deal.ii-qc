@@ -1,6 +1,4 @@
 
-#include <deal.II/lac/diagonal_matrix.h>
-
 #include <deal.II-qc/statics/fire.h>
 
 
@@ -9,52 +7,67 @@ using namespace dealiiqc;
 
 
 
-// Test to verify correctiness of SolverFIRE::sovle()
-// The objective function is f(x) = x^2;
+// Test to verify correctness of SolverFIRE::sovle()
+// The objective function is f(x,y) = x^2 + y^2.
 
 
 
 using vector_t = typename dealii::Vector<double>;
 
 
-double compute (vector_t &g, const vector_t &x)
+double compute (vector_t &G, const vector_t &X)
 {
-  AssertThrow (x.size() == 1 && g.size() == 1,
+  AssertThrow (X.size() == 2 && G.size() == 2,
                ExcInternalError());
 
-  g(0) = 2*x(0);
+  G(0) = 2*X(0);
+  G(1) = 2*X(1);
 
-  return x(0)*x(0);
+  return X.norm_sqr();
 }
 
 
-int main ()
+
+void test (const double x,
+           const double y,
+           const double tol)
 {
-  vector_t x, g;
+  vector_t X;
 
-  x.reinit(1, true);
-  g.reinit(1, true);
+  X.reinit(2, true);
 
-  // Set initial iterate.
-  x(0) = 1.;
+  // Use this to initialize DiagonalMatrix
+  X = 1.;
 
   DiagonalMatrix<vector_t> inv_mass;
-  inv_mass.reinit(x);
+  inv_mass.reinit(X);
 
+  // Create inverse diagonal matrix.
   std::shared_ptr<const DiagonalMatrix<vector_t> >
   inverse_mass =
     std::make_shared<const DiagonalMatrix<vector_t>>(inv_mass);
 
+  // Set initial iterate.
+  X(0) = x;
+  X(1) = y;
+
   auto additional_data =
     statics::SolverFIRE<vector_t>::AdditionalData(1e-3, 1e-1, 0.1, inverse_mass);
 
-  SolverControl solver_control (1e03, 1e-03);
+  SolverControl solver_control (1e05, tol);
 
   statics::SolverFIRE<vector_t> fire (solver_control, additional_data);
 
-  fire.solve(compute, x);
+  fire.solve(compute, X);
 
-  x.print(std::cout);
+  X.print(std::cout);
 
+}
+
+int main ()
+{
+  test (  10,  -2, 1e-15 );
+  test (-0.1, 0.1, 1e-15 );
+  test ( 9.1,-6.1, 1e-15 );
 
 }
