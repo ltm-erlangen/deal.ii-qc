@@ -134,7 +134,7 @@ namespace Potential
     const double energy = eps * rm_by_r6 * ( rm_by_r6 - 2.);
     const double gradient  = ComputeGradient
                              ?
-                             -12. * eps * rm_by_r6 * ( 1. - rm_by_r6) / sqrt(squared_distance)
+                             12. * eps * rm_by_r6 * ( 1. - rm_by_r6) / sqrt(squared_distance)
                              :
                              std::numeric_limits<double>::signaling_NaN();
 
