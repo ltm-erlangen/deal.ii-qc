@@ -166,12 +166,16 @@ void ConfigureQC::declare_parameters( ParameterHandler &prm )
                       "Additional coefficients for a pair of atoms of "
                       "certain types. Depending on the specific pair "
                       "potential type this input may not be necessary. "
+                      "---"
                       "For the pair potential type: Coulomb Wolf, the pair "
                       "specific coefficients are not necessary."
+                      "---"
                       "For the pair potential type: LJ, the first two "
-                      "entries are the atom types (therefore of type "
-                      "unsigned int) and the remaining two are epsilon and "
-                      "alpha LJ parameters, respectively.");
+                      "entries are the atom types and the remaining two are"
+                      "epsilon and rm LJ parameters, respectively."
+                      "Note that the atom data counts the atom types from 1 "
+                      "but deal.II-qc from 0. Therefore atom type 2 in the "
+                      "atom data is atom type 1 in deal.II-qc.");
   }
   prm.leave_subsection ();
   prm.enter_subsection ("Configure QC");
