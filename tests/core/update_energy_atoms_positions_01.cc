@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <random>
 #include <sstream>
 
 #include <deal.II-qc/core/qc.h>
@@ -49,31 +50,49 @@ Problem<dim, PotentialType>::Problem (const ConfigureQC &config)
 template <int dim, typename PotentialType>
 void Problem<dim, PotentialType>::run()
 {
-  QC<dim, PotentialType>::locally_relevant_displacement = 0.;
+  // --- Energy at zero displacement.
+
+  typename QC<dim, PotentialType>::vector_t u;
+  u.reinit (QC<dim, PotentialType>::dof_handler.locally_owned_dofs(),
+            QC<dim, PotentialType>::mpi_communicator);
+
+  u = 0.;
+
+  QC<dim, PotentialType>::locally_relevant_displacement = u;
   QC<dim, PotentialType>::update_positions();
+  const double energy_0 =
+    QC<dim, PotentialType>::template compute(QC<dim, PotentialType>::gradient);
 
-  QC<dim, PotentialType>::pcout
-      << "energy = "
-      << QC<dim, PotentialType>::template compute(QC<dim, PotentialType>::gradient)
-      << std::endl;
+  // --- Random displacements.
+  // manually get locally owned elements parallel vector:
 
-  QC<dim, PotentialType>::locally_relevant_displacement(0) = 1.;
+  std::uniform_real_distribution<double> dist (0, 1.);
+  std::default_random_engine engine;
 
+  const IndexSet locally_owned_set =
+    QC<dim, PotentialType>::dof_handler.locally_owned_dofs();
+
+  for (unsigned int i = 0; i < locally_owned_set.n_elements(); ++i)
+    u(locally_owned_set.nth_index_in_set(i)) = dist(engine);
+
+  QC<dim, PotentialType>::locally_relevant_displacement = u;
   QC<dim, PotentialType>::update_positions();
+  const double energy_1 =
+    QC<dim, PotentialType>::template compute(QC<dim, PotentialType>::gradient);
 
-  QC<dim, PotentialType>::pcout
-      << "energy = "
-      << QC<dim, PotentialType>::template compute(QC<dim, PotentialType>::gradient)
-      << std::endl;
+  // --- Reset displacement to zero.
 
-  QC<dim, PotentialType>::locally_relevant_displacement(0) = .0;
+  u = 0.;
 
+  QC<dim, PotentialType>::locally_relevant_displacement = u;
   QC<dim, PotentialType>::update_positions();
+  const double energy_2 =
+    QC<dim, PotentialType>::template compute(QC<dim, PotentialType>::gradient);
 
-  QC<dim, PotentialType>::pcout
-      << "energy = "
-      << QC<dim, PotentialType>::template compute(QC<dim, PotentialType>::gradient)
-      << std::endl;
+  AssertThrow (energy_0 == energy_2,
+               ExcInternalError());
+
+  std::cout << "TEST PASSED!" << std::endl;
 }
 
 
@@ -162,43 +181,3 @@ int main (int argc, char *argv[])
 
   return 0;
 }
-
-
-/*
- Maxima input script.
-
- // actual code below
- <
-
- erfcc(r,alpha) := erfc(alpha*r)/r;
-
- derfcc(r,alpha) := diff( erfcc(r,alpha),r);
-
- derfcc_explicit(r,alpha) := -erfc(alpha*r)/r^2
-                             - 2*alpha*(%e^(-alpha^2*r^2))/(sqrt(%pi)*r);
-
- shifted_energy(p,q,r,rc,alpha) := 14.399645*p*q*( erfcc(r,alpha)
-                                   - limit( erfcc(r, alpha), r, rc)  );
-
- grad_r(p,q,r,rc,alpha) := 14.399645*p*q*( derfcc_explicit(r,alpha)
-                                          - derfcc_explicit(rc,alpha) );
-
- grad_x(p,q,r,rc,alpha) := grad_r(p,q,r,rc,alpha)/r;
-
- print("Energy : ");
- float(at(shifted_energy(p,q,r,rc,alpha), [p=1.,q=-1.,r=sqrt(2),rc=8.25,alpha=0.25]));
-
- print("Energy : ");
- float(at(shifted_energy(p,q,r,rc,alpha), [p=1.,q=-1.,r=1,rc=8.25,alpha=0.25]));
-
- >
- // end of code
- Output:
-
-"Energy : "
-(%o7) "Energy : "
-(%o8) -6.276939683528505
-"Energy : "
-(%o9) "Energy : "
-(%o10) -10.41447086750231
- */
