@@ -343,7 +343,9 @@ void QC<dim, PotentialType>::update_positions()
            i < displacements.size();
            i++, ++cell_energy_molecules_range.first)
         // FIXME: loop over all atoms and use BlockVector for displacements
-        cell_energy_molecules_range.first->second.atoms[0].position += displacements[i];
+        cell_energy_molecules_range.first->second.atoms[0].position =
+          cell_energy_molecules_range.first->second.atoms[0].initial_position +
+          displacements[i];
 
       // The loop over displacements must have exhausted all the energy
       // molecules on a per cell basis (and the converse also should be true).
