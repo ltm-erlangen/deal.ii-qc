@@ -63,8 +63,8 @@ int main(int argc, char **argv)
         std::static_pointer_cast<Potential::PairLJCutManager>(config.get_potential());
 
       // performing tests with blessed output (from LAMMPS)
-      test(0.90, 551.3630363329171, 7656.629108919712, lj_ptr);
-      test(1.50, 0.,                 0.,               lj_ptr);
+      test(0.90, 551.3630363329171, -7656.629108919712, lj_ptr);
+      test(1.50,   0.,                  0.,             lj_ptr);
 
       std::cout << "TEST PASSED!" << std::endl;
     }

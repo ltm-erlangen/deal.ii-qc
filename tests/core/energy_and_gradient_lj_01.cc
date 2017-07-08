@@ -67,7 +67,8 @@ void Problem<dim, PotentialType>::partial_run (const double &blessed_energy,
   AssertThrow (std::fabs(energy-blessed_energy) < 400. * std::numeric_limits<double>::epsilon(),
                ExcInternalError());
 
-  AssertThrow (std::fabs(QC<dim, PotentialType>::gradient(0)-blessed_gradient < 400. * std::numeric_limits<double>::epsilon()),
+  AssertThrow (std::fabs(QC<dim, PotentialType>::gradient(0)-blessed_gradient)
+               < 2000. * std::numeric_limits<double>::epsilon(),
                ExcInternalError());
 
 }
@@ -132,7 +133,7 @@ int main (int argc, char *argv[])
       // Define Problem
       Problem<dim, Potential::PairLJCutManager> problem(config);
       problem.partial_run (144.324376994195,
-                           -1877.831410474777
+                           1877.831410474777
                            /*blessed values from Maxima*/);
 
     }
