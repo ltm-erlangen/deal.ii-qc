@@ -13,21 +13,24 @@ namespace Potential
 {
 
   /**
-   * Coulomb pair potential computed using Wolf summation method.
-   * Only supports InteractionTypes::Coul_Wolf interaction type.
+   * Coulomb pair potential computed using Wolf summation method as
    *
    * \f[
    *     \phi_{ij} =  \frac{q_i \, q_j \, \mbox{erfc}(\alpha r_{ij})}{r_{ij}}
-   *               -  \frac{q_i \, q_j \, \mbox{erfc}(\alpha r_{c })}{r_{c }}
+   *                  -
+   *                  \lim_{r \to r_c}
+   *                  \frac{q_i \, q_j \, \mbox{erfc}(\alpha r)}{r}
    * \f]
    *
    * where \f$\phi_{ij}\f$ is the Coulomb interaction energy between atom
    * \f$i\f$ and atom \f$j\f$ with charges \f$q_i\f$ and \f$q_j\f$
    * which are \f$r_{ij}\f$ distance apart. The parameter \f$\alpha\f$ is
    * the damping coefficient and \f$r_c\f$ is the cutoff radius.
+   * This pair potential only supports InteractionTypes::Coul_Wolf interaction
+   * type.
    *
    * @note The contribution of self energy \f$E^s\f$ is not computed
-   * within this class's function energy_and_scalar_force(). Therefore, the
+   * within PairCoulWolfManager::energy_and_gradient(). Therefore, the
    * value of the energy is shifted by a value of \f$E^s\f$ given by
    *
    * \f[
@@ -67,7 +70,9 @@ namespace Potential
      * two atoms of type @p i_atom_type and type @p j_atom_type
      * that are a distance of square root of @p squared_distance apart.
      * The first value in the returned pair is energy whereas the second
-     * is its (scalar) derivative, i.e. negative scalar force.
+     * is its partial derivative given as \f$
+     * \frac{\partial \phi_{ij}}{\partial r_{ij}} \f$.
+     *
      * The template parameter indicates whether to skip the additional
      * computation of gradient; this is in the case when only the
      * value of the energy is intended to be queried.
