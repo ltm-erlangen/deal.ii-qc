@@ -3,11 +3,13 @@
 // interacting exclusively through LJ interactions.
 // The blessed output is created through the script included at the end.
 
+#include "../tests.h"
+
+#include <deal.II-qc/core/qc.h>
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
-
-#include <deal.II-qc/core/qc.h>
 
 using namespace dealii;
 using namespace dealiiqc;
@@ -64,10 +66,17 @@ void Problem<dim, PotentialType>::partial_run (const double &blessed_energy,
       << "The energy computed using PairLJCutManager of 2 atom system is: "
       << energy << " eV" << std::endl;
 
-  AssertThrow (std::fabs(energy-blessed_energy) < 400. * std::numeric_limits<double>::epsilon(),
+
+  AssertThrow (Testing::almost_equal (energy,
+                                      blessed_energy,
+                                      5),
                ExcInternalError());
 
-  AssertThrow (std::fabs(QC<dim, PotentialType>::gradient(0)-blessed_gradient < 400. * std::numeric_limits<double>::epsilon()),
+  const double gradient = QC<dim, PotentialType>::gradient(0);
+
+  AssertThrow (Testing::almost_equal (gradient,
+                                      blessed_gradient,
+                                      5),
                ExcInternalError());
 
 }
@@ -132,7 +141,7 @@ int main (int argc, char *argv[])
       // Define Problem
       Problem<dim, Potential::PairLJCutManager> problem(config);
       problem.partial_run (144.324376994195,
-                           -1877.831410474777
+                           1877.831410474777
                            /*blessed values from Maxima*/);
 
     }
