@@ -24,85 +24,73 @@ using namespace dealiiqc;
 using vector_t = typename dealii::Vector<double>;
 
 
-class SingleVariableLJ
+double compute (vector_t &G, const vector_t &u, const double a)
 {
-public:
+  AssertThrow (u.size() == 1 && G.size() == 1,
+               ExcInternalError());
 
-  SingleVariableLJ (const double a)
-  {
-    X.reinit(1, true);
-    x.reinit(1, true);
+  const std::vector<double> lj_params = { 0.877, 1.55};
 
-    // Use this to initialize DiagonalMatrix
-    X = 1.;
+  Potential::PairLJCutManager lj (20);
+  lj.declare_interactions (0,
+                           1,
+                           Potential::InteractionTypes::LJ,
+                           lj_params);
 
-    // Initialize inverse diagonal matrix.
-    inv_mass.reinit(X);
+  const double x = u(0) + a;
 
-    // Set initial iterate.
-    X(0) = a;
-  }
+  std::pair<double, double> energy_force_0 =
+    lj.energy_and_gradient<true> ( 0, 1, x*x);
 
-  double compute (vector_t &G, const vector_t &u)
-  {
-    AssertThrow (u.size() == 1 && G.size() == 1,
-                 ExcInternalError());
+  G(0) = energy_force_0.second;
 
-    x  = X;
-    x += u;
+  return energy_force_0.first;
+}
 
-    std::vector<double> lj_params = { 0.877, 1.55};
 
-    Potential::PairLJCutManager lj (20);
-    lj.declare_interactions( 0,
-                             1,
-                             Potential::InteractionTypes::LJ,
-                             lj_params);
+void test (const double a,
+           const double tol)
+{
 
-    std::pair<double, double> energy_force_0 =
-      lj.energy_and_gradient<true> ( 0, 1, x(0)*x(0));
+  vector_t tmp_mass;
 
-    G(0) = energy_force_0.second;
+  tmp_mass.reinit(1, true);
 
-    return energy_force_0.first;
-  }
+  // Use this to initialize DiagonalMatrix
+  tmp_mass = 1.;
 
-  void test (const double tol)
-  {
-    auto additional_data =
-      statics::SolverFIRE<vector_t>::AdditionalData(1e-3, 1e-3, 0.001);
-
-    SolverControl solver_control (1e06, tol);
-
-    statics::SolverFIRE<vector_t> fire (solver_control, additional_data);
-
-    vector_t u;
-    u.reinit(x.size(), false);
-
-    auto compute_function =
-      [&](vector_t &G, const vector_t &U) -> double
-    {
-      return this->compute(G, U);
-    };
-
-    fire.solve(compute_function, u, inv_mass);
-
-    x.print(std::cout);
-
-  }
-
-protected:
-
-  vector_t x, X;
   DiagonalMatrix<vector_t> inv_mass;
 
-};
+  // Initialize inverse diagonal matrix.
+  inv_mass.reinit(tmp_mass);
+
+  auto additional_data =
+    statics::SolverFIRE<vector_t>::AdditionalData(1e-3, 1e-3, 0.001);
+
+  SolverControl solver_control (1e06, tol);
+
+  statics::SolverFIRE<vector_t> fire (solver_control, additional_data);
+
+  vector_t u;
+  u.reinit(1, false);
+
+  auto compute_function =
+    [&](vector_t &G, const vector_t &U) -> double
+  {
+    return compute(G, U, a);
+  };
+
+  fire.solve(compute_function, u, inv_mass);
+
+  std::cout << u(0) + a << std::endl;
+
+}
 
 
 int main ()
 {
-  SingleVariableLJ (3.1).test ( 1e-15 );
-  SingleVariableLJ (0.1).test ( 1e-15 );
-  SingleVariableLJ (9.1).test ( 1e-15 );
+  test (3.1, 1e-15 );
+  test (0.1, 1e-15 );
+  test (9.1, 1e-15 );
 
 }
