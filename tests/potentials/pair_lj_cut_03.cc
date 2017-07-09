@@ -3,31 +3,42 @@
 // This test compares the partial results of pair_lj_cut_01 test to
 // that of LAMMPS output.
 
+
+#include "../tests.h"
+
 #include <deal.II-qc/configure/configure_qc.h>
 #include <deal.II-qc/potentials/pair_lj_cut.h>
 
 using namespace dealiiqc;
 using namespace dealii;
 
-void test ( const double &r,
-            const double &lammps_energy,
-            const double &lammps_force,
-            std::shared_ptr<Potential::PairLJCutManager> lj_ptr)
+void test (const double &r,
+           const double &lammps_energy,
+           const double &lammps_force,
+           std::shared_ptr<Potential::PairLJCutManager> lj_ptr)
 {
-  std::pair<double, double> energy_force_0 =
-    lj_ptr->energy_and_gradient( 0, 1, r*r);
+  std::pair<double, double> energy_gradient_0 =
+    lj_ptr->energy_and_gradient (0, 1, r*r);
 
-  AssertThrow( fabs(energy_force_0.first-lammps_energy) < 1e5 * std::numeric_limits<double>::epsilon(),
+  AssertThrow (Testing::almost_equal (energy_gradient_0.first,
+                                      lammps_energy,
+                                      200),
                ExcInternalError());
-  AssertThrow( fabs(energy_force_0.second-lammps_force) < 1e7 * std::numeric_limits<double>::epsilon(),
+  AssertThrow (Testing::almost_equal (energy_gradient_0.second,
+                                      -lammps_force,
+                                      200),
                ExcInternalError());
 
-  std::pair<double, double> energy_force_1 =
-    lj_ptr->energy_and_gradient( 1, 0, r*r);
+  std::pair<double, double> energy_gradient_1 =
+    lj_ptr->energy_and_gradient (1, 0, r*r);
 
-  AssertThrow( fabs(energy_force_1.first-lammps_energy) < 1e5 * std::numeric_limits<double>::epsilon(),
+  AssertThrow (Testing::almost_equal (energy_gradient_1.first,
+                                      lammps_energy,
+                                      200),
                ExcInternalError());
-  AssertThrow( fabs(energy_force_1.second-lammps_force) < 1e7 * std::numeric_limits<double>::epsilon(),
+  AssertThrow (Testing::almost_equal (energy_gradient_1.second,
+                                      -lammps_force,
+                                      200),
                ExcInternalError());
 
   // std::cout << std::numeric_limits<double>::epsilon() << std::endl;
@@ -63,8 +74,8 @@ int main(int argc, char **argv)
         std::static_pointer_cast<Potential::PairLJCutManager>(config.get_potential());
 
       // performing tests with blessed output (from LAMMPS)
-      test(0.90, 551.3630363329171, -7656.629108919712, lj_ptr);
-      test(1.50,   0.,                  0.,             lj_ptr);
+      test(0.90, 551.3630363329171, 7656.629108919712, lj_ptr);
+      test(1.50,   0.,                 0.,             lj_ptr);
 
       std::cout << "TEST PASSED!" << std::endl;
     }

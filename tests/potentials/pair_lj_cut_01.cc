@@ -6,7 +6,8 @@
 using namespace dealiiqc;
 using namespace dealii;
 
-void test ( const double &r, const double &cutoff_radius)
+void test (const double &r,
+           const double &cutoff_radius)
 {
   std::vector<double> lj_params = { 0.877, 1.55};
 
