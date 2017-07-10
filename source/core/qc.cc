@@ -160,9 +160,10 @@ void QC<dim, PotentialType>::setup_system ()
 
   dof_handler.distribute_dofs (fe);
 
-  // FIXME: use CellMoleculeTools::extract_locally_relevant_dofs()
-  DoFTools::extract_locally_relevant_dofs (dof_handler,
-                                           locally_relevant_set);
+  locally_relevant_set =
+    CellMoleculeTools::
+    extract_locally_relevant_dofs (dof_handler,
+                                   cell_molecule_data.cell_molecules);
 
   // set-up constraints objects
   constraints.reinit (locally_relevant_set);
