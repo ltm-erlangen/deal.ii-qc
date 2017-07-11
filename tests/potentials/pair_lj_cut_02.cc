@@ -25,8 +25,6 @@ void test (const double &r,
   std::pair<double, double> energy_gradient_0 =
     lj.energy_and_gradient( 0, 1, r*r);
 
-  std::cout << energy_gradient_0.first << energy_gradient_0.second << std::endl;
-
   AssertThrow (Testing::almost_equal (energy_gradient_0.first,
                                       lammps_energy,
                                       200),
