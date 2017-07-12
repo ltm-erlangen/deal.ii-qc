@@ -13,7 +13,9 @@ using namespace dealii;
 using namespace dealiiqc;
 
 
-// Short test to check write_vtp() function of DataOutAtomData
+// Short test to check write_vtp() function of DataOutAtomData.
+// This test makes sure that the vtp files are legal even if an MPI process
+// doesn't have any locally owned atoms.
 
 // Comment below line to skip writing atom data in vtp file format
 #define WRITE_ATOM_DATA
@@ -38,7 +40,7 @@ public:
   {
     {
       Point<dim> bl(0,0,0);
-      Point<dim> tr(16,16,16);
+      Point<dim> tr(8,8,8);
       // create a mesh which is not aligned with crystal structure
       std::vector<unsigned int> repetitions(dim,7);
       GridGenerator::subdivided_hyper_rectangle(triangulation,
@@ -47,19 +49,14 @@ public:
                                                 tr);
     }
 
-    const std::string atom_data_file = config.get_atom_data_file();
-    std::fstream fin(atom_data_file, std::fstream::in );
-
     cell_molecule_data =
       CellMoleculeTools::
-      build_cell_molecule_data<dim> (fin,
+      build_cell_molecule_data<dim> (*config.get_stream(),
                                      dof_handler,
                                      config.get_ghost_cell_layer_thickness());
 
-    cell_molecule_data.cell_energy_molecules =
-      config.get_cluster_weights<dim>()->
-      update_cluster_weights (dof_handler,
-                              cell_molecule_data.cell_molecules);
+    for (auto &cell_molecule : cell_molecule_data.cell_molecules)
+      cell_molecule.second.cluster_weight = 0.;
 
     write_output();
   }
@@ -82,7 +79,7 @@ public:
     std::ofstream vtp_file;
     vtp_file.open (vtp_file_name.c_str(), std::ofstream::out | std::ofstream::trunc);
 
-    atom_data_out.write_vtp<3> (cell_molecule_data.cell_energy_molecules,
+    atom_data_out.write_vtp<3> (cell_molecule_data.cell_molecules,
                                 flags,
                                 vtp_file);
     vtp_file.close();
@@ -106,7 +103,7 @@ public:
       {
         MPI_Barrier(mpi_communicator);
         if (p == this_mpi_process)
-          atom_data_out.write_vtp<3> (cell_molecule_data.cell_energy_molecules,
+          atom_data_out.write_vtp<3> (cell_molecule_data.cell_molecules,
                                       flags,
                                       std::cout);
       }
@@ -132,14 +129,24 @@ int main (int argc, char **argv)
       oss << "set Dimension = 3"                              << std::endl
           << "subsection Configure atoms"                     << std::endl
           << "  set Maximum cutoff radius = 1.01"             << std::endl
-          << "  set Atom data file = "
-          << SOURCE_DIR "/../data/16_NaCl_atom.data"          << std::endl
           << "end" << std::endl
           << "subsection Configure QC"                        << std::endl
-          << "  set Ghost cell layer thickness = 2.2"         << std::endl
-          << "  set Cluster radius = 1.01"                    << std::endl
+          << "  set Ghost cell layer thickness = 1.1"         << std::endl
+          << "  set Cluster radius = 0.7"                     << std::endl
           << "  set Cluster weights by type = Cell"           << std::endl
-          << "end" << std::endl;
+          << "end" << std::endl
+          << "#end-of-parameter-section" << std::endl
+          << "LAMMPS Description"        << std::endl         << std::endl
+          << "7 atoms"                   << std::endl         << std::endl
+          << "1  atom types"             << std::endl         << std::endl
+          << "Atoms #"                   << std::endl         << std::endl
+          << "1 1 1 1.0 2. 2. 2."        << std::endl
+          << "2 2 1 1.0 6. 2. 2."        << std::endl
+          << "3 3 1 1.0 2. 6. 2."        << std::endl
+          << "4 4 1 1.0 2. 2. 6."        << std::endl
+          << "5 5 1 1.0 6. 6. 2."        << std::endl
+          << "6 6 1 1.0 6. 2. 6."        << std::endl
+          << "7 7 1 1.0 2. 6. 6."        << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());

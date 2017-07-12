@@ -1,0 +1,154 @@
+<?xml version="1.0" ?> 
+<!-- 
+# vtk DataFile Version 3.0
+-->
+<VTKFile type="PolyData" version="0.1" compressor="vtkZLibDataCompressor" byte_order="LittleEndian">
+ <PolyData>
+<Piece NumberOfPoints="2" >
+  <Points>
+    <DataArray type="Float64" NumberOfComponents="3" format="binary">
+AQAAADAAAAAwAAAAFAAAAA==eNpjYAADBwglAaXR+QhxACWAAck=
+    </DataArray>
+  </Points>
+
+  <PointData Scalars="Atom_Attributes">
+    <DataArray type="Float64" Name= "Cluster_Weights" format="binary">
+AQAAABAAAAAQAAAACwAAAA==eNpjYEAFAAAQAAE=
+    </DataArray>
+    <DataArray type="Float64" Name= "Molecule_ID" format="binary">
+AQAAABAAAAAQAAAAEAAAAA==eNpjYAADBwgl4AAAArAAkQ==
+    </DataArray>
+  </PointData>
+ </Piece>
+ </PolyData>
+</VTKFile>
+<?xml version="1.0" ?> 
+<!-- 
+# vtk DataFile Version 3.0
+-->
+<VTKFile type="PolyData" version="0.1" compressor="vtkZLibDataCompressor" byte_order="LittleEndian">
+ <PolyData>
+<Piece NumberOfPoints="1" >
+  <Points>
+    <DataArray type="Float64" NumberOfComponents="3" format="binary">
+AQAAABgAAAAYAAAADwAAAA==eNpjYAADBwY0GgAG2ADB
+    </DataArray>
+  </Points>
+
+  <PointData Scalars="Atom_Attributes">
+    <DataArray type="Float64" Name= "Cluster_Weights" format="binary">
+AQAAAAgAAAAIAAAACwAAAA==eNpjYIAAAAAIAAE=
+    </DataArray>
+    <DataArray type="Float64" Name= "Molecule_ID" format="binary">
+AQAAAAgAAAAIAAAACwAAAA==eNpjYIAAAAAIAAE=
+    </DataArray>
+  </PointData>
+ </Piece>
+ </PolyData>
+</VTKFile>
+<?xml version="1.0" ?> 
+<!-- 
+# vtk DataFile Version 3.0
+-->
+<VTKFile type="PolyData" version="0.1" compressor="vtkZLibDataCompressor" byte_order="LittleEndian">
+ <PolyData>
+<Piece NumberOfPoints="1" >
+  <Points>
+    <DataArray type="Float64" NumberOfComponents="3" format="binary">
+AQAAABgAAAAYAAAAEQAAAA==eNpjYAABCQcGCIDTAAiIANk=
+    </DataArray>
+  </Points>
+
+  <PointData Scalars="Atom_Attributes">
+    <DataArray type="Float64" Name= "Cluster_Weights" format="binary">
+AQAAAAgAAAAIAAAACwAAAA==eNpjYIAAAAAIAAE=
+    </DataArray>
+    <DataArray type="Float64" Name= "Molecule_ID" format="binary">
+AQAAAAgAAAAIAAAADQAAAA==eNpjYACBD/YAAicBMA==
+    </DataArray>
+  </PointData>
+ </Piece>
+ </PolyData>
+</VTKFile>
+<?xml version="1.0" ?> 
+<!-- 
+# vtk DataFile Version 3.0
+-->
+<VTKFile type="PolyData" version="0.1" compressor="vtkZLibDataCompressor" byte_order="LittleEndian">
+ <PolyData>
+<Piece NumberOfPoints="1" >
+  <Points>
+    <DataArray type="Float64" NumberOfComponents="3" format="binary">
+AQAAABgAAAAYAAAAEwAAAA==eNpjYAABCQcGCIDSEg4ACLgA8Q==
+    </DataArray>
+  </Points>
+
+  <PointData Scalars="Atom_Attributes">
+    <DataArray type="Float64" Name= "Cluster_Weights" format="binary">
+AQAAAAgAAAAIAAAACwAAAA==eNpjYIAAAAAIAAE=
+    </DataArray>
+    <DataArray type="Float64" Name= "Molecule_ID" format="binary">
+AQAAAAgAAAAIAAAADQAAAA==eNpjYAABEQcAAHAAVQ==
+    </DataArray>
+  </PointData>
+ </Piece>
+ </PolyData>
+</VTKFile>
+<?xml version="1.0" ?> 
+<!-- 
+# vtk DataFile Version 3.0
+-->
+<VTKFile type="PolyData" version="0.1" compressor="vtkZLibDataCompressor" byte_order="LittleEndian">
+ <PolyData>
+<Piece NumberOfPoints="0" >
+</Piece>
+ </PolyData>
+</VTKFile>
+<?xml version="1.0" ?> 
+<!-- 
+# vtk DataFile Version 3.0
+-->
+<VTKFile type="PolyData" version="0.1" compressor="vtkZLibDataCompressor" byte_order="LittleEndian">
+ <PolyData>
+<Piece NumberOfPoints="1" >
+  <Points>
+    <DataArray type="Float64" NumberOfComponents="3" format="binary">
+AQAAABgAAAAYAAAAEAAAAA==eNpjYAADBwglAacBB/gA8Q==
+    </DataArray>
+  </Points>
+
+  <PointData Scalars="Atom_Attributes">
+    <DataArray type="Float64" Name= "Cluster_Weights" format="binary">
+AQAAAAgAAAAIAAAACwAAAA==eNpjYIAAAAAIAAE=
+    </DataArray>
+    <DataArray type="Float64" Name= "Molecule_ID" format="binary">
+AQAAAAgAAAAIAAAADQAAAA==eNpjYAABCQcAAHgAWQ==
+    </DataArray>
+  </PointData>
+ </Piece>
+ </PolyData>
+</VTKFile>
+<?xml version="1.0" ?> 
+<!-- 
+# vtk DataFile Version 3.0
+-->
+<VTKFile type="PolyData" version="0.1" compressor="vtkZLibDataCompressor" byte_order="LittleEndian">
+ <PolyData>
+<Piece NumberOfPoints="1" >
+  <Points>
+    <DataArray type="Float64" NumberOfComponents="3" format="binary">
+AQAAABgAAAAYAAAAEQAAAA==eNpjYAADBwYUWsIBAAcIANk=
+    </DataArray>
+  </Points>
+
+  <PointData Scalars="Atom_Attributes">
+    <DataArray type="Float64" Name= "Cluster_Weights" format="binary">
+AQAAAAgAAAAIAAAACwAAAA==eNpjYIAAAAAIAAE=
+    </DataArray>
+    <DataArray type="Float64" Name= "Molecule_ID" format="binary">
+AQAAAAgAAAAIAAAADQAAAA==eNpjYAABDgcAAFgASQ==
+    </DataArray>
+  </PointData>
+ </Piece>
+ </PolyData>
+</VTKFile>
