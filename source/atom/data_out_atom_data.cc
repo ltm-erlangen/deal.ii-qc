@@ -25,7 +25,7 @@ namespace DataOutBase
     {}
 
     /**
-     * Push point @p p into @see data.
+     * Push point @p p into #data.
      */
     template <int dim>
     void write_point (const Point<dim> &p);
@@ -92,7 +92,7 @@ namespace DataOutBase
 
   template<int dim>
   void
-  VtpStream::write_point( const Point<dim> &p)
+  VtpStream::write_point (const Point<dim> &p)
   {
 #ifndef DEAL_II_WITH_ZLIB
     // write out coordinates
@@ -113,7 +113,7 @@ namespace DataOutBase
   }
 
   void
-  VtpStream::write_scalar( const double d)
+  VtpStream::write_scalar (const double d)
   {
 #ifndef DEAL_II_WITH_ZLIB
     // write out coordinates
@@ -167,7 +167,7 @@ namespace
   /**
    * Write out into ostream object @p out the vtp header
    */
-  void write_vtp_header( std::ostream &out,
+  void write_vtp_header (std::ostream &out,
                          const DataOutBase::VtkFlags &flags)
   {
     AssertThrow (out, ExcIO());
@@ -200,7 +200,7 @@ namespace
   /**
    * Write out into ostream object @p out the vtp footer.
    */
-  void write_vtp_footer( std::ostream &out)
+  void write_vtp_footer (std::ostream &out)
   {
     AssertThrow (out, ExcIO());
     out << " </PolyData>\n";
@@ -208,82 +208,109 @@ namespace
   }
 
 
-  template<int dim>
+  template<int dim, int atomicity=1, int spacedim=dim>
   void
-  write_vtp_main (const types::CellMoleculeContainerType<dim> &cell_molecules,
-                  const DataOutBase::VtkFlags &flags,
-                  std::ostream &out)
+  write_vtp_main
+  (const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules,
+   const DataOutBase::VtkFlags                                      &flags,
+   std::ostream                                                     &out)
   {
     AssertThrow (cell_molecules.size() > 0,
                  ExcMessage("No atom data to write"));
 
-    DataOutBase::VtpStream vtp_out( out, flags);
+    DataOutBase::VtpStream vtp_out (out, flags);
 
 #ifdef DEAL_II_WITH_ZLIB
     const char *ascii_or_binary = "binary";
 #else
     const char *ascii_or_binary = "ascii";
 #endif
-    types::global_atom_index n_locally_owned_atoms =0;
-    for ( const auto &cell_molecule : cell_molecules)
-      if ( cell_molecule.first->is_locally_owned() )
-        n_locally_owned_atoms++;
+    types::global_atom_index n_locally_owned_molecules = 0;
+    for (const auto &cell_molecule : cell_molecules)
+      if (cell_molecule.first->is_locally_owned())
+        n_locally_owned_molecules++;
 
-    // FIXME: The number of atoms can be obtained by multiplying with
-    // atomicity. Adjust n_locally_owned_atoms accordingly.
-    out << "<Piece NumberOfPoints=\"" << n_locally_owned_atoms << "\" >\n";
-    out << "  <Points>\n";
-    out << "    <DataArray type=\"Float64\" NumberOfComponents=\"3\" format=\""
+    if (n_locally_owned_molecules==0)
+      {
+        // The number of atoms can be obtained by multiplying with atomicity.
+        out << "<Piece NumberOfPoints=\"0\" >\n"
+            << "</Piece>\n";
+        return;
+      }
+
+    // The number of atoms can be obtained by multiplying with atomicity.
+    out << "<Piece NumberOfPoints=\""<< n_locally_owned_molecules *atomicity
+        << "\" >\n"
+        << "  <Points>\n"
+        << "    <DataArray type=\"Float64\" NumberOfComponents=\"3\" format=\""
         << ascii_or_binary << "\">\n";
 
     // Fill Points: the number of components
     // is set to 3.
     // If dim < 3, fill other dimensions with 0s.
-    for ( const auto &cell_molecule : cell_molecules)
-      if ( cell_molecule.first->is_locally_owned() )
+    for (const auto &cell_molecule : cell_molecules)
+      if (cell_molecule.first->is_locally_owned())
         for (const auto &atom : cell_molecule.second.atoms)
-          vtp_out.write_point (atom.position);
+          vtp_out.write_point<spacedim>(atom.position);
 
     vtp_out.flush();
 
     out << "    </DataArray>\n"
         << "  </Points>\n\n";
 
-    out << "  <PointData Scalars=\"Cluster_Weights\">\n"
+    out << "  <PointData Scalars=\"Atom_Attributes\">\n"
         << "    <DataArray type=\"Float64\" Name= \"Cluster_Weights\" format=\""
         << ascii_or_binary << "\">\n";
 
-    for ( const auto &cell_atom : cell_molecules)
-      if ( cell_atom.first->is_locally_owned() )
-        vtp_out.write_scalar( cell_atom.second.cluster_weight);
+    for (const auto &cell_molecule : cell_molecules)
+      if (cell_molecule.first->is_locally_owned())
+        for (unsigned int i = 0; i < atomicity; ++i)
+          vtp_out.write_scalar (cell_molecule.second.cluster_weight);
 
     vtp_out.flush();
 
-    out << "    </DataArray>"
-        << "  </PointData>"
-        << " </Piece>\n";
+    out << "    </DataArray>\n"
 
+        << "    <DataArray type=\"Float64\" Name= \"Molecule_ID\" format=\""
+        << ascii_or_binary << "\">\n";
+
+    for (const auto &cell_molecule : cell_molecules)
+      if (cell_molecule.first->is_locally_owned())
+        for (unsigned int i = 0; i < atomicity; ++i)
+          vtp_out.write_scalar (cell_molecule.second.global_index);
+
+    vtp_out.flush();
+
+    out << "    </DataArray>\n"
+        << "  </PointData>\n"
+        << " </Piece>\n";
   }
 
 } //namespace
 
 
 //----------------------------------------------------------------------//
-template<int dim>
+
+template<int dim, int atomicity, int spacedim>
 void
-DataOutAtomData<dim>::write_vtp (const types::CellMoleculeContainerType<dim> &cell_molecules,
-                                 const dealii::DataOutBase::VtkFlags &flags,
-                                 std::ostream &out)
+DataOutAtomData::
+write_vtp
+(const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules,
+ const dealii::DataOutBase::VtkFlags                              &flags,
+ std::ostream                                                     &out)
 {
   write_vtp_header (out, flags);
-  write_vtp_main<dim> (cell_molecules, flags, out);
+  write_vtp_main<dim, atomicity, spacedim> (cell_molecules, flags, out);
   write_vtp_footer (out);
 }
 
-template<int dim>
-void DataOutAtomData<dim>::write_pvtp_record (const std::vector<std::string> &vtp_file_names,
-                                              const dealii::DataOutBase::VtkFlags &flags,
-                                              std::ostream &out)
+
+
+void
+DataOutAtomData::
+write_pvtp_record (const std::vector<std::string>      &vtp_file_names,
+                   const dealii::DataOutBase::VtkFlags &flags,
+                   std::ostream                        &out)
 {
   AssertThrow (out, ExcIO());
   out << "<?xml version=\"1.0\" ?> \n";
@@ -321,13 +348,18 @@ void DataOutAtomData<dim>::write_pvtp_record (const std::vector<std::string> &vt
       << ascii_or_binary << "\">\n";
   out << "    </PDataArray>\n"
       << "  </PPoints>\n\n";
-  out << "  <PPointData Scalars=\"Cluster_Weights\">\n";
+
+  out << "  <PPointData Scalars=\"Atom_Attributes\">\n";
   out << "    <PDataArray type=\"Float64\" Name=\"Cluster_Weights\" format=\""
+      << ascii_or_binary << "\">\n"
+      << "    </PDataArray>\n"
+
+      << "    <PDataArray type=\"Float64\" Name=\"Molecule_ID\" format=\""
       << ascii_or_binary << "\">\n";
   out << "    </PDataArray>\n"
       << "  </PPointData>\n\n";
 
-  for ( auto name : vtp_file_names)
+  for (const auto &name : vtp_file_names)
     out << "  <Piece Source=\"" << name << "\"/>\n";
 
   out << " </PPolyData>\n";
@@ -335,12 +367,23 @@ void DataOutAtomData<dim>::write_pvtp_record (const std::vector<std::string> &vt
 }
 
 
-template class DataOutAtomData<1>;
-template class DataOutAtomData<2>;
-template class DataOutAtomData<3>;
+
+#define SINGLE_DATA_OUT_ATOM_DATA_INSTANTIATION(DIM, ATOMICITY, SPACEDIM) \
+  template void DataOutAtomData::write_vtp<DIM, ATOMICITY, SPACEDIM>      \
+  (const types::CellMoleculeContainerType<DIM, ATOMICITY, SPACEDIM> &,    \
+   const dealii::DataOutBase::VtkFlags                              &,    \
+   std::ostream                                                    &);   \
+   
+#define DATA_OUT_ATOM_DATA(R, X)                       \
+  BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,            \
+              SINGLE_DATA_OUT_ATOM_DATA_INSTANTIATION, \
+              BOOST_PP_TUPLE_EAT(3)) X                 \
+   
+// DataOutAtomData class members instantiations.
+INSTANTIATE_CLASS_WITH_DIM_ATOMICITY_AND_SPACEDIM(DATA_OUT_ATOM_DATA)
+
+#undef SINGLE_DATA_OUT_ATOM_DATA_INSTANTIATION
+#undef DATA_OUT_ATOM_DATA
 
 
 DEAL_II_QC_NAMESPACE_CLOSE
-
-
-
