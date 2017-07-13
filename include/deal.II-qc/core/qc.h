@@ -209,21 +209,15 @@ protected:
    */
   ConstraintMatrix     constraints;
 
-
   /**
-   * Unknown displacement field.
+   * Locally relevant unknown displacement filed
    */
-  vector_t displacement;
+  vector_t locally_relevant_displacement;
 
   /**
    * Gradient of the energy (a scalar) w.r.t. to the displacement field.
    */
-  vector_t gradient;
-
-  /**
-   * Locally relevant displacement filed
-   */
-  vector_t locally_relevant_displacement;
+  vector_t locally_relevant_gradient;
 
   /**
    * Auxiliary class with all the information needed per cell for
