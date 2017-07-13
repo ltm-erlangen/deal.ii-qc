@@ -39,6 +39,23 @@
 
 
 /**
+ * A macro function that returns 1 if @p DIM is less or equal to @p SPACEDIM
+ * and 0 otherwise.
+ */
+#define IS_DIM_AND_SPACEDIM_PAIR_VALID(DIM, SPACEDIM) \
+  BOOST_PP_LESS_EQUAL(DIM, SPACEDIM)
+
+
+
+/**
+ * A macro to expand CLASS macro using (DIM, SPACEDIM) tuples.
+ */
+#define INSTANTIATE_WITH_DIM_AND_SPACEDIM(CLASS) \
+  BOOST_PP_LIST_FOR_EACH_PRODUCT(CLASS, 2, (DIM, SPACEDIM))
+
+
+
+/**
  * A macro to expand CLASS macro using (SPACEDIM, ATOMICITY) tuples.
  */
 #define INSTANTIATE_WITH_SPACEDIM_AND_ATOMICITY(R, CLASS) \
