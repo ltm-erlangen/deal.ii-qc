@@ -64,7 +64,7 @@ void QC<dim, PotentialType>::run ()
   setup_fe_values_objects();
   update_neighbor_lists();
   update_positions();
-  const double e = compute(gradient);
+  const double e = compute(locally_relevant_gradient);
   (void)e;
 }
 
@@ -181,18 +181,18 @@ void QC<dim, PotentialType>::setup_system ()
   */
   constraints.close ();
 
-  gradient.reinit(dof_handler.locally_owned_dofs(),
-                  locally_relevant_set,
-                  mpi_communicator,
-                  true);
-  gradient = 0.;
+  locally_relevant_gradient.reinit(dof_handler.locally_owned_dofs(),
+                                   locally_relevant_set,
+                                   mpi_communicator,
+                                   true);
+  locally_relevant_gradient = 0.;
 
-  // FIXME: switch to a single writable ghost vector (IndexSet,IndexSet,Comm,true);
-  displacement.reinit(dof_handler.locally_owned_dofs(), mpi_communicator);
-  locally_relevant_displacement.reinit(locally_relevant_set, mpi_communicator);
+  locally_relevant_displacement.reinit(dof_handler.locally_owned_dofs(),
+                                       locally_relevant_set,
+                                       mpi_communicator,
+                                       true);
 
-  displacement = 0.;
-  locally_relevant_displacement = displacement;
+  locally_relevant_displacement = 0.;
 
   cells_to_data.clear();
 
