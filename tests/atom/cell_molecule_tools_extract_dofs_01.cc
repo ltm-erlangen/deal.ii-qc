@@ -78,7 +78,7 @@ public:
     const IndexSet locally_relevant_set =
       CellMoleculeTools::
       extract_locally_relevant_dofs (dof_handler,
-                                     cell_molecule_data.cell_molecules);
+                                     config.get_ghost_cell_layer_thickness());
 
     unsigned int
     n_mpi_processes = dealii::Utilities::MPI::n_mpi_processes(mpi_communicator),

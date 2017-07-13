@@ -244,11 +244,11 @@ namespace CellMoleculeTools
 
 
 
-  template <int dim, int atomicity, int spacedim>
+  template <int dim, int spacedim>
   IndexSet
   extract_locally_relevant_dofs
-  (const dealii::DoFHandler<dim, spacedim>                          &dof_handler,
-   const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules)
+  (const DoFHandler<dim, spacedim> &dof_handler,
+   const double                     ghost_cell_layer_thickness)
   {
     // Prepare dof index set in this container.
     IndexSet dof_set = dof_handler.locally_owned_dofs();
@@ -258,14 +258,14 @@ namespace CellMoleculeTools
     std::vector<dealii::types::global_dof_index> dof_indices;
     std::vector<dealii::types::global_dof_index> dofs_on_ghosts;
 
-    // Loop over unique locally relevant cells.
-    for (types::CellMoleculeConstIteratorType<dim, atomicity, spacedim>
-         unique_key  = cell_molecules.cbegin();
-         unique_key != cell_molecules.cend();
-         unique_key  = cell_molecules.upper_bound(unique_key->first))
-      {
-        const auto &cell = unique_key->first;
+    // Get locally relevant ghost cells
+    const auto ghost_cells =
+      GridTools::
+      compute_ghost_cell_layer_within_distance (dof_handler,
+                                                ghost_cell_layer_thickness);
 
+    for (const auto cell : ghost_cells)
+      {
         dof_indices.resize(cell->get_fe().dofs_per_cell);
         cell->get_dof_indices(dof_indices);
         for (unsigned int i=0; i<dof_indices.size(); ++i)
@@ -303,20 +303,29 @@ namespace CellMoleculeTools
   build_cell_molecule_data (std::istream                         &,      \
                             const types::MeshType<DIM, SPACEDIM> &,      \
                             double                               );      \
-  \
-  template                                                               \
-  IndexSet                                                               \
-  extract_locally_relevant_dofs<DIM, ATOMICITY, SPACEDIM>                \
-  (const types::MeshType<DIM, SPACEDIM>                             &,   \
-   const types::CellMoleculeContainerType<DIM, ATOMICITY, SPACEDIM> &);
-
-#define CELL_MOLECULE_TOOLS(R, X)                       \
-  BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,             \
-              SINGLE_CELL_MOLECULE_TOOLS_INSTANTIATION, \
+   
+#define CELL_MOLECULE_TOOLS(R, X)                                        \
+  BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,                              \
+              SINGLE_CELL_MOLECULE_TOOLS_INSTANTIATION,                  \
               BOOST_PP_TUPLE_EAT(3)) X
+
+#define CELL_MOLECULE_TOOLS_DIM_SPACEDIM_INSTANTIATION(DIM, SPACEDIM) \
+  \
+  template                                                            \
+  IndexSet                                                            \
+  extract_locally_relevant_dofs<DIM, SPACEDIM>                        \
+  (const DoFHandler<DIM, SPACEDIM> &,                                 \
+   const double           );                                          \
+   
+#define CELL_MOLECULE_TOOLS_DIM_SPACEDIM(R, X)                        \
+  BOOST_PP_IF(IS_DIM_AND_SPACEDIM_PAIR_VALID X,                       \
+              CELL_MOLECULE_TOOLS_DIM_SPACEDIM_INSTANTIATION,         \
+              BOOST_PP_TUPLE_EAT(2)) X
 
   // MoleculeHandler class Instantiations.
   INSTANTIATE_CLASS_WITH_DIM_ATOMICITY_AND_SPACEDIM(CELL_MOLECULE_TOOLS)
+
+  INSTANTIATE_WITH_DIM_AND_SPACEDIM(CELL_MOLECULE_TOOLS_DIM_SPACEDIM)
 
 #undef SINGLE_CELL_MOLECULE_TOOLS_INSTANTIATION
 #undef CELL_MOLECULE_TOOLS

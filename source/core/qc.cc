@@ -163,7 +163,7 @@ void QC<dim, PotentialType>::setup_system ()
   locally_relevant_set =
     CellMoleculeTools::
     extract_locally_relevant_dofs (dof_handler,
-                                   cell_molecule_data.cell_molecules);
+                                   configure_qc.get_ghost_cell_layer_thickness());
 
   // set-up constraints objects
   constraints.reinit (locally_relevant_set);

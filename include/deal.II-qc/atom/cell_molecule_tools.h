@@ -93,11 +93,11 @@ namespace CellMoleculeTools
    * DoFHandler::locally_owned_dofs() and the DoF indices on all locally
    * relevant ghost cells.
    */
-  template <int dim, int atomicity, int spacedim>
+  template <int dim, int spacedim>
   IndexSet
   extract_locally_relevant_dofs
-  (const types::MeshType<dim, spacedim>                             &dof_handler,
-   const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules);
+  (const DoFHandler<dim, spacedim> &dof_handler,
+   const double                     ghost_cell_layer_thickness);
 
 
 } // namespace CellMoleculeTools
