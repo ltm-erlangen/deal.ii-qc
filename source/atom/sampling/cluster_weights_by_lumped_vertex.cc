@@ -29,7 +29,7 @@ namespace Cluster
   types::CellMoleculeContainerType<dim, atomicity, spacedim>
   WeightsByLumpedVertex<dim, atomicity, spacedim>::
   update_cluster_weights
-  (const types::MeshType<dim, spacedim>                             &mesh,
+  (const dealii::DoFHandler<dim, spacedim>                          &mesh,
    const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const
   {
     // Prepare energy molecules in this container.
@@ -87,7 +87,7 @@ namespace Cluster
     // Gather global indices of the local dofs here for a given cell.
     std::vector<dealii::types::global_dof_index> local_dofs(dofs_per_cell);
 
-    for (types::CellIteratorType<dim, spacedim>
+    for (types::DoFCellIteratorType<dim, spacedim>
          cell  = dof_handler.begin_active();
          cell != dof_handler.end();
          cell++)
@@ -218,35 +218,57 @@ namespace Cluster
 
     //---Now update cluster weights with correct value
 
-    // Loop over all the energy molecules,
+    // Loop over all cells, and loop over energy molecules within each cell
     // update their weights by multiplying with the factor
     // (b_per_cell/A_per_cell)
-    for (auto &energy_molecule : cell_energy_molecules)
+    for (types::DoFCellIteratorType<dim, spacedim>
+         dof_cell  = dof_handler.begin_active();
+         dof_cell != dof_handler.end();
+         dof_cell++)
       {
-        const auto &cell = energy_molecule.first;
-        Molecule<spacedim, atomicity>  &molecule = energy_molecule.second;
+        const types::CellIteratorType<dim, spacedim> cell = dof_cell;
 
-        // Get the closest vertex (of this cell) to the molecule.
-        const auto vertex_and_squared_distance =
-          Utilities::find_closest_vertex (molecule_initial_location(molecule),
-                                          cell);
+        auto cell_energy_molecule_range =
+          cell_energy_molecules.equal_range(cell);
 
-        // We need to get the global dof index from the local index of
-        // the closest vertex.
+        // Either the cell does not have any molecules associated to it or
+        // the cell is not locally relevant to the current MPI process.
+        if (cell_energy_molecule_range.first==cell_energy_molecule_range.second)
+          continue;
 
-        // we use scalar Q1 FEM, so we have one DoF per vertex,
-        // thus as the second parameter to vertex_dof_index()
-        // we provide zero.
-        const dealii::types::global_dof_index I =
-          cell->vertex_dof_index(vertex_and_squared_distance.first,0);
+        // Loop over all energy molecules within this cell
+        for (auto
+             cell_energy_molecule_iter  = cell_energy_molecule_range.first;
+             cell_energy_molecule_iter != cell_energy_molecule_range.second;
+             cell_energy_molecule_iter++)
+          {
+            Molecule<spacedim, atomicity>  &molecule =
+              cell_energy_molecule_iter->second;
 
-        Assert (A[I] != 0, ExcInternalError());
+            // Get the closest vertex (of this cell) to the molecule.
+            const auto vertex_and_squared_distance =
+              Utilities::find_closest_vertex (molecule_initial_location(molecule),
+                                              cell);
 
-        // The cluster weight was previously set to 1. if the molecule is
-        // cluster molecule and 0. if the molecule is not cluster molecule.
-        energy_molecule.second.cluster_weight *= b[I]
-                                                 /
-                                                 A[I];
+            // We need to get the global dof index from the local index of
+            // the closest vertex.
+
+            // we use scalar Q1 FEM, so we have one DoF per vertex,
+            // thus as the second parameter to vertex_dof_index()
+            // we provide zero.
+            const dealii::types::global_dof_index I =
+              dof_cell->vertex_dof_index(vertex_and_squared_distance.first,0);
+
+            Assert (A[I] != 0, ExcInternalError());
+
+            //TODO: For each cell, this factor could be cached
+            //      for all its vertices.
+            // The cluster weight was previously set to 1. if the molecule is
+            // cluster molecule and 0. if the molecule is not cluster molecule.
+            molecule.cluster_weight *= b[I]
+                                       /
+                                       A[I];
+          }
       }
 
     return cell_energy_molecules;

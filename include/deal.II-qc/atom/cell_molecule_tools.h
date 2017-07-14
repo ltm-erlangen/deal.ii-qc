@@ -81,9 +81,9 @@ namespace CellMoleculeTools
    */
   template<int dim, int atomicity=1, int spacedim=dim>
   CellMoleculeData<dim, atomicity, spacedim>
-  build_cell_molecule_data (std::istream                         &is,
-                            const types::MeshType<dim, spacedim> &mesh,
-                            double          ghost_cell_layer_thickness);
+  build_cell_molecule_data (std::istream                            &is,
+                            const dealii::DoFHandler<dim, spacedim> &mesh,
+                            const double       ghost_cell_layer_thickness);
 
   /**
    * Return the set of global DoF indices of the locally relevant DoFs on the

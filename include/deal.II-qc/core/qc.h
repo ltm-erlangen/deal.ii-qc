@@ -275,7 +275,7 @@ protected:
   /**
    * Map of cells to data.
    */
-  std::map<typename DoFHandler<dim>::active_cell_iterator, AssemblyData>
+  std::map<types::DoFCellIteratorType<dim>, AssemblyData>
   cells_to_data;
 
   /**
