@@ -63,9 +63,9 @@ double Problem<dim, PotentialType>::compute (vector_t       &G,
   QC<dim, PotentialType>::update_positions ();
 
   const double energy =
-    QC<dim, PotentialType>::template compute<true> (QC<dim, PotentialType>::gradient);
+    QC<dim, PotentialType>::template compute<true> (QC<dim, PotentialType>::locally_relevant_gradient);
 
-  G = QC<dim, PotentialType>::gradient;
+  G = QC<dim, PotentialType>::locally_relevant_gradient;
 
   return energy;
 }
@@ -116,7 +116,7 @@ void Problem<dim, PotentialType>::statics (const double tol)
   QC<dim, PotentialType>::pcout
       << "SolverFIRE minimized energy to "
       << QC<dim, PotentialType>:: template
-      compute<false> (QC<dim, PotentialType>::gradient)
+      compute<false> (QC<dim, PotentialType>::locally_relevant_gradient)
       << "eV within 48 to 50 iterations."
       << std::endl;
 }

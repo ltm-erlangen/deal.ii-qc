@@ -59,8 +59,9 @@ void Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
     }
   MPI_Barrier(QC<dim, PotentialType>::mpi_communicator);
 
-  const double energy = QC<dim, PotentialType>::template
-                        compute<false> (QC<dim, PotentialType>::gradient);
+  const double energy =
+    QC<dim, PotentialType>::template
+    compute<false> (QC<dim, PotentialType>::locally_relevant_gradient);
 
   QC<dim, PotentialType>::pcout
       << "The energy computed using PairCoulWolfManager "
