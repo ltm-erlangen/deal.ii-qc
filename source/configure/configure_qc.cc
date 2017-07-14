@@ -9,15 +9,15 @@ using namespace dealii;
 
 // Initialize dimension to a default unusable value
 // Imposes user to `set Dimension`
-ConfigureQC::ConfigureQC( std::shared_ptr<std::istream> is)
+ConfigureQC::ConfigureQC (std::shared_ptr<std::istream> is)
   :
   dimension(0),
   input_stream(is)
 {
-  AssertThrow( *input_stream, ExcIO() );
+  AssertThrow (*input_stream, ExcIO());
   ParameterHandler prm;
   declare_parameters(prm);
-  prm.parse_input (*input_stream,"dummy","#end-of-parameter-section");
+  prm.parse_input (*input_stream, "dummy", "#end-of-parameter-section");
   parse_parameters(prm);
 }
 
@@ -119,7 +119,7 @@ ConfigureQC::get_cluster_weights() const
 
 
 
-void ConfigureQC::declare_parameters( ParameterHandler &prm )
+void ConfigureQC::declare_parameters (ParameterHandler &prm)
 {
   // TODO: Write intput file name to the screen
   //deallog << std::endl << "Parsing qc input file " << filename << std::endl
@@ -205,7 +205,7 @@ void ConfigureQC::declare_parameters( ParameterHandler &prm )
 
 
 
-void ConfigureQC::parse_parameters( ParameterHandler &prm )
+void ConfigureQC::parse_parameters (ParameterHandler &prm)
 {
   dimension = prm.get_integer("Dimension");
 

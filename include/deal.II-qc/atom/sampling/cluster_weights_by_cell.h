@@ -33,8 +33,9 @@ namespace Cluster
      * as cluster weights.
      */
     types::CellMoleculeContainerType<dim, atomicity, spacedim>
-    update_cluster_weights (const types::MeshType<dim, spacedim> &mesh,
-                            const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const;
+    update_cluster_weights
+    (const types::MeshType<dim, spacedim>                             &mesh,
+     const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const;
 
   };
 

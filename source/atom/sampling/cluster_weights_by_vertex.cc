@@ -25,8 +25,9 @@ namespace Cluster
   template<int dim, int atomicity, int spacedim>
   types::CellMoleculeContainerType<dim, atomicity, spacedim>
   WeightsByVertex<dim, atomicity, spacedim>::
-  update_cluster_weights (const types::MeshType<dim, spacedim> &mesh,
-                          const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const
+  update_cluster_weights
+  (const types::MeshType<dim, spacedim>                             &mesh,
+   const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const
   {
     // Prepare energy molecules in this container.
     types::CellMoleculeContainerType<dim, atomicity, spacedim>
