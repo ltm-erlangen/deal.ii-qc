@@ -103,9 +103,9 @@ namespace CellMoleculeTools
 
   template<int dim, int atomicity, int spacedim>
   CellMoleculeData<dim, atomicity, spacedim>
-  build_cell_molecule_data (std::istream                         &is,
-                            const types::MeshType<dim, spacedim> &mesh,
-                            double          ghost_cell_layer_thickness)
+  build_cell_molecule_data (std::istream                            &is,
+                            const dealii::DoFHandler<dim, spacedim> &mesh,
+                            const double       ghost_cell_layer_thickness)
   {
     // TODO: Assign atoms to cells as we parse atom data ?
     //       relevant for when we have a large collection of atoms.
@@ -139,7 +139,7 @@ namespace CellMoleculeTools
 
     // Loop through all the locally owned cells and
     // mark (true) all the vertices of the locally owned cells.
-    for (typename types::MeshType<dim, spacedim>::active_cell_iterator
+    for (typename dealii::DoFHandler<dim, spacedim>::active_cell_iterator
          cell = mesh.begin_active();
          cell != mesh.end(); ++cell)
       if (cell->is_locally_owned())
@@ -154,7 +154,7 @@ namespace CellMoleculeTools
     // If the total number of MPI processes is just one,
     // the size of ghost_cells vector is zero.
     const
-    std::vector<typename types::MeshType<dim, spacedim>::active_cell_iterator>
+    std::vector<typename dealii::DoFHandler<dim, spacedim>::active_cell_iterator>
     ghost_cells =
       GridTools::
       compute_ghost_cell_layer_within_distance (mesh,
@@ -182,7 +182,7 @@ namespace CellMoleculeTools
             // Find the locally active cell of the provided mesh which
             // surrounds the initial location of the molecule.
             std::pair<
-            typename types::MeshType<dim, spacedim>::active_cell_iterator
+            typename dealii::DoFHandler<dim, spacedim>::active_cell_iterator
             ,
             Point<dim>
             >
@@ -300,9 +300,9 @@ namespace CellMoleculeTools
   \
   template                                                               \
   CellMoleculeData<DIM, ATOMICITY, SPACEDIM>                             \
-  build_cell_molecule_data (std::istream                         &,      \
-                            const types::MeshType<DIM, SPACEDIM> &,      \
-                            double                               );      \
+  build_cell_molecule_data (std::istream                            &,   \
+                            const dealii::DoFHandler<DIM, SPACEDIM> &,   \
+                            const double                             );  \
    
 #define CELL_MOLECULE_TOOLS(R, X)                                        \
   BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,                              \

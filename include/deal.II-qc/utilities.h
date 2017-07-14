@@ -12,7 +12,6 @@
 #include <deal.II/grid/tria_iterator.h>
 #include <deal.II/grid/tria_accessor.h>
 #include <deal.II/dofs/dof_accessor.h>
-#include <deal.II/dofs/dof_handler.h>
 
 
 
@@ -114,17 +113,18 @@ namespace types
   typedef unsigned char atom_type;
 
   /**
-   * A typedef for mesh.
+   * A typedef for Triangulation's active_cell_iterator for ease of use.
    */
   template<int dim, int spacedim=dim>
-  using MeshType = dealii::DoFHandler<dim, spacedim>;
+  using CellIteratorType =
+    typename dealii::Triangulation<dim, spacedim>::active_cell_iterator;
 
   /**
    * A typedef for DoFHandler's active_cell_iterator for ease of use.
    */
   template<int dim, int spacedim=dim>
-  using CellIteratorType =
-    typename MeshType<dim, spacedim>::active_cell_iterator;
+  using DoFCellIteratorType =
+    typename dealii::DoFHandler<dim, spacedim>::active_cell_iterator;
 
   /**
    * A typedef for DoFHandler's const active_cell_iterator for ease of use.

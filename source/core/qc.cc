@@ -26,13 +26,13 @@ QC<dim, PotentialType>::~QC ()
 
 
 template <int dim, typename PotentialType>
-QC<dim, PotentialType>::QC ( const ConfigureQC &config )
+QC<dim, PotentialType>::QC (const ConfigureQC &config)
   :
   mpi_communicator(MPI_COMM_WORLD),
   pcout (std::cout,
          (dealii::Utilities::MPI::this_mpi_process(mpi_communicator)
           == 0)),
-  configure_qc( config ),
+  configure_qc (config),
   triangulation (mpi_communicator,
                  // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
                  Triangulation<dim>::limit_level_difference_at_vertices),
@@ -197,7 +197,7 @@ void QC<dim, PotentialType>::setup_system ()
   cells_to_data.clear();
 
   // TODO: use TriaAccessor<>::set_user_pointer() to associate AssemblyData with a cell
-  for (auto
+  for (types::DoFCellIteratorType<dim>
        cell  = dof_handler.begin_active();
        cell != dof_handler.end();
        cell++)
@@ -237,7 +237,7 @@ void QC<dim, PotentialType>::setup_fe_values_objects ()
   auto &cell_energy_molecules = cell_molecule_data.cell_energy_molecules;
 
   // FIXME: Loop only over cells associated to energy molecules.
-  for (types::CellIteratorType<dim>
+  for (types::DoFCellIteratorType<dim>
        cell  = dof_handler.begin_active();
        cell != dof_handler.end();
        cell++)
@@ -396,7 +396,7 @@ double QC<dim, PotentialType>::compute (vector_t &gradient) const
   Vector<double> local_gradient_I(dofs_per_cell), local_gradient_J(dofs_per_cell);
 
   typename
-  std::map<types::CellIteratorType<dim>, AssemblyData>::const_iterator
+  std::map<types::DoFCellIteratorType<dim>, AssemblyData>::const_iterator
   cell_data_I = cells_to_data.begin(),
   cell_data_J = cells_to_data.begin();
 
@@ -463,9 +463,18 @@ double QC<dim, PotentialType>::compute (vector_t &gradient) const
 
       if (ComputeGradient)
         {
+          const types::DoFCellIteratorType<dim> dof_cell_I (&triangulation,
+                                                            cell_I->level(),
+                                                            cell_I->index(),
+                                                            &dof_handler);
+          const types::DoFCellIteratorType<dim> dof_cell_J (&triangulation,
+                                                            cell_J->level(),
+                                                            cell_J->index(),
+                                                            &dof_handler);
+
           // Check if I'th or Jth cell changed, if so, update the pointer to
           // the cell data and get dof indices.
-          if (cell_data_I->first != cell_I)
+          if (cell_data_I->first != dof_cell_I)
             {
               // FIXME: this is quite awkward, as we need to flash-out
               // local contributions here
@@ -473,18 +482,18 @@ double QC<dim, PotentialType>::compute (vector_t &gradient) const
                                                      local_dof_indices_I,
                                                      gradient);
 
-              cell_data_I = cells_to_data.find(cell_I);
-              cell_I->get_dof_indices (local_dof_indices_I);
+              cell_data_I = cells_to_data.find(dof_cell_I);
+              dof_cell_I->get_dof_indices (local_dof_indices_I);
               local_gradient_I = 0.;
             }
-          if (cell_data_J->first != cell_J)
+          if (cell_data_J->first != dof_cell_J)
             {
               constraints.distribute_local_to_global(local_gradient_J,
                                                      local_dof_indices_J,
                                                      gradient);
 
-              cell_data_J = cells_to_data.find(cell_J);
-              cell_J->get_dof_indices (local_dof_indices_J);
+              cell_data_J = cells_to_data.find(dof_cell_J);
+              dof_cell_J->get_dof_indices (local_dof_indices_J);
               local_gradient_J = 0.;
             }
 
