@@ -18,8 +18,8 @@ namespace DataOutBase
   class VtpStream
   {
   public:
-    VtpStream ( std::ostream &stream,
-                const VtkFlags &flags)
+    VtpStream (std::ostream &stream,
+               const VtkFlags &flags)
       :
       stream (stream), flags (flags)
     {}
@@ -167,7 +167,7 @@ namespace
   /**
    * Write out into ostream object @p out the vtp header
    */
-  void write_vtp_header (std::ostream &out,
+  void write_vtp_header (std::ostream                &out,
                          const DataOutBase::VtkFlags &flags)
   {
     AssertThrow (out, ExcIO());
@@ -372,7 +372,7 @@ write_pvtp_record (const std::vector<std::string>      &vtp_file_names,
   template void DataOutAtomData::write_vtp<DIM, ATOMICITY, SPACEDIM>      \
   (const types::CellMoleculeContainerType<DIM, ATOMICITY, SPACEDIM> &,    \
    const dealii::DataOutBase::VtkFlags                              &,    \
-   std::ostream                                                    &);   \
+   std::ostream                                                     &);   \
    
 #define DATA_OUT_ATOM_DATA(R, X)                       \
   BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,            \

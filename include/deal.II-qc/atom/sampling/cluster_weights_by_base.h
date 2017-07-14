@@ -53,8 +53,9 @@ namespace Cluster
      */
     virtual
     types::CellMoleculeContainerType<dim, atomicity, spacedim>
-    update_cluster_weights (const types::MeshType<dim, spacedim> &mesh,
-                            const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const = 0;
+    update_cluster_weights
+    (const types::MeshType<dim, spacedim>                             &mesh,
+     const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const = 0;
 
   protected:
 
