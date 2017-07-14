@@ -1,0 +1,6 @@
+energy       = -0.770195
+l1 norm      = 8.30874
+l2 norm      = 3.34669
+linfty norm  = 2.05617
+n_dofs       = 22
+n_grad_zeros = 10
