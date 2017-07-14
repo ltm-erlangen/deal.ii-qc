@@ -60,7 +60,7 @@ void Problem<dim, PotentialType>::partial_run (const double &blessed_energy,
 
   const double energy =
     QC<dim, PotentialType>::template
-    compute<true> (QC<dim, PotentialType>::gradient);
+    compute<true> (QC<dim, PotentialType>::locally_relevant_gradient);
 
   QC<dim, PotentialType>::pcout
       << "The energy computed using PairLJCutManager of 2 atom system is: "
@@ -72,7 +72,7 @@ void Problem<dim, PotentialType>::partial_run (const double &blessed_energy,
                                       5),
                ExcInternalError());
 
-  const double gradient = QC<dim, PotentialType>::gradient(0);
+  const double gradient = QC<dim, PotentialType>::locally_relevant_gradient(0);
 
   AssertThrow (Testing::almost_equal (gradient,
                                       blessed_gradient,

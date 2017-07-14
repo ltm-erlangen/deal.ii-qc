@@ -47,7 +47,7 @@ void Problem<dim, PotentialType>::partial_run()
 
   const double energy =
     QC<dim, PotentialType>::template
-    compute<true> (QC<dim, PotentialType>::gradient);
+    compute<true> (QC<dim, PotentialType>::locally_relevant_gradient);
 
   QC<dim, PotentialType>::pcout << "energy      = "
                                 << energy
@@ -59,17 +59,17 @@ void Problem<dim, PotentialType>::partial_run()
   // derivative of energy for this potential and the given distance
   // (cluster weights are 1)
   const double derivative = -6.148223356137124;
-  QC<dim, PotentialType>::gradient *= 1./derivative;
+  QC<dim, PotentialType>::locally_relevant_gradient *= 1./derivative;
 
   QC<dim, PotentialType>::pcout
       << "l1 norm      = "
-      << QC<dim, PotentialType>::gradient.l1_norm ()
+      << QC<dim, PotentialType>::locally_relevant_gradient.l1_norm ()
       << std::endl
       << "l2 norm      = "
-      << QC<dim, PotentialType>::gradient.l2_norm()
+      << QC<dim, PotentialType>::locally_relevant_gradient.l2_norm()
       << std::endl
       << "linfty norm  = "
-      << QC<dim, PotentialType>::gradient.linfty_norm ()
+      << QC<dim, PotentialType>::locally_relevant_gradient.linfty_norm ()
       << std::endl;
 
   // For tests with more than one MPI processes dof numbering could be
@@ -80,7 +80,7 @@ void Problem<dim, PotentialType>::partial_run()
     for (unsigned int i = 0; i < n_dofs; i+=dim)
       {
         for (int d = 0; d < dim; ++d)
-          QC<dim, PotentialType>::pcout << QC<dim, PotentialType>::gradient[i+d]
+          QC<dim, PotentialType>::pcout << QC<dim, PotentialType>::locally_relevant_gradient[i+d]
                                         <<  "\t";
         QC<dim, PotentialType>::pcout << std::endl;
       }

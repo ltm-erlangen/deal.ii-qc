@@ -57,7 +57,7 @@ void Problem<dim, PotentialType>::partial_run()
 
   const double energy =
     QC<dim, PotentialType>::template
-    compute<true> (QC<dim, PotentialType>::gradient);
+    compute<true> (QC<dim, PotentialType>::locally_relevant_gradient);
 
   QC<dim, PotentialType>::pcout << "energy       = "
                                 << energy
@@ -74,7 +74,7 @@ void Problem<dim, PotentialType>::partial_run()
   unsigned int n_zeros = 0;
   for (unsigned int i = 0; i < locally_owned_dofs.n_elements(); ++i)
     if (QC<dim, PotentialType>::
-        gradient(locally_owned_dofs.nth_index_in_set(i)) == 0.)
+        locally_relevant_gradient(locally_owned_dofs.nth_index_in_set(i)) == 0.)
       n_zeros++;
 
   // Get global number of zero entries in gradient.
@@ -86,13 +86,13 @@ void Problem<dim, PotentialType>::partial_run()
   // (cluster weights are 1)
   QC<dim, PotentialType>::pcout
       << "l1 norm      = "
-      << QC<dim, PotentialType>::gradient.l1_norm ()
+      << QC<dim, PotentialType>::locally_relevant_gradient.l1_norm ()
       << std::endl
       << "l2 norm      = "
-      << QC<dim, PotentialType>::gradient.l2_norm()
+      << QC<dim, PotentialType>::locally_relevant_gradient.l2_norm()
       << std::endl
       << "linfty norm  = "
-      << QC<dim, PotentialType>::gradient.linfty_norm ()
+      << QC<dim, PotentialType>::locally_relevant_gradient.linfty_norm ()
       << std::endl;
 
   QC<dim, PotentialType>::pcout << "n_dofs       = "
@@ -111,7 +111,7 @@ void Problem<dim, PotentialType>::partial_run()
     for (unsigned int i = 0; i < n_dofs; i+=dim)
       {
         for (int d = 0; d < dim; ++d)
-          QC<dim, PotentialType>::pcout << QC<dim, PotentialType>::gradient[i+d]
+          QC<dim, PotentialType>::pcout << QC<dim, PotentialType>::locally_relevant_gradient[i+d]
                                         <<  "\t";
         QC<dim, PotentialType>::pcout << std::endl;
       }

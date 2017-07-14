@@ -51,7 +51,10 @@ void Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
     std::cout << "Atom I: "  << entry.second.first->second.atoms[0].global_index  << " "
               << "Atom J: "  << entry.second.second->second.atoms[0].global_index << std::endl;
 
-  const double energy = QC<dim, PotentialType>::template compute<false> (QC<dim, PotentialType>::gradient);
+  const double energy =
+    QC<dim, PotentialType>::template
+    compute<false> (QC<dim, PotentialType>::locally_relevant_gradient);
+
   QC<dim, PotentialType>::pcout
       << "The energy computed using PairCoulWolfManager of 4 charged atom system is: "
       << energy << " eV" << std::endl;

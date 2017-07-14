@@ -61,7 +61,8 @@ void Problem<dim, PotentialType>::run()
   QC<dim, PotentialType>::locally_relevant_displacement = u;
   QC<dim, PotentialType>::update_positions();
   const double energy_0 =
-    QC<dim, PotentialType>::template compute(QC<dim, PotentialType>::gradient);
+    QC<dim, PotentialType>::template
+    compute(QC<dim, PotentialType>::locally_relevant_gradient);
 
   // --- Random displacements.
   // manually get locally owned elements parallel vector:
@@ -78,7 +79,8 @@ void Problem<dim, PotentialType>::run()
   QC<dim, PotentialType>::locally_relevant_displacement = u;
   QC<dim, PotentialType>::update_positions();
   const double energy_1 =
-    QC<dim, PotentialType>::template compute(QC<dim, PotentialType>::gradient);
+    QC<dim, PotentialType>::template
+    compute(QC<dim, PotentialType>::locally_relevant_gradient);
 
   // --- Reset displacement to zero.
 
@@ -87,7 +89,8 @@ void Problem<dim, PotentialType>::run()
   QC<dim, PotentialType>::locally_relevant_displacement = u;
   QC<dim, PotentialType>::update_positions();
   const double energy_2 =
-    QC<dim, PotentialType>::template compute(QC<dim, PotentialType>::gradient);
+    QC<dim, PotentialType>::template
+    compute(QC<dim, PotentialType>::locally_relevant_gradient);
 
   AssertThrow (energy_0 == energy_2,
                ExcInternalError());
