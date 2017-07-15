@@ -56,6 +56,28 @@ namespace Cluster
                 const Quadrature<dim>              &quadrature = QTrapez<dim>());
 
     /**
+     * Return the sampling point with the index given by @p sampling_index.
+     */
+    inline
+    const Point<spacedim> &
+    get_sampling_point (const unsigned int sampling_index) const;
+
+    /**
+     * Return the number of sampling points.
+     */
+    inline
+    unsigned int
+    n_sampling_points () const;
+
+    /**
+     * Return the set of sampling indices associated to the @p cell.
+     */
+    inline
+    const std::set<unsigned int> &
+    get_sampling_indices (const types::CellIteratorType<dim, spacedim> &cell) const;
+
+
+    /**
      * Return energy molecules (in a cell based data structure) with
      * appropriately set cluster weights based on provided @p cell_molecules,
      * that were associated to @p mesh, using #cluster_radius and
@@ -79,6 +101,8 @@ namespace Cluster
      */
     const double maximum_cutoff_radius;
 
+  private:
+
     /**
      * Global list of sampling points.
      */
@@ -87,10 +111,43 @@ namespace Cluster
     /**
      * Map from cells to their corresponding sampling points' indices.
      */
-    std::map<types::CellIteratorType<dim,spacedim>, std::set<unsigned int>>
-        cells_to_sampling_indices;
+    std::map<types::CellIteratorType<dim,spacedim>, std::set<unsigned int> >
+    cells_to_sampling_indices;
   };
 
+  /*----------------------- Inline functions --------------------------------*/
+
+#ifndef DOXYGEN
+
+  template <int dim, int atomicity, int spacedim>
+  const dealii::Point<spacedim> &
+  WeightsByBase<dim, atomicity, spacedim>::
+  get_sampling_point (const unsigned int sampling_index) const
+  {
+    return sampling_points[sampling_index];
+  }
+
+
+
+  template <int dim, int atomicity, int spacedim>
+  unsigned int
+  WeightsByBase<dim, atomicity, spacedim>::
+  n_sampling_points () const
+  {
+    return sampling_points.size();
+  }
+
+
+
+  template <int dim, int atomicity, int spacedim>
+  const std::set<unsigned int> &
+  WeightsByBase<dim, atomicity, spacedim>::
+  get_sampling_indices (const types::CellIteratorType<dim, spacedim> &cell) const
+  {
+    return cells_to_sampling_indices.at(cell);
+  }
+
+#endif /* DOXYGEN */
 
 } // namespace Cluster
 

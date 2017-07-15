@@ -66,20 +66,24 @@ public:
     Cluster::WeightsByBase<dim>::initialize (triangulation, QTrapez<dim>());
 
     pcout << "Total number of vertices: "
-          << Cluster::WeightsByBase<dim>::sampling_points.size()
+          << Cluster::WeightsByBase<dim>::n_sampling_points()
           << std::endl;
 
-    for (const auto &entry : Cluster::WeightsByBase<dim>::cells_to_sampling_indices)
-      pcout << entry.first << ":" << entry.second.size() << std::endl;
+    for (dealiiqc::types::CellIteratorType<dim>
+         cell  = triangulation.begin_active();
+         cell != triangulation.end();
+         cell++)
+      pcout << cell << ":"
+            << Cluster::WeightsByBase<dim>::get_sampling_indices(cell).size()
+            << std::endl;
   }
 
   dealiiqc::types::CellMoleculeContainerType<dim>
   update_cluster_weights
-  (const DoFHandler<dim>                                 &mesh,
-   const dealiiqc::types::CellMoleculeContainerType<dim> &cell_molecules) const
+  (const DoFHandler<dim> &,
+   const dealiiqc::types::CellMoleculeContainerType<dim> &) const
   {
-    dealiiqc::types::CellMoleculeContainerType<dim> dummy;
-    return dummy;
+    return dealiiqc::types::CellMoleculeContainerType<dim>();
   }
 
 private:
@@ -99,10 +103,12 @@ int main (int argc, char **argv)
                           argv,
                           dealii::numbers::invalid_unsigned_int);
 
-      Test<2> test_2(2., 2.);
+      Test<2> test_2 (std::numeric_limits<double>::signaling_NaN(),
+                      std::numeric_limits<double>::signaling_NaN());
       test_2.run();
 
-      Test<3> test_3(2., 2.);
+      Test<3> test_3 (std::numeric_limits<double>::signaling_NaN(),
+                      std::numeric_limits<double>::signaling_NaN());
       test_3.run();
 
     }
