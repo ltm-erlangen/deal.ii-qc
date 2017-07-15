@@ -4,6 +4,8 @@
 
 #include <deal.II-qc/atom/cell_molecule_data.h>
 
+#include <deal.II/base/quadrature_lib.h>
+
 
 DEAL_II_QC_NAMESPACE_OPEN
 
@@ -46,6 +48,14 @@ namespace Cluster
     virtual ~WeightsByBase();
 
     /**
+     * Initialize #sampling_points and #cells_to_sampling_indices data members
+     * using @p triangulation and @p quadrature.
+     */
+    void
+    initialize (const Triangulation<dim, spacedim> &triangulation,
+                const Quadrature<dim>              &quadrature = QTrapez<dim>());
+
+    /**
      * Return energy molecules (in a cell based data structure) with
      * appropriately set cluster weights based on provided @p cell_molecules,
      * that were associated to @p mesh, using #cluster_radius and
@@ -54,7 +64,7 @@ namespace Cluster
     virtual
     types::CellMoleculeContainerType<dim, atomicity, spacedim>
     update_cluster_weights
-    (const dealii::DoFHandler<dim, spacedim>                          &mesh,
+    (const DoFHandler<dim, spacedim>                                  &mesh,
      const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const = 0;
 
   protected:
@@ -69,7 +79,16 @@ namespace Cluster
      */
     const double maximum_cutoff_radius;
 
-    // TODO: sampling_points
+    /**
+     * Global list of sampling points.
+     */
+    std::vector<Point<spacedim>> sampling_points;
+
+    /**
+     * Map from cells to their corresponding sampling points' indices.
+     */
+    std::map<types::CellIteratorType<dim,spacedim>, std::set<unsigned int>>
+        cells_to_sampling_indices;
   };
 
 
