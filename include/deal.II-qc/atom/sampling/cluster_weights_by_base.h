@@ -118,7 +118,7 @@ namespace Cluster
      * A set of global indices of the sampling points that are relevant for
      * the current MPI process.
      */
-    std::set<unsigned int> locally_relevant_sampling_indices;
+    IndexSet locally_relevant_sampling_indices;
   };
 
   /*----------------------- Inline functions --------------------------------*/
@@ -132,7 +132,7 @@ namespace Cluster
   {
     Assert (sampling_index < tria_ptr->get_vertices().size(),
             ExcMessage("Invalid sampling index."));
-    Assert (locally_relevant_sampling_indices.count(sampling_index),
+    Assert (locally_relevant_sampling_indices.is_element(sampling_index),
             ExcMessage("Invalid sampling index. This function was called "
                        "with a sampling index that is not locally relevant."
                        "In other words, the given sampling index is not "

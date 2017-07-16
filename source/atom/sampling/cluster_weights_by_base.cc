@@ -80,7 +80,8 @@ namespace Cluster
         // sphere around a sampling point associated to the hanging node of the
         // neighboring cell.
 
-        // So we pick up all the hanging nodes on this cell by the following
+        // So we need to pick up all the hanging nodes on this cell by
+        // the following logic:
         // cell -> all faces -> all its sub-faces -> all its vertices.
         for (unsigned int f = 0; f < GeometryInfo<dim>::faces_per_cell; ++f)
           {
@@ -94,16 +95,30 @@ namespace Cluster
                        v < GeometryInfo<dim>::vertices_per_face;
                        v++)
                     this_cell_sampling_indices.insert(subface->vertex_index(v));
-                  AssertThrow (!subface->has_children(),
-                               ExcInternalError());
+                  Assert (!subface->has_children(),
+                          ExcInternalError());
                 }
           }
+
         cells_to_sampling_indices[cell] = this_cell_sampling_indices;
       }
 
+    locally_relevant_sampling_indices.clear();
+
+    // FIXME: This will change if, Quadrature<> other than QTrapez<> is used.
+    locally_relevant_sampling_indices.set_size(triangulation.n_vertices());
+
+    // Initialize locally relevant sampling indices.
     for (const auto &entry : cells_to_sampling_indices)
-      for (const auto &sampling_index : entry.second)
-        locally_relevant_sampling_indices.insert(sampling_index);
+      {
+        const std::set<unsigned int> &sampling_indices = entry.second;
+
+        // The set of sampling indices stores unique elements and
+        // is already sorted, they can be directly added to
+        // the locally relevant sampling indices.
+        locally_relevant_sampling_indices.add_indices(sampling_indices.begin(),
+                                                      sampling_indices.end());
+      }
 
   }
 
