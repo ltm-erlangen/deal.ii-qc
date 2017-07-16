@@ -4,6 +4,8 @@
 
 #include <deal.II-qc/atom/cell_molecule_data.h>
 
+#include <deal.II/base/quadrature_lib.h>
+
 
 DEAL_II_QC_NAMESPACE_OPEN
 
@@ -46,6 +48,36 @@ namespace Cluster
     virtual ~WeightsByBase();
 
     /**
+     * Initialize #sampling_points and #cells_to_sampling_indices data members
+     * using @p triangulation and @p quadrature.
+     */
+    void
+    initialize (const Triangulation<dim, spacedim> &triangulation,
+                const Quadrature<dim>              &quadrature = QTrapez<dim>());
+
+    /**
+     * Return the sampling point with the index given by @p sampling_index.
+     */
+    inline
+    const Point<spacedim> &
+    get_sampling_point (const unsigned int sampling_index) const;
+
+    /**
+     * Return the number of sampling points.
+     */
+    inline
+    unsigned int
+    n_sampling_points () const;
+
+    /**
+     * Return the set of sampling indices associated to the @p cell.
+     */
+    inline
+    const std::set<unsigned int> &
+    get_sampling_indices (const types::CellIteratorType<dim, spacedim> &cell) const;
+
+
+    /**
      * Return energy molecules (in a cell based data structure) with
      * appropriately set cluster weights based on provided @p cell_molecules,
      * that were associated to @p mesh, using #cluster_radius and
@@ -54,7 +86,7 @@ namespace Cluster
     virtual
     types::CellMoleculeContainerType<dim, atomicity, spacedim>
     update_cluster_weights
-    (const dealii::DoFHandler<dim, spacedim>                          &mesh,
+    (const DoFHandler<dim, spacedim>                                  &mesh,
      const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const = 0;
 
   protected:
@@ -69,9 +101,66 @@ namespace Cluster
      */
     const double maximum_cutoff_radius;
 
-    // TODO: sampling_points
+  private:
+
+    /**
+     * A const pointer to a const Triangulation.
+     */
+    const Triangulation<dim, spacedim> *tria_ptr;
+
+    /**
+     * Map from cells to their corresponding sampling points' indices.
+     */
+    std::map<types::CellIteratorType<dim,spacedim>, std::set<unsigned int> >
+    cells_to_sampling_indices;
+
+    /**
+     * A set of global indices of the sampling points that are relevant for
+     * the current MPI process.
+     */
+    IndexSet locally_relevant_sampling_indices;
   };
 
+  /*----------------------- Inline functions --------------------------------*/
+
+#ifndef DOXYGEN
+
+  template <int dim, int atomicity, int spacedim>
+  const dealii::Point<spacedim> &
+  WeightsByBase<dim, atomicity, spacedim>::
+  get_sampling_point (const unsigned int sampling_index) const
+  {
+    Assert (sampling_index < tria_ptr->get_vertices().size(),
+            ExcMessage("Invalid sampling index."));
+    Assert (locally_relevant_sampling_indices.is_element(sampling_index),
+            ExcMessage("Invalid sampling index. This function was called "
+                       "with a sampling index that is not locally relevant."
+                       "In other words, the given sampling index is not "
+                       "associated to any of the locally relevant cells."));
+    return tria_ptr->get_vertices()[sampling_index];
+  }
+
+
+
+  template <int dim, int atomicity, int spacedim>
+  unsigned int
+  WeightsByBase<dim, atomicity, spacedim>::
+  n_sampling_points () const
+  {
+    return tria_ptr->get_vertices().size();
+  }
+
+
+
+  template <int dim, int atomicity, int spacedim>
+  const std::set<unsigned int> &
+  WeightsByBase<dim, atomicity, spacedim>::
+  get_sampling_indices (const types::CellIteratorType<dim, spacedim> &cell) const
+  {
+    return cells_to_sampling_indices.at(cell);
+  }
+
+#endif /* DOXYGEN */
 
 } // namespace Cluster
 
