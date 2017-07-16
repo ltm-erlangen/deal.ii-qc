@@ -15,7 +15,8 @@ namespace Cluster
                  const double &maximum_cutoff_radius)
     :
     cluster_radius(cluster_radius),
-    maximum_cutoff_radius(maximum_cutoff_radius)
+    maximum_cutoff_radius(maximum_cutoff_radius),
+    tria_ptr(NULL)
   {}
 
 
@@ -32,10 +33,8 @@ namespace Cluster
   initialize (const Triangulation<dim, spacedim> &triangulation,
               const Quadrature<dim>              &quadrature)
   {
-    const QTrapez<dim> *q_trapez_ptr =
-      dynamic_cast<const QTrapez<dim> *> (&quadrature);
-
-    AssertThrow (q_trapez_ptr != NULL, ExcNotImplemented());
+    AssertThrow (dynamic_cast<const QTrapez<dim> *> (&quadrature) != NULL,
+                 ExcNotImplemented());
 
     // TODO: Generalize sampling points by adding more sampling points.
     //       Using quadrature get sampling points from cells.
@@ -43,8 +42,8 @@ namespace Cluster
     //       generalized sampling points.
     //       But for now:
 
-    // Add triangulation's vertices as sampling points.
-    sampling_points = triangulation.get_vertices();
+    // Initialize tria_ptr data member.
+    tria_ptr = &triangulation;
 
     // Get locally relevant ghost cells
     /* TODO: This class is not aware of ghost_cell_layer_thickness
@@ -70,9 +69,19 @@ namespace Cluster
 
         std::set<unsigned int> this_cell_sampling_indices;
 
+        // First, store vertex indices of all vertices of a given cell.
         for (unsigned int v = 0; v < GeometryInfo<dim>::vertices_per_cell; v++)
           this_cell_sampling_indices.insert(cell->vertex_index(v));
 
+        // We also need to pick up all the hanging nodes, if any, on this cell
+        // as the sampling points of this cell.
+        // That's because if this cell is coarser than one (or more) of its
+        // neighbors, we must gather all the molecules inside the cluster
+        // sphere around a sampling point associated to the hanging node of the
+        // neighboring cell.
+
+        // So we pick up all the hanging nodes on this cell by the following
+        // cell -> all faces -> all its sub-faces -> all its vertices.
         for (unsigned int f = 0; f < GeometryInfo<dim>::faces_per_cell; ++f)
           {
             const auto face = cell->face(f);
@@ -91,6 +100,10 @@ namespace Cluster
           }
         cells_to_sampling_indices[cell] = this_cell_sampling_indices;
       }
+
+    for (const auto &entry : cells_to_sampling_indices)
+      for (const auto &sampling_index : entry.second)
+        locally_relevant_sampling_indices.insert(sampling_index);
 
   }
 

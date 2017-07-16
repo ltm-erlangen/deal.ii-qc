@@ -104,15 +104,21 @@ namespace Cluster
   private:
 
     /**
-     * Global list of sampling points.
+     * A const pointer to a const Triangulation.
      */
-    std::vector<Point<spacedim>> sampling_points;
+    const Triangulation<dim, spacedim> *tria_ptr;
 
     /**
      * Map from cells to their corresponding sampling points' indices.
      */
     std::map<types::CellIteratorType<dim,spacedim>, std::set<unsigned int> >
     cells_to_sampling_indices;
+
+    /**
+     * A set of global indices of the sampling points that are relevant for
+     * the current MPI process.
+     */
+    std::set<unsigned int> locally_relevant_sampling_indices;
   };
 
   /*----------------------- Inline functions --------------------------------*/
@@ -124,7 +130,14 @@ namespace Cluster
   WeightsByBase<dim, atomicity, spacedim>::
   get_sampling_point (const unsigned int sampling_index) const
   {
-    return sampling_points[sampling_index];
+    Assert (sampling_index < tria_ptr->get_vertices().size(),
+            ExcMessage("Invalid sampling index."));
+    Assert (locally_relevant_sampling_indices.count(sampling_index),
+            ExcMessage("Invalid sampling index. This function was called "
+                       "with a sampling index that is not locally relevant."
+                       "In other words, the given sampling index is not "
+                       "associated to any of the locally relevant cells."));
+    return tria_ptr->get_vertices()[sampling_index];
   }
 
 
@@ -134,7 +147,7 @@ namespace Cluster
   WeightsByBase<dim, atomicity, spacedim>::
   n_sampling_points () const
   {
-    return sampling_points.size();
+    return tria_ptr->get_vertices().size();
   }
 
 

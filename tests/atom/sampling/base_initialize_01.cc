@@ -10,6 +10,11 @@ using namespace dealiiqc;
 
 
 
+// Test to check WeightsByBase::initialize() function if it initializes its
+// private members correctly.
+
+
+
 template<int dim>
 class Test : public Cluster::WeightsByBase<dim>
 {
@@ -73,9 +78,20 @@ public:
          cell  = triangulation.begin_active();
          cell != triangulation.end();
          cell++)
-      pcout << cell << ":"
-            << Cluster::WeightsByBase<dim>::get_sampling_indices(cell).size()
-            << std::endl;
+      {
+        const std::set<unsigned int> &sampling_indices =
+          Cluster::WeightsByBase<dim>::get_sampling_indices(cell);
+        pcout << cell << " : "
+              << sampling_indices.size()
+              << " : ";
+
+        for (const auto &index : sampling_indices)
+          pcout << index << " ";
+
+        pcout << std::endl;
+      }
+
+
   }
 
   dealiiqc::types::CellMoleculeContainerType<dim>
