@@ -29,7 +29,7 @@ namespace Cluster
   types::CellMoleculeContainerType<dim, atomicity, spacedim>
   WeightsByLumpedVertex<dim, atomicity, spacedim>::
   update_cluster_weights
-  (const dealii::DoFHandler<dim, spacedim>                          &mesh,
+  (const Triangulation<dim, spacedim>                               &triangulation,
    const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const
   {
     // Prepare energy molecules in this container.
@@ -47,10 +47,9 @@ namespace Cluster
       dealii::Utilities::fixed_power<2>
       (WeightsByBase<dim, atomicity, spacedim>::cluster_radius);
 
-    // Get underlying p::Triangulation to construct DoFHandler
     const parallel::Triangulation<dim, spacedim> *const ptria =
       dynamic_cast<const parallel::Triangulation<dim, spacedim> *>
-      (&mesh.get_triangulation());
+      (&triangulation);
 
     // Get a consistent MPI_Comm.
     const MPI_Comm &mpi_communicator = ptria != nullptr
@@ -63,7 +62,7 @@ namespace Cluster
     MappingQ1<dim, spacedim> mapping;
     FE_Q<dim, spacedim> fe(1);
 
-    DoFHandler<dim, spacedim> dof_handler(*ptria);
+    DoFHandler<dim, spacedim> dof_handler(triangulation);
     dof_handler.distribute_dofs(fe);
 
     // Get the total number of dofs, in the current case of using linear

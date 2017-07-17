@@ -39,7 +39,7 @@ namespace Cluster
      */
     types::CellMoleculeContainerType<dim, atomicity, spacedim>
     update_cluster_weights
-    (const dealii::DoFHandler<dim, spacedim>                          &mesh,
+    (const Triangulation<dim, spacedim>                               &triangulation,
      const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const;
 
   };
