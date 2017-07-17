@@ -80,13 +80,13 @@ namespace Cluster
     /**
      * Return energy molecules (in a cell based data structure) with
      * appropriately set cluster weights based on provided @p cell_molecules,
-     * that were associated to @p mesh, using #cluster_radius and
+     * that were associated to @p triangulation, using #cluster_radius and
      * #maximum_cutoff_radius.
      */
     virtual
     types::CellMoleculeContainerType<dim, atomicity, spacedim>
     update_cluster_weights
-    (const DoFHandler<dim, spacedim>                                  &mesh,
+    (const Triangulation<dim, spacedim>                               &triangulation,
      const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const = 0;
 
   protected:

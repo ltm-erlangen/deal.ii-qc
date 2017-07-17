@@ -26,19 +26,20 @@ namespace Cluster
   types::CellMoleculeContainerType<dim, atomicity, spacedim>
   WeightsByVertex<dim, atomicity, spacedim>::
   update_cluster_weights
-  (const dealii::DoFHandler<dim, spacedim>                          &mesh,
+  (const Triangulation<dim, spacedim>                               &triangulation,
    const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const
   {
     // Prepare energy molecules in this container.
     types::CellMoleculeContainerType<dim, atomicity, spacedim>
     cell_energy_molecules;
 
-    const unsigned int n_vertices = mesh.get_triangulation().n_vertices();
+    const unsigned int n_vertices = triangulation.n_vertices();
 
     const parallel::Triangulation<dim, spacedim> *const ptria =
       dynamic_cast<const parallel::Triangulation<dim, spacedim> *>
-      (&mesh.get_triangulation());
+      (&triangulation);
 
+    // Get a consistent MPI_Comm.
     const MPI_Comm &mpi_communicator = ptria != nullptr
                                        ?
                                        ptria->get_communicator()

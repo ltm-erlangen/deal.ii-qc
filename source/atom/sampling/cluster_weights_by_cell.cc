@@ -23,7 +23,7 @@ namespace Cluster
   types::CellMoleculeContainerType<dim, atomicity, spacedim>
   WeightsByCell<dim, atomicity, spacedim>::
   update_cluster_weights
-  (const dealii::DoFHandler<dim, spacedim>                          &mesh,
+  (const Triangulation<dim, spacedim>                               &triangulation,
    const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const
   {
     // Prepare energy molecules in this container.
@@ -54,8 +54,8 @@ namespace Cluster
     // Loop over all active cells of the mesh and initialize
     // n_molecules_per_cell and n_cluster_molecules_per_cell.
     for (types::CellIteratorType<dim, spacedim>
-         cell  = mesh.begin_active();
-         cell != mesh.end();
+         cell  = triangulation.begin_active();
+         cell != triangulation.end();
          cell++)
       {
         n_molecules_per_cell[cell]         = 0;
@@ -128,8 +128,8 @@ namespace Cluster
     //   CellMoleculeTools functions also yield same result.
 #ifdef Debug
     for (types::CellIteratorType<dim, spacedim>
-         cell  = mesh.begin_active();
-         cell != mesh.end();
+         cell  = triangulation.begin_active();
+         cell != triangulation.end();
          cell++)
       {
         // Get n_molecules_in_cell using molecules_range.second
