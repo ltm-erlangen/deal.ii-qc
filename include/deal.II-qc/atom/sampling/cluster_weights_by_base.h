@@ -73,9 +73,15 @@ namespace Cluster
      * Return the set of sampling indices associated to the @p cell.
      */
     inline
-    const std::set<unsigned int> &
+    const std::vector<unsigned int> &
     get_sampling_indices (const types::CellIteratorType<dim, spacedim> &cell) const;
 
+    /**
+     * Return the set of sampling points associated to the @p cell.
+     */
+    inline
+    std::vector<Point<spacedim> >
+    get_sampling_points (const types::CellIteratorType<dim, spacedim> &cell) const;
 
     /**
      * Return energy molecules (in a cell based data structure) with
@@ -103,6 +109,8 @@ namespace Cluster
 
   private:
 
+    // TODO: Remove this member when the chosen Quadrature<> is other than
+    //       QTrapez<>.
     /**
      * A const pointer to a const Triangulation.
      */
@@ -111,7 +119,7 @@ namespace Cluster
     /**
      * Map from cells to their corresponding sampling points' indices.
      */
-    std::map<types::CellIteratorType<dim,spacedim>, std::set<unsigned int> >
+    std::map<types::CellIteratorType<dim,spacedim>, std::vector<unsigned int> >
     cells_to_sampling_indices;
 
     /**
@@ -137,6 +145,8 @@ namespace Cluster
                        "with a sampling index that is not locally relevant."
                        "In other words, the given sampling index is not "
                        "associated to any of the locally relevant cells."));
+
+    // TODO: Change when chosen Quadrature<> is other than QTrapez<>.
     return tria_ptr->get_vertices()[sampling_index];
   }
 
@@ -147,17 +157,42 @@ namespace Cluster
   WeightsByBase<dim, atomicity, spacedim>::
   n_sampling_points () const
   {
+    // TODO: Change when chosen Quadrature<> is other than QTrapez<>.
     return tria_ptr->get_vertices().size();
   }
 
 
 
   template <int dim, int atomicity, int spacedim>
-  const std::set<unsigned int> &
+  const std::vector<unsigned int> &
   WeightsByBase<dim, atomicity, spacedim>::
   get_sampling_indices (const types::CellIteratorType<dim, spacedim> &cell) const
   {
     return cells_to_sampling_indices.at(cell);
+  }
+
+
+
+  template <int dim, int atomicity, int spacedim>
+  std::vector<Point<spacedim> >
+  WeightsByBase<dim, atomicity, spacedim>::
+  get_sampling_points (const types::CellIteratorType<dim, spacedim> &cell) const
+  {
+    // Get the global indices of the sampling points of this cell.
+    const std::set<unsigned int> &this_cell_sampling_indices =
+      this->get_sampling_indices(cell);
+
+    // Prepare sampling points of this cell in this container.
+    std::vector<Point<spacedim> > this_cell_sampling_points;
+
+    this_cell_sampling_points.reserve(this_cell_sampling_indices.size());
+
+    // TODO: remove get_sampling_point.
+    // Prepare sampling points of this cell.
+    for (const auto &sampling_index : this_cell_sampling_indices)
+      this_cell_sampling_points.push_back(this->get_sampling_point(sampling_index));
+
+    return this_cell_sampling_points;
   }
 
 #endif /* DOXYGEN */
