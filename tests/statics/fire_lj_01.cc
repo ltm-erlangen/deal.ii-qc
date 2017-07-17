@@ -1,7 +1,7 @@
 
-#include <deal.II-qc/statics/fire.h>
-
 #include <deal.II-qc/potentials/pair_lj_cut.h>
+
+#include <deal.II/lac/solver_fire.h>
 
 
 using namespace dealii;
@@ -65,11 +65,11 @@ void test (const double a,
   inv_mass.reinit(tmp_mass);
 
   auto additional_data =
-    statics::SolverFIRE<vector_t>::AdditionalData(1e-3, 1e-3, 0.001);
+    SolverFIRE<vector_t>::AdditionalData(1e-3, 1e-3, 0.001);
 
   SolverControl solver_control (1e06, tol);
 
-  statics::SolverFIRE<vector_t> fire (solver_control, additional_data);
+  SolverFIRE<vector_t> fire (solver_control, additional_data);
 
   vector_t u;
   u.reinit(1, false);
