@@ -201,6 +201,40 @@ namespace Utilities
 
 
   /**
+   * Find the closest point in a given list of @p points to a point @p p
+   * and return a pair of its (the closest point's) index in the list and
+   * the squared distance of separation.
+   */
+  template<int dim>
+  inline
+  std::pair<unsigned int, double>
+  find_closest_point (const Point<dim>              &p,
+                      const std::vector<Point<dim>> &points)
+  {
+    AssertThrow (points.size(),
+                 ExcMessage("The given list of points is empty."));
+
+    // Assume the first point is the closest at first.
+    double squared_distance = points[0].distance_square(p);
+    unsigned int point_index = 0;
+
+    // Loop over all the other points to search for closest points.
+    for (unsigned int i=1; i<points.size(); ++i)
+      {
+        const double p_squared_distance = points[i].distance_square(p);
+        if (p_squared_distance < squared_distance)
+          {
+            squared_distance = p_squared_distance;
+            point_index = i;
+          }
+      }
+
+    return std::make_pair(point_index, squared_distance);
+  }
+
+
+
+  /**
    * Utility function that returns true if a point @p p is outside a bounding
    * box. The box is specified by two points @p minp and @p maxp (the order of
    * specifying points is important).
