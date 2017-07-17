@@ -62,6 +62,13 @@ namespace Cluster
         n_cluster_molecules_per_cell[cell] = 0;
       }
 
+    types::CellIteratorType<dim, spacedim> unique_cell =
+      cell_molecules.begin()->first;
+
+    // Prepare sampling points of this cell in this container.
+    std::vector<Point<spacedim> > this_cell_sampling_points =
+      WeightsByBase<dim, atomicity, spacedim>::get_sampling_points(unique_cell);
+
     // Loop over all molecules, see if a given molecule is energy molecule and
     // if so if it's a cluster molecule.
     // While there, count the total number of molecules per cell and
@@ -71,20 +78,30 @@ namespace Cluster
         const auto &cell         = cell_molecule.first;
         Molecule<spacedim, atomicity> molecule = cell_molecule.second;
 
+        if (unique_cell != cell)
+          {
+            unique_cell = cell;
+
+            this_cell_sampling_points =
+              WeightsByBase<dim, atomicity, spacedim>::get_sampling_points(unique_cell);
+          }
+
         Assert (n_molecules_per_cell.find(cell) !=n_molecules_per_cell.end(),
                 ExcMessage("Provided 'mesh' isn't consistent with "
                            "the cell based molecules data structure."));
 
         n_molecules_per_cell[cell]++;
 
-        // Check the proximity of the molecule to it's associated
-        // cell's vertices.
-        const auto closest_vertex =
-          Utilities::find_closest_vertex (molecule_initial_location(molecule),
-                                          cell);
-        if (closest_vertex.second < squared_energy_radius)
+        // Get the global index of the sampling point (of this cell) closest
+        // to the molecule and the squared distance of separation.
+        const double squared_distance_from_closest_sampling_point =
+          Utilities::
+          find_closest_point (molecule_initial_location(molecule),
+                              this_cell_sampling_points).second;
+
+        if (squared_distance_from_closest_sampling_point < squared_energy_radius)
           {
-            if (closest_vertex.second < squared_cluster_radius)
+            if (squared_distance_from_closest_sampling_point < squared_cluster_radius)
               {
                 // Increment cluster molecule count for this "cell"
                 n_cluster_molecules_per_cell[cell]++;
@@ -95,9 +112,10 @@ namespace Cluster
               // molecule is not cluster molecule
               molecule.cluster_weight = 0.;
 
-            // Insert molecule into cell_energy_molecules if it is within a distance of
-            // energy_radius to associated cell's vertices.
-            cell_energy_molecules.insert(std::make_pair(cell,molecule));
+            // Insert molecule into cell_energy_molecules as the distance
+            // from the molecule to one of the sampling points of the cell is
+            // less than energy_radius.
+            cell_energy_molecules.insert(std::make_pair(cell, molecule));
           }
       }
 

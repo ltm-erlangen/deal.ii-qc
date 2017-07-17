@@ -53,7 +53,7 @@ namespace Cluster
      */
     void
     initialize (const Triangulation<dim, spacedim> &triangulation,
-                const Quadrature<dim>              &quadrature = QTrapez<dim>());
+                const Quadrature<dim>              &quadrature = QTrapez<dim>()) const;
 
     /**
      * Return the sampling point with the index given by @p sampling_index.
@@ -114,19 +114,19 @@ namespace Cluster
     /**
      * A const pointer to a const Triangulation.
      */
-    const Triangulation<dim, spacedim> *tria_ptr;
+    mutable const Triangulation<dim, spacedim> *tria_ptr;
 
     /**
      * Map from cells to their corresponding sampling points' indices.
      */
-    std::map<types::CellIteratorType<dim,spacedim>, std::vector<unsigned int> >
+    mutable std::map<types::CellIteratorType<dim,spacedim>, std::vector<unsigned int> >
     cells_to_sampling_indices;
 
     /**
      * A set of global indices of the sampling points that are relevant for
      * the current MPI process.
      */
-    IndexSet locally_relevant_sampling_indices;
+    mutable IndexSet locally_relevant_sampling_indices;
   };
 
   /*----------------------- Inline functions --------------------------------*/
@@ -179,7 +179,7 @@ namespace Cluster
   get_sampling_points (const types::CellIteratorType<dim, spacedim> &cell) const
   {
     // Get the global indices of the sampling points of this cell.
-    const std::set<unsigned int> &this_cell_sampling_indices =
+    const std::vector<unsigned int> &this_cell_sampling_indices =
       this->get_sampling_indices(cell);
 
     // Prepare sampling points of this cell in this container.

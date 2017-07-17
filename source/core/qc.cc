@@ -130,9 +130,17 @@ void QC<dim, PotentialType>::setup_cell_energy_molecules()
 
   // It is ConfigureQC that actually creates a shared pointer to the derived
   // class object of the Cluster::WeightsByBase according to the parsed input.
+
+  std::shared_ptr<const Cluster::WeightsByBase<dim> > cluster_weights_method =
+    configure_qc.get_cluster_weights<dim>();
+
+  //TODO: Get Quadrature from ConfigureQC.
+  cluster_weights_method->initialize (triangulation,
+                                      QTrapez<dim>());
+
   cell_molecule_data.cell_energy_molecules =
-    configure_qc.get_cluster_weights<dim>()->
-    update_cluster_weights (dof_handler,
+    cluster_weights_method->
+    update_cluster_weights (triangulation,
                             cell_molecule_data.cell_molecules);
 }
 

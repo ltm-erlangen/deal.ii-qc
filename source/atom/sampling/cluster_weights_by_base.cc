@@ -31,7 +31,7 @@ namespace Cluster
   void
   WeightsByBase<dim, atomicity, spacedim>::
   initialize (const Triangulation<dim, spacedim> &triangulation,
-              const Quadrature<dim>              &quadrature)
+              const Quadrature<dim>              &quadrature) const
   {
     AssertThrow (dynamic_cast<const QTrapez<dim> *> (&quadrature) != NULL,
                  ExcNotImplemented());
@@ -117,7 +117,7 @@ namespace Cluster
     // Initialize locally relevant sampling indices.
     for (const auto &entry : cells_to_sampling_indices)
       {
-        const std::set<unsigned int> &sampling_indices = entry.second;
+        const std::vector<unsigned int> &sampling_indices = entry.second;
 
         // The set of sampling indices stores unique elements and
         // is already sorted, they can be directly added to

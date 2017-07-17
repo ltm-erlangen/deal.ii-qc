@@ -69,14 +69,17 @@ public:
                                      dof_handler,
                                      config.get_ghost_cell_layer_thickness());
 
-    const Cluster::WeightsByLumpedVertex<dim>
+    Cluster::WeightsByLumpedVertex<dim>
     weights_by_lumped_vertex (config.get_cluster_radius(),
                               config.get_maximum_cutoff_radius());
+
+    weights_by_lumped_vertex.initialize (triangulation,
+                                         QTrapez<dim>());
 
     const auto &cell_molecules = cell_molecule_data.cell_molecules;
 
     cell_molecule_data.cell_energy_molecules =
-      weights_by_lumped_vertex.update_cluster_weights (dof_handler,
+      weights_by_lumped_vertex.update_cluster_weights (triangulation,
                                                        cell_molecules);
 
     unsigned int this_mpi_process =

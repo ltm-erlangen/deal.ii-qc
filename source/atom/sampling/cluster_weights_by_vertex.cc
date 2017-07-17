@@ -33,7 +33,8 @@ namespace Cluster
     types::CellMoleculeContainerType<dim, atomicity, spacedim>
     cell_energy_molecules;
 
-    const unsigned int n_vertices = triangulation.n_vertices();
+    const unsigned int n_sampling_points =
+      WeightsByBase<dim, atomicity, spacedim>::n_sampling_points();
 
     const parallel::Triangulation<dim, spacedim> *const ptria =
       dynamic_cast<const parallel::Triangulation<dim, spacedim> *>
@@ -46,13 +47,17 @@ namespace Cluster
                                        :
                                        MPI_COMM_SELF;
 
-    // Prepare the total number of molecules per vertex in this container.
-    // The container should also contain the information of the total number
-    // of molecules per per vertex for ghost cells on the current MPI process.
-    std::vector<unsigned int> n_molecules_per_vertex(n_vertices,0);
+    // Prepare the total number of molecules per sampling point in this
+    // container. The container should also contain the information of
+    // the total number of molecules per sampling point for ghost cells of
+    // the current MPI process.
+    std::vector<unsigned int>
+    n_molecules_per_sampling_point(n_sampling_points, 0);
 
-    // Prepare the number of cluster molecules per vertex in this container.
-    std::vector<unsigned int> n_cluster_molecules_per_vertex(n_vertices,0);
+    // Prepare the number of cluster molecules per sampling point in this
+    // container.
+    std::vector<unsigned int>
+    n_cluster_molecules_per_sampling_point(n_sampling_points, 0);
 
     // Get the squared_energy_radius to identify energy molecules.
     const double squared_energy_radius =
@@ -65,40 +70,67 @@ namespace Cluster
       dealii::Utilities::fixed_power<2>
       (WeightsByBase<dim, atomicity, spacedim>::cluster_radius);
 
+    types::CellIteratorType<dim, spacedim> unique_cell =
+      cell_molecules.begin()->first;
+
+    // Get the global indices of the sampling points of this cell.
+    std::vector<unsigned int> this_cell_sampling_indices =
+      WeightsByBase<dim, atomicity, spacedim>::get_sampling_indices(unique_cell);
+
+    // Prepare sampling points of this cell in this container.
+    std::vector<Point<spacedim> > this_cell_sampling_points =
+      WeightsByBase<dim, atomicity, spacedim>::get_sampling_points(unique_cell);
+
     // Loop over all molecules, see if a given molecules is energy molecules and
     // if so if it's a cluster molecules.
-    // While there, count the total number of molecules per vertex and
-    // number of cluster molecules per vertex.
+    // While there, count the total number of molecules per sampling point and
+    // number of cluster molecules per sampling point.
     for (const auto &cell_molecule : cell_molecules)
       {
         const auto &cell = cell_molecule.first;
         Molecule<spacedim, atomicity> molecule = cell_molecule.second;
 
-        // Get the closest vertex (of this cell) to the molecules.
-        const auto vertex_and_squared_distance =
-          Utilities::find_closest_vertex (molecule_initial_location(molecule),
-                                          cell);
+        if (unique_cell != cell)
+          {
+            unique_cell = cell;
 
-        const unsigned int global_vertex_index =
-          cell->vertex_index(vertex_and_squared_distance.first);
+            this_cell_sampling_indices =
+              WeightsByBase<dim, atomicity, spacedim>::get_sampling_indices(unique_cell);
 
-        const double &squared_distance_from_closest_vertex =
-          vertex_and_squared_distance.second;
+            this_cell_sampling_points =
+              WeightsByBase<dim, atomicity, spacedim>::get_sampling_points(unique_cell);
+          }
+
+        // Get the global index of the sampling point (of this cell) closest
+        // to the molecule and the squared distance of separation.
+        const std::pair<unsigned int, double> closest_sampling_point =
+          Utilities::
+          find_closest_point (molecule_initial_location(molecule),
+                              this_cell_sampling_points);
+
+        const unsigned int closest_sampling_index =
+          // Advance from begin to location_in_container to get the closest
+          // sampling point index.
+          *std::next (this_cell_sampling_indices.cbegin(),
+                      closest_sampling_point.first);
+
+        // Squared distance to the closest sampling point.
+        const double &squared_distance = closest_sampling_point.second;
 
         // Count only molecules assigned to locally owned cells, so that
         // when sum is performed over all MPI processes only the molecules
         // assigned locally owned cells are counted.
         if (cell->is_locally_owned())
-          n_molecules_per_vertex[global_vertex_index]++;
+          n_molecules_per_sampling_point[closest_sampling_index]++;
 
-        if (squared_distance_from_closest_vertex < squared_energy_radius)
+        if (squared_distance < squared_energy_radius)
           {
-            if (squared_distance_from_closest_vertex < squared_cluster_radius)
+            if (squared_distance < squared_cluster_radius)
               {
                 // Count only the cluster molecules of the locally owned cells.
                 if (cell->is_locally_owned())
                   // Increment cluster molecules count for this "vertex"
-                  n_cluster_molecules_per_vertex[global_vertex_index]++;
+                  n_cluster_molecules_per_sampling_point[closest_sampling_index]++;
                 // molecules is cluster molecules
                 molecule.cluster_weight = 1.;
               }
@@ -106,8 +138,8 @@ namespace Cluster
               // molecules is not cluster molecules
               molecule.cluster_weight = 0.;
 
-            // Insert molecules into cell_energy_molecules if it is within a distance of
-            // energy_radius to associated cell's vertices.
+            // Insert molecules into cell_energy_molecules if it is within
+            // a distance of energy radius to associated cell's vertices.
             cell_energy_molecules.insert(std::make_pair(cell,molecule));
           }
       }
@@ -115,16 +147,26 @@ namespace Cluster
     //---Finished adding energy molecules
 
     // Accumulate the number of molecules per vertex from all MPI processes.
-    dealii::Utilities::MPI::sum (n_molecules_per_vertex,
+    dealii::Utilities::MPI::sum (n_molecules_per_sampling_point,
                                  mpi_communicator,
-                                 n_molecules_per_vertex);
+                                 n_molecules_per_sampling_point);
 
     // Accumulate the number of cluster molecules per vertex from all MPI processes.
-    dealii::Utilities::MPI::sum (n_cluster_molecules_per_vertex,
+    dealii::Utilities::MPI::sum (n_cluster_molecules_per_sampling_point,
                                  mpi_communicator,
-                                 n_cluster_molecules_per_vertex);
+                                 n_cluster_molecules_per_sampling_point);
 
     //---Now update cluster weights with correct value
+
+    unique_cell = cell_energy_molecules.begin()->first;
+
+    // Get the global indices of the sampling points of this cell.
+    this_cell_sampling_indices =
+      WeightsByBase<dim, atomicity, spacedim>::get_sampling_indices(unique_cell);
+
+    // Prepare sampling points of this cell in this container.
+    this_cell_sampling_points =
+      WeightsByBase<dim, atomicity, spacedim>::get_sampling_points(unique_cell);
 
     // Loop over all the energy molecules,
     // update their weights by multiplying with the factor
@@ -134,23 +176,38 @@ namespace Cluster
         const auto &cell = energy_molecule.first;
         Molecule<spacedim, atomicity>  &molecule = energy_molecule.second;
 
-        // Get the closest vertex (of this cell) to the molecules.
-        const auto vertex_and_squared_distance =
-          Utilities::find_closest_vertex (molecule_initial_location(molecule),
-                                          cell);
+        if (unique_cell != cell)
+          {
+            unique_cell = cell;
 
-        const unsigned int global_vertex_index =
-          cell->vertex_index(vertex_and_squared_distance.first);
+            this_cell_sampling_indices =
+              WeightsByBase<dim, atomicity, spacedim>::get_sampling_indices(unique_cell);
 
-        Assert (n_cluster_molecules_per_vertex[global_vertex_index] != 0,
+            this_cell_sampling_points =
+              WeightsByBase<dim, atomicity, spacedim>::get_sampling_points(unique_cell);
+          }
+
+        // Get the closest sampling point of the cell to the given point.
+        const unsigned int location_in_container =
+          Utilities::
+          find_closest_point (molecule_initial_location(molecule),
+                              this_cell_sampling_points).first;
+
+        const unsigned int closest_sampling_index =
+          // Advance from begin to location_in_container to get the closest
+          // sampling point index.
+          *std::next(this_cell_sampling_indices.cbegin(), location_in_container);
+
+        Assert (n_cluster_molecules_per_sampling_point[closest_sampling_index]
+                != 0,
                 ExcInternalError());
 
         // The cluster weight was previously set to 1. if the molecules is
         // cluster molecules and 0. if the molecules is not cluster molecules.
         molecule.cluster_weight *=
-          static_cast<double>(n_molecules_per_vertex[global_vertex_index])
+          static_cast<double>(n_molecules_per_sampling_point[closest_sampling_index])
           /
-          static_cast<double>(n_cluster_molecules_per_vertex[global_vertex_index]);
+          static_cast<double>(n_cluster_molecules_per_sampling_point[closest_sampling_index]);
       }
 
     return cell_energy_molecules;
