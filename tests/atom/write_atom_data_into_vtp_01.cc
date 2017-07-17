@@ -56,8 +56,8 @@ public:
                                      dof_handler,
                                      config.get_ghost_cell_layer_thickness());
 
-    std::shared_ptr<const Cluster::WeightsByBase<dim>> cluster_weights_method =
-                                                      config.get_cluster_weights<dim>();
+    std::shared_ptr<Cluster::WeightsByBase<dim>> cluster_weights_method =
+                                                config.get_cluster_weights<dim>();
 
     cluster_weights_method->initialize (triangulation,
                                         QTrapez<dim>());

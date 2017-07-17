@@ -31,7 +31,7 @@ namespace Cluster
   void
   WeightsByBase<dim, atomicity, spacedim>::
   initialize (const Triangulation<dim, spacedim> &triangulation,
-              const Quadrature<dim>              &quadrature) const
+              const Quadrature<dim>              &quadrature)
   {
     AssertThrow (dynamic_cast<const QTrapez<dim> *> (&quadrature) != NULL,
                  ExcNotImplemented());

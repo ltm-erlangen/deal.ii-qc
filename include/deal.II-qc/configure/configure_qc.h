@@ -98,8 +98,8 @@ public:
    * WeightsByBase.
    */
   template <int dim, int atomicity=1, int spacedim=dim>
-  std::shared_ptr<const Cluster::WeightsByBase<dim, atomicity, spacedim>>
-      get_cluster_weights() const;
+  std::shared_ptr<Cluster::WeightsByBase<dim, atomicity, spacedim> >
+  get_cluster_weights() const;
 
 private:
 
