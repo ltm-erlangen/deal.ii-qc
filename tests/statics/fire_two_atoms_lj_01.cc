@@ -18,11 +18,11 @@
 
 #include <deal.II-qc/atom/cell_molecule_tools.h>
 #include <deal.II-qc/core/qc.h>
-#include <deal.II-qc/statics/fire.h>
 
 #include <deal.II/dofs/dof_tools.h>
 #include <deal.II/grid/grid_out.h>
 #include <deal.II/grid/tria_accessor.h>
+#include <deal.II/lac/solver_fire.h>
 
 
 using namespace dealii;
@@ -88,11 +88,11 @@ void Problem<dim, PotentialType>::statics (const double tol)
   inv_mass.reinit(u);
 
   auto additional_data =
-    typename statics::SolverFIRE<vector_t>::AdditionalData(0.15, 0.15, 0.15);
+    typename SolverFIRE<vector_t>::AdditionalData(0.15, 0.15, 0.15);
 
   SolverControl solver_control (1e04, tol);
 
-  statics::SolverFIRE<vector_t> fire (solver_control, additional_data);
+  SolverFIRE<vector_t> fire (solver_control, additional_data);
 
   std::function<double(vector_t &,  const vector_t &)> compute_function =
     [&]               (vector_t &G, const vector_t &U) -> double

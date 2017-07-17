@@ -338,8 +338,7 @@ void QC<dim, PotentialType>::update_positions()
       std::pair<types::CellMoleculeIteratorType<dim>, types::CellMoleculeIteratorType<dim> >
       cell_energy_molecules_range = cell_molecule_data.cell_energy_molecules.equal_range(cell);
 
-      // update energy molecules positions
-      // TODO: write test to check if positions are updated correctly.
+      // Update energy molecules positions.
       for (unsigned int i = 0;
            i < displacements.size();
            i++, ++cell_energy_molecules_range.first)
