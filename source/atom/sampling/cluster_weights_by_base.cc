@@ -117,7 +117,7 @@ namespace Cluster
     // Initialize locally relevant sampling indices.
     for (const auto &entry : cells_to_sampling_indices)
       {
-        const std::set<unsigned int> &sampling_indices = entry.second;
+        const std::vector<unsigned int> &sampling_indices = entry.second;
 
         // The set of sampling indices stores unique elements and
         // is already sorted, they can be directly added to

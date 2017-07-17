@@ -51,9 +51,15 @@ public:
                                      dof_handler,
                                      config.get_ghost_cell_layer_thickness());
 
+    std::shared_ptr<Cluster::WeightsByBase<dim> > cluster_weights_method =
+      config.get_cluster_weights<dim>();
+
+    cluster_weights_method->initialize (triangulation,
+                                        QTrapez<dim>());
+
     cell_molecule_data.cell_energy_molecules =
-      config.get_cluster_weights<dim>()->
-      update_cluster_weights (dof_handler,
+      cluster_weights_method->
+      update_cluster_weights (triangulation,
                               cell_molecule_data.cell_molecules);
 
     const auto &cell_energy_molecules = cell_molecule_data.cell_energy_molecules;

@@ -279,6 +279,11 @@ protected:
   cells_to_data;
 
   /**
+   * Shared pointer to the cluster weights method.
+   */
+  std::shared_ptr<Cluster::WeightsByBase<dim> > cluster_weights_method;
+
+  /**
    * The primary atom data object that holds cell based atom data structures.
    * Cell based atom data structures rely on the association between molecules
    * and mesh.

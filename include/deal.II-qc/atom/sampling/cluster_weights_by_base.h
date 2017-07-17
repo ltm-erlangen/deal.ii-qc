@@ -179,7 +179,7 @@ namespace Cluster
   get_sampling_points (const types::CellIteratorType<dim, spacedim> &cell) const
   {
     // Get the global indices of the sampling points of this cell.
-    const std::set<unsigned int> &this_cell_sampling_indices =
+    const std::vector<unsigned int> &this_cell_sampling_indices =
       this->get_sampling_indices(cell);
 
     // Prepare sampling points of this cell in this container.

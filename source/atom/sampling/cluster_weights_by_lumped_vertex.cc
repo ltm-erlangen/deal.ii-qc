@@ -32,6 +32,19 @@ namespace Cluster
   (const Triangulation<dim, spacedim>                               &triangulation,
    const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const
   {
+    // In the case of LumpedVertex, the current logic of building
+    // energy molecules and assigning cluster weights is only valid
+    // when the triangulation doesn't have hanging nodes.
+    // Throw ExcNotImplemented() for now if triangulation has hanging nodes.
+    AssertThrow (!triangulation.has_hanging_nodes(),
+                 ExcNotImplemented());
+
+    const unsigned int n_sampling_points =
+      WeightsByBase<dim, atomicity, spacedim>::n_sampling_points();
+
+    AssertThrow (n_sampling_points == triangulation.n_vertices(),
+                 ExcNotImplemented());
+
     // Prepare energy molecules in this container.
     types::CellMoleculeContainerType<dim, atomicity, spacedim>
     cell_energy_molecules;
@@ -96,6 +109,10 @@ namespace Cluster
         // initialize fe_values object so as to evaluate the shape function
         // values at the all the lattice sites in the atomistic system.
 
+        // Prepare sampling points of this cell in this container.
+        const std::vector<Point<spacedim> > this_cell_sampling_points =
+          WeightsByBase<dim, atomicity, spacedim>::get_sampling_points(cell);
+
         // Get cell molecules range
         const auto cell_molecules_range =
           CellMoleculeTools::
@@ -136,15 +153,16 @@ namespace Cluster
             for (int d = 0; d < dim; ++d)
               points[q][d] = molecule.position_inside_reference_cell[d];
 
-            // Check the proximity of the molecule to it's associated
-            // cell's vertices.
-            const auto closest_vertex =
-              Utilities::find_closest_vertex (molecule_initial_location(molecule),
-                                              cell);
+            // Get the squared distance between the molecule and the closest
+            // closest sampling point (closest vertex) of this cell.
+            const double squared_distance_from_closest_sampling_point =
+              Utilities::
+              find_closest_point (molecule_initial_location(molecule),
+                                  this_cell_sampling_points).second;
 
-            if (closest_vertex.second < squared_energy_radius)
+            if (squared_distance_from_closest_sampling_point < squared_energy_radius)
               {
-                if (closest_vertex.second < squared_cluster_radius)
+                if (squared_distance_from_closest_sampling_point < squared_cluster_radius)
                   {
                     // molecule is cluster molecule
                     molecule.cluster_weight = 1.;
@@ -157,8 +175,8 @@ namespace Cluster
                     weights_per_molecule[q] = 0.;
                   }
 
-                // Insert molecule into cell_energy_molecules if it is within a distance of
-                // energy_radius to associated cell's vertices.
+                // Insert molecules into cell_energy_molecules if it is within
+                // a distance of energy radius to associated cell's vertices.
                 cell_energy_molecules.insert(std::make_pair(cell, molecule));
               }
 
@@ -245,9 +263,9 @@ namespace Cluster
               cell_energy_molecule_iter->second;
 
             // Get the closest vertex (of this cell) to the molecule.
-            const auto vertex_and_squared_distance =
+            const unsigned int cell_vertex =
               Utilities::find_closest_vertex (molecule_initial_location(molecule),
-                                              cell);
+                                              cell).first;
 
             // We need to get the global dof index from the local index of
             // the closest vertex.
@@ -256,7 +274,7 @@ namespace Cluster
             // thus as the second parameter to vertex_dof_index()
             // we provide zero.
             const dealii::types::global_dof_index I =
-              dof_cell->vertex_dof_index(vertex_and_squared_distance.first,0);
+              dof_cell->vertex_dof_index(cell_vertex, 0);
 
             Assert (A[I] != 0, ExcInternalError());
 

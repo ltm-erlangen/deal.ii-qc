@@ -88,7 +88,7 @@ ConfigureQC::get_potential() const
 }
 
 template<int dim, int atomicity, int spacedim>
-std::shared_ptr<const Cluster::WeightsByBase<dim, atomicity, spacedim> >
+std::shared_ptr<Cluster::WeightsByBase<dim, atomicity, spacedim> >
 ConfigureQC::get_cluster_weights() const
 {
   AssertDimension(dim, dimension);
@@ -98,17 +98,17 @@ ConfigureQC::get_cluster_weights() const
   // three different shared pointers.
   if (cluster_weights_type == "Cell")
     return
-      std::make_shared<const Cluster::WeightsByCell<dim, atomicity, spacedim>>
+      std::make_shared<Cluster::WeightsByCell<dim, atomicity, spacedim>>
       (cluster_radius, maximum_cutoff_radius);
 
   else if (cluster_weights_type == "LumpedVertex")
     return
-      std::make_shared<const Cluster::WeightsByLumpedVertex<dim, atomicity, spacedim>>
+      std::make_shared<Cluster::WeightsByLumpedVertex<dim, atomicity, spacedim>>
       (cluster_radius, maximum_cutoff_radius);
 
   else if (cluster_weights_type == "Vertex")
     return
-      std::make_shared<const Cluster::WeightsByVertex<dim, atomicity, spacedim>>
+      std::make_shared<Cluster::WeightsByVertex<dim, atomicity, spacedim>>
       (cluster_radius, maximum_cutoff_radius);
 
   else
@@ -331,10 +331,10 @@ std::shared_ptr<const Geometry::Base<2>> ConfigureQC::get_geometry() const;
 template
 std::shared_ptr<const Geometry::Base<3>> ConfigureQC::get_geometry() const;
 
-#define SINGLE_CONFIGURE_QC_INSTANTIATION(DIM, ATOMICITY, SPACEDIM)       \
-  template                                                                \
-  std::shared_ptr<const Cluster::WeightsByBase<DIM, ATOMICITY, SPACEDIM>> \
-  ConfigureQC::get_cluster_weights() const;                               \
+#define SINGLE_CONFIGURE_QC_INSTANTIATION(DIM, ATOMICITY, SPACEDIM) \
+  template                                                          \
+  std::shared_ptr<Cluster::WeightsByBase<DIM, ATOMICITY, SPACEDIM>> \
+  ConfigureQC::get_cluster_weights() const;                         \
    
 #define CONFIGURE_QC(R, X)                       \
   BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,      \

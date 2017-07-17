@@ -79,7 +79,7 @@ public:
          cell != triangulation.end();
          cell++)
       {
-        const std::set<unsigned int> &sampling_indices =
+        const std::vector<unsigned int> &sampling_indices =
           Cluster::WeightsByBase<dim>::get_sampling_indices(cell);
         pcout << cell << " : "
               << sampling_indices.size()
@@ -96,7 +96,7 @@ public:
 
   dealiiqc::types::CellMoleculeContainerType<dim>
   update_cluster_weights
-  (const DoFHandler<dim> &,
+  (const Triangulation<dim> &,
    const dealiiqc::types::CellMoleculeContainerType<dim> &) const
   {
     return dealiiqc::types::CellMoleculeContainerType<dim>();
