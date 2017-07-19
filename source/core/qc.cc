@@ -101,14 +101,14 @@ void QC<dim, PotentialType>::setup_cell_molecules()
       cell_molecule_data =
         CellMoleculeTools::build_cell_molecule_data<dim>
         (fin,
-         dof_handler,
+         triangulation,
          configure_qc.get_ghost_cell_layer_thickness());
     }
   else if ( !(* configure_qc.get_stream()).eof() )
     cell_molecule_data =
       CellMoleculeTools::build_cell_molecule_data<dim>
       (*configure_qc.get_stream(),
-       dof_handler,
+       triangulation,
        configure_qc.get_ghost_cell_layer_thickness());
   else
     AssertThrow(false,

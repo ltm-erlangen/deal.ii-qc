@@ -19,7 +19,7 @@ using namespace dealii;
  * atomistic system is far less than the number of atoms. The charges and
  * masses of different atom types can be stored elsewhere in a central pool.
  *
- * A drude particles can be constructed using two Atom objects. One object for
+ * A drude particle can be constructed using two Atom objects. One object for
  * the charged core and another for the charged shell.
  */
 template <int spacedim>

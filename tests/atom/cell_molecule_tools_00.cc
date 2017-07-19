@@ -41,7 +41,7 @@ public:
     cell_molecule_data =
       CellMoleculeTools::
       build_cell_molecule_data<dim> (fin,
-                                     dof_handler,
+                                     triangulation,
                                      config.get_ghost_cell_layer_thickness());
 
     std::shared_ptr<Cluster::WeightsByBase<dim> > cluster_weights_method =
