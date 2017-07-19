@@ -1,7 +1,7 @@
 
 #include <deal.II/base/utilities.h>
 
-#include <deal.II-qc/atom/sampling/cluster_weights_by_vertex.h>
+#include <deal.II-qc/atom/sampling/cluster_weights_by_sampling_points.h>
 
 
 DEAL_II_QC_NAMESPACE_OPEN
@@ -12,9 +12,9 @@ namespace Cluster
 
 
   template<int dim, int atomicity, int spacedim>
-  WeightsByVertex<dim, atomicity, spacedim>::
-  WeightsByVertex (const double &cluster_radius,
-                   const double &maximum_cutoff_radius)
+  WeightsBySamplingPoints<dim, atomicity, spacedim>::
+  WeightsBySamplingPoints (const double &cluster_radius,
+                           const double &maximum_cutoff_radius)
     :
     WeightsByBase<dim, atomicity, spacedim> (cluster_radius,
                                              maximum_cutoff_radius)
@@ -24,7 +24,7 @@ namespace Cluster
 
   template<int dim, int atomicity, int spacedim>
   types::CellMoleculeContainerType<dim, atomicity, spacedim>
-  WeightsByVertex<dim, atomicity, spacedim>::
+  WeightsBySamplingPoints<dim, atomicity, spacedim>::
   update_cluster_weights
   (const Triangulation<dim, spacedim>                               &triangulation,
    const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const
@@ -215,16 +215,16 @@ namespace Cluster
 
 
 
-#define SINGLE_WEIGHTS_BY_VERTEX_INSTANTIATION(DIM, ATOMICITY, SPACEDIM) \
-  template class WeightsByVertex< DIM, ATOMICITY, SPACEDIM >;            \
+#define SINGLE_WEIGHTS_BY_SPOINTS_INSTANTIATION(DIM, ATOMICITY, SPACEDIM) \
+  template class WeightsBySamplingPoints< DIM, ATOMICITY, SPACEDIM >;    \
    
-#define WEIGHTS_BY_VERTEX(R, X)                       \
+#define WEIGHTS_BY_SAMPLING_POINTS(R, X)                       \
   BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,           \
-              SINGLE_WEIGHTS_BY_VERTEX_INSTANTIATION, \
+              SINGLE_WEIGHTS_BY_SPOINTS_INSTANTIATION,\
               BOOST_PP_TUPLE_EAT(3)) X                \
    
-  // WeightsByLumpedVertex class Instantiations.
-  INSTANTIATE_CLASS_WITH_DIM_ATOMICITY_AND_SPACEDIM(WEIGHTS_BY_VERTEX)
+  // WeightsBySamplingPoints class Instantiations.
+  INSTANTIATE_CLASS_WITH_DIM_ATOMICITY_AND_SPACEDIM(WEIGHTS_BY_SAMPLING_POINTS)
 
 #undef SINGLE_WEIGHTS_BY_VERTEX_INSTANTIATION
 #undef WEIGHTS_BY_VERTEX

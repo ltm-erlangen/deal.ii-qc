@@ -10,10 +10,8 @@ using namespace dealiiqc;
 
 
 
-// Compute the mass of the atomistic system of 10 atoms using lumped clustering
-// approach.
-// Only 2 atoms are inside the triangulation and are stored in cel molecules
-// the mass of the system should be 2.
+// Compute the mass of the atomistic system of NaCl nano-crystal of 4096 atoms
+// using WeightsBySamplingPoints clustering approach.
 
 
 
@@ -56,23 +54,23 @@ void Problem<dim, PotentialType>::partial_run(const ConfigureQC &config)
   QC<dim, PotentialType>::configure_qc = config;
   QC<dim, PotentialType>::setup_cell_energy_molecules();
 
-  const auto &energy_atoms =  QC<dim, PotentialType>::cell_molecule_data.cell_energy_molecules;
+  const auto &cell_energy_molecules =  QC<dim, PotentialType>::cell_molecule_data.cell_energy_molecules;
 
   const double cluster_radius =
     QC<dim, PotentialType>::configure_qc.get_cluster_radius();
 
   double mass = 0.;
 
-  for (const auto &cell_atom : energy_atoms)
+  for (const auto &cell_atom : cell_energy_molecules)
     if (cell_atom.first->is_locally_owned())
       mass += cell_atom.second.cluster_weight;
 
   dealii::Utilities::MPI::sum (mass,
                                QC<dim, PotentialType>::mpi_communicator);
 
-  std::cout << cluster_radius << "\t"
-            << mass << "\t"
-            << std::endl;
+  QC<dim, PotentialType>::pcout << cluster_radius << "\t"
+                                << mass << "\t"
+                                << std::endl;
 
 }
 
@@ -86,30 +84,35 @@ int main (int argc, char *argv[])
                                                                   dealii::numbers::invalid_unsigned_int);
 
       std::ostringstream oss;
-      oss << "set Dimension = 3"                            << std::endl
+      oss << "set Dimension = 3"                              << std::endl
+
+          << "subsection Geometry"                            << std::endl
+          << "  set Type = Box"                               << std::endl
+          << "  subsection Box"                               << std::endl
+          << "    set X center = 7.5"                         << std::endl
+          << "    set Y center = 7.5"                         << std::endl
+          << "    set Z center = 7.5"                         << std::endl
+          << "    set X extent = 15."                         << std::endl
+          << "    set Y extent = 15."                         << std::endl
+          << "    set Z extent = 15."                         << std::endl
+          << "    set X repetitions = 1"                      << std::endl
+          << "    set Y repetitions = 1"                      << std::endl
+          << "    set Z repetitions = 1"                      << std::endl
+          << "  end"                                          << std::endl
+          << "  set Number of initial global refinements = 2" << std::endl
+          << "end"                                            << std::endl
+
           << "subsection Configure atoms"                   << std::endl
           << "  set Maximum cutoff radius = 5"              << std::endl
-          << "end"                                          << std::endl
-          << "subsection Configure QC"                      << std::endl
-          << "  set Ghost cell layer thickness = 5.01"      << std::endl
-          << "  set Cluster radius = 2"                     << std::endl
-          << "  set Cluster weights by type = LumpedVertex" << std::endl
-          << "end"                                          << std::endl
-          << "#end-of-parameter-section" << std::endl
-          << "LAMMPS Description"        << std::endl       << std::endl
-          << "10 atoms"                  << std::endl       << std::endl
-          << "1  atom types"             << std::endl       << std::endl
-          << "Atoms #"                   << std::endl       << std::endl
-          << "1 1 1 1.0 2. 2. 2."        << std::endl
-          << "2 2 1 1.0 6. 2. 2."        << std::endl
-          << "3 3 1 1.0 2. 6. 2."        << std::endl
-          << "4 4 1 1.0 2. 2. 6."        << std::endl
-          << "5 5 1 1.0 6. 6. 2."        << std::endl
-          << "6 6 1 1.0 6. 2. 6."        << std::endl
-          << "7 7 1 1.0 2. 6. 6."        << std::endl
-          << "8 8 1 1.0 6. 6. 6."        << std::endl
-          << "9 9 1 1.0 7. 7. 7.9"       << std::endl
-          << "10 10 1 1.0 1. 1. 0.1"     << std::endl;
+          << "  set Atom data file = "
+          << SOURCE_DIR "/../../data/16_NaCl_atom.data"       << std::endl
+          << "end"                                            << std::endl
+          << "subsection Configure QC"                        << std::endl
+          << "  set Ghost cell layer thickness = 5.01"        << std::endl
+          << "  set Cluster radius = 1"                       << std::endl
+          << "  set Cluster weights by type = SamplingPoints" << std::endl
+          << "end"                                            << std::endl
+          << "#end-of-parameter-section" << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());
@@ -118,7 +121,7 @@ int main (int argc, char *argv[])
       // Define Problem
       Problem<3, Potential::PairCoulWolfManager> problem(tune_config);
 
-      double new_cluster_radius = 2.0;
+      double new_cluster_radius = 1.0;
 
       for (unsigned int i = 0; i < 16; ++i, new_cluster_radius += 1)
         {

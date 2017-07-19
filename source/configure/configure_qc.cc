@@ -106,9 +106,9 @@ ConfigureQC::get_cluster_weights() const
       std::make_shared<Cluster::WeightsByLumpedVertex<dim, atomicity, spacedim>>
       (cluster_radius, maximum_cutoff_radius);
 
-  else if (cluster_weights_type == "Vertex")
+  else if (cluster_weights_type == "SamplingPoints")
     return
-      std::make_shared<Cluster::WeightsByVertex<dim, atomicity, spacedim>>
+      std::make_shared<Cluster::WeightsBySamplingPoints<dim, atomicity, spacedim>>
       (cluster_radius, maximum_cutoff_radius);
 
   else
@@ -191,7 +191,7 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
                       "Cluster radius used in "
                       "QC simulation");
     prm.declare_entry("Cluster weights by type", "Cell",
-                      Patterns::Selection("Cell|LumpedVertex|Vertex"),
+                      Patterns::Selection("Cell|LumpedVertex|SamplingPoints"),
                       "Select the way how cluster "
                       "weights are computed for "
                       "cluster atoms.");
