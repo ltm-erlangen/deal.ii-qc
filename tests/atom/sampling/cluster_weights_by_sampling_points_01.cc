@@ -10,8 +10,8 @@ using namespace dealiiqc;
 
 
 
-// Compute the mass of the atomistic system of 10 atoms using lumped clustering
-// approach.
+// Compute the mass of the atomistic system of 10 atoms using
+// sampling points clustering approach (WeightsBySamplingPoints).
 // Only 2 atoms are inside the triangulation and are stored in cel molecules
 // the mass of the system should be 2.
 
@@ -82,24 +82,26 @@ int main (int argc, char *argv[])
 {
   try
     {
-      dealii::Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv,
-                                                                  dealii::numbers::invalid_unsigned_int);
+      dealii::Utilities::MPI::MPI_InitFinalize
+      mpi_initialization (argc,
+                          argv,
+                          dealii::numbers::invalid_unsigned_int);
 
       std::ostringstream oss;
-      oss << "set Dimension = 3"                            << std::endl
-          << "subsection Configure atoms"                   << std::endl
-          << "  set Maximum cutoff radius = 5"              << std::endl
-          << "end"                                          << std::endl
-          << "subsection Configure QC"                      << std::endl
-          << "  set Ghost cell layer thickness = 5.01"      << std::endl
-          << "  set Cluster radius = 2"                     << std::endl
-          << "  set Cluster weights by type = LumpedVertex" << std::endl
-          << "end"                                          << std::endl
+      oss << "set Dimension = 3"                              << std::endl
+          << "subsection Configure atoms"                     << std::endl
+          << "  set Maximum cutoff radius = 5"                << std::endl
+          << "end"                                            << std::endl
+          << "subsection Configure QC"                        << std::endl
+          << "  set Ghost cell layer thickness = 5.01"        << std::endl
+          << "  set Cluster radius = 2"                       << std::endl
+          << "  set Cluster weights by type = SamplingPoints" << std::endl
+          << "end"                                            << std::endl
           << "#end-of-parameter-section" << std::endl
-          << "LAMMPS Description"        << std::endl       << std::endl
-          << "10 atoms"                  << std::endl       << std::endl
-          << "1  atom types"             << std::endl       << std::endl
-          << "Atoms #"                   << std::endl       << std::endl
+          << "LAMMPS Description"        << std::endl         << std::endl
+          << "10 atoms"                  << std::endl         << std::endl
+          << "1  atom types"             << std::endl         << std::endl
+          << "Atoms #"                   << std::endl         << std::endl
           << "1 1 1 1.0 2. 2. 2."        << std::endl
           << "2 2 1 1.0 6. 2. 2."        << std::endl
           << "3 3 1 1.0 2. 6. 2."        << std::endl
