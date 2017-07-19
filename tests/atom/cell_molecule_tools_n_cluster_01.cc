@@ -35,7 +35,6 @@ public:
     triangulation (MPI_COMM_WORLD,
                    // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
                    Triangulation<dim>::limit_level_difference_at_vertices),
-    dof_handler    (triangulation),
     mpi_communicator(MPI_COMM_WORLD)
   {}
 
@@ -48,7 +47,7 @@ public:
     cell_molecule_data =
       CellMoleculeTools::
       build_cell_molecule_data<dim> (*config.get_stream(),
-                                     dof_handler,
+                                     triangulation,
                                      config.get_ghost_cell_layer_thickness());
 
     std::shared_ptr<Cluster::WeightsByBase<dim> > cluster_weights_method =
@@ -70,7 +69,7 @@ public:
                 << cell_molecule.second.cluster_weight << std::endl;
 
     const unsigned int n_cluster_molecules =
-      CellMoleculeTools::n_cluster_molecules_in_cell<dim> (dof_handler.begin_active(),
+      CellMoleculeTools::n_cluster_molecules_in_cell<dim> (triangulation.begin_active(),
                                                            cell_energy_molecules);
     AssertThrow(n_cluster_molecules == 10,
                 ExcInternalError());
@@ -79,7 +78,6 @@ public:
 private:
   const ConfigureQC &config;
   parallel::shared::Triangulation<dim> triangulation;
-  DoFHandler<dim>      dof_handler;
   MPI_Comm mpi_communicator;
   CellMoleculeData<dim> cell_molecule_data;
 

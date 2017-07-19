@@ -72,7 +72,7 @@ public:
     cell_molecule_data =
       CellMoleculeTools::
       build_cell_molecule_data<dim> (*config.get_stream(),
-                                     dof_handler,
+                                     triangulation,
                                      config.get_ghost_cell_layer_thickness());
 
     const IndexSet locally_relevant_set =

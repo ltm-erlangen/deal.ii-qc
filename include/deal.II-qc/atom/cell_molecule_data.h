@@ -89,8 +89,9 @@ namespace types
  *
  * The association between molecules and cells allows for accessing each
  * molecule through its associated cell. The cell based molecule data
- * structures in this class can be initialized using MoleculeHandler
- * class member functions.
+ * structures in this class can be initialized using
+ * CellMoleculeTools::build_cell_molecule_data() and (derived class)
+ * implementation of Cluster::WeightsByBase::update_cluster_weights().
  */
 template<int dim, int atomicity=1, int spacedim=dim>
 struct CellMoleculeData

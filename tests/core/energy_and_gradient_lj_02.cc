@@ -58,7 +58,7 @@ Problem<dim, PotentialType>::Problem (const std::string &s)
     CellMoleculeTools::
     build_cell_molecule_data<dim>
     (*config.get_stream(),
-     QC<dim, PotentialType>::dof_handler,
+     QC<dim, PotentialType>::triangulation,
      config.get_ghost_cell_layer_thickness());
 }
 
