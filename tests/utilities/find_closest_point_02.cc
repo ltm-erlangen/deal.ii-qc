@@ -36,6 +36,13 @@ void test()
     dealiiqc::Utilities::find_closest_point (p,
                                              points_1);
 
+  const auto closest_vertex =
+    dealiiqc::Utilities::find_closest_vertex (p,
+                                              tria.begin_active());
+
+  AssertThrow (closest.second == closest_vertex.second,
+               ExcInternalError());
+
   std::cout << closest.first  << " " << closest.second << std::endl;
 }
 
