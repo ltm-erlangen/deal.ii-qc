@@ -1,0 +1,7 @@
+Total number of cell atoms: 4
+::WeightsBySamplingPoints: Atom: 1.05 0.45 : Cluster_Weight: 2
+::WeightsBySamplingPoints: Atom: 1.1 0.45 : Cluster_Weight: 0
+::WeightsBySamplingPoints: Atom: 0.95 0.45 : Cluster_Weight: 2
+::WeightsByCell: Atom: 1.05 0.45 Cluster_Weight: 3
+::WeightsByCell: Atom: 1.1 0.45 Cluster_Weight: 0
+::WeightsByCell: Atom: 0.95 0.45 Cluster_Weight: 1
