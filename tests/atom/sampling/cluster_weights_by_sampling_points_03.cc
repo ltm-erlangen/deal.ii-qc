@@ -10,7 +10,7 @@
 
 #include <deal.II-qc/atom/cell_molecule_tools.h>
 #include <deal.II-qc/atom/molecule_handler.h>
-#include "../../../include/deal.II-qc/atom/sampling/cluster_weights_by_sampling_points.h"
+#include <deal.II-qc/atom/sampling/cluster_weights_by_sampling_points.h>
 
 using namespace dealii;
 using namespace dealiiqc;

@@ -117,7 +117,7 @@ int main (int argc, char *argv[])
           << "  set Maximum cutoff radius = 2.0"              << std::endl
           << "  set Pair potential type = LJ"                 << std::endl
           << "  set Pair global coefficients = 1.99 "         << std::endl
-          << "  set Pair specific coefficients = 0, 1, 0.877, 1.55;" << std::endl
+          << "  set Pair specific coefficients = 0, 0, 0.877, 1.55;" << std::endl
           << "end"                                            << std::endl
 
           << "subsection Configure QC"                        << std::endl
@@ -128,10 +128,10 @@ int main (int argc, char *argv[])
 
           << "LAMMPS Description"              << std::endl   << std::endl
           << "2 atoms"                         << std::endl   << std::endl
-          << "2  atom types"                   << std::endl   << std::endl
+          << "1  atom types"                   << std::endl   << std::endl
           << "Atoms #"                         << std::endl   << std::endl
           << "1 1 1  1.0 0.0 0. 0."                          << std::endl
-          << "2 2 2  1.0 1.0 0. 0."                          << std::endl;
+          << "2 2 1  1.0 1.0 0. 0."                          << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());
