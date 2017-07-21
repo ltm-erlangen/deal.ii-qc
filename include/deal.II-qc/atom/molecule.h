@@ -13,7 +13,10 @@ using namespace dealii;
  * A class for molecules embedded in a <tt>spacedim</tt>-dimensional space.
  *
  * The <tt>atomicity</tt> of a molecule, that is the number of atoms it
- * contains, must be known at compile time.
+ * contains, must be known at compile time. It is possible that the
+ * <tt>atomicity</tt> of a molecule is greater than the number of atom types
+ * within the molecule. For instance, TiO\f$_2\f$ molecule has two atom types
+ * within it but its <tt>atomicity</tt> is 3.
  */
 template<int spacedim, int atomicity=1>
 struct Molecule

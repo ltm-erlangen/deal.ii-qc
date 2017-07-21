@@ -228,7 +228,7 @@ ParseAtomData<spacedim, atomicity>::parse_atoms (std::istream                   
                                       "atom attributes under Atom keyword section"));
 
       Assert (i_atom_index<=n_atoms && i_atom_index>0,
-              ExcInvalidValue( line_no,
+              ExcInvalidValue (line_no,
                                "atom index (> number of atoms or <=0"));
 
       temporary_atom.global_index =
@@ -290,6 +290,17 @@ ParseAtomData<spacedim, atomicity>::parse_atoms (std::istream                   
   Assert (i==n_atoms,
           ExcMessage("The number of atoms do not match the number of entries "
                      "under Atoms keyword section"));
+
+#ifdef DEBUG
+
+  // Make sure that for each molecule atomicity-number of atoms are read from
+  // atom data. If this is not the case then one or more of the atoms of
+  // molecules are not set.
+  for (const auto &entry : n_atoms_added_per_molecule)
+    Assert (entry == atomicity,
+            ExcMessage("The number of atoms parsed for a molecule is not "
+                       "equal to its atomicity."));
+#endif
 
   //---At this point atoms in molecules are not sorted according to their
   //   stamps.
