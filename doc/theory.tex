@@ -251,19 +251,19 @@ due to the two interacting molecules $I$ and $J$ given as,
  E^{}_{IJ} =  \begin{cases}                   \,\,
                \sum\limits_{i \, \in \, I}    \,\,
                \sum\limits_{j \, \in \, J}    \,
-		\phi^{}_{ij}(r^{jk}),
+		\phi^{}_{ij}(r^{ij}),
 		& \text{if } \,  I \neq J \\[1em] \,\,
 
                \sum\limits_{i \, \in \, I}    \,\,
                \sum\limits_{J \, \ni \, j \, < \, i} \,
-               \phi^{}_{ij}(r^{jk}), 
+               \phi^{}_{ij}(r^{ij}), 
                & \text{otherwise}.
               \end{cases}
 \label{eq:inter_and_intra}
 \end{equation}
-where $\phi^{}_{ij}(r^{jk})$ describes the interaction potential between two 
+where $\phi^{}_{ij}(r^{ij})$ describes the interaction potential between two 
 atoms with atom stamps $i$ and $j$ as a function of their separation distance 
-$r^{jk} = \norm{\bsf r^{jk}} = \norm{ \bsf x^{i}_{I} - \bsf x^{j}_{J} }$. 
+$r^{ij} = \norm{\bsf r^{ij}} = \norm{ \bsf x^{i}_{I} - \bsf x^{j}_{J} }$. 
 The gradient of the total energy with respect to the degree of freedom $d \in 
 \mcl D$ of the atoms with atom stamp $k \in \mcl A$ is
 \begin{align}
@@ -282,16 +282,16 @@ Using \refeq{inter_and_intra},
             \,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,
 	    \sum_{i \, \in \, I}                          \,\,
 	    \sum_{I \, \ni \, j \, < \, i}                \,
-             &\frac{\partial \phi^{}_{ij}(r^{jk})}{\partial r} \, 
-               \frac{\partial r^{jk}}{\partial \bsf r^{jk}} \cdot
-               \frac{\partial \bsf r^{jk}}{\partial u^k_d}     \\
+             &\frac{\partial \phi^{}_{ij}(r^{ij})}{\partial r} \, 
+               \frac{\partial r^{ij}}{\partial \bsf r^{ij}} \cdot
+               \frac{\partial \bsf r^{ij}}{\partial u^k_d}     \\
 	    +
 	    \sum_{\mcl M \, \ni \, J < I}  \,\,
             \sum_{i \, \in \, I}           \,\,
 	    \sum_{j \, \in \, J}           \,
-               &\frac{\partial \phi^{}_{ij}(r^{jk})}{\partial r^{jk}} \, 
-                 \frac{\partial r^{jk}}{\partial \bsf r^{jk}} \cdot
-                 \frac{\partial \bsf r^{jk}}{\partial u^k_d}
+               &\frac{\partial \phi^{}_{ij}(r^{ij})}{\partial r^{ij}} \, 
+                 \frac{\partial r^{ij}}{\partial \bsf r^{ij}} \cdot
+                 \frac{\partial \bsf r^{ij}}{\partial u^k_d}
            \Bigg],
 \end{align}
 and on using \refeq{current_atom_pos},
@@ -301,8 +301,8 @@ and on using \refeq{current_atom_pos},
 		\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,
 		\sum_{i \, \in \, I}       \,\,\,
 		\sum_{I \, \ni \, j \, < \, i}       \,
-		  &{\phi}^\prime_{ij} (r^{jk})\, \, 
-		    \frac {\bsf r^{jk}}{r^{jk}}
+		  &{\phi}^\prime_{ij} (r^{ij})\, \, 
+		    \frac {\bsf r^{ij}}{r^{ij}}
 		    \cdot
 		    \bigg[
 		      \delta_{ik} \,\, \gz N_d( \bsf X_{I})  
@@ -313,8 +313,8 @@ and on using \refeq{current_atom_pos},
 	      \sum_{\mcl M \, \ni \, J < I}  \,
 	      \sum_{i \, \in \, I}       \,\,\,
 	      \sum_{j \, \in \, J}       \,
-		&{\phi}^\prime_{ij} (r^{jk})\, \, 
-		  \frac {\bsf r^{jk}}{r^{jk}}
+		&{\phi}^\prime_{ij} (r^{ij})\, \, 
+		  \frac {\bsf r^{ij}}{r^{ij}}
 		  \cdot
 		  \bigg[
 		    \delta_{ik} \,\, \gz N_d( \bsf X_{I})  
@@ -335,8 +335,8 @@ factoring out the shape function evaluations at molecules' locations we have
 		&\cdot
 		  \sum_{i \, \in \, I}            \,\,\,
 		  \sum_{I \, \ni \, j \, < \, i} \,
-		  \frac {\bsf r^{jk}}{r^{jk}}               \,
-		    {\phi}^\prime_{ij} (r^{jk})        \,
+		  \frac {\bsf r^{ij}}{r^{ij}}               \,
+		    {\phi}^\prime_{ij} (r^{ij})        \,
 		      \Big(
 			\delta_{ik} 
 			- 
@@ -351,8 +351,8 @@ factoring out the shape function evaluations at molecules' locations we have
 		  &\cdot
 		    \sum_{i \, \in \, I}    \,\,\,\,\,
 		    \sum_{j \, \in \, J}   \,
-		    \frac {\bsf r^{jk}}{r^{jk}}       \,
-		      {\phi}^\prime_{ij}(r^{jk}) \,
+		    \frac {\bsf r^{ij}}{r^{ij}}       \,
+		      {\phi}^\prime_{ij}(r^{ij}) \,
 		      \delta_{ik}           \,
 		    \\
 		  -
@@ -360,8 +360,8 @@ factoring out the shape function evaluations at molecules' locations we have
 		  &\cdot
 		    \sum_{i \, \in \, I}    \,\,\,\,\,
 		    \sum_{j \, \in \, J}   \,
-		    \frac{\bsf r^{jk}}{r^{jk}}
-		      {\phi}^\prime_{ij}(r^{jk}) \,
+		    \frac{\bsf r^{ij}}{r^{ij}}
+		      {\phi}^\prime_{ij}(r^{ij}) \,
 		      \delta_{jk}           \,
 		\,\,\,
 		\Bigg\}
@@ -370,5 +370,5 @@ factoring out the shape function evaluations at molecules' locations we have
 		\,\,\,\,\,\,\,\,\,\,\,\,
 	 \Bigg],
 \end{align}
-where $r^{jk} = \norm{\bsf r^{jk}} = \norm{ \bsf x^{i}_{I} - \bsf x^{j}_{J} }$.
+where $r^{ij} = \norm{\bsf r^{ij}} = \norm{ \bsf x^{i}_{I} - \bsf x^{j}_{J} }$.
 \end{document}
