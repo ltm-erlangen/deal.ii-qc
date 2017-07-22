@@ -188,14 +188,19 @@ void QC<dim, PotentialType>::setup_system ()
   */
   constraints.close ();
 
-  locally_relevant_gradient.reinit(dof_handler.locally_owned_dofs(),
-                                   locally_relevant_set,
+  IndexSet ghost_set (locally_relevant_set);
+  IndexSet locally_owned_set (dof_handler.locally_owned_dofs());
+
+  ghost_set.subtract_set(locally_owned_set);
+
+  locally_relevant_gradient.reinit(locally_owned_set,
+                                   ghost_set,
                                    mpi_communicator,
                                    true);
   locally_relevant_gradient = 0.;
 
-  locally_relevant_displacement.reinit(dof_handler.locally_owned_dofs(),
-                                       locally_relevant_set,
+  locally_relevant_displacement.reinit(locally_owned_set,
+                                       ghost_set,
                                        mpi_communicator,
                                        true);
 
