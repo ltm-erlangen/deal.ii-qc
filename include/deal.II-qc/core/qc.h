@@ -17,6 +17,7 @@
 #include <deal.II/distributed/shared_tria.h>
 
 #include <deal.II/lac/generic_linear_algebra.h>
+#include <deal.II/numerics/vector_tools.h>
 
 namespace LA
 {
@@ -119,6 +120,12 @@ protected:
    * (or sampling rule) to update cluster weights of energy molecules.
    */
   void setup_cell_energy_molecules();
+
+  /**
+   * Insert the (algebraic) constraints due to Dirichlet boundary conditions
+   * into #constraints.
+   */
+  void setup_boundary_conditions(const double time = 0.);
 
   /**
    * Distribute degrees-of-freedom and initialise matrices and vectors.

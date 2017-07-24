@@ -5,6 +5,7 @@
 #include <deal.II/base/subscriptor.h>
 #include <deal.II/base/parameter_handler.h>
 #include <deal.II/base/logstream.h>
+#include <deal.II/dofs/function_map.h>
 
 #include <fstream>
 #include <sstream>
@@ -101,6 +102,12 @@ public:
   std::shared_ptr<Cluster::WeightsByBase<dim, atomicity, spacedim> >
   get_cluster_weights() const;
 
+  /**
+   * Get the map from boundary ids to boundary functions in string format.
+   */
+  std::map<int, std::string>
+  get_boundary_functions() const;
+
 private:
 
   /*
@@ -122,6 +129,11 @@ private:
    * Pair potential type to be used.
    */
   std::string pair_potential_type;
+
+  /**
+   * A map from boundary ids to boundary functions in string format.
+   */
+  std::map<int, std::string> boundary_functions;
 
   /**
    * Shared pointer to the three dimensional Geometry object.

@@ -16,6 +16,9 @@ namespace Geometry
 {
   /**
    * Geometry defined by a Gmsh input file.
+   *
+   * @note Here it is assumed that the Gmsh input file specifically sets
+   * boundary ids for the mesh.
    */
   template <int dim>
   class Gmsh : public Base<dim>

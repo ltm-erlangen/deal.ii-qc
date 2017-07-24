@@ -119,6 +119,14 @@ ConfigureQC::get_cluster_weights() const
 
 
 
+std::map<int, std::string>
+ConfigureQC::get_boundary_functions() const
+{
+  return boundary_functions;
+}
+
+
+
 void ConfigureQC::declare_parameters (ParameterHandler &prm)
 {
   // TODO: Write intput file name to the screen
@@ -195,9 +203,23 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
                       "Select the way how cluster "
                       "weights are computed for "
                       "cluster atoms.");
+    prm.declare_entry("Boundary conditions",
+                      "0: NotControlled; 1: NotControlled; 2: NotControlled;"
+                      "3: NotControlled; 4: NotControlled; 5: NotControlled;",
+                      Patterns::List(Patterns::Anything(),
+                                     6,
+                                     std::numeric_limits<unsigned int>::max(),
+                                     ";"),
+                      "Boundary conditions specified as a map between "
+                      "boundary ids of the mesh and functions that describe "
+                      "the boundary conditions."
+                      "---"
+                      "For example:"
+                      "1: ZeroFunction implies that the boundary "
+                      "denoted with boundary id 1 is subjected to Homogeneous "
+                      "Dirichlet boundary condition.");
   }
   prm.leave_subsection ();
-
   // TODO: Declare Run 0
   //       Compute energy and force at the initial configuration.
 
@@ -212,20 +234,20 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
   if (dimension==3)
     {
       geometry_3d = Geometry::parse_parameters_and_get_geometry<3>(prm);
-      Assert( !geometry_1d, ExcInternalError());
-      Assert( !geometry_2d, ExcInternalError());
+      Assert (!geometry_1d, ExcInternalError());
+      Assert (!geometry_2d, ExcInternalError());
     }
   else if (dimension==2)
     {
       geometry_2d = Geometry::parse_parameters_and_get_geometry<2>(prm);
-      Assert( !geometry_1d, ExcInternalError());
-      Assert( !geometry_3d, ExcInternalError());
+      Assert (!geometry_1d, ExcInternalError());
+      Assert (!geometry_3d, ExcInternalError());
     }
   else if (dimension==1)
     {
       geometry_1d = Geometry::parse_parameters_and_get_geometry<1>(prm);
-      Assert( !geometry_2d, ExcInternalError());
-      Assert( !geometry_3d, ExcInternalError());
+      Assert (!geometry_2d, ExcInternalError());
+      Assert (!geometry_3d, ExcInternalError());
     }
   else
     AssertThrow (false, ExcNotImplemented());
@@ -318,6 +340,14 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
 
     cluster_radius = prm.get_double( "Cluster radius");
     cluster_weights_type = prm.get("Cluster weights by type");
+
+    const std::vector<std::vector<std::string> > list_of_boundary_conditions =
+      Utilities::
+      split_list_of_string_lists(prm.get("Boundary conditions"),';',':');
+
+    for (const auto &one_condition : list_of_boundary_conditions)
+      boundary_functions[dealii::Utilities::string_to_int(one_condition[0])] =
+        one_condition[1];
   }
   prm.leave_subsection();
 }

@@ -161,6 +161,41 @@ void QC<dim, PotentialType>::write_mesh (T &os, const std::string &type )
 
 
 template <int dim, typename PotentialType>
+void QC<dim, PotentialType>::setup_boundary_conditions (const double)
+{
+  typename FunctionMap<dim>::type dirichlet_boundary_functions;
+
+  // TODO: Change from dim to dim*atomicity or to number of components?
+  ZeroFunction<dim> homogeneous_dirichlet_bc (dim);
+
+  const std::map<int, std::string> boundary_function_names =
+    configure_qc.get_boundary_functions();
+
+  // TODO: Support more function objects using FunctionParser
+  for (const auto &single_bc : boundary_function_names)
+    {
+      if (!single_bc.second.compare("ZeroFunction"))
+        {
+          dirichlet_boundary_functions[single_bc.first] =
+            &homogeneous_dirichlet_bc;
+        }
+      else if (!single_bc.second.compare("NotControlled"))
+        {
+          // Do nothing.
+        }
+      else
+        AssertThrow (false,
+                     ExcNotImplemented());
+    }
+
+  VectorTools::interpolate_boundary_values (dof_handler,
+                                            dirichlet_boundary_functions,
+                                            constraints);
+}
+
+
+
+template <int dim, typename PotentialType>
 void QC<dim, PotentialType>::setup_system ()
 {
   TimerOutput::Scope t (computing_timer, "Setup system");
@@ -176,16 +211,8 @@ void QC<dim, PotentialType>::setup_system ()
   constraints.reinit (locally_relevant_set);
   DoFTools::make_hanging_node_constraints (dof_handler, constraints);
 
-  /*
-  std::set<types::boundary_id>       dirichlet_boundary_ids;
-  typename FunctionMap<dim>::type    dirichlet_boundary_functions;
-  ZeroFunction<dim>                  homogeneous_dirichlet_bc (1);
-  dirichlet_boundary_ids.insert(0);
-  dirichlet_boundary_functions[0] = &homogeneous_dirichlet_bc;
-  VectorTools::interpolate_boundary_values (dof_handler,
-                                            dirichlet_boundary_functions,
-                                            constraints);
-  */
+  setup_boundary_conditions();
+
   constraints.close ();
 
   locally_relevant_gradient.reinit(dof_handler.locally_owned_dofs(),
@@ -575,6 +602,7 @@ double QC<dim, PotentialType>::compute (vector_t &gradient) const
   template void QC<dim, PotentialType>::run ();                              \
   template void QC<dim, PotentialType>::setup_cell_molecules ();             \
   template void QC<dim, PotentialType>::setup_cell_energy_molecules ();      \
+  template void QC<dim, PotentialType>::setup_boundary_conditions(const double); \
   template void QC<dim, PotentialType>::setup_system ();                     \
   template void QC<dim, PotentialType>::setup_triangulation();               \
   template void QC<dim, PotentialType>::write_mesh (std::ofstream &, const std::string &);        \
