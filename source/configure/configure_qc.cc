@@ -203,13 +203,12 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
                       "Select the way how cluster "
                       "weights are computed for "
                       "cluster atoms.");
-    prm.declare_entry("Boundary conditions",
-                      "0: NotControlled; 1: NotControlled; 2: NotControlled;"
-                      "3: NotControlled; 4: NotControlled; 5: NotControlled;",
-                      Patterns::List(Patterns::Anything(),
-                                     6,
-                                     std::numeric_limits<unsigned int>::max(),
-                                     ";"),
+    prm.declare_entry("Boundary conditions", "",
+                      Patterns::Map(Patterns::Integer(0),
+                                    Patterns::Anything(),
+                                    0,
+                                    std::numeric_limits<unsigned int>::max(),
+                                    ";"),
                       "Boundary conditions specified as a map between "
                       "boundary ids of the mesh and functions that describe "
                       "the boundary conditions."
@@ -217,7 +216,11 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
                       "For example:"
                       "1: ZeroFunction implies that the boundary "
                       "denoted with boundary id 1 is subjected to Homogeneous "
-                      "Dirichlet boundary condition.");
+                      "Dirichlet boundary condition."
+                      "---"
+                      "Note: If boundary condition is not specified for a "
+                      "boundary id, then no boundary condition is enforced at "
+                      "such a boundary.");
   }
   prm.leave_subsection ();
   // TODO: Declare Run 0

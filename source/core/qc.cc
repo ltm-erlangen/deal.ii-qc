@@ -1,6 +1,7 @@
 
 // a source file which contains definition of core functions of QC class
 
+#include <deal.II/base/function_parser.h>
 #include <deal.II/grid/grid_in.h>
 #include <deal.II/grid/grid_out.h>
 #include <deal.II/grid/grid_tools.h>
@@ -79,6 +80,7 @@ void QC<dim, PotentialType>::reconfigure_qc(const ConfigureQC &configure)
   update_neighbor_lists();
   update_positions();
 }
+
 
 
 template <int dim, typename PotentialType>
@@ -165,28 +167,33 @@ void QC<dim, PotentialType>::setup_boundary_conditions (const double)
 {
   typename FunctionMap<dim>::type dirichlet_boundary_functions;
 
-  // TODO: Change from dim to dim*atomicity or to number of components?
-  ZeroFunction<dim> homogeneous_dirichlet_bc (dim);
-
   const std::map<int, std::string> boundary_function_names =
     configure_qc.get_boundary_functions();
 
-  // TODO: Support more function objects using FunctionParser
+  const unsigned int n_boundary_functions = boundary_function_names.size();
+
+  std::deque<FunctionParser<dim>> function_objects;
+
+  for (unsigned int i =0; i< n_boundary_functions; ++i)
+    function_objects.emplace_back (dim * 1 /* TODO: dim*atomicity, blocks? */ );
+
+  auto function_object_itr = function_objects.begin();
+
   for (const auto &single_bc : boundary_function_names)
     {
-      if (!single_bc.second.compare("ZeroFunction"))
-        {
-          dirichlet_boundary_functions[single_bc.first] =
-            &homogeneous_dirichlet_bc;
-        }
-      else if (!single_bc.second.compare("NotControlled"))
-        {
-          // Do nothing.
-        }
-      else
-        AssertThrow (false,
-                     ExcNotImplemented());
+      function_object_itr->
+      initialize (FunctionParser<dim>::default_variable_names(),
+                  std::vector<std::string>(dim*1/*atomicity*/, single_bc.second),
+                  typename FunctionParser<dim>::ConstMap());
+
+      dirichlet_boundary_functions[single_bc.first] =
+        &(*function_object_itr);
+
+      function_object_itr++;
     }
+
+  Assert (function_object_itr == function_objects.end(),
+          ExcInternalError());
 
   VectorTools::interpolate_boundary_values (dof_handler,
                                             dirichlet_boundary_functions,

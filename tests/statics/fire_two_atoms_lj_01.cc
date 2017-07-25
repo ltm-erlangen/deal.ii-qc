@@ -121,8 +121,8 @@ void Problem<dim, PotentialType>::statics (const double tol)
       << std::endl;
 
   QC<dim, PotentialType>::pcout
-    << "Final positions of the two atoms:"
-    << std::endl;
+      << "Final positions of the two atoms:"
+      << std::endl;
 
   for (const auto &entry :
        QC<dim, PotentialType>::cell_molecule_data.cell_energy_molecules)

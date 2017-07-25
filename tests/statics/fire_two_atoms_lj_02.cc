@@ -122,8 +122,8 @@ void Problem<dim, PotentialType>::statics (const double tol)
       << std::endl;
 
   QC<dim, PotentialType>::pcout
-    << "Final positions of the two atoms:"
-    << std::endl;
+      << "Final positions of the two atoms:"
+      << std::endl;
 
   for (const auto &entry :
        QC<dim, PotentialType>::cell_molecule_data.cell_energy_molecules)
@@ -174,10 +174,7 @@ int main (int argc, char *argv[])
           << "subsection Configure QC"                        << std::endl
           << "  set Ghost cell layer thickness = 2.01"        << std::endl
           << "  set Cluster radius = 2.0"                     << std::endl
-          << "  set Boundary conditions = 0: NotControlled; 1: NotControlled; "
-          "                               2: ZeroFunction;  3: NotControlled; "
-          "                               4: NotControlled; 5: NotControlled;"
-          <<                                                     std::endl
+          << "  set Boundary conditions = 2: 0."              << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section"                      << std::endl
 

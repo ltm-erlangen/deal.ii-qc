@@ -1,8 +1,8 @@
 #ifndef __dealii_qc_qc_h
 #define __dealii_qc_qc_h
 
-#include <deal.II/base/quadrature_lib.h>
 #include <deal.II/base/conditional_ostream.h>
+#include <deal.II/base/quadrature_lib.h>
 #include <deal.II/base/timer.h>
 #include <deal.II/base/utilities.h>
 
