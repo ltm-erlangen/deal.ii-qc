@@ -173,6 +173,10 @@ void QC<dim, PotentialType>::initialize_boundary_functions()
   for (auto &single_bc : boundary_ids_to_function_expressions)
     {
       const unsigned int n_components = single_bc.second.size();
+
+      Assert (n_components == dim /* * atomicity*/,
+              ExcMessage("Invalid number of components."));
+
       std::vector<bool> component_mask (n_components, true);
 
       for (unsigned int i = 0; i < n_components; ++i)
@@ -196,7 +200,8 @@ void QC<dim, PotentialType>::initialize_boundary_functions()
       dirichlet_boundary_functions[single_bc.first].second->
       initialize (FunctionParser<dim>::default_variable_names(),
                   single_bc.second,
-                  typename FunctionParser<dim>::ConstMap());
+                  typename FunctionParser<dim>::ConstMap(),
+                  true);
     }
 }
 

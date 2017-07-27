@@ -392,7 +392,7 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
         for (const auto &expression : function_expressions)
           ignore_boundary_id &= expression.empty();
 
-        // If none of the function expressions are empty,
+        // If any of the function expressions are not empty,
         // then consider preparing function expression for this boundary id.
         if (!ignore_boundary_id)
           boundary_ids_to_function_expressions[boundary_id] =

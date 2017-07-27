@@ -131,11 +131,6 @@ private:
   std::string pair_potential_type;
 
   /**
-   * A map from boundary ids to boundary functions in string format.
-   */
-  std::map<int, std::string> boundary_functions;
-
-  /**
    * Shared pointer to the three dimensional Geometry object.
    *
    * @note The dimension of the Geometry object has to be read from the input
