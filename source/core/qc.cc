@@ -1,7 +1,6 @@
 
 // a source file which contains definition of core functions of QC class
 
-#include <deal.II/base/function_parser.h>
 #include <deal.II/grid/grid_in.h>
 #include <deal.II/grid/grid_out.h>
 #include <deal.II/grid/grid_tools.h>
@@ -53,6 +52,9 @@ QC<dim, PotentialType>::QC (const ConfigureQC &config)
 
   // Read atom data file and initialize atoms
   setup_cell_molecules();
+
+  // Initialize boundary functions.
+  initialize_boundary_functions();
 }
 
 
@@ -163,41 +165,52 @@ void QC<dim, PotentialType>::write_mesh (T &os, const std::string &type )
 
 
 template <int dim, typename PotentialType>
+void QC<dim, PotentialType>::initialize_boundary_functions()
+{
+  std::map<unsigned int, std::vector<std::string> >
+  boundary_ids_to_function_expressions = configure_qc.get_boundary_functions();
+
+  for (auto &single_bc : boundary_ids_to_function_expressions)
+    {
+      const unsigned int n_components = single_bc.second.size();
+      std::vector<bool> component_mask (n_components, true);
+
+      for (unsigned int i = 0; i < n_components; ++i)
+        if (single_bc.second[i].empty())
+          {
+            component_mask[i] = false;
+            // Set empty strings to parsable strings.
+            // Entry in component mask will ensure that this is not used at all.
+            single_bc.second[i] = "0.";
+          }
+
+      dirichlet_boundary_functions.insert
+      (std::make_pair (single_bc.first,
+                       std::make_pair
+                       (component_mask,
+                        std::make_shared<FunctionParser</*space*/dim>>(dim*1,
+                            0.))
+                      )
+      );
+
+      dirichlet_boundary_functions[single_bc.first].second->
+      initialize (FunctionParser<dim>::default_variable_names(),
+                  single_bc.second,
+                  typename FunctionParser<dim>::ConstMap());
+    }
+}
+
+
+
+template <int dim, typename PotentialType>
 void QC<dim, PotentialType>::setup_boundary_conditions (const double)
 {
-  typename FunctionMap<dim>::type dirichlet_boundary_functions;
-
-  const std::map<int, std::string> boundary_function_names =
-    configure_qc.get_boundary_functions();
-
-  const unsigned int n_boundary_functions = boundary_function_names.size();
-
-  std::deque<FunctionParser<dim>> function_objects;
-
-  for (unsigned int i =0; i< n_boundary_functions; ++i)
-    function_objects.emplace_back (dim * 1 /* TODO: dim*atomicity, blocks? */ );
-
-  auto function_object_itr = function_objects.begin();
-
-  for (const auto &single_bc : boundary_function_names)
-    {
-      function_object_itr->
-      initialize (FunctionParser<dim>::default_variable_names(),
-                  std::vector<std::string>(dim*1/*atomicity*/, single_bc.second),
-                  typename FunctionParser<dim>::ConstMap());
-
-      dirichlet_boundary_functions[single_bc.first] =
-        &(*function_object_itr);
-
-      function_object_itr++;
-    }
-
-  Assert (function_object_itr == function_objects.end(),
-          ExcInternalError());
-
-  VectorTools::interpolate_boundary_values (dof_handler,
-                                            dirichlet_boundary_functions,
-                                            constraints);
+  for (const auto &single_bc : dirichlet_boundary_functions)
+    VectorTools::interpolate_boundary_values (dof_handler,
+                                              single_bc.first,
+                                              *(single_bc.second.second),
+                                              constraints,
+                                              single_bc.second.first);
 }
 
 

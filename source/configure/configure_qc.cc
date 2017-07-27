@@ -119,10 +119,10 @@ ConfigureQC::get_cluster_weights() const
 
 
 
-std::map<int, std::string>
+std::map<unsigned int, std::vector<std::string> >
 ConfigureQC::get_boundary_functions() const
 {
-  return boundary_functions;
+  return boundary_ids_to_function_expressions;
 }
 
 
@@ -203,26 +203,55 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
                       "Select the way how cluster "
                       "weights are computed for "
                       "cluster atoms.");
-    prm.declare_entry("Boundary conditions", "",
-                      Patterns::Map(Patterns::Integer(0),
-                                    Patterns::Anything(),
-                                    0,
-                                    std::numeric_limits<unsigned int>::max(),
-                                    ";"),
-                      "Boundary conditions specified as a map between "
-                      "boundary ids of the mesh and functions that describe "
-                      "the boundary conditions."
-                      "---"
-                      "For example:"
-                      "1: ZeroFunction implies that the boundary "
-                      "denoted with boundary id 1 is subjected to Homogeneous "
-                      "Dirichlet boundary condition."
-                      "---"
-                      "Note: If boundary condition is not specified for a "
-                      "boundary id, then no boundary condition is enforced at "
-                      "such a boundary.");
   }
   prm.leave_subsection ();
+
+  for (unsigned int
+       boundary_id = 0;
+       boundary_id < max_n_boundaries;
+       boundary_id++)
+    {
+      prm.enter_subsection ("boundary_" +
+                            dealii::Utilities::int_to_string(boundary_id));
+      {
+        prm.declare_entry("Function expressions",
+                          ", , ,",
+                          Patterns::List(Patterns::Anything(),
+                                         0,
+                                         std::numeric_limits<unsigned int>::max(),
+                                         ","),
+                          "Function expressions that describes the boundary "
+                          "condition for all the components of the "
+                          "vector-valued solution at the current boundary id."
+                          "Each expression should end with a comma."
+                          "If the function expression of a particular "
+                          "component is empty then the corresponding component "
+                          "of the vector-valued solution at the boundary "
+                          "corresponding to the current boundary id is not "
+                          "constrained. This is then equivalent to having the "
+                          "corresponding entry in the component mask set to "
+                          "false. In this way only certain components of the "
+                          "vector-valued solution at the boundary can be "
+                          "constrained."
+                          "For example:"
+                          "If the solution of the problem being solved is "
+                          "vector valued displacements in two dimensions, "
+                          "the component mask with true false implies that "
+                          "only the first component of the displacements is "
+                          "being constrained to the given function "
+                          "describing the boundary condition."
+                          "Non empty function expressions would be passed in "
+                          "to initialize valid Function objects using "
+                          "FunctionParser."
+                          "---"
+                          "For example:"
+                          "The expression 0 implies that the current "
+                          "component of the current boundary id is subjected "
+                          "to Homogeneous Dirichlet boundary condition.");
+      }
+      prm.leave_subsection ();
+    }
+
   // TODO: Declare Run 0
   //       Compute energy and force at the initial configuration.
 
@@ -343,16 +372,34 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
 
     cluster_radius = prm.get_double( "Cluster radius");
     cluster_weights_type = prm.get("Cluster weights by type");
-
-    const std::vector<std::vector<std::string> > list_of_boundary_conditions =
-      Utilities::
-      split_list_of_string_lists(prm.get("Boundary conditions"),';',':');
-
-    for (const auto &one_condition : list_of_boundary_conditions)
-      boundary_functions[dealii::Utilities::string_to_int(one_condition[0])] =
-        one_condition[1];
   }
   prm.leave_subsection();
+
+  for (unsigned int
+       boundary_id = 0;
+       boundary_id < max_n_boundaries;
+       boundary_id++)
+    {
+      prm.enter_subsection("boundary_" +
+                           dealii::Utilities::int_to_string(boundary_id));
+      {
+        const std::vector<std::string> function_expressions =
+          dealii::Utilities::split_string_list (prm.get("Function expressions"),
+                                                ',');
+
+        bool ignore_boundary_id = true;
+
+        for (const auto &expression : function_expressions)
+          ignore_boundary_id &= expression.empty();
+
+        // If none of the function expressions are empty,
+        // then consider preparing function expression for this boundary id.
+        if (!ignore_boundary_id)
+          boundary_ids_to_function_expressions[boundary_id] =
+            function_expressions;
+      }
+      prm.leave_subsection();
+    }
 }
 
 

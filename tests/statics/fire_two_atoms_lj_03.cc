@@ -107,8 +107,8 @@ void Problem<dim, PotentialType>::statics (const double tol)
 
   const unsigned int n_iterations = solver_control.last_step();
 
-  AssertThrow ((n_iterations > 78) &&
-               (n_iterations < 82),
+  AssertThrow ((n_iterations > 85) &&
+               (n_iterations < 89),
                ExcInternalError("Need to re-adjust iteration bounds."
                                 "It appears that FIRE took more or less "
                                 "number of iterations to converge on this "
@@ -118,7 +118,7 @@ void Problem<dim, PotentialType>::statics (const double tol)
       << "SolverFIRE minimized energy to "
       << QC<dim, PotentialType>:: template
       compute<false> (QC<dim, PotentialType>::locally_relevant_gradient)
-      << "eV within 79 to 81 iterations."
+      << "eV within 86 to 88 iterations."
       << std::endl;
 
   QC<dim, PotentialType>::pcout
@@ -177,7 +177,7 @@ int main (int argc, char *argv[])
           << "end"                                            << std::endl
 
           << "subsection boundary_2"                          << std::endl
-          << "  set Function expressions = 0., 0."            << std::endl
+          << "  set Function expressions = 0., , "            << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section"                      << std::endl
 
