@@ -1,8 +1,9 @@
 #ifndef __dealii_qc_qc_h
 #define __dealii_qc_qc_h
 
-#include <deal.II/base/quadrature_lib.h>
 #include <deal.II/base/conditional_ostream.h>
+#include <deal.II/base/function_parser.h>
+#include <deal.II/base/quadrature_lib.h>
 #include <deal.II/base/timer.h>
 #include <deal.II/base/utilities.h>
 
@@ -10,6 +11,7 @@
 
 #include <deal.II/grid/tria.h>
 
+#include <deal.II/fe/component_mask.h>
 #include <deal.II/fe/fe_system.h>
 #include <deal.II/fe/fe_values.h>
 #include <deal.II/fe/mapping_q1.h>
@@ -17,6 +19,7 @@
 #include <deal.II/distributed/shared_tria.h>
 
 #include <deal.II/lac/generic_linear_algebra.h>
+#include <deal.II/numerics/vector_tools.h>
 
 namespace LA
 {
@@ -121,6 +124,17 @@ protected:
   void setup_cell_energy_molecules();
 
   /**
+   * Initialize #dirichlet_boundary_functions.
+   */
+  void initialize_boundary_functions();
+
+  /**
+   * Insert the (algebraic) constraints due to Dirichlet boundary conditions
+   * into #constraints.
+   */
+  void setup_boundary_conditions(const double time = 0.);
+
+  /**
    * Distribute degrees-of-freedom and initialise matrices and vectors.
    */
   void setup_system ();
@@ -218,6 +232,13 @@ protected:
    * Gradient of the energy (a scalar) w.r.t. to the displacement field.
    */
   vector_t locally_relevant_gradient;
+
+  /**
+   * Map of boundary ids to Functions describing the corresponding boundary
+   * condition.
+   */
+  std::map<unsigned int, std::pair<ComponentMask, std::shared_ptr<FunctionParser<dim> > > >
+  dirichlet_boundary_functions;
 
   /**
    * Auxiliary class with all the information needed per cell for

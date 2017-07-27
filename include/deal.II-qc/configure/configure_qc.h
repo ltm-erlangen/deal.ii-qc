@@ -101,6 +101,13 @@ public:
   std::shared_ptr<Cluster::WeightsByBase<dim, atomicity, spacedim> >
   get_cluster_weights() const;
 
+  /**
+   * Get the map from boundary ids to boundary function expressions in
+   * the string format.
+   */
+  std::map<unsigned int, std::vector<std::string> >
+  get_boundary_functions() const;
+
 private:
 
   /*
@@ -165,6 +172,18 @@ protected:
    * A shared pointer to the pair potential object.
    */
   mutable std::shared_ptr<Potential::PairBaseManager> pair_potential;
+
+  /**
+   * Maximum number of boundary ids with specified boundary conditions.
+   */
+  static const unsigned int max_n_boundaries = 10;
+
+  /**
+   * A map from boundary ids to function expressions which describe the boundary
+   * conditions.
+   */
+  std::map<unsigned int, std::vector<std::string> >
+  boundary_ids_to_function_expressions;
 
   /**
    * In distributed memory calculation with local h-adaptive FE each

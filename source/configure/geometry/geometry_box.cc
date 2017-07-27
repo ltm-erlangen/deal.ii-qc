@@ -40,7 +40,7 @@ namespace Geometry
                                                rep_vec,
                                                bottom_left,
                                                top_right,
-                                               false);
+                                               true);
     mesh.refine_global(Base<dim>::n_initial_global_refinements);
   }
 

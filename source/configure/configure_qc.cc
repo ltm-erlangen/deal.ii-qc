@@ -119,6 +119,14 @@ ConfigureQC::get_cluster_weights() const
 
 
 
+std::map<unsigned int, std::vector<std::string> >
+ConfigureQC::get_boundary_functions() const
+{
+  return boundary_ids_to_function_expressions;
+}
+
+
+
 void ConfigureQC::declare_parameters (ParameterHandler &prm)
 {
   // TODO: Write intput file name to the screen
@@ -198,6 +206,52 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
   }
   prm.leave_subsection ();
 
+  for (unsigned int
+       boundary_id = 0;
+       boundary_id < max_n_boundaries;
+       boundary_id++)
+    {
+      prm.enter_subsection ("boundary_" +
+                            dealii::Utilities::int_to_string(boundary_id));
+      {
+        prm.declare_entry("Function expressions",
+                          ", , ,",
+                          Patterns::List(Patterns::Anything(),
+                                         0,
+                                         std::numeric_limits<unsigned int>::max(),
+                                         ","),
+                          "Function expressions that describes the boundary "
+                          "condition for all the components of the "
+                          "vector-valued solution at the current boundary id."
+                          "Each expression should end with a comma."
+                          "If the function expression of a particular "
+                          "component is empty then the corresponding component "
+                          "of the vector-valued solution at the boundary "
+                          "corresponding to the current boundary id is not "
+                          "constrained. This is then equivalent to having the "
+                          "corresponding entry in the component mask set to "
+                          "false. In this way only certain components of the "
+                          "vector-valued solution at the boundary can be "
+                          "constrained."
+                          "For example:"
+                          "If the solution of the problem being solved is "
+                          "vector valued displacements in two dimensions, "
+                          "the component mask with true false implies that "
+                          "only the first component of the displacements is "
+                          "being constrained to the given function "
+                          "describing the boundary condition."
+                          "Non empty function expressions would be passed in "
+                          "to initialize valid Function objects using "
+                          "FunctionParser."
+                          "---"
+                          "For example:"
+                          "The expression 0 implies that the current "
+                          "component of the current boundary id is subjected "
+                          "to Homogeneous Dirichlet boundary condition.");
+      }
+      prm.leave_subsection ();
+    }
+
   // TODO: Declare Run 0
   //       Compute energy and force at the initial configuration.
 
@@ -212,20 +266,20 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
   if (dimension==3)
     {
       geometry_3d = Geometry::parse_parameters_and_get_geometry<3>(prm);
-      Assert( !geometry_1d, ExcInternalError());
-      Assert( !geometry_2d, ExcInternalError());
+      Assert (!geometry_1d, ExcInternalError());
+      Assert (!geometry_2d, ExcInternalError());
     }
   else if (dimension==2)
     {
       geometry_2d = Geometry::parse_parameters_and_get_geometry<2>(prm);
-      Assert( !geometry_1d, ExcInternalError());
-      Assert( !geometry_3d, ExcInternalError());
+      Assert (!geometry_1d, ExcInternalError());
+      Assert (!geometry_3d, ExcInternalError());
     }
   else if (dimension==1)
     {
       geometry_1d = Geometry::parse_parameters_and_get_geometry<1>(prm);
-      Assert( !geometry_2d, ExcInternalError());
-      Assert( !geometry_3d, ExcInternalError());
+      Assert (!geometry_2d, ExcInternalError());
+      Assert (!geometry_3d, ExcInternalError());
     }
   else
     AssertThrow (false, ExcNotImplemented());
@@ -320,6 +374,32 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
     cluster_weights_type = prm.get("Cluster weights by type");
   }
   prm.leave_subsection();
+
+  for (unsigned int
+       boundary_id = 0;
+       boundary_id < max_n_boundaries;
+       boundary_id++)
+    {
+      prm.enter_subsection("boundary_" +
+                           dealii::Utilities::int_to_string(boundary_id));
+      {
+        const std::vector<std::string> function_expressions =
+          dealii::Utilities::split_string_list (prm.get("Function expressions"),
+                                                ',');
+
+        bool ignore_boundary_id = true;
+
+        for (const auto &expression : function_expressions)
+          ignore_boundary_id &= expression.empty();
+
+        // If any of the function expressions are not empty,
+        // then consider preparing function expression for this boundary id.
+        if (!ignore_boundary_id)
+          boundary_ids_to_function_expressions[boundary_id] =
+            function_expressions;
+      }
+      prm.leave_subsection();
+    }
 }
 
 

@@ -52,6 +52,9 @@ QC<dim, PotentialType>::QC (const ConfigureQC &config)
 
   // Read atom data file and initialize atoms
   setup_cell_molecules();
+
+  // Initialize boundary functions.
+  initialize_boundary_functions();
 }
 
 
@@ -79,6 +82,7 @@ void QC<dim, PotentialType>::reconfigure_qc(const ConfigureQC &configure)
   update_neighbor_lists();
   update_positions();
 }
+
 
 
 template <int dim, typename PotentialType>
@@ -161,6 +165,61 @@ void QC<dim, PotentialType>::write_mesh (T &os, const std::string &type )
 
 
 template <int dim, typename PotentialType>
+void QC<dim, PotentialType>::initialize_boundary_functions()
+{
+  std::map<unsigned int, std::vector<std::string> >
+  boundary_ids_to_function_expressions = configure_qc.get_boundary_functions();
+
+  for (auto &single_bc : boundary_ids_to_function_expressions)
+    {
+      const unsigned int n_components = single_bc.second.size();
+
+      Assert (n_components == dim /* * atomicity*/,
+              ExcMessage("Invalid number of components."));
+
+      std::vector<bool> component_mask (n_components, true);
+
+      for (unsigned int i = 0; i < n_components; ++i)
+        if (single_bc.second[i].empty())
+          {
+            component_mask[i] = false;
+            // Set empty strings to parsable strings.
+            // Entry in component mask will ensure that this is not used at all.
+            single_bc.second[i] = "0.";
+          }
+
+      dirichlet_boundary_functions.insert
+      (std::make_pair (single_bc.first,
+                       std::make_pair
+                       (component_mask,
+                        std::make_shared<FunctionParser</*space*/dim>>(dim*1,
+                            0.))
+                      )
+      );
+
+      dirichlet_boundary_functions[single_bc.first].second->
+      initialize (FunctionParser<dim>::default_variable_names(),
+                  single_bc.second,
+                  typename FunctionParser<dim>::ConstMap() /* TODO, true*/);
+    }
+}
+
+
+
+template <int dim, typename PotentialType>
+void QC<dim, PotentialType>::setup_boundary_conditions (const double)
+{
+  for (const auto &single_bc : dirichlet_boundary_functions)
+    VectorTools::interpolate_boundary_values (dof_handler,
+                                              single_bc.first,
+                                              *(single_bc.second.second),
+                                              constraints,
+                                              single_bc.second.first);
+}
+
+
+
+template <int dim, typename PotentialType>
 void QC<dim, PotentialType>::setup_system ()
 {
   TimerOutput::Scope t (computing_timer, "Setup system");
@@ -176,16 +235,8 @@ void QC<dim, PotentialType>::setup_system ()
   constraints.reinit (locally_relevant_set);
   DoFTools::make_hanging_node_constraints (dof_handler, constraints);
 
-  /*
-  std::set<types::boundary_id>       dirichlet_boundary_ids;
-  typename FunctionMap<dim>::type    dirichlet_boundary_functions;
-  ZeroFunction<dim>                  homogeneous_dirichlet_bc (1);
-  dirichlet_boundary_ids.insert(0);
-  dirichlet_boundary_functions[0] = &homogeneous_dirichlet_bc;
-  VectorTools::interpolate_boundary_values (dof_handler,
-                                            dirichlet_boundary_functions,
-                                            constraints);
-  */
+  setup_boundary_conditions();
+
   constraints.close ();
 
   locally_relevant_gradient.reinit(dof_handler.locally_owned_dofs(),
@@ -575,6 +626,7 @@ double QC<dim, PotentialType>::compute (vector_t &gradient) const
   template void QC<dim, PotentialType>::run ();                              \
   template void QC<dim, PotentialType>::setup_cell_molecules ();             \
   template void QC<dim, PotentialType>::setup_cell_energy_molecules ();      \
+  template void QC<dim, PotentialType>::setup_boundary_conditions(const double); \
   template void QC<dim, PotentialType>::setup_system ();                     \
   template void QC<dim, PotentialType>::setup_triangulation();               \
   template void QC<dim, PotentialType>::write_mesh (std::ofstream &, const std::string &);        \

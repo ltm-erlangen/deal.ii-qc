@@ -5,10 +5,11 @@
 // *-------o
 // |       |          o,*  - vertices
 // |       |          o    - atoms
-// |       |          *    - dof sites at which gradient value is zero
+// |       |
 // o-------*
 //
-// 4 entries of the gradient of the total energy are zeros.
+// 6 entries of the gradient of the total energy are zeros.
+// The displacement of the atom at the origin is constrained to zero.
 
 
 
@@ -106,8 +107,8 @@ void Problem<dim, PotentialType>::statics (const double tol)
 
   const unsigned int n_iterations = solver_control.last_step();
 
-  AssertThrow ((n_iterations > 47) &&
-               (n_iterations < 51),
+  AssertThrow ((n_iterations > 78) &&
+               (n_iterations < 82),
                ExcInternalError("Need to re-adjust iteration bounds."
                                 "It appears that FIRE took more or less "
                                 "number of iterations to converge on this "
@@ -117,7 +118,7 @@ void Problem<dim, PotentialType>::statics (const double tol)
       << "SolverFIRE minimized energy to "
       << QC<dim, PotentialType>:: template
       compute<false> (QC<dim, PotentialType>::locally_relevant_gradient)
-      << "eV within 48 to 50 iterations."
+      << "eV within 79 to 81 iterations."
       << std::endl;
 
   QC<dim, PotentialType>::pcout
@@ -173,6 +174,10 @@ int main (int argc, char *argv[])
           << "subsection Configure QC"                        << std::endl
           << "  set Ghost cell layer thickness = 2.01"        << std::endl
           << "  set Cluster radius = 2.0"                     << std::endl
+          << "end"                                            << std::endl
+
+          << "subsection boundary_2"                          << std::endl
+          << "  set Function expressions = 0., 0."            << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section"                      << std::endl
 
