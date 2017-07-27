@@ -200,8 +200,7 @@ void QC<dim, PotentialType>::initialize_boundary_functions()
       dirichlet_boundary_functions[single_bc.first].second->
       initialize (FunctionParser<dim>::default_variable_names(),
                   single_bc.second,
-                  typename FunctionParser<dim>::ConstMap(),
-                  true);
+                  typename FunctionParser<dim>::ConstMap() /* TODO, true*/);
     }
 }
 
