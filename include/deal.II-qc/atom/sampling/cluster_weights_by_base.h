@@ -48,8 +48,9 @@ namespace Cluster
     virtual ~WeightsByBase();
 
     /**
-     * Initialize #sampling_points and #cells_to_sampling_indices data members
-     * using @p triangulation and @p quadrature.
+     * Initialize #locally_relevant_sampling_indices and
+     * #cells_to_sampling_indices data members using @p triangulation and
+     * @p quadrature.
      */
     void
     initialize (const Triangulation<dim, spacedim> &triangulation,

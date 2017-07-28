@@ -101,7 +101,7 @@ protected:
    * CellMoleculeData::charges) of the current MPI process. However, this
    * function doesn't update CellMoleculeData::cell_energy_molecules of
    * #cell_molecule_data, this is done by
-   * QC::setup_energy_atoms_with_cluster_weights().
+   * QC::setup_cell_energy_molecules().
    *
    * @note The primary data member CellMoleculeData::cell_molecules in
    * #cell_molecule_data should be used only to initialize
@@ -112,7 +112,7 @@ protected:
   void setup_cell_molecules();
 
   /**
-   * Setup CellMoleculeData::cell_energy_molecules of #cel_molecule_data of
+   * Setup CellMoleculeData::cell_energy_molecules of #cell_molecule_data of
    * the current MPI process with appropriate cluster weights.
    *
    * All the cluster molecules get a non-zero cluster weight while all the
@@ -154,10 +154,10 @@ protected:
 
   /**
    * Return the computed energy of the atomistic system using QC approach, and
-   * update the its @p gradient if @tparam ComputeGradient is set true.
+   * update the its @p gradient if <tt>ComputeGradient</tt> is set true.
    *
    * The template parameter indicates whether to do the additional
-   * computation of the gradient of the energy; when @tparam ComputeGradient
+   * computation of the gradient of the energy; when <tt>ComputeGradient</tt>
    * is set false only the value of the energy is computed.
    */
   template<bool ComputeGradient=true>
