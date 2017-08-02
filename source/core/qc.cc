@@ -45,7 +45,7 @@ QC<dim, PotentialType>::QC (const ConfigureQC &config)
                    TimerOutput::never,
                    TimerOutput::wall_times)
 {
-  Assert( dim==configure_qc.get_dimension(), ExcInternalError());
+  Assert (dim==configure_qc.get_dimension(), ExcInternalError());
 
   // Load the mesh by reading from mesh file
   setup_triangulation();
@@ -167,6 +167,8 @@ void QC<dim, PotentialType>::write_mesh (T &os, const std::string &type )
 template <int dim, typename PotentialType>
 void QC<dim, PotentialType>::initialize_boundary_functions()
 {
+  TimerOutput::Scope t (computing_timer, "Initialize boundary functions");
+
   std::map<unsigned int, std::vector<std::string> >
   boundary_ids_to_function_expressions = configure_qc.get_boundary_functions();
 
@@ -248,7 +250,7 @@ void QC<dim, PotentialType>::setup_system ()
   locally_relevant_displacement.reinit(dof_handler.locally_owned_dofs(),
                                        locally_relevant_set,
                                        mpi_communicator,
-                                       true);
+                                       false);
 
   locally_relevant_displacement = 0.;
 
@@ -388,13 +390,19 @@ void QC<dim, PotentialType>::update_positions()
       Assert (it != cells_to_data.end(),
               ExcInternalError());
 
+      std::pair<types::CellMoleculeIteratorType<dim>, types::CellMoleculeIteratorType<dim> >
+        cell_energy_molecules_range = cell_molecule_data.cell_energy_molecules.equal_range(cell);
+
+      // FIXME: remove after FIXME in setup_system()
+      // If this cell is not within the locally relevant active cells of the
+      // current MPI process continue active cell loop
+      if (!cell_molecule_data.cell_energy_molecules.count(cell))
+        continue;
+
       // get displacement field on all quadrature points of this object
       it->second.fe_values->operator[](u_fe).get_function_values(locally_relevant_displacement,
                                                                  it->second.displacements);
       const auto &displacements = it->second.displacements;
-
-      std::pair<types::CellMoleculeIteratorType<dim>, types::CellMoleculeIteratorType<dim> >
-      cell_energy_molecules_range = cell_molecule_data.cell_energy_molecules.equal_range(cell);
 
       // Update energy molecules positions.
       for (unsigned int i = 0;
