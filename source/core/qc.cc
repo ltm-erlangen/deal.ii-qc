@@ -391,12 +391,12 @@ void QC<dim, PotentialType>::update_positions()
               ExcInternalError());
 
       std::pair<types::CellMoleculeIteratorType<dim>, types::CellMoleculeIteratorType<dim> >
-        cell_energy_molecules_range = cell_molecule_data.cell_energy_molecules.equal_range(cell);
+      cell_energy_molecules_range = cell_molecule_data.cell_energy_molecules.equal_range(cell);
 
       // FIXME: remove after FIXME in setup_system()
       // If this cell is not within the locally relevant active cells of the
       // current MPI process continue active cell loop
-      if (!cell_molecule_data.cell_energy_molecules.count(cell))
+      if (cell_energy_molecules_range.first==cell_energy_molecules_range.second)
         continue;
 
       // get displacement field on all quadrature points of this object
