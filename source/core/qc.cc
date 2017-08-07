@@ -55,6 +55,9 @@ QC<dim, PotentialType>::QC (const ConfigureQC &config)
 
   // Initialize boundary functions.
   initialize_boundary_functions();
+
+  // Setup external potential fields.
+  initialize_external_potential_fields();
 }
 
 
@@ -217,6 +220,26 @@ void QC<dim, PotentialType>::setup_boundary_conditions (const double)
                                               *(single_bc.second.second),
                                               constraints,
                                               single_bc.second.first);
+}
+
+
+
+template <int dim, typename PotentialType>
+void QC<dim, PotentialType>::initialize_external_potential_fields (const double)
+{
+  for (const auto &entry : configure_qc.get_external_potential_fields())
+    {
+      external_potential_fields[entry.first] =
+        std::make_shared<PotentialField<dim> >(entry.first.second, 0.);
+
+      // Direct cast, does not construct a temporary shared_ptr.
+      external_potential_fields[entry.first]->
+      initialize ((dim==3) ? "x,y,z,q,t" :
+                  (dim==2  ? "x,y,q,t"   : "x,q,t"),
+                  entry.second,
+                  typename FunctionParser<dim>::ConstMap(),
+                  true);
+    }
 }
 
 

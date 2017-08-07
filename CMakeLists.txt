@@ -34,6 +34,7 @@ SET(TARGET_SRC
   source/potentials/pair_base.cc
   source/potentials/pair_coul_wolf.cc
   source/potentials/pair_lj_cut.cc
+  source/potentials/potential_field.cc
   source/core/qc.cc
   ${CMAKE_CURRENT_BINARY_DIR}/version.cc
   )
