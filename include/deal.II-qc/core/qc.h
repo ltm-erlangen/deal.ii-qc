@@ -32,6 +32,7 @@ namespace LA
 
 #include <deal.II-qc/atom/molecule_handler.h>
 #include <deal.II-qc/configure/configure_qc.h>
+#include <deal.II-qc/potentials/potential_field.h>
 
 
 DEAL_II_QC_NAMESPACE_OPEN
@@ -135,6 +136,11 @@ protected:
   void setup_boundary_conditions(const double time = 0.);
 
   /**
+   * Set up external potential fields.
+   */
+  virtual void initialize_external_potential_fields(const double time = 0.);
+
+  /**
    * Distribute degrees-of-freedom and initialise matrices and vectors.
    */
   void setup_system ();
@@ -154,7 +160,7 @@ protected:
 
   /**
    * Return the computed energy of the atomistic system using QC approach, and
-   * update the its @p gradient if <tt>ComputeGradient</tt> is set true.
+   * update its @p gradient if <tt>ComputeGradient</tt> is set true.
    *
    * The template parameter indicates whether to do the additional
    * computation of the gradient of the energy; when <tt>ComputeGradient</tt>
@@ -239,6 +245,12 @@ protected:
    */
   std::map<unsigned int, std::pair<ComponentMask, std::shared_ptr<FunctionParser<dim> > > >
   dirichlet_boundary_functions;
+
+  /**
+   * External potential field function.
+   */
+  std::multimap<unsigned int, std::shared_ptr<PotentialField<dim> > >
+  external_potential_fields;
 
   /**
    * Auxiliary class with all the information needed per cell for

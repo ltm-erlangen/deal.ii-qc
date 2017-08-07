@@ -55,6 +55,9 @@ QC<dim, PotentialType>::QC (const ConfigureQC &config)
 
   // Initialize boundary functions.
   initialize_boundary_functions();
+
+  // Setup external potential fields.
+  initialize_external_potential_fields();
 }
 
 
@@ -217,6 +220,30 @@ void QC<dim, PotentialType>::setup_boundary_conditions (const double)
                                               *(single_bc.second.second),
                                               constraints,
                                               single_bc.second.first);
+}
+
+
+
+template <int dim, typename PotentialType>
+void QC<dim, PotentialType>::initialize_external_potential_fields (const double)
+{
+  for (const auto &entry : configure_qc.get_external_potential_fields())
+    {
+      auto external_potential_field_iterator =
+        external_potential_fields.insert
+        (
+          std::make_pair(entry.first.first,
+                         std::make_shared<PotentialField<dim>>(entry.first.second))
+        );
+
+      // Initialize FunctionParser object of PotentialField.
+      external_potential_field_iterator->second->
+      initialize ((dim==3) ? "x,y,z,t" :
+                  (dim==2  ? "x,y,t"   : "x,t"),
+                  entry.second,
+                  typename FunctionParser<dim>::ConstMap(),
+                  true);
+    }
 }
 
 

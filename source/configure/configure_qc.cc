@@ -127,6 +127,14 @@ ConfigureQC::get_boundary_functions() const
 
 
 
+std::map<std::pair<unsigned int, bool>, std::string>
+ConfigureQC::get_external_potential_fields() const
+{
+  return external_potential_field_expressions;
+}
+
+
+
 void ConfigureQC::declare_parameters (ParameterHandler &prm)
 {
   // TODO: Write intput file name to the screen
@@ -248,6 +256,38 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
                           "The expression 0 implies that the current "
                           "component of the current boundary id is subjected "
                           "to Homogeneous Dirichlet boundary condition.");
+      }
+      prm.leave_subsection ();
+    }
+
+  for (unsigned int
+       material_id = 0;
+       material_id < max_n_material_ids;
+       material_id++)
+    {
+      prm.enter_subsection ("ext_potential_material_id_" +
+                            dealii::Utilities::int_to_string(material_id));
+      {
+        prm.declare_entry ("Is electric field",
+                           "false",
+                           Patterns::Bool(),
+                           "Specify whether the potential field is an electric "
+                           "potential field.");
+        prm.declare_entry("Function expression",
+                          "",
+                          Patterns::Anything(),
+                          "Function expressions that describes the external "
+                          "potential field applied to the domain with current "
+                          "material id."
+                          "If the function expression empty then there "
+                          "is no external potential field applied to the "
+                          "domain with current material id."
+                          "---"
+                          "In three dimensions, the function expression "
+                          "consists of 4 variables — namely x, y, z and t."
+                          "The first three variables denote the spatial "
+                          "location of a point where the value is to be "
+                          "computed followed by the time variable.");
       }
       prm.leave_subsection ();
     }
@@ -397,6 +437,30 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
         if (!ignore_boundary_id)
           boundary_ids_to_function_expressions[boundary_id] =
             function_expressions;
+      }
+      prm.leave_subsection();
+    }
+
+  for (unsigned int
+       material_id = 0;
+       material_id < max_n_material_ids;
+       material_id++)
+    {
+      prm.enter_subsection("ext_potential_material_id_" +
+                           dealii::Utilities::int_to_string(material_id));
+      {
+        const std::pair<unsigned int, bool> unique_key =
+          std::make_pair(material_id, prm.get_bool("Is electric field"));
+
+        const std::string function_expression =
+          prm.get("Function expression");
+
+        // If the provided function expression is not empty,
+        // then prepare potential field function expression for this
+        //      material id.
+        if (!function_expression.empty())
+          external_potential_field_expressions[unique_key] =
+            function_expression;
       }
       prm.leave_subsection();
     }

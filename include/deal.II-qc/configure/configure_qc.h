@@ -108,6 +108,14 @@ public:
   std::map<unsigned int, std::vector<std::string> >
   get_boundary_functions() const;
 
+  /**
+   * Get the map describing external potential field expressions in the string
+   * format. See #external_potential_field_expressions for explanation of the
+   * returned map.
+   */
+  std::map<std::pair<unsigned int, bool>, std::string>
+  get_external_potential_fields() const;
+
 private:
 
   /*
@@ -184,6 +192,21 @@ protected:
    */
   std::map<unsigned int, std::vector<std::string> >
   boundary_ids_to_function_expressions;
+
+  /**
+   * Maximum number of mateiral ids in the domain.
+   */
+  static const unsigned int max_n_material_ids = 10;
+
+  /**
+   * A map to describe external potential field function expressions.
+   * The mapping is from a pair of unsigned int (describing the
+   * material id on which the external potential field is prescribed) and
+   * bool (whether the external potential field is an electric field) to the
+   * external potential field function expression.
+   */
+  std::map<std::pair<unsigned int, bool>, std::string>
+  external_potential_field_expressions;
 
   /**
    * In distributed memory calculation with local h-adaptive FE each
