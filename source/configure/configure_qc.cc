@@ -284,11 +284,10 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
                           "domain with current material id."
                           "---"
                           "In three dimensions, the function expression "
-                          "consists of 5 variables — namely x, y, z, q and t."
+                          "consists of 4 variables — namely x, y, z and t."
                           "The first three variables denote the spatial "
                           "location of a point where the value is to be "
-                          "computed, followed by the charge "
-                          "(at the spatial location) and the time variable.");
+                          "computed followed by the time variable.");
       }
       prm.leave_subsection ();
     }

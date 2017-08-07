@@ -249,7 +249,7 @@ protected:
   /**
    * External potential field function.
    */
-  std::map<std::pair<unsigned int, bool>, std::shared_ptr<PotentialField<dim> > >
+  std::multimap<unsigned int, std::shared_ptr<PotentialField<dim> > >
   external_potential_fields;
 
   /**

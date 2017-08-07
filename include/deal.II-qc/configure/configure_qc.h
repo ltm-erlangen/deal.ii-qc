@@ -110,7 +110,8 @@ public:
 
   /**
    * Get the map describing external potential field expressions in the string
-   * format.
+   * format. See #external_potential_field_expressions for explanation of the
+   * returned map.
    */
   std::map<std::pair<unsigned int, bool>, std::string>
   get_external_potential_fields() const;

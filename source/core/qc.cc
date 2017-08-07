@@ -229,13 +229,17 @@ void QC<dim, PotentialType>::initialize_external_potential_fields (const double)
 {
   for (const auto &entry : configure_qc.get_external_potential_fields())
     {
-      external_potential_fields[entry.first] =
-        std::make_shared<PotentialField<dim> >(entry.first.second, 0.);
+      auto external_potential_field_iterator =
+        external_potential_fields.insert
+        (
+          std::make_pair(entry.first.first,
+                         std::make_shared<PotentialField<dim>>(entry.first.second))
+        );
 
-      // Direct cast, does not construct a temporary shared_ptr.
-      external_potential_fields[entry.first]->
-      initialize ((dim==3) ? "x,y,z,q,t" :
-                  (dim==2  ? "x,y,q,t"   : "x,q,t"),
+      // Initialize FunctionParser object of PotentialField.
+      external_potential_field_iterator->second->
+      initialize ((dim==3) ? "x,y,z,t" :
+                  (dim==2  ? "x,y,t"   : "x,t"),
                   entry.second,
                   typename FunctionParser<dim>::ConstMap(),
                   true);
