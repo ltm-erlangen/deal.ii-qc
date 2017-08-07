@@ -5,7 +5,7 @@ using namespace dealiiqc;
 using namespace dealii;
 
 
-// Test to check correctness of PotentialField value and gradient functions.
+// Test to check correctness of PotentialField value function.
 
 
 template <int dim>
@@ -23,12 +23,16 @@ void test (const bool        is_electric_field,
                         true);
 
   if (is_electric_field)
-    AssertThrow (potential.value(p,q) == p.norm_square() * q,
-                 ExcInternalError())
-    else
+    {
+      AssertThrow (potential.value(p,q) == p.norm_square() * q,
+                   ExcInternalError());
+    }
+  else
+    {
       AssertThrow (potential.value(p,q) == p.norm_square(),
                    ExcInternalError());
     }
+}
 
 
 int main ()
