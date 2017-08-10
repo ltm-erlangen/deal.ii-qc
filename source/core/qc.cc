@@ -81,8 +81,9 @@ void QC<dim, PotentialType>::run ()
     {
       minimize_energy(time);
       time += time_step;
-    }
 
+      // TODO: iteration-dependent DataOutAtomData logging.
+    }
 }
 
 
@@ -721,8 +722,6 @@ void QC<dim, PotentialType>::minimize_energy (const double time)
             << " before terminating."
             << std::endl;
     }
-
-  // TODO: iteration-dependent DataOutAtomData logging.
 }
 
 
