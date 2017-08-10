@@ -43,8 +43,7 @@ QC<dim, PotentialType>::QC (const ConfigureQC &config)
   computing_timer (mpi_communicator,
                    pcout,
                    TimerOutput::never,
-                   TimerOutput::wall_times),
-  solver(configure_qc.get_minimizer<vector_t>())
+                   TimerOutput::wall_times)
 {
   Assert (dim==configure_qc.get_dimension(), ExcInternalError());
 
@@ -68,8 +67,22 @@ void QC<dim, PotentialType>::run ()
   setup_fe_values_objects();
   update_neighbor_lists();
   update_positions();
-  const double e = compute(locally_relevant_gradient);
-  (void)e;
+
+  minimize_energy (-1.);
+
+  // Initialize external potential fields.
+  initialize_external_potential_fields();
+
+  const unsigned int n_time_steps = configure_qc.get_n_time_steps();
+  const double time_step   = configure_qc.get_time_step();
+
+  double time = 0.;
+  for (unsigned int step = 0; step <= n_time_steps; ++step)
+    {
+      minimize_energy(time);
+      time += time_step;
+    }
+
 }
 
 
@@ -639,25 +652,13 @@ double QC<dim, PotentialType>::compute (vector_t &gradient) const
 
 
 template <int dim, typename PotentialType>
-double QC<dim, PotentialType>::compute (vector_t       &gradients,
-                                        const vector_t &displacements)
-{
-  locally_relevant_displacement = displacements;
-  update_positions();
-  const double energy = compute<true>(locally_relevant_gradient);
-  gradients = locally_relevant_gradient;
-  return energy;
-}
-
-
-
-template <int dim, typename PotentialType>
 void QC<dim, PotentialType>::minimize_energy (const double time)
 {
   if (time >= 0.)
     for (auto &potential_field : external_potential_fields)
       potential_field.second->set_time (time);
 
+  // FIXME: move u and inv_mass to constructor
   vector_t u (QC<dim, PotentialType>::dof_handler.locally_owned_dofs(),
               QC<dim, PotentialType>::mpi_communicator);
 
@@ -671,24 +672,50 @@ void QC<dim, PotentialType>::minimize_energy (const double time)
   // Create inverse diagonal matrix.
   DiagonalMatrix<vector_t> inv_mass;
   inv_mass.reinit(u);
+  //---------------------------------------------------------------------------
 
   std::function<double(vector_t &,  const vector_t &)> compute_function =
     [&]               (vector_t &G, const vector_t &U) -> double
   {
-    return this->compute(G, U);
+    locally_relevant_displacement = U;
+    update_positions();
+    const double energy = compute<true>(locally_relevant_gradient);
+    G = locally_relevant_gradient;
+    return energy;
   };
 
   u = 0.;
 
+  ConfigureQC::SolverControlParameters solver_control_parameters =
+    configure_qc.get_solver_control_parameters();
+
+  SolverControl solver_control (solver_control_parameters.max_steps,
+                                solver_control_parameters.tolerance,
+                                solver_control_parameters.log_history,
+                                solver_control_parameters.log_result);
+  solver_control.log_frequency(solver_control_parameters.log_frequency);
+
   try
     {
-      // FIXME: Support other solvers
-      static_cast<SolverFIRE<vector_t>*>(solver.get())->
-      solve(compute_function, u, inv_mass);
+      if (configure_qc.get_minimizer_name()=="FIRE")
+        {
+          ConfigureQC::FireParameters fire_parameters =
+            configure_qc.get_fire_parameters();
+
+          typename SolverFIRE<vector_t>::AdditionalData
+          additional_data_fire (fire_parameters.initial_time_step,
+                                fire_parameters.maximum_time_step,
+                                fire_parameters.maximum_linfty_norm);
+
+          SolverFIRE<vector_t> solver(solver_control, additional_data_fire);
+          solver.solve(compute_function, u, inv_mass);
+        }
+      else
+        AssertThrow(false, ExcNotImplemented());
     }
   catch (...)
     {
-      pcout << "Solver terminated achieving desired tolerance, "
+      pcout << "Solver terminated without achieving desired tolerance, "
             << "while minimizing the energy to "
             << compute<false>(locally_relevant_gradient)
             << " before terminating."
@@ -696,27 +723,6 @@ void QC<dim, PotentialType>::minimize_energy (const double time)
     }
 
   // TODO: iteration-dependent DataOutAtomData logging.
-}
-
-
-
-template <int dim, typename PotentialType>
-void QC<dim, PotentialType>::solve ()
-{
-  minimize_energy (-1.);
-
-  // Initialize external potential fields.
-  initialize_external_potential_fields();
-
-  const unsigned int n_load_steps = configure_qc.get_n_load_steps();
-  const double loading_interval   = configure_qc.get_time_interval_between_load_steps();
-
-  double time = configure_qc.get_initial_time();
-  for (unsigned int step = 0; step < n_load_steps; ++step)
-    {
-      minimize_energy(time);
-      time += loading_interval;
-    }
 }
 
 
@@ -752,8 +758,7 @@ void QC<dim, PotentialType>::solve ()
   template double QC<dim, PotentialType>::compute<true >(TrilinosWrappers::MPI::Vector &) const;  \
   template double QC<dim, PotentialType>::compute<false>(TrilinosWrappers::MPI::Vector &) const;  \
   template void QC<dim, PotentialType>::initialize_external_potential_fields (const double);      \
-  template void QC<dim, PotentialType>::minimize_energy (const double);      \
-  template void QC<dim, PotentialType>::solve ();
+  template void QC<dim, PotentialType>::minimize_energy (const double);
 
 DEAL_II_QC_INSTANTIATE(INSTANTIATE)
 

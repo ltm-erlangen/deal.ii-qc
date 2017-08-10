@@ -172,7 +172,7 @@ protected:
 
   /**
    * Return the computed energy of the atomistic system using QC approach, and
-   * update @p gradient of the energy.
+   * update @p gradient of the energy upon applying a given @p displacement.
    */
   double compute (vector_t       &gradients,
                   const vector_t &displacements);
@@ -182,11 +182,6 @@ protected:
    * system at time @p time.
    */
   void minimize_energy (const double time);
-
-  /**
-   * Apply quasi-static loading onto the atomistic system.
-   */
-  void solve ();
 
   /**
    * Given cells and dof handler, for each cell set-up FEValues object with
@@ -357,11 +352,6 @@ protected:
    * A time object
    */
   mutable TimerOutput  computing_timer;
-
-  /**
-   * Solver for energy minimization.
-   */
-  std::shared_ptr<Solver<vector_t>> solver;
 
 };
 

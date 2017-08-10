@@ -12,8 +12,7 @@ using namespace dealii;
 ConfigureQC::ConfigureQC (std::shared_ptr<std::istream> is)
   :
   dimension(0),
-  input_stream(is),
-  solver_control(100, 1.e-8, true, true)
+  input_stream(is)
 {
   AssertThrow (*input_stream, ExcIO());
   ParameterHandler prm;
@@ -136,41 +135,38 @@ ConfigureQC::get_external_potential_fields() const
 
 
 
-double ConfigureQC::get_initial_time() const
+std::string ConfigureQC::get_minimizer_name() const
 {
-  return initial_time;
+  return minimizer;
 }
 
 
 
-double ConfigureQC::get_time_interval_between_load_steps() const
+double ConfigureQC::get_time_step() const
 {
-  return time_interval_between_load_steps;
+  return time_step;
 }
 
 
 
-unsigned int ConfigureQC::get_n_load_steps() const
+unsigned int ConfigureQC::get_n_time_steps() const
 {
-  return n_load_steps;
+  return n_time_steps;
 }
 
 
 
-template <typename VectorType>
-std::shared_ptr<Solver<VectorType>> ConfigureQC::get_minimizer()
+ConfigureQC::SolverControlParameters
+ConfigureQC::get_solver_control_parameters () const
 {
-  typename SolverFIRE<VectorType>::AdditionalData
-  additional_data_fire (fire_initial_time_step,
-                        fire_maximum_time_step,
-                        fire_maximum_linfty_norm);
-  return
-    (minimizer=="FIRE")
-    ?
-    std::make_shared<SolverFIRE<VectorType>> (solver_control,
-                                              additional_data_fire)
-    :
-    std::make_shared<Solver<VectorType>> (solver_control);
+  return solver_control_parameters;
+}
+
+
+
+ConfigureQC::FireParameters ConfigureQC::get_fire_parameters () const
+{
+  return fire_parameters;
 }
 
 
@@ -364,17 +360,12 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
 
   prm.enter_subsection("Quasi-static loading");
   {
-    prm.declare_entry("Initial time",
-                      "0.",
-                      Patterns::Double(0),
-                      "The initial time at which the quasi-static loading "
-                      "process is initiated.");
-    prm.declare_entry("Number of load steps",
+    prm.declare_entry("Number of time steps",
                       "0",
                       Patterns::Integer(0),
                       "The number of load steps to be performed during the "
                       "quasi-static loading process.");
-    prm.declare_entry("Time interval between load steps",
+    prm.declare_entry("Time step size",
                       "0.1",
                       Patterns::Double(0),
                       "The time interval between load steps in the "
@@ -557,15 +548,19 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
 
   prm.enter_subsection ("Minimizer settings");
   {
-    solver_control.parse_parameters(prm);
+    solver_control_parameters.max_steps     = prm.get_integer("Max steps");
+    solver_control_parameters.tolerance     = prm.get_double("Tolerance");
+    solver_control_parameters.log_history   = prm.get_bool("Log history");
+    solver_control_parameters.log_result    = prm.get_bool("Log result");
+    solver_control_parameters.log_frequency = prm.get_integer("Log frequency");
 
     minimizer              = prm.get("Minimizer");
 
     prm.enter_subsection("FIRE");
     {
-      fire_initial_time_step = prm.get_double("Initial time step");
-      fire_maximum_time_step = prm.get_double("Maximum time step");
-      fire_maximum_linfty_norm = prm.get_double("Maximum linfty norm");
+      fire_parameters.initial_time_step = prm.get_double("Initial time step");
+      fire_parameters.maximum_time_step = prm.get_double("Maximum time step");
+      fire_parameters.maximum_linfty_norm = prm.get_double("Maximum linfty norm");
     }
     prm.leave_subsection();
   }
@@ -573,9 +568,8 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
 
   prm.enter_subsection("Quasi-static loading");
   {
-    initial_time = prm.get_double("Initial time");
-    n_load_steps = prm.get_integer("Number of load steps");
-    time_interval_between_load_steps = prm.get_double("Time interval between load steps");
+    n_time_steps = prm.get_integer("Number of time steps");
+    time_step    = prm.get_double("Time step size");
   }
   prm.leave_subsection();
 }
@@ -588,10 +582,6 @@ template
 std::shared_ptr<const Geometry::Base<2>> ConfigureQC::get_geometry() const;
 template
 std::shared_ptr<const Geometry::Base<3>> ConfigureQC::get_geometry() const;
-
-template
-std::shared_ptr<Solver<LinearAlgebraTrilinos::MPI::Vector> >
-ConfigureQC::get_minimizer();
 
 #define SINGLE_CONFIGURE_QC_INSTANTIATION(DIM, ATOMICITY, SPACEDIM) \
   template                                                          \
