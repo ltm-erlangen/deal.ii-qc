@@ -190,6 +190,38 @@ template <int dim, typename PotentialType>
 void QC<dim, PotentialType>::setup_triangulation()
 {
   configure_qc.get_geometry<dim>()->create_mesh(triangulation);
+
+  ConfigureQC::InitialRefinementParameters initial_refinement_params =
+    configure_qc.get_initial_refinement_parameters();
+
+  FunctionParser<dim> refinement_function (1,0.);
+
+  refinement_function.initialize(FunctionParser<dim>::default_variable_names(),
+                                 initial_refinement_params.refinement_function,
+                                 typename FunctionParser<dim>::ConstMap());
+
+  const double fraction_of_cells = initial_refinement_params.fraction_of_cells;
+
+  unsigned int n_refinement_cycles =
+    initial_refinement_params.n_refinement_cycles;
+
+  for (unsigned int cycle = 0; cycle < n_refinement_cycles; cycle++)
+    {
+      Vector<float> blind_error_estimate_per_cell (triangulation.n_active_cells());
+
+      unsigned int active_cell_i = 0;
+      for (types::CellIteratorType<dim>
+           cell  = triangulation.begin_active();
+           cell != triangulation.end();
+           cell++, active_cell_i++)
+        blind_error_estimate_per_cell[active_cell_i] =
+          refinement_function.value(cell->center());
+
+      GridRefinement::refine_and_coarsen_fixed_number (triangulation,
+                                                       blind_error_estimate_per_cell,
+                                                       fraction_of_cells, 0);
+      triangulation.execute_coarsening_and_refinement();
+    }
 }
 
 

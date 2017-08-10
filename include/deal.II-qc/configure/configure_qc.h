@@ -92,6 +92,31 @@ public:
     double maximum_linfty_norm;
   };
 
+  /**
+   * Parameters for custom initial refinement.
+   */
+  struct InitialRefinementParameters
+  {
+    /**
+     * Function expression that describes a field to flag
+     * cells for refinement. If the value of the function
+     * evaluated at cell centers is above a certain threshold,
+     * the cell is to be marked for refinement.
+     */
+    std::string refinement_function;
+
+    /**
+     * The fraction of cells to be refined. If this number is zero, no cells
+     * will be refined. If it equals one, the result will be flagging for
+     * global refinement.
+     */
+    double fraction_of_cells;
+
+    /**
+     * Number of refinement cycles.
+     */
+    unsigned int n_refinement_cycles;
+  };
 
   /**
    * Constructor with a shared pointer to an istream object @p is.
@@ -198,6 +223,11 @@ public:
    * Get SolverFIRE parameters.
    */
   FireParameters get_fire_parameters() const;
+
+  /**
+   * Get parameters for custom initial refinement.
+   */
+  InitialRefinementParameters get_initial_refinement_parameters() const;
 
 private:
 
@@ -366,6 +396,11 @@ protected:
    * Parameters to setup SolverFIRE minimizer.
    */
   FireParameters fire_parameters;
+
+  /**
+   * Initial refinement parameters.
+   */
+  InitialRefinementParameters initial_refinement_parameters;
 
 };
 

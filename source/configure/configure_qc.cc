@@ -171,6 +171,14 @@ ConfigureQC::FireParameters ConfigureQC::get_fire_parameters () const
 
 
 
+ConfigureQC::InitialRefinementParameters
+ConfigureQC::get_initial_refinement_parameters() const
+{
+  return initial_refinement_parameters;
+}
+
+
+
 void ConfigureQC::declare_parameters (ParameterHandler &prm)
 {
   // TODO: Write intput file name to the screen
@@ -182,6 +190,27 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
                     "Dimensionality of the problem ");
 
   Geometry::declare_parameters(prm);
+
+  prm.enter_subsection ("Custom initial refinement");
+  {
+    prm.declare_entry("Function expression for refinement",
+                      "0",
+                      Patterns::Anything(),
+                      "Function expression that describes a field to flag "
+                      "cells for refinement. If the value of the function "
+                      "evaluated at cell centers is above a certain "
+                      "threshold, the cell is to be marked for refinement.");
+    prm.declare_entry("Fraction of cells for refinement",
+                      "0.142857",
+                      Patterns::Double(),
+                      "The fraction of the cells to be refined.");
+    prm.declare_entry("Number of refinement cycles",
+                      "3",
+                      Patterns::Integer(0),
+                      "Number of refinement cycles.");
+
+  }
+  prm.leave_subsection();
 
   // TODO: Declare atom information
   // Use LAMMPS-like atom data file
@@ -400,6 +429,17 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
     }
   else
     AssertThrow (false, ExcNotImplemented());
+
+  prm.enter_subsection ("Custom initial refinement");
+  {
+    initial_refinement_parameters.refinement_function =
+      prm.get("Function expression for refinement");
+    initial_refinement_parameters.fraction_of_cells =
+      prm.get_double("Fraction of cells for refinement");
+    initial_refinement_parameters.n_refinement_cycles =
+      prm.get_integer("Number of refinement cycles");
+  }
+  prm.leave_subsection();
 
   prm.enter_subsection("Configure atoms");
   {
