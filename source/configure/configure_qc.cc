@@ -358,20 +358,16 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
   }
   prm.leave_subsection ();
 
-  prm.enter_subsection("Quasi-static loading");
-  {
-    prm.declare_entry("Number of time steps",
-                      "0",
-                      Patterns::Integer(0),
-                      "The number of load steps to be performed during the "
-                      "quasi-static loading process.");
-    prm.declare_entry("Time step size",
-                      "0.1",
-                      Patterns::Double(0),
-                      "The time interval between load steps in the "
-                      "quasi-static loading process.");
-  }
-  prm.leave_subsection();
+  prm.declare_entry("Number of time steps",
+                    "0",
+                    Patterns::Integer(0),
+                    "The number of load steps to be performed during the "
+                    "quasi-static loading process.");
+  prm.declare_entry("Time step size",
+                    "0.1",
+                    Patterns::Double(0),
+                    "The time interval between load steps in the "
+                    "quasi-static loading process.");
 
   // TODO: Declare Run 0
   //       Compute energy and force at the initial configuration.
@@ -566,12 +562,10 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
   }
   prm.leave_subsection ();
 
-  prm.enter_subsection("Quasi-static loading");
-  {
-    n_time_steps = prm.get_integer("Number of time steps");
-    time_step    = prm.get_double("Time step size");
-  }
-  prm.leave_subsection();
+
+  n_time_steps = prm.get_integer("Number of time steps");
+  time_step    = prm.get_double("Time step size");
+
 }
 
 
