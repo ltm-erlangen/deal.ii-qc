@@ -19,6 +19,7 @@
 #include <deal.II/distributed/shared_tria.h>
 
 #include <deal.II/lac/generic_linear_algebra.h>
+#include <deal.II/numerics/data_out.h>
 #include <deal.II/numerics/vector_tools.h>
 
 namespace LA
@@ -182,6 +183,13 @@ protected:
    * system at time @p time.
    */
   void minimize_energy (const double time);
+
+  /**
+   * Output displacement field at @p time time occurring at time step number
+   * @p timestep_no.
+   */
+  void output_results (const double time,
+                       const unsigned int timestep_no) const;
 
   /**
    * Given cells and dof handler, for each cell set-up FEValues object with
