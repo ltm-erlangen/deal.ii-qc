@@ -179,9 +179,14 @@ protected:
 
   /**
    * Minimize the energy (computed using the QC approach) of the atomistic
-   * system in the initial configuration.
+   * system at time @p time.
    */
-  void relax_initial_configuration();
+  void minimize_energy (const double time);
+
+  /**
+   * Apply quasi-static loading onto the atomistic system.
+   */
+  void solve ();
 
   /**
    * Given cells and dof handler, for each cell set-up FEValues object with
@@ -352,6 +357,11 @@ protected:
    * A time object
    */
   mutable TimerOutput  computing_timer;
+
+  /**
+   * Solver for energy minimization.
+   */
+  std::shared_ptr<Solver<vector_t>> solver;
 
 };
 

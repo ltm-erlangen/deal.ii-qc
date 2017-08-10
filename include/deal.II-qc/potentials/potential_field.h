@@ -67,6 +67,11 @@ public:
   virtual Tensor<1, spacedim> gradient (const Point<spacedim> &p,
                                         const double           q) const;
 
+  /**
+   * Set time for the time dependent #function_object using a given @p time.
+   */
+  void set_time (const double time);
+
 private:
 
   /**

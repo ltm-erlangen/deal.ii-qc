@@ -6,7 +6,6 @@
 #include <deal.II/grid/grid_tools.h>
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/dofs/dof_tools.h>
-#include <deal.II/lac/solver_fire.h>
 
 #include <deal.II-qc/atom/cell_molecule_tools.h>
 #include <deal.II-qc/core/qc.h>
@@ -44,7 +43,8 @@ QC<dim, PotentialType>::QC (const ConfigureQC &config)
   computing_timer (mpi_communicator,
                    pcout,
                    TimerOutput::never,
-                   TimerOutput::wall_times)
+                   TimerOutput::wall_times),
+  solver(configure_qc.get_minimizer<vector_t>())
 {
   Assert (dim==configure_qc.get_dimension(), ExcInternalError());
 
@@ -652,56 +652,71 @@ double QC<dim, PotentialType>::compute (vector_t       &gradients,
 
 
 template <int dim, typename PotentialType>
-void QC<dim, PotentialType>::relax_initial_configuration ()
+void QC<dim, PotentialType>::minimize_energy (const double time)
 {
+  if (time >= 0.)
+    for (auto &potential_field : external_potential_fields)
+      potential_field.second->set_time (time);
+
   vector_t u (QC<dim, PotentialType>::dof_handler.locally_owned_dofs(),
               QC<dim, PotentialType>::mpi_communicator);
 
   // Use this to initialize DiagonalMatrix
   u = 1.;
 
+  // FIXME: Compute inverse mass matrix based on cluster weights.
+  //        Make inverse matrix a member variable of this class.
+  //        write a function to set it up.
+
   // Create inverse diagonal matrix.
   DiagonalMatrix<vector_t> inv_mass;
   inv_mass.reinit(u);
 
-  auto additional_data =
-    typename SolverFIRE<vector_t>::
-    AdditionalData (configure_qc.get_fire_initial_time_step(),
-                    configure_qc.get_fire_maximum_time_step(),
-                    configure_qc.get_fire_maximum_linfty_norm());
-
-  SolverControl solver_control (configure_qc.get_n_minimizer_iterations(),
-                                configure_qc.get_minimizer_tolerance());
-
-  SolverFIRE<vector_t> fire (solver_control, additional_data);
-
   std::function<double(vector_t &,  const vector_t &)> compute_function =
     [&]               (vector_t &G, const vector_t &U) -> double
   {
-    const double energy = this->compute(G, U);
-    pcout << "Energy: "           << energy
-    << "\t Gradient norm: " << G.l2_norm() << std::endl;
-    return energy;
+    return this->compute(G, U);
   };
 
   u = 0.;
 
   try
     {
-      fire.solve(compute_function, u, inv_mass);
+      // FIXME: Support other solvers
+      static_cast<SolverFIRE<vector_t>*>(solver.get())->
+      solve(compute_function, u, inv_mass);
     }
   catch (...)
     {
-      const unsigned int n_iterations = solver_control.last_step();
-      pcout << "Solver terminated at " << n_iterations << " iteration "
-            << "without achieving desired tolerance, while minimizing the "
-            << "energy to "
+      pcout << "Solver terminated achieving desired tolerance, "
+            << "while minimizing the energy to "
             << compute<false>(locally_relevant_gradient)
             << " before terminating."
             << std::endl;
     }
 
   // TODO: iteration-dependent DataOutAtomData logging.
+}
+
+
+
+template <int dim, typename PotentialType>
+void QC<dim, PotentialType>::solve ()
+{
+  minimize_energy (-1.);
+
+  // Initialize external potential fields.
+  initialize_external_potential_fields();
+
+  const unsigned int n_load_steps = configure_qc.get_n_load_steps();
+  const double loading_interval   = configure_qc.get_time_interval_between_load_steps();
+
+  double time = configure_qc.get_initial_time();
+  for (unsigned int step = 0; step < n_load_steps; ++step)
+    {
+      minimize_energy(time);
+      time += loading_interval;
+    }
 }
 
 
@@ -737,7 +752,8 @@ void QC<dim, PotentialType>::relax_initial_configuration ()
   template double QC<dim, PotentialType>::compute<true >(TrilinosWrappers::MPI::Vector &) const;  \
   template double QC<dim, PotentialType>::compute<false>(TrilinosWrappers::MPI::Vector &) const;  \
   template void QC<dim, PotentialType>::initialize_external_potential_fields (const double);      \
-  template void QC<dim, PotentialType>::relax_initial_configuration();
+  template void QC<dim, PotentialType>::minimize_energy (const double);      \
+  template void QC<dim, PotentialType>::solve ();
 
 DEAL_II_QC_INSTANTIATE(INSTANTIATE)
 

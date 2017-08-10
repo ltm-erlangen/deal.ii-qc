@@ -5,6 +5,8 @@
 #include <deal.II/base/subscriptor.h>
 #include <deal.II/base/parameter_handler.h>
 #include <deal.II/base/logstream.h>
+#include <deal.II/lac/generic_linear_algebra.h>
+#include <deal.II/lac/solver_fire.h>
 
 #include <fstream>
 #include <sstream>
@@ -117,30 +119,26 @@ public:
   get_external_potential_fields() const;
 
   /**
-   * Get the minimizer tolerance for terminating energy minimization process.
+   * Get the initial time at which the quasi-static loading is initiated.
    */
-  double get_minimizer_tolerance() const;
+  double get_initial_time() const;
 
   /**
-   * Get the number of minimizer iterations for terminating energy minimization
+   * Get the time interval between load steps during the quasi-static loading
    * process.
    */
-  unsigned long int get_n_minimizer_iterations() const;
+  double get_time_interval_between_load_steps() const;
 
   /**
-   * Get FIRE minimizer's initial time step.
+   * Get the number of load steps during the quasi-static loading process.
    */
-  double get_fire_initial_time_step() const;
+  unsigned int get_n_load_steps() const;
 
   /**
-   * Get FIRE minimizer's maximum time step.
+   * Get minimizer for energy minimization process.
    */
-  double get_fire_maximum_time_step() const;
-
-  /**
-   * Get FIRE minimizer's maximum linfty norm.
-   */
-  double get_fire_maximum_linfty_norm() const;
+  template <typename VectorType>
+  std::shared_ptr<Solver<VectorType>> get_minimizer();
 
 private:
 
@@ -284,14 +282,31 @@ protected:
   std::string cluster_weights_type;
 
   /**
-   * Tolerance for terminating energy minimization process.
+   * Type of minimizer
    */
-  double minimizer_tolerance;
+  std::string minimizer;
 
   /**
-   * Number of iterations of the minimizer for terminating minimization process.
+   * Solver control.
    */
-  unsigned long int n_minimizer_iterations;
+  SolverControl solver_control;
+
+  /**
+   * Initial time at which the quasi-static loading is initiated.
+   */
+  double initial_time;
+
+  /**
+   * Number of load steps to be performed during the quasi-static loading.
+   */
+  unsigned int n_load_steps;
+
+  /**
+   * The time interval between load steps of quasi-static loading process.
+   * The value depends on the sensitivity of the atomistic system to the
+   * applied loading.
+   */
+  double time_interval_between_load_steps;
 
   /**
    * FIRE minimizer's initial time step.
@@ -307,7 +322,6 @@ protected:
    * FIRE minimizer's maximum linfty norm.
    */
   double fire_maximum_linfty_norm;
-
 };
 
 

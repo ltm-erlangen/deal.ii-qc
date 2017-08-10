@@ -12,7 +12,8 @@ using namespace dealii;
 ConfigureQC::ConfigureQC (std::shared_ptr<std::istream> is)
   :
   dimension(0),
-  input_stream(is)
+  input_stream(is),
+  solver_control(100, 1.e-8, true, true)
 {
   AssertThrow (*input_stream, ExcIO());
   ParameterHandler prm;
@@ -135,37 +136,41 @@ ConfigureQC::get_external_potential_fields() const
 
 
 
-double ConfigureQC::get_minimizer_tolerance() const
+double ConfigureQC::get_initial_time() const
 {
-  return minimizer_tolerance;
+  return initial_time;
 }
 
 
 
-unsigned long int ConfigureQC::get_n_minimizer_iterations() const
+double ConfigureQC::get_time_interval_between_load_steps() const
 {
-  return n_minimizer_iterations;
+  return time_interval_between_load_steps;
 }
 
 
 
-double ConfigureQC::get_fire_initial_time_step() const
+unsigned int ConfigureQC::get_n_load_steps() const
 {
-  return fire_initial_time_step;
+  return n_load_steps;
 }
 
 
 
-double ConfigureQC::get_fire_maximum_time_step() const
+template <typename VectorType>
+std::shared_ptr<Solver<VectorType>> ConfigureQC::get_minimizer()
 {
-  return fire_maximum_time_step;
-}
-
-
-
-double ConfigureQC::get_fire_maximum_linfty_norm() const
-{
-  return fire_maximum_linfty_norm;
+  typename SolverFIRE<VectorType>::AdditionalData
+  additional_data_fire (fire_initial_time_step,
+                        fire_maximum_time_step,
+                        fire_maximum_linfty_norm);
+  return
+    (minimizer=="FIRE")
+    ?
+    std::make_shared<SolverFIRE<VectorType>> (solver_control,
+                                              additional_data_fire)
+    :
+    std::make_shared<Solver<VectorType>> (solver_control);
 }
 
 
@@ -329,20 +334,13 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
 
   prm.enter_subsection ("Minimizer settings");
   {
-    prm.declare_entry ("Minimizer tolerance",
-                       "1e-8",
-                       Patterns::Double(1e-16),
-                       "Maximum gradient norm for terminating energy "
-                       "minimization.");
-    prm.declare_entry ("Number of minimizer iterations",
-                       "1000",
-                       Patterns::Integer(0, 1e6),
-                       "Number of iterations of the minimizer before "
-                       "terminating energy minimization.");
+    SolverControl::declare_parameters(prm);
+
     prm.declare_entry ("Minimizer",
                        "FIRE",
                        Patterns::Selection("FIRE"/* TODO Add more minimizers*/),
                        "Choose minimizer.");
+
     prm.enter_subsection ("FIRE");
     {
       prm.declare_entry ("Initial time step",
@@ -361,9 +359,28 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
                          "freedom.");
     }
     prm.leave_subsection ();
-
   }
   prm.leave_subsection ();
+
+  prm.enter_subsection("Quasi-static loading");
+  {
+    prm.declare_entry("Initial time",
+                      "0.",
+                      Patterns::Double(0),
+                      "The initial time at which the quasi-static loading "
+                      "process is initiated.");
+    prm.declare_entry("Number of load steps",
+                      "0",
+                      Patterns::Integer(0),
+                      "The number of load steps to be performed during the "
+                      "quasi-static loading process.");
+    prm.declare_entry("Time interval between load steps",
+                      "0.1",
+                      Patterns::Double(0),
+                      "The time interval between load steps in the "
+                      "quasi-static loading process.");
+  }
+  prm.leave_subsection();
 
   // TODO: Declare Run 0
   //       Compute energy and force at the initial configuration.
@@ -540,8 +557,9 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
 
   prm.enter_subsection ("Minimizer settings");
   {
-    minimizer_tolerance    = prm.get_double ("Minimizer tolerance");
-    n_minimizer_iterations = prm.get_integer ("Number of minimizer iterations");
+    solver_control.parse_parameters(prm);
+
+    minimizer              = prm.get("Minimizer");
 
     prm.enter_subsection("FIRE");
     {
@@ -552,6 +570,14 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
     prm.leave_subsection();
   }
   prm.leave_subsection ();
+
+  prm.enter_subsection("Quasi-static loading");
+  {
+    initial_time = prm.get_double("Initial time");
+    n_load_steps = prm.get_integer("Number of load steps");
+    time_interval_between_load_steps = prm.get_double("Time interval between load steps");
+  }
+  prm.leave_subsection();
 }
 
 
@@ -562,6 +588,10 @@ template
 std::shared_ptr<const Geometry::Base<2>> ConfigureQC::get_geometry() const;
 template
 std::shared_ptr<const Geometry::Base<3>> ConfigureQC::get_geometry() const;
+
+template
+std::shared_ptr<Solver<LinearAlgebraTrilinos::MPI::Vector> >
+ConfigureQC::get_minimizer();
 
 #define SINGLE_CONFIGURE_QC_INSTANTIATION(DIM, ATOMICITY, SPACEDIM) \
   template                                                          \
