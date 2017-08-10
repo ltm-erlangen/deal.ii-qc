@@ -116,6 +116,32 @@ public:
   std::map<std::pair<unsigned int, bool>, std::string>
   get_external_potential_fields() const;
 
+  /**
+   * Get the minimizer tolerance for terminating energy minimization process.
+   */
+  double get_minimizer_tolerance() const;
+
+  /**
+   * Get the number of minimizer iterations for terminating energy minimization
+   * process.
+   */
+  unsigned long int get_n_minimizer_iterations() const;
+
+  /**
+   * Get FIRE minimizer's initial time step.
+   */
+  double get_fire_initial_time_step() const;
+
+  /**
+   * Get FIRE minimizer's maximum time step.
+   */
+  double get_fire_maximum_time_step() const;
+
+  /**
+   * Get FIRE minimizer's maximum linfty norm.
+   */
+  double get_fire_maximum_linfty_norm() const;
+
 private:
 
   /*
@@ -256,6 +282,31 @@ protected:
    * The type of method to update cluster weights.
    */
   std::string cluster_weights_type;
+
+  /**
+   * Tolerance for terminating energy minimization process.
+   */
+  double minimizer_tolerance;
+
+  /**
+   * Number of iterations of the minimizer for terminating minimization process.
+   */
+  unsigned long int n_minimizer_iterations;
+
+  /**
+   * FIRE minimizer's initial time step.
+   */
+  double fire_initial_time_step;
+
+  /**
+   * FIRE minimizer's maximum time step.
+   */
+  double fire_maximum_time_step;
+
+  /**
+   * FIRE minimizer's maximum linfty norm.
+   */
+  double fire_maximum_linfty_norm;
 
 };
 

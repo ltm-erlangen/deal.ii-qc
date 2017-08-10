@@ -138,7 +138,8 @@ protected:
   /**
    * Set up external potential fields.
    */
-  virtual void initialize_external_potential_fields(const double time = 0.);
+  virtual
+  void initialize_external_potential_fields (const double initial_time = 0.);
 
   /**
    * Distribute degrees-of-freedom and initialise matrices and vectors.
@@ -168,6 +169,19 @@ protected:
    */
   template<bool ComputeGradient=true>
   double compute (vector_t &gradient) const;
+
+  /**
+   * Return the computed energy of the atomistic system using QC approach, and
+   * update @p gradient of the energy.
+   */
+  double compute (vector_t       &gradients,
+                  const vector_t &displacements);
+
+  /**
+   * Minimize the energy (computed using the QC approach) of the atomistic
+   * system in the initial configuration.
+   */
+  void relax_initial_configuration();
 
   /**
    * Given cells and dof handler, for each cell set-up FEValues object with

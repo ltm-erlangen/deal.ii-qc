@@ -135,6 +135,41 @@ ConfigureQC::get_external_potential_fields() const
 
 
 
+double ConfigureQC::get_minimizer_tolerance() const
+{
+  return minimizer_tolerance;
+}
+
+
+
+unsigned long int ConfigureQC::get_n_minimizer_iterations() const
+{
+  return n_minimizer_iterations;
+}
+
+
+
+double ConfigureQC::get_fire_initial_time_step() const
+{
+  return fire_initial_time_step;
+}
+
+
+
+double ConfigureQC::get_fire_maximum_time_step() const
+{
+  return fire_maximum_time_step;
+}
+
+
+
+double ConfigureQC::get_fire_maximum_linfty_norm() const
+{
+  return fire_maximum_linfty_norm;
+}
+
+
+
 void ConfigureQC::declare_parameters (ParameterHandler &prm)
 {
   // TODO: Write intput file name to the screen
@@ -291,6 +326,44 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
       }
       prm.leave_subsection ();
     }
+
+  prm.enter_subsection ("Minimizer settings");
+  {
+    prm.declare_entry ("Minimizer tolerance",
+                       "1e-8",
+                       Patterns::Double(1e-16),
+                       "Maximum gradient norm for terminating energy "
+                       "minimization.");
+    prm.declare_entry ("Number of minimizer iterations",
+                       "1000",
+                       Patterns::Integer(0, 1e6),
+                       "Number of iterations of the minimizer before "
+                       "terminating energy minimization.");
+    prm.declare_entry ("Minimizer",
+                       "FIRE",
+                       Patterns::Selection("FIRE"/* TODO Add more minimizers*/),
+                       "Choose minimizer.");
+    prm.enter_subsection ("FIRE");
+    {
+      prm.declare_entry ("Initial time step",
+                         "0.2",
+                         Patterns::Double(1e-16),
+                         "FIRE minimizer initial time step.");
+      prm.declare_entry ("Maximum time step",
+                         "0.5",
+                         Patterns::Double(1e-16),
+                         "FIRE minimizer maximum time step.");
+      prm.declare_entry ("Maximum linfty norm",
+                         "0.5",
+                         Patterns::Double(1e-16),
+                         "FIRE minimizer maximum linfty norm. This refers "
+                         "to the maximum allowable change in any degree of "
+                         "freedom.");
+    }
+    prm.leave_subsection ();
+
+  }
+  prm.leave_subsection ();
 
   // TODO: Declare Run 0
   //       Compute energy and force at the initial configuration.
@@ -464,6 +537,21 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
       }
       prm.leave_subsection();
     }
+
+  prm.enter_subsection ("Minimizer settings");
+  {
+    minimizer_tolerance    = prm.get_double ("Minimizer tolerance");
+    n_minimizer_iterations = prm.get_integer ("Number of minimizer iterations");
+
+    prm.enter_subsection("FIRE");
+    {
+      fire_initial_time_step = prm.get_double("Initial time step");
+      fire_maximum_time_step = prm.get_double("Maximum time step");
+      fire_maximum_linfty_norm = prm.get_double("Maximum linfty norm");
+    }
+    prm.leave_subsection();
+  }
+  prm.leave_subsection ();
 }
 
 

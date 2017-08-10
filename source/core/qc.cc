@@ -6,6 +6,7 @@
 #include <deal.II/grid/grid_tools.h>
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/dofs/dof_tools.h>
+#include <deal.II/lac/solver_fire.h>
 
 #include <deal.II-qc/atom/cell_molecule_tools.h>
 #include <deal.II-qc/core/qc.h>
@@ -55,9 +56,6 @@ QC<dim, PotentialType>::QC (const ConfigureQC &config)
 
   // Initialize boundary functions.
   initialize_boundary_functions();
-
-  // Setup external potential fields.
-  initialize_external_potential_fields();
 }
 
 
@@ -225,7 +223,7 @@ void QC<dim, PotentialType>::setup_boundary_conditions (const double)
 
 
 template <int dim, typename PotentialType>
-void QC<dim, PotentialType>::initialize_external_potential_fields (const double)
+void QC<dim, PotentialType>::initialize_external_potential_fields (const double initial_time)
 {
   for (const auto &entry : configure_qc.get_external_potential_fields())
     {
@@ -233,7 +231,8 @@ void QC<dim, PotentialType>::initialize_external_potential_fields (const double)
         external_potential_fields.insert
         (
           std::make_pair(entry.first.first,
-                         std::make_shared<PotentialField<dim>>(entry.first.second))
+                         std::make_shared<PotentialField<dim>>(entry.first.second,
+                                                               initial_time))
         );
 
       // Initialize FunctionParser object of PotentialField.
@@ -639,6 +638,74 @@ double QC<dim, PotentialType>::compute (vector_t &gradient) const
 
 
 
+template <int dim, typename PotentialType>
+double QC<dim, PotentialType>::compute (vector_t       &gradients,
+                                        const vector_t &displacements)
+{
+  locally_relevant_displacement = displacements;
+  update_positions();
+  const double energy = compute<true>(locally_relevant_gradient);
+  gradients = locally_relevant_gradient;
+  return energy;
+}
+
+
+
+template <int dim, typename PotentialType>
+void QC<dim, PotentialType>::relax_initial_configuration ()
+{
+  vector_t u (QC<dim, PotentialType>::dof_handler.locally_owned_dofs(),
+              QC<dim, PotentialType>::mpi_communicator);
+
+  // Use this to initialize DiagonalMatrix
+  u = 1.;
+
+  // Create inverse diagonal matrix.
+  DiagonalMatrix<vector_t> inv_mass;
+  inv_mass.reinit(u);
+
+  auto additional_data =
+    typename SolverFIRE<vector_t>::
+    AdditionalData (configure_qc.get_fire_initial_time_step(),
+                    configure_qc.get_fire_maximum_time_step(),
+                    configure_qc.get_fire_maximum_linfty_norm());
+
+  SolverControl solver_control (configure_qc.get_n_minimizer_iterations(),
+                                configure_qc.get_minimizer_tolerance());
+
+  SolverFIRE<vector_t> fire (solver_control, additional_data);
+
+  std::function<double(vector_t &,  const vector_t &)> compute_function =
+    [&]               (vector_t &G, const vector_t &U) -> double
+  {
+    const double energy = this->compute(G, U);
+    pcout << "Energy: "           << energy
+    << "\t Gradient norm: " << G.l2_norm() << std::endl;
+    return energy;
+  };
+
+  u = 0.;
+
+  try
+    {
+      fire.solve(compute_function, u, inv_mass);
+    }
+  catch (...)
+    {
+      const unsigned int n_iterations = solver_control.last_step();
+      pcout << "Solver terminated at " << n_iterations << " iteration "
+            << "without achieving desired tolerance, while minimizing the "
+            << "energy to "
+            << compute<false>(locally_relevant_gradient)
+            << " before terminating."
+            << std::endl;
+    }
+
+  // TODO: iteration-dependent DataOutAtomData logging.
+}
+
+
+
 /**
  * A macro that is used in instantiating QC class and it's functions
  * for 1d, 2d and 3d. Call this macro with the name of another macro that when
@@ -668,7 +735,9 @@ double QC<dim, PotentialType>::compute (vector_t &gradient) const
   template void QC<dim, PotentialType>::setup_fe_values_objects ();          \
   template void QC<dim, PotentialType>::update_positions();                  \
   template double QC<dim, PotentialType>::compute<true >(TrilinosWrappers::MPI::Vector &) const;  \
-  template double QC<dim, PotentialType>::compute<false>(TrilinosWrappers::MPI::Vector &) const;
+  template double QC<dim, PotentialType>::compute<false>(TrilinosWrappers::MPI::Vector &) const;  \
+  template void QC<dim, PotentialType>::initialize_external_potential_fields (const double);      \
+  template void QC<dim, PotentialType>::relax_initial_configuration();
 
 DEAL_II_QC_INSTANTIATE(INSTANTIATE)
 
