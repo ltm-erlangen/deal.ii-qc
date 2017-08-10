@@ -81,10 +81,86 @@ void QC<dim, PotentialType>::run ()
     {
       minimize_energy(time);
       time += time_step;
-
-      // TODO: iteration-dependent DataOutAtomData logging.
+      output_results (time, step);
     }
 }
+
+
+
+template <int dim, typename PotentialType>
+void QC<dim, PotentialType>::output_results (const double time,
+                                             const unsigned int timestep_no) const
+{
+  DataOut<dim> data_out;
+  data_out.attach_dof_handler (dof_handler);
+  std::vector<std::string> solution_names;
+  switch (dim)
+    {
+    case 1:
+      solution_names.push_back ("u_x");
+      break;
+    case 2:
+      solution_names.push_back ("u_x");
+      solution_names.push_back ("u_y");
+      break;
+    case 3:
+      solution_names.push_back ("u_x");
+      solution_names.push_back ("u_y");
+      solution_names.push_back ("u_z");
+      break;
+    default:
+      Assert (false, ExcNotImplemented());
+    }
+  data_out.add_data_vector (locally_relevant_displacement,
+                            solution_names);
+
+  std::vector<dealii::types::subdomain_id> partition_int (triangulation.n_active_cells());
+  GridTools::get_subdomain_association (triangulation, partition_int);
+  const Vector<double> partitioning(partition_int.begin(),
+                                    partition_int.end());
+  data_out.add_data_vector (partitioning, "partitioning");
+  data_out.build_patches ();
+
+  unsigned int
+  this_mpi_process = dealii::Utilities::MPI::this_mpi_process(mpi_communicator),
+  n_mpi_processes  = dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
+
+  std::string filename = "solution-" + dealii::Utilities::int_to_string(timestep_no,4)
+                         + "." + dealii::Utilities::int_to_string(this_mpi_process,3)
+                         + ".vtu";
+  AssertThrow (n_mpi_processes < 1000,
+               ExcNotImplemented());
+
+  std::ofstream output (filename.c_str());
+  data_out.write_vtu (output);
+  if (this_mpi_process==0)
+    {
+      std::vector<std::string> filenames;
+      for (unsigned int i=0; i<n_mpi_processes; ++i)
+        filenames.push_back ("solution-"
+                             + dealii::Utilities::int_to_string(timestep_no,4)
+                             + "." + dealii::Utilities::int_to_string(i,3)
+                             + ".vtu");
+      const std::string
+      visit_master_filename = ("solution-" +
+                               dealii::Utilities::int_to_string(timestep_no,4) +
+                               ".visit");
+      std::ofstream visit_master (visit_master_filename.c_str());
+      DataOutBase::write_visit_record (visit_master, filenames);
+      const std::string
+      pvtu_master_filename = ("solution-" +
+                              dealii::Utilities::int_to_string(timestep_no,4) +
+                              ".pvtu");
+      std::ofstream pvtu_master (pvtu_master_filename.c_str());
+      data_out.write_pvtu_record (pvtu_master, filenames);
+      static std::vector<std::pair<double,std::string> > times_and_names;
+      times_and_names.push_back (std::pair<double,std::string> (time,
+                                                                pvtu_master_filename));
+      std::ofstream pvd_output ("solution.pvd");
+      DataOutBase::write_pvd_record (pvd_output, times_and_names);
+    }
+}
+
 
 
 template <int dim, typename PotentialType>
@@ -757,7 +833,8 @@ void QC<dim, PotentialType>::minimize_energy (const double time)
   template double QC<dim, PotentialType>::compute<true >(TrilinosWrappers::MPI::Vector &) const;  \
   template double QC<dim, PotentialType>::compute<false>(TrilinosWrappers::MPI::Vector &) const;  \
   template void QC<dim, PotentialType>::initialize_external_potential_fields (const double);      \
-  template void QC<dim, PotentialType>::minimize_energy (const double);
+  template void QC<dim, PotentialType>::minimize_energy (const double);      \
+  template void QC<dim, PotentialType>::output_results (const double, const unsigned int) const;
 
 DEAL_II_QC_INSTANTIATE(INSTANTIATE)
 
