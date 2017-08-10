@@ -87,6 +87,18 @@ void QC<dim, PotentialType>::run ()
 
 
 
+namespace
+{
+  inline
+  std::string data_out_solution_filename (const unsigned int timestep_no,
+                                          const dealii::types::subdomain_id id)
+  {
+    return "solution-" +
+           dealii::Utilities::int_to_string(timestep_no,4) + "." +
+           dealii::Utilities::int_to_string(id,3) + ".vtu";
+  }
+}
+
 template <int dim, typename PotentialType>
 void QC<dim, PotentialType>::output_results (const double time,
                                              const unsigned int timestep_no) const
@@ -116,20 +128,20 @@ void QC<dim, PotentialType>::output_results (const double time,
 
   std::vector<dealii::types::subdomain_id> partition_int (triangulation.n_active_cells());
   GridTools::get_subdomain_association (triangulation, partition_int);
-  const Vector<double> partitioning(partition_int.begin(),
+  const Vector<float> partitioning (partition_int.begin(),
                                     partition_int.end());
   data_out.add_data_vector (partitioning, "partitioning");
   data_out.build_patches ();
 
-  unsigned int
+  const unsigned int
   this_mpi_process = dealii::Utilities::MPI::this_mpi_process(mpi_communicator),
   n_mpi_processes  = dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
 
-  std::string filename = "solution-" + dealii::Utilities::int_to_string(timestep_no,4)
-                         + "." + dealii::Utilities::int_to_string(this_mpi_process,3)
-                         + ".vtu";
   AssertThrow (n_mpi_processes < 1000,
                ExcNotImplemented());
+
+  const std::string filename = data_out_solution_filename (timestep_no,
+                                                           this_mpi_process);
 
   std::ofstream output (filename.c_str());
   data_out.write_vtu (output);
@@ -137,10 +149,8 @@ void QC<dim, PotentialType>::output_results (const double time,
     {
       std::vector<std::string> filenames;
       for (unsigned int i=0; i<n_mpi_processes; ++i)
-        filenames.push_back ("solution-"
-                             + dealii::Utilities::int_to_string(timestep_no,4)
-                             + "." + dealii::Utilities::int_to_string(i,3)
-                             + ".vtu");
+        filenames.push_back (data_out_solution_filename (timestep_no, i));
+
       const std::string
       visit_master_filename = ("solution-" +
                                dealii::Utilities::int_to_string(timestep_no,4) +
