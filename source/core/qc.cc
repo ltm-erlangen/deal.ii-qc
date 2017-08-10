@@ -500,10 +500,12 @@ double QC<dim, PotentialType>::compute (vector_t &gradient) const
   local_dof_indices_I(dofs_per_cell), local_dof_indices_J(dofs_per_cell);
   Vector<double> local_gradient_I(dofs_per_cell), local_gradient_J(dofs_per_cell);
 
+  // start from a first pair of cells I-J in the neighbour list.
   const types::CellIteratorType<dim>
   cell_I_first = neighbor_lists.begin()->first.first,
   cell_J_first = neighbor_lists.begin()->first.second;
 
+  // Convert tria's cells into dof cells.
   const types::DoFCellIteratorType<dim>
   dof_cell_I_first (&triangulation,
                     cell_I_first->level(),
@@ -516,6 +518,7 @@ double QC<dim, PotentialType>::compute (vector_t &gradient) const
                     cell_J_first->index(),
                     &dof_handler);
 
+  // Locate the first pair of cells I-J.
   typename
   std::map<types::DoFCellIteratorType<dim>, AssemblyData>::const_iterator
   cell_data_I = cells_to_data.find(dof_cell_I_first),
