@@ -1,5 +1,6 @@
 
 // Check the correctness of energy computation with various number of processes.
+// (This test was previously failing for mpirun=4, bugfix in #203 fixes this).
 
 
 #include <iostream>
