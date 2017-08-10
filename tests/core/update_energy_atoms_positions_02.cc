@@ -11,14 +11,15 @@ using namespace dealiiqc;
 
 
 
-// Compute the energy of the system of 2 charged atoms
+// Compute the energy of the system of 3 charged atoms
 // interacting exclusively through Coulomb interactions.
+// Check that they the energy remains for a single configuration.
 //
-// +-------*
-// |       |          *, +  - vertices
-// |       |          *     - atoms
-// |       |
-// *-------+
+// +-------+-------+
+// |       |       |   *, +  - vertices
+// |       |       |   *     - atoms
+// |       |       |
+// *-------*-------*
 //
 // Update the positions of atoms
 
@@ -29,7 +30,7 @@ class Problem : public QC<dim, PotentialType>
 {
 public:
   Problem (const ConfigureQC &);
-  void run ();
+  void partial_run ();
 };
 
 
@@ -48,7 +49,7 @@ Problem<dim, PotentialType>::Problem (const ConfigureQC &config)
 
 
 template <int dim, typename PotentialType>
-void Problem<dim, PotentialType>::run()
+void Problem<dim, PotentialType>::partial_run()
 {
   // --- Energy at zero displacement.
 
@@ -121,7 +122,7 @@ int main (int argc, char *argv[])
           << "    set X center = 1."                          << std::endl
           << "    set Y center = .5"                          << std::endl
           << "    set Z center = .5"                          << std::endl
-          << "    set X extent = 1."                          << std::endl
+          << "    set X extent = 2."                          << std::endl
           << "    set Y extent = 1."                          << std::endl
           << "    set Z extent = 1."                          << std::endl
           << "    set X repetitions = 2"                      << std::endl
@@ -158,7 +159,7 @@ int main (int argc, char *argv[])
 
       // Define Problem
       Problem<dim, Potential::PairCoulWolfManager> problem(config);
-      problem.run ();
+      problem.partial_run ();
     }
   catch (std::exception &exc)
     {
