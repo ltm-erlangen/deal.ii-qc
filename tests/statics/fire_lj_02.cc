@@ -1,15 +1,5 @@
 
-// Check the convergence of FIRE minimization scheme applied to fully atomistic
-// QC system with 2 atoms interacting via Lennard-Jones potential.
-//
-// *-------o
-// |       |          o,*  - vertices
-// |       |          *    - atoms
-// |       |          o    - dof sites at which gradient value is zero
-// o-------*
-//
-// 4 entries of the gradient of the total energy are zeros.
-
+// Check the correctness of energy computation with various number of processes.
 
 
 #include <iostream>
@@ -87,9 +77,9 @@ int main (int argc, char *argv[])
           << "    set X center =  4"                          << std::endl
           << "    set Y center =  4"                          << std::endl
           << "    set Z center =  3.5"                        << std::endl
-          << "    set X extent =  8"                         << std::endl
-          << "    set Y extent =  8"                         << std::endl
-          << "    set Z extent =  8"                         << std::endl
+          << "    set X extent =  8"                          << std::endl
+          << "    set Y extent =  8"                          << std::endl
+          << "    set Z extent =  8"                          << std::endl
           << "    set X repetitions = 1"                      << std::endl
           << "    set Y repetitions = 1"                      << std::endl
           << "    set Z repetitions = 1"                      << std::endl
@@ -102,37 +92,17 @@ int main (int argc, char *argv[])
           << "  set Atom data file = "
           << SOURCE_DIR "/../data/8_NaCl_atom.data"           << std::endl
           << "  set Pair potential type = LJ"                 << std::endl
-          << "  set Pair global coefficients = 1.35"         << std::endl
+          << "  set Pair global coefficients = 1.35"          << std::endl
           << "  set Pair specific coefficients = "
           "0, 0, 1., .7220;"
           "0, 1, 1., .7220;"
-          "1, 1, 1., .7220;"                              << std::endl
+          "1, 1, 1., .7220;"                                  << std::endl
           << "end"                                            << std::endl
 
           << "subsection Configure QC"                        << std::endl
           << "  set Ghost cell layer thickness = 2.99"        << std::endl
           << "  set Cluster radius = 1.2"                     << std::endl
           << "  set Cluster weights by type = SamplingPoints" << std::endl
-          << "end"                                            << std::endl
-
-          << "subsection boundary_0"                          << std::endl
-          << "  set Function expressions = 0., , ,"           << std::endl
-          << "end"                                            << std::endl
-
-          << "subsection boundary_1"                          << std::endl
-          << "  set Function expressions = 0., , ,"           << std::endl
-          << "end"                                            << std::endl
-
-          << "subsection boundary_2"                          << std::endl
-          << "  set Function expressions = , 0., ,"           << std::endl
-          << "end"                                            << std::endl
-
-          << "subsection boundary_3"                          << std::endl
-          << "  set Function expressions = , 0., ,"           << std::endl
-          << "end"                                            << std::endl
-
-          << "subsection boundary_4"                          << std::endl
-          << "  set Function expressions = , , 0.,"           << std::endl
           << "end"                                            << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
