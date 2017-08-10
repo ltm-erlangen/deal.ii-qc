@@ -500,10 +500,30 @@ double QC<dim, PotentialType>::compute (vector_t &gradient) const
   local_dof_indices_I(dofs_per_cell), local_dof_indices_J(dofs_per_cell);
   Vector<double> local_gradient_I(dofs_per_cell), local_gradient_J(dofs_per_cell);
 
+  const types::CellIteratorType<dim>
+  cell_I_first = neighbor_lists.begin()->first.first,
+  cell_J_first = neighbor_lists.begin()->first.second;
+
+  const types::DoFCellIteratorType<dim>
+  dof_cell_I_first (&triangulation,
+                    cell_I_first->level(),
+                    cell_I_first->index(),
+                    &dof_handler);
+
+  const types::DoFCellIteratorType<dim>
+  dof_cell_J_first (&triangulation,
+                    cell_J_first->level(),
+                    cell_J_first->index(),
+                    &dof_handler);
+
   typename
   std::map<types::DoFCellIteratorType<dim>, AssemblyData>::const_iterator
-  cell_data_I = cells_to_data.begin(),
-  cell_data_J = cells_to_data.begin();
+  cell_data_I = cells_to_data.find(dof_cell_I_first),
+  cell_data_J = cells_to_data.find(dof_cell_J_first);
+
+  AssertThrow (cell_data_I != cells_to_data.end() &&
+               cell_data_J != cells_to_data.end(),
+               ExcInternalError());
 
   local_gradient_I = 0.;
   local_gradient_J = 0.;
