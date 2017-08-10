@@ -135,6 +135,42 @@ ConfigureQC::get_external_potential_fields() const
 
 
 
+std::string ConfigureQC::get_minimizer_name() const
+{
+  return minimizer;
+}
+
+
+
+double ConfigureQC::get_time_step() const
+{
+  return time_step;
+}
+
+
+
+unsigned int ConfigureQC::get_n_time_steps() const
+{
+  return n_time_steps;
+}
+
+
+
+ConfigureQC::SolverControlParameters
+ConfigureQC::get_solver_control_parameters () const
+{
+  return solver_control_parameters;
+}
+
+
+
+ConfigureQC::FireParameters ConfigureQC::get_fire_parameters () const
+{
+  return fire_parameters;
+}
+
+
+
 void ConfigureQC::declare_parameters (ParameterHandler &prm)
 {
   // TODO: Write intput file name to the screen
@@ -291,6 +327,47 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
       }
       prm.leave_subsection ();
     }
+
+  prm.enter_subsection ("Minimizer settings");
+  {
+    SolverControl::declare_parameters(prm);
+
+    prm.declare_entry ("Minimizer",
+                       "FIRE",
+                       Patterns::Selection("FIRE"/* TODO Add more minimizers*/),
+                       "Choose minimizer.");
+
+    prm.enter_subsection ("FIRE");
+    {
+      prm.declare_entry ("Initial time step",
+                         "0.2",
+                         Patterns::Double(1e-16),
+                         "FIRE minimizer initial time step.");
+      prm.declare_entry ("Maximum time step",
+                         "0.5",
+                         Patterns::Double(1e-16),
+                         "FIRE minimizer maximum time step.");
+      prm.declare_entry ("Maximum linfty norm",
+                         "0.5",
+                         Patterns::Double(1e-16),
+                         "FIRE minimizer maximum linfty norm. This refers "
+                         "to the maximum allowable change in any degree of "
+                         "freedom.");
+    }
+    prm.leave_subsection ();
+  }
+  prm.leave_subsection ();
+
+  prm.declare_entry("Number of time steps",
+                    "0",
+                    Patterns::Integer(0),
+                    "The number of load steps to be performed during the "
+                    "quasi-static loading process.");
+  prm.declare_entry("Time step size",
+                    "0.1",
+                    Patterns::Double(0),
+                    "The time interval between load steps in the "
+                    "quasi-static loading process.");
 
   // TODO: Declare Run 0
   //       Compute energy and force at the initial configuration.
@@ -464,6 +541,31 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
       }
       prm.leave_subsection();
     }
+
+  prm.enter_subsection ("Minimizer settings");
+  {
+    solver_control_parameters.max_steps     = prm.get_integer("Max steps");
+    solver_control_parameters.tolerance     = prm.get_double("Tolerance");
+    solver_control_parameters.log_history   = prm.get_bool("Log history");
+    solver_control_parameters.log_result    = prm.get_bool("Log result");
+    solver_control_parameters.log_frequency = prm.get_integer("Log frequency");
+
+    minimizer              = prm.get("Minimizer");
+
+    prm.enter_subsection("FIRE");
+    {
+      fire_parameters.initial_time_step = prm.get_double("Initial time step");
+      fire_parameters.maximum_time_step = prm.get_double("Maximum time step");
+      fire_parameters.maximum_linfty_norm = prm.get_double("Maximum linfty norm");
+    }
+    prm.leave_subsection();
+  }
+  prm.leave_subsection ();
+
+
+  n_time_steps = prm.get_integer("Number of time steps");
+  time_step    = prm.get_double("Time step size");
+
 }
 
 

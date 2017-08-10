@@ -60,6 +60,14 @@ PotentialField<spacedim>::gradient (const Point<spacedim> &p,
 
 
 
+template <int spacedim>
+void PotentialField<spacedim>::set_time (const double time)
+{
+  function_object.set_time(time);
+}
+
+
+
 template class PotentialField<1>;
 template class PotentialField<2>;
 template class PotentialField<3>;

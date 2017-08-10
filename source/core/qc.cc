@@ -55,9 +55,6 @@ QC<dim, PotentialType>::QC (const ConfigureQC &config)
 
   // Initialize boundary functions.
   initialize_boundary_functions();
-
-  // Setup external potential fields.
-  initialize_external_potential_fields();
 }
 
 
@@ -70,8 +67,23 @@ void QC<dim, PotentialType>::run ()
   setup_fe_values_objects();
   update_neighbor_lists();
   update_positions();
-  const double e = compute(locally_relevant_gradient);
-  (void)e;
+
+  minimize_energy (-1.);
+
+  // Initialize external potential fields.
+  initialize_external_potential_fields();
+
+  const unsigned int n_time_steps = configure_qc.get_n_time_steps();
+  const double time_step   = configure_qc.get_time_step();
+
+  double time = 0.;
+  for (unsigned int step = 0; step <= n_time_steps; ++step)
+    {
+      minimize_energy(time);
+      time += time_step;
+
+      // TODO: iteration-dependent DataOutAtomData logging.
+    }
 }
 
 
@@ -225,7 +237,7 @@ void QC<dim, PotentialType>::setup_boundary_conditions (const double)
 
 
 template <int dim, typename PotentialType>
-void QC<dim, PotentialType>::initialize_external_potential_fields (const double)
+void QC<dim, PotentialType>::initialize_external_potential_fields (const double initial_time)
 {
   for (const auto &entry : configure_qc.get_external_potential_fields())
     {
@@ -233,7 +245,8 @@ void QC<dim, PotentialType>::initialize_external_potential_fields (const double)
         external_potential_fields.insert
         (
           std::make_pair(entry.first.first,
-                         std::make_shared<PotentialField<dim>>(entry.first.second))
+                         std::make_shared<PotentialField<dim>>(entry.first.second,
+                                                               initial_time))
         );
 
       // Initialize FunctionParser object of PotentialField.
@@ -639,6 +652,80 @@ double QC<dim, PotentialType>::compute (vector_t &gradient) const
 
 
 
+template <int dim, typename PotentialType>
+void QC<dim, PotentialType>::minimize_energy (const double time)
+{
+  if (time >= 0.)
+    for (auto &potential_field : external_potential_fields)
+      potential_field.second->set_time (time);
+
+  // FIXME: move u and inv_mass to constructor
+  vector_t u (QC<dim, PotentialType>::dof_handler.locally_owned_dofs(),
+              QC<dim, PotentialType>::mpi_communicator);
+
+  // Use this to initialize DiagonalMatrix
+  u = 1.;
+
+  // FIXME: Compute inverse mass matrix based on cluster weights.
+  //        Make inverse matrix a member variable of this class.
+  //        write a function to set it up.
+
+  // Create inverse diagonal matrix.
+  DiagonalMatrix<vector_t> inv_mass;
+  inv_mass.reinit(u);
+  //---------------------------------------------------------------------------
+
+  std::function<double(vector_t &,  const vector_t &)> compute_function =
+    [&]               (vector_t &G, const vector_t &U) -> double
+  {
+    locally_relevant_displacement = U;
+    update_positions();
+    const double energy = compute<true>(locally_relevant_gradient);
+    G = locally_relevant_gradient;
+    return energy;
+  };
+
+  u = 0.;
+
+  ConfigureQC::SolverControlParameters solver_control_parameters =
+    configure_qc.get_solver_control_parameters();
+
+  SolverControl solver_control (solver_control_parameters.max_steps,
+                                solver_control_parameters.tolerance,
+                                solver_control_parameters.log_history,
+                                solver_control_parameters.log_result);
+  solver_control.log_frequency(solver_control_parameters.log_frequency);
+
+  try
+    {
+      if (configure_qc.get_minimizer_name()=="FIRE")
+        {
+          ConfigureQC::FireParameters fire_parameters =
+            configure_qc.get_fire_parameters();
+
+          typename SolverFIRE<vector_t>::AdditionalData
+          additional_data_fire (fire_parameters.initial_time_step,
+                                fire_parameters.maximum_time_step,
+                                fire_parameters.maximum_linfty_norm);
+
+          SolverFIRE<vector_t> solver(solver_control, additional_data_fire);
+          solver.solve(compute_function, u, inv_mass);
+        }
+      else
+        AssertThrow(false, ExcNotImplemented());
+    }
+  catch (...)
+    {
+      pcout << "Solver terminated without achieving desired tolerance, "
+            << "while minimizing the energy to "
+            << compute<false>(locally_relevant_gradient)
+            << " before terminating."
+            << std::endl;
+    }
+}
+
+
+
 /**
  * A macro that is used in instantiating QC class and it's functions
  * for 1d, 2d and 3d. Call this macro with the name of another macro that when
@@ -668,7 +755,9 @@ double QC<dim, PotentialType>::compute (vector_t &gradient) const
   template void QC<dim, PotentialType>::setup_fe_values_objects ();          \
   template void QC<dim, PotentialType>::update_positions();                  \
   template double QC<dim, PotentialType>::compute<true >(TrilinosWrappers::MPI::Vector &) const;  \
-  template double QC<dim, PotentialType>::compute<false>(TrilinosWrappers::MPI::Vector &) const;
+  template double QC<dim, PotentialType>::compute<false>(TrilinosWrappers::MPI::Vector &) const;  \
+  template void QC<dim, PotentialType>::initialize_external_potential_fields (const double);      \
+  template void QC<dim, PotentialType>::minimize_energy (const double);
 
 DEAL_II_QC_INSTANTIATE(INSTANTIATE)
 

@@ -5,6 +5,8 @@
 #include <deal.II/base/subscriptor.h>
 #include <deal.II/base/parameter_handler.h>
 #include <deal.II/base/logstream.h>
+#include <deal.II/lac/generic_linear_algebra.h>
+#include <deal.II/lac/solver_fire.h>
 
 #include <fstream>
 #include <sstream>
@@ -35,6 +37,61 @@ using namespace dealii;
 class ConfigureQC
 {
 public:
+
+  /**
+   * Parameters to setup SolverControl.
+   */
+  struct SolverControlParameters
+  {
+    /**
+     * Maximum number of minimizer iterations before declaring failure.
+     */
+    unsigned int max_steps;
+
+    /**
+     * Prescribed tolerance to be achieved.
+     */
+    double       tolerance;
+
+    /**
+     * Log convergence history to deallog.
+     */
+    bool         log_history;
+
+    /**
+     * Log only every nth step.
+     */
+    unsigned int log_frequency;
+
+    /**
+     * If true, after finishing the iteration, a statement about failure or
+     * success together with last step and value of convergence criteria are
+     * logged.
+     */
+    bool         log_result;
+  };
+
+  /**
+   * Parameters to setup SolverFIRE minimizer.
+   */
+  struct FireParameters
+  {
+    /**
+     * Initial time step.
+     */
+    double initial_time_step;
+
+    /**
+     * Maximum time step.
+     */
+    double maximum_time_step;
+
+    /**
+     * Maximum linfty norm.
+     */
+    double maximum_linfty_norm;
+  };
+
 
   /**
    * Constructor with a shared pointer to an istream object @p is.
@@ -115,6 +172,32 @@ public:
    */
   std::map<std::pair<unsigned int, bool>, std::string>
   get_external_potential_fields() const;
+
+  /**
+   * Get minimizer's name.
+   */
+  std::string get_minimizer_name() const;
+
+  /**
+   * Get the time interval between load steps during the quasi-static loading
+   * process.
+   */
+  double get_time_step() const;
+
+  /**
+   * Get the number of load steps during the quasi-static loading process.
+   */
+  unsigned int get_n_time_steps() const;
+
+  /**
+   * Get SolverControl parameters.
+   */
+  SolverControlParameters get_solver_control_parameters () const;
+
+  /**
+   * Get SolverFIRE parameters.
+   */
+  FireParameters get_fire_parameters() const;
 
 private:
 
@@ -256,6 +339,33 @@ protected:
    * The type of method to update cluster weights.
    */
   std::string cluster_weights_type;
+
+  /**
+   * Type of minimizer
+   */
+  std::string minimizer;
+
+  /**
+   * Number of load steps to be performed during the quasi-static loading.
+   */
+  unsigned int n_time_steps;
+
+  /**
+   * The time interval between load steps of quasi-static loading process.
+   * The value depends on the sensitivity of the atomistic system to the
+   * applied loading.
+   */
+  double time_step;
+
+  /**
+   * SolverControl parameters
+   */
+  SolverControlParameters solver_control_parameters;
+
+  /**
+   * Parameters to setup SolverFIRE minimizer.
+   */
+  FireParameters fire_parameters;
 
 };
 
