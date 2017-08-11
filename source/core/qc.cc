@@ -8,6 +8,7 @@
 #include <deal.II/dofs/dof_tools.h>
 
 #include <deal.II-qc/atom/cell_molecule_tools.h>
+#include <deal.II-qc/core/compute_tools.h>
 #include <deal.II-qc/core/qc.h>
 
 
@@ -656,9 +657,12 @@ double QC<dim, PotentialType>::compute_local (vector_t &gradient) const
                          "Either cell_I or cell_J doesn't contain "
                          "cell_molecule_I or cell_molecule_J, respectively."));
 
+      const Molecule<dim, 1> &molecule_I = cell_molecule_I->second;
+      const Molecule<dim, 1> &molecule_J = cell_molecule_J->second;
+
       // FIXME: loop over all atoms
-      const Tensor<1,dim> rIJ = cell_molecule_I->second.atoms[0].position -
-                                cell_molecule_J->second.atoms[0].position;
+      const Tensor<1,dim> rIJ = molecule_I.atoms[0].position -
+                                molecule_J.atoms[0].position;
 
       const double r_square = rIJ.norm_square();
 
@@ -673,8 +677,8 @@ double QC<dim, PotentialType>::compute_local (vector_t &gradient) const
       // whether or not one of the two molecules do not belong to any cluster.
 
       // Compute scaling of energy due to cluster weights.
-      const double scale_energy = 0.5 * (cell_molecule_I->second.cluster_weight +
-                                         cell_molecule_J->second.cluster_weight );
+      const double scale_energy = 0.5 * (molecule_I.cluster_weight +
+                                         molecule_J.cluster_weight );
 
       // Assert that the scaling factor of energy, due to clustering, is
       // non-zero. One of the molecule must be a cluster molecule and
@@ -685,12 +689,59 @@ double QC<dim, PotentialType>::compute_local (vector_t &gradient) const
       // molecule I and  molecule J:
       const std::pair<double, double> pair =
         (*potential_ptr).template
-        energy_and_gradient<ComputeGradient> (cell_molecule_I->second.atoms[0].type,
-                                              cell_molecule_J->second.atoms[0].type,
+        energy_and_gradient<ComputeGradient> (molecule_I.atoms[0].type,
+                                              molecule_J.atoms[0].type,
                                               r_square);
 
+      // Accumulate energy and gradient due to external potential fields here.
+      std::pair<double, Tensor<1, dim> >
+      external_energy_and_gradient_I = std::make_pair(0, Tensor<1,dim>()),
+      external_energy_and_gradient_J = std::make_pair(0, Tensor<1,dim>());
+
+      // Get the external potential field(s) for cell_I and cell_J.
+      auto external_potential_fields_range_I =
+        external_potential_fields.equal_range(cell_I->material_id());
+
+      auto external_potential_fields_range_J =
+        external_potential_fields.equal_range(cell_J->material_id());
+
+      for (auto
+           potential_field  = external_potential_fields_range_I.first;
+           potential_field != external_potential_fields_range_I.second;
+           potential_field++)
+        {
+          const std::pair<double, Tensor<1, dim> >
+          energy_and_gradient_I =
+            ComputeTools::energy_and_gradient<dim, ComputeGradient>
+            (*potential_field->second,
+             molecule_I.atoms[0],
+             cell_molecule_data.charges->operator[](molecule_I.atoms[0].type));
+
+          external_energy_and_gradient_I.first  += energy_and_gradient_I.first;
+          external_energy_and_gradient_I.second += energy_and_gradient_I.second;
+        }
+
+      for (auto
+           potential_field  = external_potential_fields_range_J.first;
+           potential_field != external_potential_fields_range_J.second;
+           potential_field++)
+        {
+          const std::pair<double, Tensor<1, dim> >
+          energy_and_gradient_J =
+            ComputeTools::energy_and_gradient<dim, ComputeGradient>
+            (*potential_field->second,
+             molecule_I.atoms[0],
+             cell_molecule_data.charges->operator[](molecule_I.atoms[0].type));
+
+          external_energy_and_gradient_J.first  += energy_and_gradient_J.first;
+          external_energy_and_gradient_J.second += energy_and_gradient_J.second;
+        }
+
       // Now we scale the energy according to cluster weights of the molecules.
-      energy_per_process += scale_energy * pair.first ;
+      energy_per_process += scale_energy *
+                            (external_energy_and_gradient_I.first +
+                             external_energy_and_gradient_J.first +
+                             pair.first);
 
       if (ComputeGradient)
         {
@@ -730,11 +781,17 @@ double QC<dim, PotentialType>::compute_local (vector_t &gradient) const
 
           // Get quadrature point index from the local_index of molecule pairs
           const unsigned int
-          qI = cell_molecule_I->second.local_index,
-          qJ = cell_molecule_J->second.local_index;
+          qI = molecule_I.local_index,
+          qJ = molecule_J.local_index;
 
           const double r = std::sqrt(r_square);
           const double force_multiplier  = scale_energy * pair.second / r;
+
+          const Tensor <1, dim> gradient_I =
+            scale_energy * external_energy_and_gradient_I.second;
+
+          const Tensor <1, dim> gradient_J =
+            scale_energy * external_energy_and_gradient_J.second;
 
           // FIXME: evaluate gradients for all atoms in molecules.
           // Finally, we evaluated local contribution to the gradient of
@@ -750,12 +807,14 @@ double QC<dim, PotentialType>::compute_local (vector_t &gradient) const
             {
               const unsigned int nonzero_comp = fe.system_to_component_index(k).first;
 
-              local_gradient_I[k] += force_multiplier *
-                                     rIJ[nonzero_comp] *
+              local_gradient_I[k] += (gradient_I[nonzero_comp]
+                                      +      rIJ[nonzero_comp] * force_multiplier)
+                                     *
                                      cell_data_I->second.fe_values->shape_value(k, qI);
 
-              local_gradient_J[k] -= force_multiplier *
-                                     rIJ[nonzero_comp] *
+              local_gradient_J[k] -= (gradient_J[nonzero_comp]
+                                      +       rIJ[nonzero_comp] * force_multiplier)
+                                     *
                                      cell_data_J->second.fe_values->shape_value(k, qJ);
             }
         }
