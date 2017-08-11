@@ -361,6 +361,16 @@ protected:
    */
   mutable TimerOutput  computing_timer;
 
+private:
+
+  /**
+   * Return the computed energy of the atomistic system using QC approach
+   * for the current MPI process, and update its @p gradient for the current
+   * MPI process if <tt>ComputeGradient</tt> is set true.
+   */
+  template <bool ComputeGradient=true>
+  double compute_local (vector_t &gradient) const;
+
 };
 
 

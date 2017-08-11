@@ -11,22 +11,15 @@ using namespace dealiiqc;
 
 
 
-// Compute the energy of the system of 3 charged atoms
-// interacting exclusively through Coulomb interactions.
+// Check that the energy computation doesn't throw error for the case when
+// an MPI process has empty neighbor_lists.
 //
-// Check that the energy remains unchanged for a particular configuration.
-// This is achieved by the following procedure. First compute the energy
-// for the initial configuration. Applying a random displacement to the
-// atomistic system and then removing it. Compute the energy again to compare
-// with the earlier value.
-//
-// +-------+-------+
-// |       |       |   *, +  - vertices
+// +-------+-------*
+// |       |     * |   *, +  - vertices
 // |       |       |   *     - atoms
-// |       |       |
-// *-------*-------*
+// |       | *     |
+// +-------+-------*
 //
-// Update the positions of atoms
 
 
 
@@ -35,7 +28,6 @@ class Problem : public QC<dim, PotentialType>
 {
 public:
   Problem (const ConfigureQC &);
-  void partial_run ();
 };
 
 
@@ -49,60 +41,12 @@ Problem<dim, PotentialType>::Problem (const ConfigureQC &config)
   QC<dim, PotentialType>::setup_system();
   QC<dim, PotentialType>::setup_fe_values_objects();
   QC<dim, PotentialType>::update_neighbor_lists();
-}
-
-
-
-template <int dim, typename PotentialType>
-void Problem<dim, PotentialType>::partial_run()
-{
-  // --- Energy at zero displacement.
-
-  typename QC<dim, PotentialType>::vector_t u;
-  u.reinit (QC<dim, PotentialType>::dof_handler.locally_owned_dofs(),
-            QC<dim, PotentialType>::mpi_communicator);
-
-  u = 0.;
-
-  QC<dim, PotentialType>::locally_relevant_displacement = u;
   QC<dim, PotentialType>::update_positions();
-  const double energy_0 =
+  const double energy =
     QC<dim, PotentialType>::template
     compute(QC<dim, PotentialType>::locally_relevant_gradient);
 
-  // --- Random displacements.
-  // manually get locally owned elements parallel vector:
-
-  std::uniform_real_distribution<double> dist (0, 1.);
-  std::default_random_engine engine;
-
-  const IndexSet locally_owned_set =
-    QC<dim, PotentialType>::dof_handler.locally_owned_dofs();
-
-  for (unsigned int i = 0; i < locally_owned_set.n_elements(); ++i)
-    u(locally_owned_set.nth_index_in_set(i)) = dist(engine);
-
-  QC<dim, PotentialType>::locally_relevant_displacement = u;
-  QC<dim, PotentialType>::update_positions();
-  const double energy_1 =
-    QC<dim, PotentialType>::template
-    compute(QC<dim, PotentialType>::locally_relevant_gradient);
-  (void)energy_1;
-
-  // --- Reset displacement to zero.
-
-  u = 0.;
-
-  QC<dim, PotentialType>::locally_relevant_displacement = u;
-  QC<dim, PotentialType>::update_positions();
-  const double energy_2 =
-    QC<dim, PotentialType>::template
-    compute(QC<dim, PotentialType>::locally_relevant_gradient);
-
-  AssertThrow (energy_0 == energy_2,
-               ExcInternalError());
-
-  QC<dim, PotentialType>::pcout << "TEST PASSED!" << std::endl;
+  QC<dim, PotentialType>::pcout << "Energy: " << energy << std::endl;
 }
 
 
@@ -150,12 +94,13 @@ int main (int argc, char *argv[])
           << "#end-of-parameter-section"                      << std::endl
 
           << "LAMMPS Description"              << std::endl   << std::endl
-          << "3 atoms"                         << std::endl   << std::endl
+          << "4 atoms"                         << std::endl   << std::endl
           << "2  atom types"                   << std::endl   << std::endl
           << "Atoms #"                         << std::endl   << std::endl
-          << "1 1 1  1.0 0.0 0.0 0."                          << std::endl
-          << "2 2 2 -1.0 1.0 0.0 0."                          << std::endl
-          << "3 3 1  1.0 2.0 0.0 0."                          << std::endl;
+          << "1 1 1  1.0 2.0 1.0 0."                          << std::endl
+          << "2 2 2 -1.0 1.2 0.3 0."                          << std::endl
+          << "3 3 1  1.0 2.0 0.0 0."                          << std::endl
+          << "4 4 2 -1.0 1.8 0.7 0."                          << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());
@@ -164,7 +109,6 @@ int main (int argc, char *argv[])
 
       // Define Problem
       Problem<dim, Potential::PairCoulWolfManager> problem(config);
-      problem.partial_run ();
     }
   catch (std::exception &exc)
     {

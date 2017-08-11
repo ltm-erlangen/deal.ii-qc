@@ -568,10 +568,27 @@ double QC<dim, PotentialType>::compute (vector_t &gradient) const
 {
   TimerOutput::Scope t (computing_timer, "Compute energy and gradient");
 
-  double energy_per_process = 0.;
-
   if (ComputeGradient)
     gradient = 0.;
+
+  const double energy_per_process =
+    neighbor_lists.empty() ?
+    0.                     :
+    compute_local<ComputeGradient>(gradient);
+
+  gradient.compress(VectorOperation::add);
+
+  // sum contributions from all MPI cores and return the result:
+  return dealii::Utilities::MPI::sum(energy_per_process, mpi_communicator);
+}
+
+
+
+template <int dim, typename PotentialType>
+template <bool ComputeGradient>
+double QC<dim, PotentialType>::compute_local (vector_t &gradient) const
+{
+  double energy_per_process = 0.;
 
   // Get the const PotentialType object from configure_qc.
   const std::shared_ptr<const PotentialType> potential_ptr =
@@ -752,14 +769,8 @@ double QC<dim, PotentialType>::compute (vector_t &gradient) const
   constraints.distribute_local_to_global(local_gradient_J,
                                          local_dof_indices_J,
                                          gradient);
-
-  gradient.compress(VectorOperation::add);
-
-  // sum contributions from all MPI cores and return the result:
-  return dealii::Utilities::MPI::sum(energy_per_process, mpi_communicator);
+  return energy_per_process;
 }
-
-
 
 template <int dim, typename PotentialType>
 void QC<dim, PotentialType>::minimize_energy (const double time)
