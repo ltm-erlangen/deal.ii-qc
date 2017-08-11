@@ -43,8 +43,8 @@ Problem<dim, PotentialType>::Problem (const ConfigureQC &config)
   QC<dim, PotentialType>::update_neighbor_lists();
   QC<dim, PotentialType>::update_positions();
   const double energy =
-      QC<dim, PotentialType>::template
-      compute(QC<dim, PotentialType>::locally_relevant_gradient);
+    QC<dim, PotentialType>::template
+    compute(QC<dim, PotentialType>::locally_relevant_gradient);
 
   QC<dim, PotentialType>::pcout << "Energy: " << energy << std::endl;
 }

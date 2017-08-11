@@ -587,185 +587,185 @@ double QC<dim, PotentialType>::compute_local (vector_t &gradient) const
   double energy_per_process = 0.;
 
   // Get the const PotentialType object from configure_qc.
-    const std::shared_ptr<const PotentialType> potential_ptr =
-      std::const_pointer_cast<const PotentialType>(
-        std::static_pointer_cast<PotentialType>(configure_qc.get_potential()));
+  const std::shared_ptr<const PotentialType> potential_ptr =
+    std::const_pointer_cast<const PotentialType>(
+      std::static_pointer_cast<PotentialType>(configure_qc.get_potential()));
 
-    // Assert that the casted pointer is not NULL.
-    Assert (potential_ptr, ExcInternalError());
+  // Assert that the casted pointer is not NULL.
+  Assert (potential_ptr, ExcInternalError());
 
-    const unsigned int dofs_per_cell = fe.dofs_per_cell;
-    std::vector<dealii::types::global_dof_index>
-    local_dof_indices_I(dofs_per_cell), local_dof_indices_J(dofs_per_cell);
-    Vector<double> local_gradient_I(dofs_per_cell), local_gradient_J(dofs_per_cell);
+  const unsigned int dofs_per_cell = fe.dofs_per_cell;
+  std::vector<dealii::types::global_dof_index>
+  local_dof_indices_I(dofs_per_cell), local_dof_indices_J(dofs_per_cell);
+  Vector<double> local_gradient_I(dofs_per_cell), local_gradient_J(dofs_per_cell);
 
-    // start from a first pair of cells I-J in the neighbour list.
-    const types::CellIteratorType<dim>
-    cell_I_first = neighbor_lists.begin()->first.first,
-    cell_J_first = neighbor_lists.begin()->first.second;
+  // start from a first pair of cells I-J in the neighbour list.
+  const types::CellIteratorType<dim>
+  cell_I_first = neighbor_lists.begin()->first.first,
+  cell_J_first = neighbor_lists.begin()->first.second;
 
-    // Convert tria's cells into dof cells.
-    const types::DoFCellIteratorType<dim>
-    dof_cell_I_first (&triangulation,
-                      cell_I_first->level(),
-                      cell_I_first->index(),
-                      &dof_handler);
+  // Convert tria's cells into dof cells.
+  const types::DoFCellIteratorType<dim>
+  dof_cell_I_first (&triangulation,
+                    cell_I_first->level(),
+                    cell_I_first->index(),
+                    &dof_handler);
 
-    const types::DoFCellIteratorType<dim>
-    dof_cell_J_first (&triangulation,
-                      cell_J_first->level(),
-                      cell_J_first->index(),
-                      &dof_handler);
+  const types::DoFCellIteratorType<dim>
+  dof_cell_J_first (&triangulation,
+                    cell_J_first->level(),
+                    cell_J_first->index(),
+                    &dof_handler);
 
-    // Locate the first pair of cells I-J.
-    typename
-    std::map<types::DoFCellIteratorType<dim>, AssemblyData>::const_iterator
-    cell_data_I = cells_to_data.find(dof_cell_I_first),
-    cell_data_J = cells_to_data.find(dof_cell_J_first);
+  // Locate the first pair of cells I-J.
+  typename
+  std::map<types::DoFCellIteratorType<dim>, AssemblyData>::const_iterator
+  cell_data_I = cells_to_data.find(dof_cell_I_first),
+  cell_data_J = cells_to_data.find(dof_cell_J_first);
 
-    AssertThrow (cell_data_I != cells_to_data.end() &&
-                 cell_data_J != cells_to_data.end(),
-                 ExcInternalError());
+  AssertThrow (cell_data_I != cells_to_data.end() &&
+               cell_data_J != cells_to_data.end(),
+               ExcInternalError());
 
-    local_gradient_I = 0.;
-    local_gradient_J = 0.;
+  local_gradient_I = 0.;
+  local_gradient_J = 0.;
 
-    cell_data_I->first->get_dof_indices (local_dof_indices_I);
-    cell_data_J->first->get_dof_indices (local_dof_indices_J);
+  cell_data_I->first->get_dof_indices (local_dof_indices_I);
+  cell_data_J->first->get_dof_indices (local_dof_indices_J);
 
-    // TODO: parallelize using using TBB by looping over pairs of cells.
-    // Rework neighbor list as std::map<std::pair<Cell,Cell>,....>
-    for (const auto &cell_pair_cell_molecule_pair : neighbor_lists)
-      {
-        // get reference to current cell pair and molecule pair
-        const types::CellIteratorType<dim>
-        &cell_I  = cell_pair_cell_molecule_pair.first.first,
-         &cell_J = cell_pair_cell_molecule_pair.first.second;
+  // TODO: parallelize using using TBB by looping over pairs of cells.
+  // Rework neighbor list as std::map<std::pair<Cell,Cell>,....>
+  for (const auto &cell_pair_cell_molecule_pair : neighbor_lists)
+    {
+      // get reference to current cell pair and molecule pair
+      const types::CellIteratorType<dim>
+      &cell_I  = cell_pair_cell_molecule_pair.first.first,
+       &cell_J = cell_pair_cell_molecule_pair.first.second;
 
-        const types::CellMoleculeConstIteratorType<dim>
-        &cell_molecule_I  = cell_pair_cell_molecule_pair.second.first,
-         &cell_molecule_J = cell_pair_cell_molecule_pair.second.second;
+      const types::CellMoleculeConstIteratorType<dim>
+      &cell_molecule_I  = cell_pair_cell_molecule_pair.second.first,
+       &cell_molecule_J = cell_pair_cell_molecule_pair.second.second;
 
-        Assert ((cell_I == cell_molecule_I->first) &&
-                (cell_J == cell_molecule_J->first),
-                ExcMessage("Incorrect neighbor lists."
-                           "Either cell_I or cell_J doesn't contain "
-                           "cell_molecule_I or cell_molecule_J, respectively."));
+      Assert ((cell_I == cell_molecule_I->first) &&
+              (cell_J == cell_molecule_J->first),
+              ExcMessage("Incorrect neighbor lists."
+                         "Either cell_I or cell_J doesn't contain "
+                         "cell_molecule_I or cell_molecule_J, respectively."));
 
-        // FIXME: loop over all atoms
-        const Tensor<1,dim> rIJ = cell_molecule_I->second.atoms[0].position -
-                                  cell_molecule_J->second.atoms[0].position;
+      // FIXME: loop over all atoms
+      const Tensor<1,dim> rIJ = cell_molecule_I->second.atoms[0].position -
+                                cell_molecule_J->second.atoms[0].position;
 
-        const double r_square = rIJ.norm_square();
+      const double r_square = rIJ.norm_square();
 
-        // If molecules I and J interact with each other while belonging to
-        // different clusters. In this case, we need to account for
-        // different weights associated with the clusters by
-        // scaling E_{IJ} with (n_I + n_J)/2, which is exactly how
-        // this contribution would be added had we followed assembly
-        // from clusters perspective.
-        // Since molecules not attributed to clusters have zero weights,
-        // we can directly use the scaling above without the need to find out
-        // whether or not one of the two molecules do not belong to any cluster.
+      // If molecules I and J interact with each other while belonging to
+      // different clusters. In this case, we need to account for
+      // different weights associated with the clusters by
+      // scaling E_{IJ} with (n_I + n_J)/2, which is exactly how
+      // this contribution would be added had we followed assembly
+      // from clusters perspective.
+      // Since molecules not attributed to clusters have zero weights,
+      // we can directly use the scaling above without the need to find out
+      // whether or not one of the two molecules do not belong to any cluster.
 
-        // Compute scaling of energy due to cluster weights.
-        const double scale_energy = 0.5 * (cell_molecule_I->second.cluster_weight +
-                                           cell_molecule_J->second.cluster_weight );
+      // Compute scaling of energy due to cluster weights.
+      const double scale_energy = 0.5 * (cell_molecule_I->second.cluster_weight +
+                                         cell_molecule_J->second.cluster_weight );
 
-        // Assert that the scaling factor of energy, due to clustering, is
-        // non-zero. One of the molecule must be a cluster molecule and
-        // therefore have non-zero (more specifically positive) cluster_weight.
-        Assert (scale_energy > 0, ExcInternalError());
+      // Assert that the scaling factor of energy, due to clustering, is
+      // non-zero. One of the molecule must be a cluster molecule and
+      // therefore have non-zero (more specifically positive) cluster_weight.
+      Assert (scale_energy > 0, ExcInternalError());
 
-        // Compute energy and gradient for a purely pair-wise interaction of
-        // molecule I and  molecule J:
-        const std::pair<double, double> pair =
-          (*potential_ptr).template
-          energy_and_gradient<ComputeGradient> (cell_molecule_I->second.atoms[0].type,
-                                                cell_molecule_J->second.atoms[0].type,
-                                                r_square);
+      // Compute energy and gradient for a purely pair-wise interaction of
+      // molecule I and  molecule J:
+      const std::pair<double, double> pair =
+        (*potential_ptr).template
+        energy_and_gradient<ComputeGradient> (cell_molecule_I->second.atoms[0].type,
+                                              cell_molecule_J->second.atoms[0].type,
+                                              r_square);
 
-        // Now we scale the energy according to cluster weights of the molecules.
-        energy_per_process += scale_energy * pair.first ;
+      // Now we scale the energy according to cluster weights of the molecules.
+      energy_per_process += scale_energy * pair.first ;
 
-        if (ComputeGradient)
-          {
-            const types::DoFCellIteratorType<dim> dof_cell_I (&triangulation,
-                                                              cell_I->level(),
-                                                              cell_I->index(),
-                                                              &dof_handler);
-            const types::DoFCellIteratorType<dim> dof_cell_J (&triangulation,
-                                                              cell_J->level(),
-                                                              cell_J->index(),
-                                                              &dof_handler);
+      if (ComputeGradient)
+        {
+          const types::DoFCellIteratorType<dim> dof_cell_I (&triangulation,
+                                                            cell_I->level(),
+                                                            cell_I->index(),
+                                                            &dof_handler);
+          const types::DoFCellIteratorType<dim> dof_cell_J (&triangulation,
+                                                            cell_J->level(),
+                                                            cell_J->index(),
+                                                            &dof_handler);
 
-            // Check if I'th or Jth cell changed, if so, update the pointer to
-            // the cell data and get dof indices.
-            if (cell_data_I->first != dof_cell_I)
-              {
-                // FIXME: this is quite awkward, as we need to flash-out
-                // local contributions here
-                constraints.distribute_local_to_global(local_gradient_I,
-                                                       local_dof_indices_I,
-                                                       gradient);
+          // Check if I'th or Jth cell changed, if so, update the pointer to
+          // the cell data and get dof indices.
+          if (cell_data_I->first != dof_cell_I)
+            {
+              // FIXME: this is quite awkward, as we need to flash-out
+              // local contributions here
+              constraints.distribute_local_to_global(local_gradient_I,
+                                                     local_dof_indices_I,
+                                                     gradient);
 
-                cell_data_I = cells_to_data.find(dof_cell_I);
-                dof_cell_I->get_dof_indices (local_dof_indices_I);
-                local_gradient_I = 0.;
-              }
-            if (cell_data_J->first != dof_cell_J)
-              {
-                constraints.distribute_local_to_global(local_gradient_J,
-                                                       local_dof_indices_J,
-                                                       gradient);
+              cell_data_I = cells_to_data.find(dof_cell_I);
+              dof_cell_I->get_dof_indices (local_dof_indices_I);
+              local_gradient_I = 0.;
+            }
+          if (cell_data_J->first != dof_cell_J)
+            {
+              constraints.distribute_local_to_global(local_gradient_J,
+                                                     local_dof_indices_J,
+                                                     gradient);
 
-                cell_data_J = cells_to_data.find(dof_cell_J);
-                dof_cell_J->get_dof_indices (local_dof_indices_J);
-                local_gradient_J = 0.;
-              }
+              cell_data_J = cells_to_data.find(dof_cell_J);
+              dof_cell_J->get_dof_indices (local_dof_indices_J);
+              local_gradient_J = 0.;
+            }
 
-            // Get quadrature point index from the local_index of molecule pairs
-            const unsigned int
-            qI = cell_molecule_I->second.local_index,
-            qJ = cell_molecule_J->second.local_index;
+          // Get quadrature point index from the local_index of molecule pairs
+          const unsigned int
+          qI = cell_molecule_I->second.local_index,
+          qJ = cell_molecule_J->second.local_index;
 
-            const double r = std::sqrt(r_square);
-            const double force_multiplier  = scale_energy * pair.second / r;
+          const double r = std::sqrt(r_square);
+          const double force_multiplier  = scale_energy * pair.second / r;
 
-            // FIXME: evaluate gradients for all atoms in molecules.
-            // Finally, we evaluated local contribution to the gradient of
-            // energy. The main ingredient in forces is
-            // r^{ab}_{,k} = n^{ab} * [N_k(X^a) - N_k(X^b)]
-            // where k is global dof. So for a given pair of atoms a and b,
-            // we can add force contributions from
-            // F(local_dofs(i)) +=  n^{ab}*N_{local_dof{i}}(X^a)
-            // F(local_dofs(j)) -=  n^{ab}*N_{local_dof{j}}(X^b)
-            // Below we utilize the fact that we work with primitive vector-valued
-            // shape functions which are non-zero at a single component only.
-            for (unsigned int k = 0; k < dofs_per_cell; ++k)
-              {
-                const unsigned int nonzero_comp = fe.system_to_component_index(k).first;
+          // FIXME: evaluate gradients for all atoms in molecules.
+          // Finally, we evaluated local contribution to the gradient of
+          // energy. The main ingredient in forces is
+          // r^{ab}_{,k} = n^{ab} * [N_k(X^a) - N_k(X^b)]
+          // where k is global dof. So for a given pair of atoms a and b,
+          // we can add force contributions from
+          // F(local_dofs(i)) +=  n^{ab}*N_{local_dof{i}}(X^a)
+          // F(local_dofs(j)) -=  n^{ab}*N_{local_dof{j}}(X^b)
+          // Below we utilize the fact that we work with primitive vector-valued
+          // shape functions which are non-zero at a single component only.
+          for (unsigned int k = 0; k < dofs_per_cell; ++k)
+            {
+              const unsigned int nonzero_comp = fe.system_to_component_index(k).first;
 
-                local_gradient_I[k] += force_multiplier *
-                                       rIJ[nonzero_comp] *
-                                       cell_data_I->second.fe_values->shape_value(k, qI);
+              local_gradient_I[k] += force_multiplier *
+                                     rIJ[nonzero_comp] *
+                                     cell_data_I->second.fe_values->shape_value(k, qI);
 
-                local_gradient_J[k] -= force_multiplier *
-                                       rIJ[nonzero_comp] *
-                                       cell_data_J->second.fe_values->shape_value(k, qJ);
-              }
-          }
+              local_gradient_J[k] -= force_multiplier *
+                                     rIJ[nonzero_comp] *
+                                     cell_data_J->second.fe_values->shape_value(k, qJ);
+            }
+        }
 
-      } // loop over neighbour lists
+    } // loop over neighbour lists
 
-    // Flush out contributions from the last pair of cells
-    constraints.distribute_local_to_global(local_gradient_I,
-                                           local_dof_indices_I,
-                                           gradient);
-    constraints.distribute_local_to_global(local_gradient_J,
-                                           local_dof_indices_J,
-                                           gradient);
-    return energy_per_process;
+  // Flush out contributions from the last pair of cells
+  constraints.distribute_local_to_global(local_gradient_I,
+                                         local_dof_indices_I,
+                                         gradient);
+  constraints.distribute_local_to_global(local_gradient_J,
+                                         local_dof_indices_J,
+                                         gradient);
+  return energy_per_process;
 }
 
 template <int dim, typename PotentialType>
