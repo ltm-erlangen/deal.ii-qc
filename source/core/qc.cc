@@ -568,13 +568,9 @@ double QC<dim, PotentialType>::compute (vector_t &gradient) const
 {
   TimerOutput::Scope t (computing_timer, "Compute energy and gradient");
 
-  double energy_per_process = 0.;
-
-  if (ComputeGradient)
-    gradient = 0.;
-
-  if (!neighbor_lists.empty())
-    energy_per_process = compute_local<ComputeGradient>(gradient);
+  const double energy_per_process =
+    neighbor_lists.empty() ?
+    0.                     : compute_local<ComputeGradient>(gradient);
 
   gradient.compress(VectorOperation::add);
 
@@ -589,9 +585,6 @@ template <bool ComputeGradient>
 double QC<dim, PotentialType>::compute_local (vector_t &gradient) const
 {
   double energy_per_process = 0.;
-
-  if (ComputeGradient)
-    gradient = 0.;
 
   // Get the const PotentialType object from configure_qc.
     const std::shared_ptr<const PotentialType> potential_ptr =
