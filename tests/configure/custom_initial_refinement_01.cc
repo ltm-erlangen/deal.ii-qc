@@ -60,8 +60,8 @@ int main (int argc, char *argv[])
           << "  set Number of initial global refinements = 1" << std::endl
           << "end"                                            << std::endl
 
-          << "subsection Custom initial refinement"           << std::endl
-          << "  set Function expression for refinement = "
+          << "subsection A priori refinement"                 << std::endl
+          << "  set Error indicator function = "
           "exp(-(x-5)*(x-5) - (y-10)*(y-10))"                 << std::endl
           << "  set Marking strategy = FixedFraction"         << std::endl
           << "  set Refinement parameter = 0.25"              << std::endl

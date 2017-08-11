@@ -191,14 +191,13 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
 
   Geometry::declare_parameters(prm);
 
-  prm.enter_subsection ("Custom initial refinement");
+  prm.enter_subsection ("A priori refinement");
   {
-    prm.declare_entry("Function expression for refinement",
+    prm.declare_entry("Error indicator function",
                       "0",
                       Patterns::Anything(),
-                      "Function expression that describes a "
-                      "(non-negative function) field to flag cells for "
-                      "refinement. "
+                      "Function expression that describes a non-negative "
+                      "function and represents a-priori estimate of error."
                       "See InitialRefinementParameters::refinement_function.");
     prm.declare_entry("Marking strategy",
                       "FixedFraction",
@@ -434,10 +433,10 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
   else
     AssertThrow (false, ExcNotImplemented());
 
-  prm.enter_subsection ("Custom initial refinement");
+  prm.enter_subsection ("A priori refinement");
   {
-    initial_refinement_parameters.refinement_function =
-      prm.get("Function expression for refinement");
+    initial_refinement_parameters.indicator_function =
+      prm.get("Error indicator function");
     initial_refinement_parameters.marking_strategy =
       prm.get("Marking strategy");
     initial_refinement_parameters.refinement_parameter =

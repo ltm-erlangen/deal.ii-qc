@@ -199,7 +199,7 @@ void QC<dim, PotentialType>::setup_triangulation()
   FunctionParser<dim> refinement_function (1,0.);
 
   refinement_function.initialize(FunctionParser<dim>::default_variable_names(),
-                                 initial_refinement_params.refinement_function,
+                                 initial_refinement_params.indicator_function,
                                  typename FunctionParser<dim>::ConstMap());
 
   const double refinement_parameter = initial_refinement_params.refinement_parameter;

@@ -93,17 +93,19 @@ public:
   };
 
   /**
-   * Parameters for custom initial refinement.
+   * Parameters for a priori refinement.
    */
   struct InitialRefinementParameters
   {
     /**
-     * Function expression that describes a (non-negative function) field to
-     * flag cells for refinement. The value of the function evaluated at the
-     * cell centers is used in conjunction with a provided marking strategy,
-     * to mark the cells for refinement.
+     * Function expression that describes a non-negative function and
+     * represents a-priori estimate of error.
+     *
+     * The value of the function evaluated at the cell centers is used in
+     * conjunction with a provided marking strategy, to mark the cells for
+     * refinement.
      */
-    std::string refinement_function;
+    std::string indicator_function;
 
     /**
      * Marking strategy for mesh refinement.
