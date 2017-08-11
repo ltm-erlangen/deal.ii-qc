@@ -41,6 +41,10 @@ namespace Geometry
                                                bottom_left,
                                                top_right,
                                                true);
+    // Reset material ids to zero, colorize = true also colorizes material id.
+    for (auto cell  = mesh.begin_active(); cell != mesh.end(); cell++)
+      cell->set_material_id(0);
+
     mesh.refine_global(Base<dim>::n_initial_global_refinements);
   }
 
