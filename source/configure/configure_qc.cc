@@ -171,6 +171,14 @@ ConfigureQC::FireParameters ConfigureQC::get_fire_parameters () const
 
 
 
+ConfigureQC::InitialRefinementParameters
+ConfigureQC::get_initial_refinement_parameters() const
+{
+  return initial_refinement_parameters;
+}
+
+
+
 void ConfigureQC::declare_parameters (ParameterHandler &prm)
 {
   // TODO: Write intput file name to the screen
@@ -182,6 +190,30 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
                     "Dimensionality of the problem ");
 
   Geometry::declare_parameters(prm);
+
+  prm.enter_subsection ("A priori refinement");
+  {
+    prm.declare_entry("Error indicator function",
+                      "0",
+                      Patterns::Anything(),
+                      "Function expression that describes a non-negative "
+                      "function and represents a-priori estimate of error."
+                      "See InitialRefinementParameters::refinement_function.");
+    prm.declare_entry("Marking strategy",
+                      "FixedFraction",
+                      Patterns::Selection("FixedFraction"/*|FixedNumber|Global"*/),
+                      "Marking strategy for mesh refinement.");
+    prm.declare_entry("Refinement parameter",
+                      "0",
+                      Patterns::Double(),
+                      "Refinement parameter based on marking strategy."
+                      "See InitialRefinementParameters::refinement_parameter.");
+    prm.declare_entry("Number of refinement cycles",
+                      "0",
+                      Patterns::Integer(0),
+                      "Number of refinement cycles.");
+  }
+  prm.leave_subsection();
 
   // TODO: Declare atom information
   // Use LAMMPS-like atom data file
@@ -400,6 +432,19 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
     }
   else
     AssertThrow (false, ExcNotImplemented());
+
+  prm.enter_subsection ("A priori refinement");
+  {
+    initial_refinement_parameters.indicator_function =
+      prm.get("Error indicator function");
+    initial_refinement_parameters.marking_strategy =
+      prm.get("Marking strategy");
+    initial_refinement_parameters.refinement_parameter =
+      prm.get_double("Refinement parameter");
+    initial_refinement_parameters.n_refinement_cycles =
+      prm.get_integer("Number of refinement cycles");
+  }
+  prm.leave_subsection();
 
   prm.enter_subsection("Configure atoms");
   {

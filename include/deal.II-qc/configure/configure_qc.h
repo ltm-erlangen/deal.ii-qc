@@ -92,6 +92,41 @@ public:
     double maximum_linfty_norm;
   };
 
+  /**
+   * Parameters for a priori refinement.
+   */
+  struct InitialRefinementParameters
+  {
+    /**
+     * Function expression that describes a non-negative function and
+     * represents a-priori estimate of error.
+     *
+     * The value of the function evaluated at the cell centers is used in
+     * conjunction with a provided marking strategy, to mark the cells for
+     * refinement.
+     */
+    std::string indicator_function;
+
+    /**
+     * Marking strategy for mesh refinement.
+     */
+    std::string marking_strategy;
+
+    /**
+     * Refinement parameter based on #marking_strategy.
+     *
+     * If the marking strategy is FixedFraction, then the refinement parameter
+     * is the fraction of cells to be refined. If this number is zero, no cells
+     * will be refined. If it equals one, the result will be flagging for
+     * global refinement.
+     */
+    double refinement_parameter;
+
+    /**
+     * Number of refinement cycles.
+     */
+    unsigned int n_refinement_cycles;
+  };
 
   /**
    * Constructor with a shared pointer to an istream object @p is.
@@ -198,6 +233,11 @@ public:
    * Get SolverFIRE parameters.
    */
   FireParameters get_fire_parameters() const;
+
+  /**
+   * Get parameters for custom initial refinement.
+   */
+  InitialRefinementParameters get_initial_refinement_parameters() const;
 
 private:
 
@@ -366,6 +406,11 @@ protected:
    * Parameters to setup SolverFIRE minimizer.
    */
   FireParameters fire_parameters;
+
+  /**
+   * Initial refinement parameters.
+   */
+  InitialRefinementParameters initial_refinement_parameters;
 
 };
 

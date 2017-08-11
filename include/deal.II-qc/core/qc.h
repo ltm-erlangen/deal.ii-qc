@@ -10,6 +10,7 @@
 #include <deal.II/lac/constraint_matrix.h>
 
 #include <deal.II/grid/tria.h>
+#include <deal.II/grid/grid_refinement.h>
 
 #include <deal.II/fe/component_mask.h>
 #include <deal.II/fe/fe_system.h>
