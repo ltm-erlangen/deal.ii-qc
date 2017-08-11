@@ -196,19 +196,23 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
     prm.declare_entry("Function expression for refinement",
                       "0",
                       Patterns::Anything(),
-                      "Function expression that describes a field to flag "
-                      "cells for refinement. If the value of the function "
-                      "evaluated at cell centers is above a certain "
-                      "threshold, the cell is to be marked for refinement.");
-    prm.declare_entry("Fraction of cells for refinement",
-                      "0.142857",
+                      "Function expression that describes a "
+                      "(non-negative function) field to flag cells for "
+                      "refinement. "
+                      "See InitialRefinementParameters::refinement_function.");
+    prm.declare_entry("Marking strategy",
+                      "FixedFraction",
+                      Patterns::Selection("FixedFraction"/*|FixedNumber|Global"*/),
+                      "Marking strategy for mesh refinement.");
+    prm.declare_entry("Refinement parameter",
+                      "0",
                       Patterns::Double(),
-                      "The fraction of the cells to be refined.");
+                      "Refinement parameter based on marking strategy."
+                      "See InitialRefinementParameters::refinement_parameter.");
     prm.declare_entry("Number of refinement cycles",
-                      "3",
+                      "0",
                       Patterns::Integer(0),
                       "Number of refinement cycles.");
-
   }
   prm.leave_subsection();
 
@@ -434,8 +438,10 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
   {
     initial_refinement_parameters.refinement_function =
       prm.get("Function expression for refinement");
-    initial_refinement_parameters.fraction_of_cells =
-      prm.get_double("Fraction of cells for refinement");
+    initial_refinement_parameters.marking_strategy =
+      prm.get("Marking strategy");
+    initial_refinement_parameters.refinement_parameter =
+      prm.get_double("Refinement parameter");
     initial_refinement_parameters.n_refinement_cycles =
       prm.get_integer("Number of refinement cycles");
   }

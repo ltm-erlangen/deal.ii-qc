@@ -63,7 +63,8 @@ int main (int argc, char *argv[])
           << "subsection Custom initial refinement"           << std::endl
           << "  set Function expression for refinement = "
           "exp(-(x-5)*(x-5) - (y-10)*(y-10))"                 << std::endl
-          << "  set Fraction of cells for refinement = 0.25"  << std::endl
+          << "  set Marking strategy = FixedFraction"         << std::endl
+          << "  set Refinement parameter = 0.25"              << std::endl
           << "  set Number of refinement cycles = 3"          << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section"                      << std::endl

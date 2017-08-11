@@ -98,19 +98,27 @@ public:
   struct InitialRefinementParameters
   {
     /**
-     * Function expression that describes a field to flag
-     * cells for refinement. If the value of the function
-     * evaluated at cell centers is above a certain threshold,
-     * the cell is to be marked for refinement.
+     * Function expression that describes a (non-negative function) field to
+     * flag cells for refinement. The value of the function evaluated at the
+     * cell centers is used in conjunction with a provided marking strategy,
+     * to mark the cells for refinement.
      */
     std::string refinement_function;
 
     /**
-     * The fraction of cells to be refined. If this number is zero, no cells
+     * Marking strategy for mesh refinement.
+     */
+    std::string marking_strategy;
+
+    /**
+     * Refinement parameter based on #marking_strategy.
+     *
+     * If the marking strategy is FixedFraction, then the refinement parameter
+     * is the fraction of cells to be refined. If this number is zero, no cells
      * will be refined. If it equals one, the result will be flagging for
      * global refinement.
      */
-    double fraction_of_cells;
+    double refinement_parameter;
 
     /**
      * Number of refinement cycles.
