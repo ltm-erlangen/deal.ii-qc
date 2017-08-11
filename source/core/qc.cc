@@ -573,6 +573,9 @@ double QC<dim, PotentialType>::compute (vector_t &gradient) const
   if (ComputeGradient)
     gradient = 0.;
 
+  if (neighbor_lists.empty())
+    return dealii::Utilities::MPI::sum(energy_per_process, mpi_communicator);
+
   // Get the const PotentialType object from configure_qc.
   const std::shared_ptr<const PotentialType> potential_ptr =
     std::const_pointer_cast<const PotentialType>(
@@ -588,11 +591,8 @@ double QC<dim, PotentialType>::compute (vector_t &gradient) const
 
   // start from a first pair of cells I-J in the neighbour list.
   const types::CellIteratorType<dim>
-  cell_I_first = neighbor_lists.empty() ?
-                 triangulation.begin_active()  : neighbor_lists.begin()->first.first;
-  const types::CellIteratorType<dim>
-  cell_J_first = neighbor_lists.empty() ?
-                 triangulation.begin_active()  : neighbor_lists.begin()->first.second;
+  cell_I_first = neighbor_lists.begin()->first.first,
+  cell_J_first = neighbor_lists.begin()->first.second;
 
   // Convert tria's cells into dof cells.
   const types::DoFCellIteratorType<dim>

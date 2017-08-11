@@ -13,7 +13,12 @@ using namespace dealiiqc;
 
 // Compute the energy of the system of 3 charged atoms
 // interacting exclusively through Coulomb interactions.
-// Check that they the energy remains for a single configuration.
+//
+// Check that the energy remains unchanged for a particular configuration.
+// This is achieved by the following procedure. First compute the energy
+// for the initial configuration. Applying a random displacement to the
+// atomistic system and then removing it. Compute the energy again to compare
+// with the earlier value.
 //
 // +-------+-------+
 // |       |       |   *, +  - vertices
