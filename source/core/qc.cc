@@ -568,9 +568,13 @@ double QC<dim, PotentialType>::compute (vector_t &gradient) const
 {
   TimerOutput::Scope t (computing_timer, "Compute energy and gradient");
 
+  if (ComputeGradient)
+    gradient = 0.;
+
   const double energy_per_process =
     neighbor_lists.empty() ?
-    0.                     : compute_local<ComputeGradient>(gradient);
+    0.                     :
+    compute_local<ComputeGradient>(gradient);
 
   gradient.compress(VectorOperation::add);
 
