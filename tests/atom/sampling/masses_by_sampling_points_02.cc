@@ -59,7 +59,7 @@ void Problem<dim, PotentialType>::partial_run()
   QC<dim, PotentialType>::setup_cell_energy_molecules();
   QC<dim, PotentialType>::setup_system();
 
-  LA::MPI::Vector inverse_masses;
+  typename QC<dim, PotentialType>::vector_t inverse_masses;
 
   inverse_masses.reinit (QC<dim, PotentialType>::dof_handler.locally_owned_dofs(),
                          QC<dim, PotentialType>::locally_relevant_set,
@@ -67,10 +67,16 @@ void Problem<dim, PotentialType>::partial_run()
                          true);
 
   QC<dim, PotentialType>::cluster_weights_method->
-  compute_dof_masses (inverse_masses,
-                      QC<dim, PotentialType>::dof_handler,
-                      QC<dim, PotentialType>::cell_molecule_data);
+  compute_dof_inverse_masses (inverse_masses,
+                              QC<dim, PotentialType>::dof_handler,
+                              QC<dim, PotentialType>::cell_molecule_data);
 
+  // Get masses for comparison with blessed output.
+  for (typename QC<dim, PotentialType>::vector_t::iterator
+       entry  = inverse_masses.begin();
+       entry != inverse_masses.end();
+       entry++)
+    *entry = 1./(*entry);
 
   if (dealii::Utilities::MPI::n_mpi_processes(QC<dim, PotentialType>::mpi_communicator)==1)
     inverse_masses.print(std::cout);

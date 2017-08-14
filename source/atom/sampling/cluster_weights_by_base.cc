@@ -137,7 +137,7 @@ namespace Cluster
   template <typename VectorType>
   void
   WeightsByBase<dim, atomicity, spacedim>::
-  compute_dof_masses
+  compute_dof_inverse_masses
   (VectorType                                       &inverse_masses,
    const DoFHandler<dim, spacedim>                  &dof_handler,
    const CellMoleculeData<dim, atomicity, spacedim> &cell_molecule_data) const
@@ -281,13 +281,21 @@ namespace Cluster
       } // for locally owned cells.
 
     inverse_masses.compress(VectorOperation::add);
+
+    // Take reciprocal of each locally owned entry to get inverse masses
+    // from masses.
+    for (typename VectorType::iterator
+         entry  = inverse_masses.begin();
+         entry != inverse_masses.end();
+         entry++)
+      *entry = 1./(*entry);
   }
 
 
 #define SINGLE_WEIGHTS_BY_BASE_INSTANTIATION(DIM, ATOMICITY, SPACEDIM)  \
   template class WeightsByBase< DIM, ATOMICITY, SPACEDIM >;             \
   template void                                                         \
-  WeightsByBase< DIM, ATOMICITY, SPACEDIM >::compute_dof_masses     \
+  WeightsByBase< DIM, ATOMICITY, SPACEDIM >::compute_dof_inverse_masses \
   (TrilinosWrappers::MPI::Vector                    &,                  \
    const DoFHandler<DIM, SPACEDIM>                  &,                  \
    const CellMoleculeData<DIM, ATOMICITY, SPACEDIM> &) const;

@@ -129,7 +129,7 @@ namespace Cluster
      */
     template <typename VectorType>
     void
-    compute_dof_masses
+    compute_dof_inverse_masses
     (VectorType                                       &inverse_masses,
      const DoFHandler<dim, spacedim>                  &dof_handler,
      const CellMoleculeData<dim, atomicity, spacedim> &cell_molecule_data) const;
