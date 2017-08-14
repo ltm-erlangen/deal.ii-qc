@@ -240,34 +240,35 @@ namespace Cluster
                 const auto &face = cell->face(f);
 
                 if (face->has_children())
-                  {
-                    // Any one of the child of this face will surely have the
-                    // hanging node as one of its vertices.
+                  for (unsigned int sf = 0; sf < face->number_of_children(); ++sf)
+                    {
+                      // Run over all the vertices of this child face
+                      // to find if the hanging node on this face corresponds
+                      // to the current sampling index.
+                      const auto &subface = face->child(sf);
 
-                    // Take the first child and run over all its vertices
-                    // to find if the hanging node on this face corresponds
-                    // to the current sampling index.
-                    const auto &subface = face->child(0);
+                      for (unsigned int
+                           child_face_v = 0;
+                           child_face_v < GeometryInfo<dim>::vertices_per_face;
+                           child_face_v++)
+                        if (subface->vertex_index(child_face_v) == sampling_index)
+                          {
+                            for (unsigned int
+                                 c = 0;
+                                 c < dof_handler.get_fe().n_dofs_per_vertex();
+                                 c++)
+                              inverse_masses[subface->vertex_dof_index (child_face_v, c)] +=
+                                masses_at_sampling_points[i];
 
-                    for (unsigned int
-                         child_face_v = 0;
-                         child_face_v < GeometryInfo<dim>::vertices_per_face;
-                         child_face_v++)
-                      if (subface->vertex_index(child_face_v) == sampling_index)
-                        {
-                          for (unsigned int
-                               c = 0;
-                               c < dof_handler.get_fe().n_dofs_per_vertex();
-                               c++)
-                            inverse_masses[subface->vertex_dof_index (child_face_v, c)] +=
-                              masses_at_sampling_points[i];
+                            this_cell_used_sampling_indices[i] = true;
+                            break;
+                          }
 
-                          this_cell_used_sampling_indices[i] = true;
-                          break;
-                        }
-                  }
+                      if (this_cell_used_sampling_indices[i])
+                        break;
+                    } // for all child faces of the current face.
 
-                if (this_cell_used_sampling_indices[i] == true)
+                if (this_cell_used_sampling_indices[i])
                   break;
               } // for all faces of this cell.
 
