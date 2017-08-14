@@ -68,7 +68,7 @@ void test (const double &r,
   enegry_and_gradient_0 = ComputeTools::energy_and_gradient (lj,
                                                              atom_1,
                                                              atom_2);
-    const std::pair<double, Tensor<1, spacedim> >
+  const std::pair<double, Tensor<1, spacedim> >
   enegry_and_gradient_1 = ComputeTools::energy_and_gradient (lj,
                                                              atom_2,
                                                              atom_1);
@@ -89,12 +89,12 @@ void test (const double &r,
                                         50),
                  ExcInternalError())
 
-  for (int d = 0; d < spacedim; d++)
-    AssertThrow (Testing::almost_equal (lj_gradient_1[d],
-                                        enegry_and_gradient_1.second[d],
-                                        50),
-                 ExcInternalError())
-}
+    for (int d = 0; d < spacedim; d++)
+      AssertThrow (Testing::almost_equal (lj_gradient_1[d],
+                                          enegry_and_gradient_1.second[d],
+                                          50),
+                   ExcInternalError())
+    }
 
 int main()
 {

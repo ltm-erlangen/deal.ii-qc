@@ -750,9 +750,9 @@ double QC<dim, PotentialType>::compute_local (vector_t &gradient) const
 
       // Now we scale the energy according to cluster weights of the molecules.
       energy_per_process +=
-          // FIXME: Add intra molecular energy of cluster I.
-          // FIXME: Also for molecule J, if it is cluster
-          //        molecule.
+        // FIXME: Add intra molecular energy of cluster I.
+        // FIXME: Also for molecule J, if it is cluster
+        //        molecule.
         molecular_energy_and_gradient_IJ.first * scale_energy              +
         external_energy_and_gradient_I.first   * molecule_I.cluster_weight +
         external_energy_and_gradient_J.first   * molecule_J.cluster_weight;
@@ -803,7 +803,7 @@ double QC<dim, PotentialType>::compute_local (vector_t &gradient) const
             // FIXME: Add intra molecular gradient for molecule I.
             external_energy_and_gradient_I.second * molecule_I.cluster_weight +
             molecular_energy_and_gradient_IJ.second(0,0) * scale_energy;
-            // FIXME: For atomicity: Perform row sum (i.e., sum over j \in J).
+          // FIXME: For atomicity: Perform row sum (i.e., sum over j \in J).
 
           const Tensor <1, dim> // Will eventually become vector of Tensors of size atomicity.
           gradient_J =
@@ -811,7 +811,7 @@ double QC<dim, PotentialType>::compute_local (vector_t &gradient) const
             //        if it is cluster molecule.
             external_energy_and_gradient_J.second * molecule_J.cluster_weight -
             molecular_energy_and_gradient_IJ.second(0,0) * scale_energy;
-            // FIXME: For atomicity: Perform column sum (i.e., sum over i \in I).
+          // FIXME: For atomicity: Perform column sum (i.e., sum over i \in I).
 
           // FIXME: evaluate gradients for all atoms in molecules.
           // Finally, we evaluated local contribution to the gradient of
