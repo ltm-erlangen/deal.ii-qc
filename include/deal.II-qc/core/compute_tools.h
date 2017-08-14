@@ -63,8 +63,8 @@ namespace ComputeTools
    * atoms \f$i\f$ and \f$j\f$ located at \f$ \textbf x^i \f$ and
    * \f$ \textbf x^j \f$, respectively, interacting via a given @p potential.
    *
-   * The potential energy can be computed using the functional form of the given
-   * potential \f$ \phi^{}_{ij}(r^{ij}) \f$ where
+   * The potential energy can be computed using the empirical formula of
+   * the given potential \f$ \phi^{}_{ij}(r^{ij}) \f$ where
    * \f$ r^{ij} = |\textbf r^{ij}| = |\textbf x^{i} - \textbf x^{j}| \f$ and
    * the gradient by
    * \f[
@@ -148,14 +148,16 @@ namespace ComputeTools
     double energy = 0.;
     Table<2, Tensor<1, spacedim> > gradients (atomicity, atomicity);
 
-    Tensor<1, spacedim> temp;
+    {
+      Tensor<1, spacedim> temp;
 
-    for (int i = 0; i < spacedim; ++i)
-      temp[i] = ComputeGradient ?
-                0.              :
-                std::numeric_limits<double>::signaling_NaN();
+      for (int i = 0; i < spacedim; ++i)
+        temp[i] = ComputeGradient ?
+                  0.              :
+                  std::numeric_limits<double>::signaling_NaN();
 
-    gradients.fill (temp);
+      gradients.fill (temp);
+    }
 
     const auto &atoms_I = molecule_I.atoms;
     const auto &atoms_J = molecule_J.atoms;
@@ -173,11 +175,11 @@ namespace ComputeTools
                                                atoms_I[j]);
               energy += energy_and_gradient_tensor.first;
 
-              if (!ComputeGradient)
-                continue;
-
-              gradients(i,j) = energy_and_gradient_tensor.second;
-              gradients(j,i) = gradients(i,j);
+              if (ComputeGradient)
+                {
+                  gradients(i,j) = energy_and_gradient_tensor.second;
+                  gradients(j,i) = gradients(i,j);
+                }
             }
       }
     else
@@ -194,10 +196,8 @@ namespace ComputeTools
                                                            atoms_J[j]);
               energy += energy_and_gradient_tensor.first;
 
-              if (!ComputeGradient)
-                continue;
-
-              gradients(i,j) = energy_and_gradient_tensor.second;
+              if (ComputeGradient)
+                gradients(i,j) = energy_and_gradient_tensor.second;
             }
       }
 
