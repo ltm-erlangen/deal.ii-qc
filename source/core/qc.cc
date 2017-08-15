@@ -403,18 +403,36 @@ void QC<dim, PotentialType>::setup_system ()
 
   constraints.close ();
 
-  locally_relevant_gradient.reinit(dof_handler.locally_owned_dofs(),
-                                   locally_relevant_set,
-                                   mpi_communicator,
-                                   true);
-  locally_relevant_gradient = 0.;
+  distributed_displacement.reinit (dof_handler.locally_owned_dofs(),
+                                   mpi_communicator);
 
-  locally_relevant_displacement.reinit(dof_handler.locally_owned_dofs(),
-                                       locally_relevant_set,
-                                       mpi_communicator,
-                                       false);
+  locally_relevant_displacement.reinit (dof_handler.locally_owned_dofs(),
+                                        locally_relevant_set,
+                                        mpi_communicator,
+                                        false);
 
+  locally_relevant_gradient.reinit (dof_handler.locally_owned_dofs(),
+                                    locally_relevant_set,
+                                    mpi_communicator,
+                                    true);
+
+  distributed_displacement      = 0.;
   locally_relevant_displacement = 0.;
+  locally_relevant_gradient     = 0.;
+
+  // Create a temporary vector to initialize inverse_mass_matrix;
+  vector_t inverse_masses;
+  inverse_masses.reinit (dof_handler.locally_owned_dofs(),
+                         locally_relevant_set,
+                         mpi_communicator,
+                         true);
+
+  // Compute inverse masses based on cluster weights.
+  cluster_weights_method->compute_dof_inverse_masses (inverse_masses,
+                                                      cell_molecule_data,
+                                                      dof_handler,
+                                                      constraints);
+  inverse_mass_matrix.reinit (inverse_masses);
 
   cells_to_data.clear();
 
@@ -856,33 +874,19 @@ void QC<dim, PotentialType>::minimize_energy (const double time)
     for (auto &potential_field : external_potential_fields)
       potential_field.second->set_time (time);
 
-  // FIXME: move u and inv_mass to constructor
-  vector_t u (QC<dim, PotentialType>::dof_handler.locally_owned_dofs(),
-              QC<dim, PotentialType>::mpi_communicator);
-
-  // Use this to initialize DiagonalMatrix
-  u = 1.;
-
-  // FIXME: Compute inverse mass matrix based on cluster weights.
-  //        Make inverse matrix a member variable of this class.
-  //        write a function to set it up.
-
-  // Create inverse diagonal matrix.
-  DiagonalMatrix<vector_t> inv_mass;
-  inv_mass.reinit(u);
   //---------------------------------------------------------------------------
 
   std::function<double(vector_t &,  const vector_t &)> compute_function =
-    [&]               (vector_t &G, const vector_t &U) -> double
+    [&]               (vector_t &G, const vector_t &) -> double
   {
-    locally_relevant_displacement = U;
+    constraints.distribute(distributed_displacement);
+    locally_relevant_displacement = distributed_displacement;
+    constraints.set_zero(distributed_displacement);
     update_positions();
     const double energy = compute<true>(locally_relevant_gradient);
     G = locally_relevant_gradient;
     return energy;
   };
-
-  u = 0.;
 
   ConfigureQC::SolverControlParameters solver_control_parameters =
     configure_qc.get_solver_control_parameters();
@@ -906,7 +910,9 @@ void QC<dim, PotentialType>::minimize_energy (const double time)
                                 fire_parameters.maximum_linfty_norm);
 
           SolverFIRE<vector_t> solver(solver_control, additional_data_fire);
-          solver.solve(compute_function, u, inv_mass);
+          solver.solve (compute_function,
+                        distributed_displacement,
+                        inverse_mass_matrix);
         }
       else
         AssertThrow(false, ExcNotImplemented());
