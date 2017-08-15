@@ -100,7 +100,7 @@ namespace rol
     /**
      * Return a clone of the Vector.
      */
-    Teuchos::RCP<ROL::Vector<real_type> > clone() const;
+    Teuchos::RCP<ROL::Vector<real_type>> clone() const;
 
     /**
      * Return a Teuchos smart reference counting pointer the basis vector
@@ -168,7 +168,7 @@ namespace rol
   void
   VectorAdaptor<VectorType>::set (const ROL::Vector<real_type> &rol_vector)
   {
-    Assert (vector_ptr->size() != rol_vector.dimension(),
+    Assert (vector_ptr->size() == rol_vector.dimension(),
             ExcDimensionMismatch(vector_ptr->size(), rol_vector.dimension()))
 
     const VectorAdaptor &vector_adaptor =
@@ -183,7 +183,7 @@ namespace rol
   void
   VectorAdaptor<VectorType>::plus (const ROL::Vector<real_type> &rol_vector)
   {
-    Assert (vector_ptr->size() != rol_vector.dimension(),
+    Assert (vector_ptr->size() == rol_vector.dimension(),
             ExcDimensionMismatch(vector_ptr->size(), rol_vector.dimension()))
 
     const VectorAdaptor &vector_adaptor =
@@ -199,7 +199,7 @@ namespace rol
   VectorAdaptor<VectorType>::axpy (const real_type               alpha,
                                    const ROL::Vector<real_type> &rol_vector)
   {
-    Assert (vector_ptr->size() != rol_vector.dimension(),
+    Assert (vector_ptr->size() == rol_vector.dimension(),
             ExcDimensionMismatch(vector_ptr->size(), rol_vector.dimension()))
 
     const VectorAdaptor &vector_adaptor =
@@ -214,7 +214,10 @@ namespace rol
   int
   VectorAdaptor<VectorType>::dimension () const
   {
-    return vector_ptr->size();
+    Assert (vector_ptr->size() < std::numeric_limits<int>::max(),
+            ExcMessage("The size of the vector being used is greater than "
+                       "largest value of type int."))
+    return static_cast<int>(vector_ptr->size());
   }
 
 
@@ -233,7 +236,7 @@ namespace rol
   VectorAdaptor<VectorType>::
   dot (const ROL::Vector<real_type> &rol_vector) const
   {
-    Assert (vector_ptr->size() != rol_vector.dimension(),
+    Assert (vector_ptr->size() == rol_vector.dimension(),
             ExcDimensionMismatch(vector_ptr->size(), rol_vector.dimension()))
 
     const VectorAdaptor &vector_adaptor =
@@ -264,7 +267,7 @@ namespace rol
   }
 
 
-
+/*
   template<typename VectorType>
   Teuchos::RCP<ROL::Vector<typename VectorType::real_type> >
   VectorAdaptor<VectorType>::basis (const int i) const
@@ -284,7 +287,7 @@ namespace rol
 
     return e;
   }
-
+*/
 
 
   template<typename VectorType>
@@ -307,7 +310,7 @@ namespace rol
   applyBinary (const ROL::Elementwise::UnaryFunction<real_type> &f,
                const ROL::Vector<real_type>                     &x)
   {
-    Assert (vector_ptr->size() != x.dimension(),
+    Assert (vector_ptr->size() == x.dimension(),
             ExcDimensionMismatch(vector_ptr->size(), x.dimension()))
 
     const VectorAdaptor &vector_adaptor =
