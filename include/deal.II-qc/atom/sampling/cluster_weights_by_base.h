@@ -97,25 +97,26 @@ namespace Cluster
      const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const = 0;
 
     /**
-     * Prepare the inverse masses attributed to the locally relevant dofs
-     * in @p inverse_masses, given @p dof_handler and cell based molecule data
-     * @p cell_molecule_data of the atomistic system.
+     * Prepare the inverse masses attributed to the locally relevant
+     * degree of freedom (DoF) in @p inverse_masses, given @p dof_handler and
+     * cell based molecule data @p cell_molecule_data of the atomistic system.
      * It is assumed that energy molecules of @p cell_molecule_data have
      * updated cluster weights.
      *
-     * For each degree of freedom associated to a sampling point in conjunction
-     * with an atom stamp, the mass attributed to the dof is computed by
-     * summing up the masses of sampling molecules' atoms with the same
-     * atom stamp, scaled by their respective molecules' cluster weights.
-     * Mathematically, if \f$ u^i_d \f$ is a degree of freedom associated to
+     * For each degree of freedom (DoF) associated to a sampling point in
+     * conjunction with an atom stamp, the mass attributed to the DoF is
+     * computed by summing up the masses of sampling molecules' atoms with
+     * the same atom stamp, scaled by their respective molecules'
+     * cluster weights.
+     * Mathematically, if \f$ u^i_d \f$ is a DoF associated to
      * the sampling point \f$ p \f$ in conjunction with atom stamp \f$ i \f$,
-     * then the mass \f$ m^i_d\f$ attributed to this dof is given as
+     * then the mass \f$ m^i_d\f$ attributed to this DoF is given as
      * \f[
-     *     m^i_d  = \sum_{I \, \in \, \cal C_p}    w^{}_I \, \mathsf m^i_I,
+     *     m^i_d  = \sum_{I \, \in \, \mathcal C_p}    w^{}_I \, \mathsf m^i_I,
      * \f]
-     * where \f$ \cal C_p \f$ is the set of sampling molecules associated to the
-     * sampling point \f$ p \f$ and \f$ \mathsf m^i_I \f$ is the mass of the
-     * atom with atom stamp \f$ i \f$ of molecule \f$ I \f$.
+     * where \f$ \mathcal C_p \f$ is the set of sampling molecules associated
+     * to the sampling point \f$ p \f$ and \f$ \mathsf m^i_I \f$ is the mass of
+     * the atom with atom stamp \f$ i \f$ of molecule \f$ I \f$.
      *
      * @note The @p inverse_masses vector should be a writable ghosted vector
      * that is prepared for example in the following way:
@@ -131,8 +132,9 @@ namespace Cluster
     void
     compute_dof_inverse_masses
     (VectorType                                       &inverse_masses,
+     const CellMoleculeData<dim, atomicity, spacedim> &cell_molecule_data,
      const DoFHandler<dim, spacedim>                  &dof_handler,
-     const CellMoleculeData<dim, atomicity, spacedim> &cell_molecule_data) const;
+     const ConstraintMatrix                           &constraints) const;
 
   protected:
 

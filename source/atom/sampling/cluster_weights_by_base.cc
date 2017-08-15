@@ -139,15 +139,16 @@ namespace Cluster
   WeightsByBase<dim, atomicity, spacedim>::
   compute_dof_inverse_masses
   (VectorType                                       &inverse_masses,
+   const CellMoleculeData<dim, atomicity, spacedim> &cell_molecule_data,
    const DoFHandler<dim, spacedim>                  &dof_handler,
-   const CellMoleculeData<dim, atomicity, spacedim> &cell_molecule_data) const
+   const ConstraintMatrix                           &constraints) const
   {
     inverse_masses = 0.;
 
     Assert (inverse_masses.size() == dof_handler.n_dofs(),
             ExcMessage("Invalid inverse_masses provided."
                        "The size of the vector should equal to the total "
-                       "number of dofs."))
+                       "number of DoFs."))
 
     // For now support atomicity=1. // TODO: Extend to atomicity>1.
     AssertThrow (atomicity==1, ExcNotImplemented());
@@ -194,11 +195,15 @@ namespace Cluster
             const Molecule<spacedim, atomicity> &molecule =
               cell_molecule_itr->second;
 
+            Assert (molecule.cluster_weight != numbers::invalid_cluster_weight,
+                    ExcMessage("Cluster weight of one or more molecules is "
+                               "not set before preparing inverse mass matrix."))
+
             // Get the location of the closest sampling point (of this cell)
             // to the molecule in this_cell_sampling_points.
-            const unsigned int location_in_container =
-              Utilities::find_closest_point (molecule_initial_location(molecule),
-                                             this_cell_sampling_points).first;
+            const unsigned int
+            location_in_container = Utilities::find_closest_point(molecule_initial_location(molecule),
+                                                                  this_cell_sampling_points          ).first;
 
             masses_at_sampling_points[location_in_container] +=
               molecule.cluster_weight *
@@ -216,23 +221,27 @@ namespace Cluster
             const auto &sampling_index = this_cell_sampling_indices[i];
 
             // If the sampling_index is one of the vertices of the current cell,
-            // get the corresponding dofs at the vertex to add masses.
+            // get the corresponding DoFs at the vertex to add masses.
             for (unsigned int v = 0; v < GeometryInfo<dim>::vertices_per_cell; v++)
+              //FIXME: Logic here needs to change for case when more sampling points
+              //       are added apart from vertices of the triangulation.
               if (cell->vertex_index(v) == sampling_index)
                 {
                   for (unsigned int
                        c = 0;
                        c < dof_handler.get_fe().n_dofs_per_vertex();
                        c++)
-                    inverse_masses[cell->vertex_dof_index (v, c)] +=
-                      masses_at_sampling_points[i];
+                    constraints.distribute_local_to_global (cell->vertex_dof_index (v, c),
+                                                            masses_at_sampling_points[i],
+                                                            inverse_masses);
 
                   this_cell_used_sampling_indices[i] = true;
                   break;
                 }
 
             // If the control reaches here,
-            // then this sampling index corresponds to a hanging node.
+            // then this sampling index corresponds to a hanging node
+            //      from a perspective of unrefined cell.
 
             // Loop through the faces to check which faces have children.
             for (unsigned int f = 0; f < GeometryInfo<dim>::faces_per_cell; ++f)
@@ -243,22 +252,26 @@ namespace Cluster
                   for (unsigned int sf = 0; sf < face->number_of_children(); ++sf)
                     {
                       // Run over all the vertices of this child face
-                      // to find if the hanging node on this face corresponds
-                      // to the current sampling index.
+                      // to find if the vertex with a hanging node(s)
+                      // on this face has index sampling_index.
                       const auto &subface = face->child(sf);
 
                       for (unsigned int
                            child_face_v = 0;
                            child_face_v < GeometryInfo<dim>::vertices_per_face;
                            child_face_v++)
+                        //FIXME: Logic here needs to change for case when more sampling points
+                        //       are added apart from vertices of the triangulation.
                         if (subface->vertex_index(child_face_v) == sampling_index)
                           {
                             for (unsigned int
                                  c = 0;
                                  c < dof_handler.get_fe().n_dofs_per_vertex();
                                  c++)
-                              inverse_masses[subface->vertex_dof_index (child_face_v, c)] +=
-                                masses_at_sampling_points[i];
+                              constraints.distribute_local_to_global
+                              (subface->vertex_dof_index (child_face_v, c),
+                               masses_at_sampling_points[i],
+                               inverse_masses);
 
                             this_cell_used_sampling_indices[i] = true;
                             break;
@@ -289,7 +302,13 @@ namespace Cluster
          entry  = inverse_masses.begin();
          entry != inverse_masses.end();
          entry++)
-      *entry = 1./(*entry);
+      {
+        Assert (*entry >= 0., ExcInternalError())
+
+        // Assign a mass of 1. to hanging node DoFs and other zero mass DoFs.
+        *entry = *entry ==0 ?
+                 1.         : 1./(*entry);
+      }
   }
 
 
@@ -298,8 +317,9 @@ namespace Cluster
   template void                                                         \
   WeightsByBase< DIM, ATOMICITY, SPACEDIM >::compute_dof_inverse_masses \
   (TrilinosWrappers::MPI::Vector                    &,                  \
+   const CellMoleculeData<DIM, ATOMICITY, SPACEDIM> &,                  \
    const DoFHandler<DIM, SPACEDIM>                  &,                  \
-   const CellMoleculeData<DIM, ATOMICITY, SPACEDIM> &) const;
+   const ConstraintMatrix                           &) const;
 
 #define WEIGHTS_BY_BASE(R, X)                       \
   BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,         \

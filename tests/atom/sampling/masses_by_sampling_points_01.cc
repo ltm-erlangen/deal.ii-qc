@@ -56,8 +56,9 @@ void Problem<dim, PotentialType>::partial_run()
 
   QC<dim, PotentialType>::cluster_weights_method->
   compute_dof_inverse_masses (inverse_masses,
+                              QC<dim, PotentialType>::cell_molecule_data,
                               QC<dim, PotentialType>::dof_handler,
-                              QC<dim, PotentialType>::cell_molecule_data);
+                              QC<dim, PotentialType>::constraints);
 
   // Get masses for comparison with blessed output.
   for (typename QC<dim, PotentialType>::vector_t::iterator
