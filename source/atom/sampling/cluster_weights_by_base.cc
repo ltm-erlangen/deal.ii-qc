@@ -241,7 +241,7 @@ namespace Cluster
 
             // If the control reaches here,
             // then this sampling index corresponds to a hanging node
-            //      from a perspective of unrefined cell.
+            // from a perspective of unrefined cell.
 
             // Loop through the faces to check which faces have children.
             for (unsigned int f = 0; f < GeometryInfo<dim>::faces_per_cell; ++f)
@@ -307,7 +307,8 @@ namespace Cluster
 
         // Assign a mass of 1. to hanging node DoFs and other zero mass DoFs.
         *entry = *entry ==0 ?
-                 1.         : 1./(*entry);
+                 1.         :
+                 1./(*entry);
       }
   }
 
