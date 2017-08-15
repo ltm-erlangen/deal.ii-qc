@@ -2,6 +2,7 @@
 #ifndef __dealii_qc_rol_vector_adaptor_h
 #define __dealii_qc_rol_vector_adaptor_h
 
+// FIXME: Require Trilinos and that it is configured with ROL.
 #include "ROL_Vector.hpp"
 
 #include <deal.II-qc/utilities.h>
@@ -14,11 +15,11 @@ namespace rol
 {
 
   /**
-   * Vector adaptor that provides @tparam VectorType implementation of the
+   * Vector adaptor that provides <tt>VectorType</tt> implementation of the
    * ROL::Vector interface.
    *
-   * VectorAdaptor supports any vector that satisfies @tparam VectorType concept
-   * introduced in deal.II (see Vector classes in deal.II).
+   * VectorAdaptor supports any vector that satisfies <tt>VectorType</tt>
+   * concept introduced in deal.II (see Vector classes in deal.II).
    */
   template<typename VectorType>
   class VectorAdaptor : public ROL::Vector<typename VectorType::real_type>
@@ -167,9 +168,8 @@ namespace rol
   void
   VectorAdaptor<VectorType>::set (const ROL::Vector<real_type> &rol_vector)
   {
-    TEUCHOS_TEST_FOR_EXCEPTION (vector_ptr->size() != rol_vector.dimension(),
-                                std::invalid_argument,
-                                "Error: Vectors must have the same dimension.");
+    Assert (vector_ptr->size() != rol_vector.dimension(),
+            ExcDimensionMismatch(vector_ptr->size(), rol_vector.dimension()))
 
     const VectorAdaptor &vector_adaptor =
       Teuchos::dyn_cast<const VectorAdaptor>(rol_vector);
@@ -183,9 +183,8 @@ namespace rol
   void
   VectorAdaptor<VectorType>::plus (const ROL::Vector<real_type> &rol_vector)
   {
-    TEUCHOS_TEST_FOR_EXCEPTION (vector_ptr->size() != rol_vector.dimension(),
-                                std::invalid_argument,
-                                "Error: Vectors must have the same dimension.");
+    Assert (vector_ptr->size() != rol_vector.dimension(),
+            ExcDimensionMismatch(vector_ptr->size(), rol_vector.dimension()))
 
     const VectorAdaptor &vector_adaptor =
       Teuchos::dyn_cast<const VectorAdaptor>(rol_vector);
@@ -200,9 +199,8 @@ namespace rol
   VectorAdaptor<VectorType>::axpy (const real_type               alpha,
                                    const ROL::Vector<real_type> &rol_vector)
   {
-    TEUCHOS_TEST_FOR_EXCEPTION (vector_ptr->size() != rol_vector.dimension(),
-                                std::invalid_argument,
-                                "Error: Vectors must have the same dimension." );
+    Assert (vector_ptr->size() != rol_vector.dimension(),
+            ExcDimensionMismatch(vector_ptr->size(), rol_vector.dimension()))
 
     const VectorAdaptor &vector_adaptor =
       Teuchos::dyn_cast<const VectorAdaptor>(rol_vector);
@@ -235,9 +233,8 @@ namespace rol
   VectorAdaptor<VectorType>::
   dot (const ROL::Vector<real_type> &rol_vector) const
   {
-    TEUCHOS_TEST_FOR_EXCEPTION (vector_ptr->size() != rol_vector.dimension(),
-                                std::invalid_argument,
-                                "Error: Vectors must have the same dimension.");
+    Assert (vector_ptr->size() != rol_vector.dimension(),
+            ExcDimensionMismatch(vector_ptr->size(), rol_vector.dimension()))
 
     const VectorAdaptor &vector_adaptor =
       Teuchos::dyn_cast< const VectorAdaptor>(rol_vector);
@@ -272,16 +269,15 @@ namespace rol
   Teuchos::RCP<ROL::Vector<typename VectorType::real_type> >
   VectorAdaptor<VectorType>::basis (const int i) const
   {
-    TEUCHOS_TEST_FOR_EXCEPTION (vector_ptr->locally_owned_elements().is_element(i),
-                                std::invalid_argument,
-                                "Error: Basis index must be between 0 and vector dimension.");
+    Assert (vector_ptr->locally_owned_elements().is_element(i),
+            ExcMessage("Queried index is not a locally owned index."));
     Teuchos::RCP< VectorType> vec_ptr = Teuchos::rcp (new VectorType);
 
     // Zero all the entries in dealii vector.
     (*vec_ptr).reinit(*vector_ptr, false);
 
     Teuchos::RCP<VectorAdaptor> e =
-      Teuchos::rcp( new VectorAdaptor( vec_ptr) );
+      Teuchos::rcp (new VectorAdaptor(vec_ptr));
 
     // Set asked basis.
     (*e->getVector())[i] = 1.0;
@@ -296,14 +292,11 @@ namespace rol
   VectorAdaptor<VectorType>::
   applyUnary (const ROL::Elementwise::UnaryFunction<real_type> &f)
   {
-    const dealii::IndexSet locally_owned_index_set =
-      vector_ptr->locally_owned_elements ();
-
-    for (unsigned int i = 0; i < locally_owned_index_set.n_elements(); ++i)
-      {
-        const unsigned int ind = locally_owned_index_set.nth_index_in_set(i);
-        (*vector_ptr)[ind] = f.apply((*vector_ptr)[ind]);
-      }
+    for (typename VectorType::iterator
+         iterator  = vector_ptr->begin();
+         iterator != vector_ptr->end();
+         iterator++)
+      *iterator = f.apply(*iterator);
   }
 
 
@@ -314,22 +307,22 @@ namespace rol
   applyBinary (const ROL::Elementwise::UnaryFunction<real_type> &f,
                const ROL::Vector<real_type>                     &x)
   {
-    TEUCHOS_TEST_FOR_EXCEPTION (vector_ptr->size() != x.dimension(),
-                                std::invalid_argument,
-                                "Error: Vectors must have the same dimension.");
+    Assert (vector_ptr->size() != x.dimension(),
+            ExcDimensionMismatch(vector_ptr->size(), x.dimension()))
 
     const VectorAdaptor &vector_adaptor =
       Teuchos::dyn_cast<const VectorAdaptor>(x);
 
     const VectorType &dealii_vector = *(vector_adaptor.getVector());
 
-    const dealii::IndexSet locally_owned_index_set =
-      vector_ptr->locally_owned_elements ();
-
-    for (unsigned int i = 0; i < locally_owned_index_set.n_elements(); ++i)
+    for (typename VectorType::iterator
+         l_iterator  = vector_ptr->begin(), r_iterator  = dealii_vector.begin();
+         l_iterator != vector_ptr->end();
+         l_iterator++,                      r_iterator)
       {
-        const unsigned int ind = locally_owned_index_set.nth_index_in_set(i);
-        (*vector_ptr)[ind] = f.apply((*vector_ptr)[ind], dealii_vector[ind]);
+        Assert (r_iterator != dealii_vector.end(),
+                ExcInternalError())
+        *l_iterator = f.apply(*l_iterator, *r_iterator);
       }
   }
 
@@ -342,14 +335,11 @@ namespace rol
   {
     typename VectorType::real_type result = r.initialValue();
 
-    const dealii::IndexSet locally_owned_index_set =
-      vector_ptr->locally_owned_elements ();
-
-    for (unsigned int i = 0; i < locally_owned_index_set.n_elements(); ++i)
-      {
-        const unsigned int ind = locally_owned_index_set.nth_index_in_set(i);
-        r.reduce((*vector_ptr)[ind], result);
-      }
+    for (typename VectorType::iterator
+         iterator  = vector_ptr->begin();
+         iterator != vector_ptr->end();
+         iterator++)
+      r.reduce(*iterator, result);
 
     return result;
   }
