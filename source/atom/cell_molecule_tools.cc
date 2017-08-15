@@ -1,5 +1,6 @@
 
 #include <deal.II/grid/grid_tools.h>
+#include <deal.II/dofs/dof_tools.h>
 
 #include <deal.II-qc/atom/cell_molecule_tools.h>
 #include <deal.II-qc/atom/parse_atom_data.h>
@@ -247,7 +248,10 @@ namespace CellMoleculeTools
    const double                     ghost_cell_layer_thickness)
   {
     // Prepare dof index set in this container.
-    IndexSet dof_set = dof_handler.locally_owned_dofs();
+    IndexSet dof_set;
+
+    // Get locally relevant dofs first.
+    DoFTools::extract_locally_relevant_dofs(dof_handler, dof_set);
 
     // Note: The logic here is similar to that of
     // DoFTools::extract_locally_relevant_dofs().

@@ -253,6 +253,11 @@ protected:
   ConstraintMatrix     constraints;
 
   /**
+   * Distributed displacement field.
+   */
+  vector_t distributed_displacement;
+
+  /**
    * Locally relevant unknown displacement filed
    */
   vector_t locally_relevant_displacement;
@@ -261,6 +266,11 @@ protected:
    * Gradient of the energy (a scalar) w.r.t. to the displacement field.
    */
   vector_t locally_relevant_gradient;
+
+  /**
+   * Inverse mass matrix.
+   */
+  DiagonalMatrix<vector_t> inverse_mass_matrix;
 
   /**
    * Map of boundary ids to Functions describing the corresponding boundary
