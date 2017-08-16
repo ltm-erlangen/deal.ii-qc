@@ -34,7 +34,7 @@ namespace LA
 
 #include <deal.II-qc/atom/molecule_handler.h>
 #include <deal.II-qc/configure/configure_qc.h>
-#include <deal.II-qc/potentials/potential_field.h>
+#include <deal.II-qc/potentials/potential_field_parser.h>
 
 
 DEAL_II_QC_NAMESPACE_OPEN
