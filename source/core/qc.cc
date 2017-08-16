@@ -367,8 +367,9 @@ void QC<dim, PotentialType>::initialize_external_potential_fields (const double 
         external_potential_fields.insert
         (
           std::make_pair(entry.first.first,
-                         std::make_shared<PotentialFieldParser<dim>>(entry.first.second,
-                             initial_time))
+                         std::make_shared<PotentialFieldParser<dim> >
+                         (entry.first.second,
+                          initial_time))
         );
 
       // Initialize FunctionParser object of PotentialFieldParser.
