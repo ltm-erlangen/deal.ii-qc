@@ -17,21 +17,20 @@ using namespace dealii;
  * present in a <tt>spacedim</tt>-dimensional space with an exponent of
  * <tt>degree</tt> in its empirical formula.
  */
-template <int spacedim, int degree=2>
+template <int spacedim>
 class NanoIndentor : public PotentialField<spacedim>
 {
 public:
 
   /**
-   * Constructor. Takes parameters @p point, @p dir and @p A representing
-   * the center or the tip, the direction and the strength of the NanoIndentor,
+   * Constructor. Takes parameters @p initial_location and @p dir representing
+   * the initial location (usually the center or the tip) and the direction,
    * respectively, and may take @p is_electric_field that denotes whether
    * the indentor induces an electric field (which defaults to false),
    * @p initial_time that defaults to zero.
    */
-  NanoIndentor(const Point<spacedim>     &point,
+  NanoIndentor(const Point<spacedim>     &initial_location,
                const Tensor<1, spacedim> &dir,
-               const double               A                 = 0.001,
                const bool                 is_electric_field = false,
                const double               initial_time      = 0.);
 
@@ -41,7 +40,7 @@ public:
   virtual ~NanoIndentor();
 
   /**
-   * Initialize the FunctionParser object #indentor_displacement_function.
+   * Initialize the FunctionParser object #indentor_position_function.
    */
   void initialize (const std::string                   &variables,
                    const std::string                   &expression,
@@ -56,25 +55,25 @@ public:
 protected:
 
   /**
-   * FunctionParser object to describe the displacement of the indentor along
+   * FunctionParser object to describe the position of the indentor along
    * the direction of indentation #direction.
    */
-  FunctionParser<spacedim> indentor_displacement_function;
+  FunctionParser<spacedim> indentor_position_function;
 
   /**
-   * Center or the tip of the indentor.
+   * Initial location of the indentor.
    */
-  Point<spacedim> point;
+  const Point<spacedim> initial_location;
+
+  /**
+   * Current location of the indentor.
+   */
+  Point<spacedim> current_location;
 
   /**
    * Unit vector along the direction of indentation.
    */
-  Tensor<1, spacedim> direction;
-
-  /**
-   * Parameter representing strength of the indentor.
-   */
-  double A;
+  const Tensor<1, spacedim> direction;
 
 };
 

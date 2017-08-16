@@ -14,11 +14,11 @@ void test (const Point<dim>      &p,
            const Tensor<1, dim> &dir,
            const double          time)
 {
-  SphericalNanoIndentor<dim, 2> potential (Point<dim>(),
-                                           dir,
-                                           0.001,
-                                           4.1,
-                                           0.);
+  SphericalNanoIndentor<dim> potential (Point<dim>(),
+                                        dir,
+                                        0.001,
+                                        4.1,
+                                        0.);
 
   potential.initialize ((dim==3) ? "x,y,z,t" :
                         (dim==2  ? "x,y,t"   : "x,t"),
