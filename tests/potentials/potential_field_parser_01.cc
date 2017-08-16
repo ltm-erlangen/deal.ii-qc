@@ -1,11 +1,11 @@
 
-#include <deal.II-qc/potentials/potential_field.h>
+#include <deal.II-qc/potentials/potential_field_function_parser.h>
 
 using namespace dealiiqc;
 using namespace dealii;
 
 
-// Test to check correctness of PotentialField value function.
+// Test to check correctness of PotentialFieldParser value function.
 
 
 template <int dim>
@@ -13,7 +13,7 @@ void test (const bool        is_electric_field,
            const Point<dim> &p,
            const double      q)
 {
-  PotentialField<dim> potential (is_electric_field, 0.);
+  PotentialFieldFunctionParser<dim> potential (is_electric_field, 0.);
 
   potential.initialize ((dim==3) ? "x,y,z,t" :
                         (dim==2  ? "x,y,t"   : "x,t"),
