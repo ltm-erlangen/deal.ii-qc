@@ -14,11 +14,10 @@ using namespace dealii;
 
 /**
  * Abstract class for describing interaction potential under a nano-indentor
- * present in a <tt>spacedim</tt>-dimensional space with an exponent of
- * <tt>degree</tt> in its empirical formula.
+ * present in a <tt>dim</tt>-dimensional space.
  */
-template <int spacedim>
-class NanoIndentor : public PotentialField<spacedim>
+template <int dim>
+class NanoIndentor : public PotentialField<dim>
 {
 public:
 
@@ -29,10 +28,10 @@ public:
    * the indentor induces an electric field (which defaults to false),
    * @p initial_time that defaults to zero.
    */
-  NanoIndentor(const Point<spacedim>     &initial_location,
-               const Tensor<1, spacedim> &dir,
-               const bool                 is_electric_field = false,
-               const double               initial_time      = 0.);
+  NanoIndentor(const Point<dim>     &initial_location,
+               const Tensor<1, dim> &dir,
+               const bool            is_electric_field = false,
+               const double          initial_time      = 0.);
 
   /**
    * Destructor.
@@ -48,7 +47,7 @@ public:
                    const bool                           time_dependent = true);
 
   /**
-   * Set the time to new_time, overwriting the old value.
+   * Move the indenter at the position corresponding to the time @p new_time.
    */
   void set_time (const double new_time);
 
@@ -58,22 +57,22 @@ protected:
    * FunctionParser object to describe the position of the indentor along
    * the direction of indentation #direction.
    */
-  FunctionParser<spacedim> indentor_position_function;
+  FunctionParser<dim>  indentor_position_function;
 
   /**
    * Initial location of the indentor.
    */
-  const Point<spacedim> initial_location;
+  const Point<dim>     initial_location;
 
   /**
    * Current location of the indentor.
    */
-  Point<spacedim> current_location;
+  Point<dim>           current_location;
 
   /**
    * Unit vector along the direction of indentation.
    */
-  const Tensor<1, spacedim> direction;
+  const Tensor<1, dim> direction;
 
 };
 

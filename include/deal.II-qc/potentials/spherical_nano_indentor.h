@@ -11,8 +11,7 @@ using namespace dealii;
 
 /**
  * Class for describing interaction potential under a spherical nano-indentor
- * present in a <tt>spacedim</tt>-dimensional space with an exponent of
- * <tt>degree</tt> in its empirical formula.
+ * present in a <tt>dim</tt>-dimensional space.
  *
  * The potential of spherical nano-indenter has the following empirical form,
  * \f[
@@ -25,8 +24,8 @@ using namespace dealii;
  * the strength, \f$ n \f$ is the degree and \f$ R \f$ is the radius
  * of the indentor.
  */
-template <int spacedim>
-class SphericalNanoIndentor : public NanoIndentor<spacedim>
+template <int dim>
+class SphericalNanoIndentor : public NanoIndentor<dim>
 {
 public:
 
@@ -38,11 +37,11 @@ public:
    * @param radius            the radius of the spherical indentor, and
    * @param initial_time      the initial value of the time variable.
    */
-  SphericalNanoIndentor(const Point<spacedim>     &initial_location,
-                        const Tensor<1, spacedim> &dir,
-                        const double               radius            = 100.0,
-                        const double               A                 = 0.001,
-                        const double               initial_time      = 0.);
+  SphericalNanoIndentor(const Point<dim>     &initial_location,
+                        const Tensor<1, dim> &dir,
+                        const double          radius            = 100.0,
+                        const double          A                 = 0.001,
+                        const double          initial_time      = 0.);
 
   /**
    * Destructor.
@@ -53,14 +52,14 @@ public:
    * Return the value of the function evaluated at a given point @p p.
    *
    */
-  double value (const Point<spacedim> &p,
-                const double            ) const;
+  double value (const Point<dim> &p,
+                const double       ) const;
 
   /**
    * Return the gradient of the function evaluated at a given point @p p.
    */
-  Tensor<1, spacedim> gradient (const Point<spacedim> &p,
-                                const double            ) const;
+  Tensor<1, dim> gradient (const Point<dim> &p,
+                           const double       ) const;
 
 private:
 
@@ -72,7 +71,7 @@ private:
   /**
    * Parameter representing strength of the indentor.
    */
-  double A;
+  double       A;
 
 };
 

@@ -7,55 +7,55 @@
 DEAL_II_QC_NAMESPACE_OPEN
 
 
-template <int spacedim>
-SphericalNanoIndentor<spacedim>::
-SphericalNanoIndentor(const Point<spacedim>     &initial_location,
-                      const Tensor<1, spacedim> &dir,
-                      const double               A,
-                      const double               radius,
-                      const double               initial_time)
+template <int dim>
+SphericalNanoIndentor<dim>::
+SphericalNanoIndentor(const Point<dim>     &initial_location,
+                      const Tensor<1, dim> &dir,
+                      const double          A,
+                      const double          radius,
+                      const double          initial_time)
   :
-  NanoIndentor<spacedim>(initial_location, dir, false, initial_time),
+  NanoIndentor<dim>(initial_location, dir, false, initial_time),
   radius(radius),
   A(A)
 {}
 
 
 
-template <int spacedim>
-SphericalNanoIndentor<spacedim>::~SphericalNanoIndentor()
+template <int dim>
+SphericalNanoIndentor<dim>::~SphericalNanoIndentor()
 {}
 
 
 
-template <int spacedim>
+template <int dim>
 double
-SphericalNanoIndentor<spacedim>::value (const Point<spacedim> &p,
-                                        const double            ) const
+SphericalNanoIndentor<dim>::value (const Point<dim> &p,
+                                   const double       ) const
 {
-  const Point<spacedim> &center = NanoIndentor<spacedim>::current_location;
+  const Point<dim> &center = NanoIndentor<dim>::current_location;
 
   const double distance = (p-center).norm();
 
   return distance < radius ?
-         A*dealii::Utilities::fixed_power<(spacedim<3) ? 2 : 3>(radius-distance)
+         A*dealii::Utilities::fixed_power<(dim<3) ? 2 : 3>(radius-distance)
          :
          0.;
 }
 
 
 
-template <int spacedim>
-Tensor<1, spacedim>
-SphericalNanoIndentor<spacedim>::gradient (const Point<spacedim> &p,
-                                           const double            ) const
+template <int dim>
+Tensor<1, dim>
+SphericalNanoIndentor<dim>::gradient (const Point<dim> &p,
+                                      const double       ) const
 {
-  const Point<spacedim> &center = NanoIndentor<spacedim>::current_location;
+  const Point<dim> &center = NanoIndentor<dim>::current_location;
 
-  const Tensor<1, spacedim> position_vector = p-center;
+  const Tensor<1, dim> position_vector = p-center;
   const double distance = position_vector.norm();
 
-  const unsigned int degree = (spacedim < 3) ? 2 : 3;
+  const unsigned int degree = (dim < 3) ? 2 : 3;
 
   const double
   factor = - A*degree*

@@ -6,34 +6,42 @@
 
 DEAL_II_QC_NAMESPACE_OPEN
 
-
-template <int spacedim>
-NanoIndentor<spacedim>::
-NanoIndentor(const Point<spacedim>     &initial_location,
-             const Tensor<1, spacedim> &dir,
-             const bool                 is_electric_field,
-             const double               initial_time     )
-  :
-  PotentialField<spacedim>(is_electric_field, initial_time),
-  indentor_position_function(1, initial_time),
-  initial_location(initial_location),
-  current_location(initial_location),
-  direction(dir)
+namespace
 {
-  Assert (std::fabs(dir.norm()-1.) < 1e-14,
-          ExcMessage("The direction of the indentor should be a unit vector."));
+  template <int dim>
+  Tensor<1, dim> get_normalized_tensor (const Tensor<1, dim> &in_tensor)
+  {
+    Tensor<1, dim> unit_tensor = in_tensor;
+    unit_tensor *= 1./in_tensor.norm();
+    return unit_tensor;
+  }
 }
 
 
-
-template <int spacedim>
-NanoIndentor<spacedim>::~NanoIndentor()
+template <int dim>
+NanoIndentor<dim>::
+NanoIndentor(const Point<dim>     &initial_location,
+             const Tensor<1, dim> &dir,
+             const bool           is_electric_field,
+             const double         initial_time     )
+  :
+  PotentialField<dim>(is_electric_field, initial_time),
+  indentor_position_function(1, initial_time),
+  initial_location(initial_location),
+  current_location(initial_location),
+  direction(get_normalized_tensor(dir))
 {}
 
 
 
-template <int spacedim>
-void NanoIndentor<spacedim>::initialize
+template <int dim>
+NanoIndentor<dim>::~NanoIndentor()
+{}
+
+
+
+template <int dim>
+void NanoIndentor<dim>::initialize
 (const std::string                   &variables,
  const std::string                   &expression,
  const std::map<std::string, double> &constants,
@@ -47,8 +55,8 @@ void NanoIndentor<spacedim>::initialize
 
 
 
-template <int spacedim>
-void NanoIndentor<spacedim>::set_time (const double new_time)
+template <int dim>
+void NanoIndentor<dim>::set_time (const double new_time)
 {
   FunctionTime<double>::set_time(new_time);
   indentor_position_function.set_time (new_time);
