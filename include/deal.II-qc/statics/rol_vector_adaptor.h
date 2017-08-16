@@ -7,6 +7,8 @@
 
 #include <deal.II-qc/utilities.h>
 
+#include <deal.II/lac/vector.h>
+
 
 DEAL_II_QC_NAMESPACE_OPEN
 
@@ -267,27 +269,27 @@ namespace rol
   }
 
 
-/*
-  template<typename VectorType>
-  Teuchos::RCP<ROL::Vector<typename VectorType::real_type> >
-  VectorAdaptor<VectorType>::basis (const int i) const
-  {
-    Assert (vector_ptr->locally_owned_elements().is_element(i),
-            ExcMessage("Queried index is not a locally owned index."));
-    Teuchos::RCP< VectorType> vec_ptr = Teuchos::rcp (new VectorType);
+  /*
+    template<typename VectorType>
+    Teuchos::RCP<ROL::Vector<typename VectorType::real_type> >
+    VectorAdaptor<VectorType>::basis (const int i) const
+    {
+      Assert (vector_ptr->locally_owned_elements().is_element(i),
+              ExcMessage("Queried index is not a locally owned index."));
+      Teuchos::RCP< VectorType> vec_ptr = Teuchos::rcp (new VectorType);
 
-    // Zero all the entries in dealii vector.
-    (*vec_ptr).reinit(*vector_ptr, false);
+      // Zero all the entries in dealii vector.
+      (*vec_ptr).reinit(*vector_ptr, false);
 
-    Teuchos::RCP<VectorAdaptor> e =
-      Teuchos::rcp (new VectorAdaptor(vec_ptr));
+      Teuchos::RCP<VectorAdaptor> e =
+        Teuchos::rcp (new VectorAdaptor(vec_ptr));
 
-    // Set asked basis.
-    (*e->getVector())[i] = 1.0;
+      // Set asked basis.
+      (*e->getVector())[i] = 1.0;
 
-    return e;
-  }
-*/
+      return e;
+    }
+  */
 
 
   template<typename VectorType>
@@ -300,6 +302,8 @@ namespace rol
          iterator != vector_ptr->end();
          iterator++)
       *iterator = f.apply(*iterator);
+
+    vector_ptr->compress (dealii::VectorOperation::insert);
   }
 
 
@@ -327,6 +331,8 @@ namespace rol
                 ExcInternalError())
         *l_iterator = f.apply(*l_iterator, *r_iterator);
       }
+
+    vector_ptr->compress (dealii::VectorOperation::insert);
   }
 
 

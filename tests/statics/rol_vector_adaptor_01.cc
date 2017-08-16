@@ -93,8 +93,8 @@ public:
                  Real                    &tol)
   {
     Teuchos::RCP<const dealii::Vector<Real>> xp = getVector<Xprim>(x);
-    Teuchos::RCP<dealii::Vector<Real>> gp =
-        Teuchos::rcp_const_cast< dealii::Vector<Real> >(getVector<Xdual>(g));
+    Teuchos::RCP<dealii::Vector<Real> > gp =
+      Teuchos::rcp_const_cast< dealii::Vector<Real> >(getVector<Xdual>(g));
 
     dealii::Point<3> b((*xp)[0], (*xp)[1], (*xp)[2]);
     dealii::Point<3> rel(b-a);
