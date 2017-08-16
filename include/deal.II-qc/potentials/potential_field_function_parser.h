@@ -16,7 +16,7 @@ using namespace dealii;
  * Class for describing scalar potential fields through a FunctionParser object.
  */
 template <int spacedim>
-class PotentialFieldParser : public PotentialField<spacedim>
+class PotentialFieldFunctionParser : public PotentialField<spacedim>
 {
 public:
 
@@ -27,14 +27,14 @@ public:
    * used for the computation of gradients using finite differences (which
    * defaults to 1e-8).
    */
-  PotentialFieldParser (const bool   is_electric_field = false,
-                        const double initial_time      = 0.,
-                        const double h                 = 1e-8);
+  PotentialFieldFunctionParser (const bool   is_electric_field = false,
+                                const double initial_time      = 0.,
+                                const double h                 = 1e-8);
 
   /**
    * Destructor.
    */
-  virtual ~PotentialFieldParser();
+  virtual ~PotentialFieldFunctionParser();
 
   /**
    * Initialize the function parser. This methods accepts the following

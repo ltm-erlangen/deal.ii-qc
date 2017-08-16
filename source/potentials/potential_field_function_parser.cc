@@ -1,14 +1,15 @@
 
-#include <deal.II-qc/potentials/potential_field_parser.h>
+#include <deal.II-qc/potentials/potential_field_function_parser.h>
 
 
 DEAL_II_QC_NAMESPACE_OPEN
 
 
 template <int spacedim>
-PotentialFieldParser<spacedim>::PotentialFieldParser (const bool   is_electric_field,
-                                                      const double initial_time,
-                                                      const double h)
+PotentialFieldFunctionParser<spacedim>::
+PotentialFieldFunctionParser (const bool   is_electric_field,
+                              const double initial_time,
+                              const double h)
   :
   PotentialField<spacedim>(is_electric_field, initial_time),
   function_object (1, initial_time, h)
@@ -17,14 +18,14 @@ PotentialFieldParser<spacedim>::PotentialFieldParser (const bool   is_electric_f
 
 
 template <int spacedim>
-PotentialFieldParser<spacedim>::~PotentialFieldParser()
+PotentialFieldFunctionParser<spacedim>::~PotentialFieldFunctionParser()
 {}
 
 
 
 template <int spacedim>
 void
-PotentialFieldParser<spacedim>::
+PotentialFieldFunctionParser<spacedim>::
 initialize (const std::string                   &variables,
             const std::string                   &expression,
             const std::map<std::string, double> &constants,
@@ -40,8 +41,8 @@ initialize (const std::string                   &variables,
 
 template <int spacedim>
 double
-PotentialFieldParser<spacedim>::value (const Point<spacedim> &p,
-                                       const double           q) const
+PotentialFieldFunctionParser<spacedim>::value (const Point<spacedim> &p,
+                                               const double           q) const
 {
   return PotentialField<spacedim>::is_electric_field ?
          function_object.value(p) * q                :
@@ -52,8 +53,9 @@ PotentialFieldParser<spacedim>::value (const Point<spacedim> &p,
 
 template <int spacedim>
 Tensor<1, spacedim>
-PotentialFieldParser<spacedim>::gradient (const Point<spacedim> &p,
-                                          const double           q) const
+PotentialFieldFunctionParser<spacedim>::
+gradient (const Point<spacedim> &p,
+          const double           q) const
 {
   return PotentialField<spacedim>::is_electric_field ?
          function_object.gradient(p) * q             :
@@ -63,16 +65,17 @@ PotentialFieldParser<spacedim>::gradient (const Point<spacedim> &p,
 
 
 template <int spacedim>
-void PotentialFieldParser<spacedim>::set_time (const double new_time)
+void PotentialFieldFunctionParser<spacedim>::set_time (const double new_time)
 {
+  FunctionTime<double>::set_time(new_time);
   function_object.set_time(new_time);
 }
 
 
 
-template class PotentialFieldParser<1>;
-template class PotentialFieldParser<2>;
-template class PotentialFieldParser<3>;
+template class PotentialFieldFunctionParser<1>;
+template class PotentialFieldFunctionParser<2>;
+template class PotentialFieldFunctionParser<3>;
 
 
 DEAL_II_QC_NAMESPACE_CLOSE
