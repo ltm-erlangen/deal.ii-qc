@@ -51,6 +51,7 @@ void NanoIndentor<spacedim, degree>::initialize
 template <int spacedim, int degree>
 void NanoIndentor<spacedim, degree>::set_time (const double new_time)
 {
+  FunctionTime<double>::set_time(new_time);
   indentor_displacement_function.set_time (new_time);
   point += indentor_displacement_function.value(point)*direction;
 }
