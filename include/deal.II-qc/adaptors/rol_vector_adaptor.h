@@ -3,25 +3,83 @@
 #define __dealii_qc_rol_vector_adaptor_h
 
 // FIXME: Require Trilinos and that it is configured with ROL.
+#ifdef DEAL_II_WITH_TRILINOS
 #include "ROL_Vector.hpp"
 
 #include <deal.II-qc/utilities.h>
 
+#include <deal.II/base/exceptions.h>
 #include <deal.II/lac/vector.h>
 
 
 DEAL_II_QC_NAMESPACE_OPEN
 
 
+/**
+ * A namespace that provides an interface to the
+ * <a href="https://trilinos.org/docs/dev/packages/rol/doc/html/index.html">
+ * Rapid Optimization Library</a> (ROL).
+ */
 namespace rol
 {
+
+  using namespace dealii;
 
   /**
    * Vector adaptor that provides <tt>VectorType</tt> implementation of the
    * ROL::Vector interface.
    *
-   * VectorAdaptor supports any vector that satisfies <tt>VectorType</tt>
-   * concept introduced in deal.II (see Vector classes in deal.II).
+   * VectorAdaptor supports vectors that satisfies the following ROL VectorType
+   * concept.
+   *
+   * The VectorType should contain the following types.
+   * @code
+   * VectorType::size_type;  // The type of size of the vector.
+   * VectorType::value_type; // The type of elements stored in the vector.
+   * @endcode
+   *
+   * The VectorType should contain the following methods.
+   * @code
+   *                   // Reinitialize the current vector using a given vector's
+   *                   // size (and the parallel distribution) without copying
+   *                   // the elements.
+   * VectorType::reinit(const VectorType &, ...);
+   *
+   *                       // Globally add a given vector to the current.
+   * VectorType::operator+=(const VectorType &);
+   *
+   *                       // Scale all elements by a given scalar.
+   * VectorType::operator*=(const VectorType::value_type &);
+   *
+   *                // Scale all elements of the current vector and globally
+   *                // add a given vector to it.
+   * VectorType::add(const VectorType::value_type, const VectorType &);
+   *
+   *                      // Copies the data of a given vector to the current.
+   *                      // Resize the current vector if necessary (MPI safe).
+   * VectorType::operation=(const VectorType &);
+   *
+   *                 // To query the global size of the current vector.
+   * VectorType::size();
+   *
+   *                    // To query L_2 norm of the current vector
+   * VectorType::l2_norm();
+   *
+   *                  // Iterator to the start of the (locally owned) element
+   *                  // of the current vector.
+   * VectorType::begin();
+   *
+   *                // Iterator to the one past the last (locally owned)
+   *                // element of the current vector.
+   * VectorType::end();
+   *
+   *                     // Compress the vector i.e., flush the buffers of the
+   *                     // vector object if it has any.
+   * VectorType::compress(VectorOperation::insert);
+   * @endcode
+   *
+   * Most of the vectors in deal.II (see Vector classes) adhere to the above
+   * ROL VectorType concept.
    */
   template<typename VectorType>
   class VectorAdaptor : public ROL::Vector<typename VectorType::real_type>
@@ -95,7 +153,7 @@ namespace rol
     real_type dot( const ROL::Vector<real_type> &rol_vector ) const;
 
     /**
-     * Return the \f$ L_2 $\f norm of the Vector.
+     * Return the \f$ L_2 \f$ norm of the Vector.
      */
     real_type norm() const;
 
@@ -106,7 +164,7 @@ namespace rol
 
     /**
      * Return a Teuchos smart reference counting pointer the basis vector
-     * corresponding to the @p i \f${}^{th}$\f element of the Vector.
+     * corresponding to the @p i \f${}^{th}\f$ element of the Vector.
      */
     Teuchos::RCP<ROL::Vector<real_type>> basis (const int i) const;
 
@@ -116,11 +174,11 @@ namespace rol
     void applyUnary (const ROL::Elementwise::UnaryFunction<real_type> &f);
 
     /**
-     * Apply binary function @p f along with ROL::Vector @p x to all the
-     * elements of the Vector.
+     * Apply binary function @p f along with ROL::Vector @p rol_vector to all
+     * the elements of the Vector.
      */
     void applyBinary (const ROL::Elementwise::UnaryFunction<real_type> &f,
-                      const ROL::Vector<real_type>                     &x);
+                      const ROL::Vector<real_type>                     &rol_vector);
 
     /**
      * Return the accumulated value on applying reduction operation @p r on
@@ -135,7 +193,8 @@ namespace rol
 
   };
 
-  /* --------------------- Inline and template functions ------------------- */
+
+  /*------------------------------member definitions--------------------------*/
 #ifndef DOXYGEN
 
 
@@ -170,8 +229,13 @@ namespace rol
   void
   VectorAdaptor<VectorType>::set (const ROL::Vector<real_type> &rol_vector)
   {
-    Assert (vector_ptr->size() == rol_vector.dimension(),
-            ExcDimensionMismatch(vector_ptr->size(), rol_vector.dimension()))
+    const unsigned int rol_vector_size =
+      static_cast<unsigned int> (rol_vector.dimension());
+
+    const unsigned int current_vector_size = vector_ptr->size();
+
+    Assert (current_vector_size == rol_vector_size,
+            ExcDimensionMismatch(current_vector_size, rol_vector_size));
 
     const VectorAdaptor &vector_adaptor =
       Teuchos::dyn_cast<const VectorAdaptor>(rol_vector);
@@ -185,13 +249,18 @@ namespace rol
   void
   VectorAdaptor<VectorType>::plus (const ROL::Vector<real_type> &rol_vector)
   {
-    Assert (vector_ptr->size() == rol_vector.dimension(),
-            ExcDimensionMismatch(vector_ptr->size(), rol_vector.dimension()))
+    const unsigned int rol_vector_size =
+      static_cast<unsigned int> (rol_vector.dimension());
+
+    const unsigned int current_vector_size = vector_ptr->size();
+
+    Assert (current_vector_size == rol_vector_size,
+            ExcDimensionMismatch(current_vector_size, rol_vector_size));
 
     const VectorAdaptor &vector_adaptor =
       Teuchos::dyn_cast<const VectorAdaptor>(rol_vector);
 
-    vector_ptr->add( *(vector_adaptor.getVector()) );
+    *vector_ptr += *(vector_adaptor.getVector());
   }
 
 
@@ -201,8 +270,13 @@ namespace rol
   VectorAdaptor<VectorType>::axpy (const real_type               alpha,
                                    const ROL::Vector<real_type> &rol_vector)
   {
-    Assert (vector_ptr->size() == rol_vector.dimension(),
-            ExcDimensionMismatch(vector_ptr->size(), rol_vector.dimension()))
+    const unsigned int rol_vector_size =
+      static_cast<unsigned int> (rol_vector.dimension());
+
+    const unsigned int current_vector_size = vector_ptr->size();
+
+    Assert (current_vector_size == rol_vector_size,
+            ExcDimensionMismatch(current_vector_size, rol_vector_size));
 
     const VectorAdaptor &vector_adaptor =
       Teuchos::dyn_cast<const VectorAdaptor>(rol_vector);
@@ -218,7 +292,7 @@ namespace rol
   {
     Assert (vector_ptr->size() < std::numeric_limits<int>::max(),
             ExcMessage("The size of the vector being used is greater than "
-                       "largest value of type int."))
+                       "largest value of type int."));
     return static_cast<int>(vector_ptr->size());
   }
 
@@ -238,8 +312,13 @@ namespace rol
   VectorAdaptor<VectorType>::
   dot (const ROL::Vector<real_type> &rol_vector) const
   {
-    Assert (vector_ptr->size() == rol_vector.dimension(),
-            ExcDimensionMismatch(vector_ptr->size(), rol_vector.dimension()))
+    const unsigned int rol_vector_size =
+      static_cast<unsigned int> (rol_vector.dimension());
+
+    const unsigned int current_vector_size = vector_ptr->size();
+
+    Assert (current_vector_size == rol_vector_size,
+            ExcDimensionMismatch(current_vector_size, rol_vector_size));
 
     const VectorAdaptor &vector_adaptor =
       Teuchos::dyn_cast< const VectorAdaptor>(rol_vector);
@@ -269,27 +348,26 @@ namespace rol
   }
 
 
-  /*
-    template<typename VectorType>
-    Teuchos::RCP<ROL::Vector<typename VectorType::real_type> >
-    VectorAdaptor<VectorType>::basis (const int i) const
-    {
-      Assert (vector_ptr->locally_owned_elements().is_element(i),
-              ExcMessage("Queried index is not a locally owned index."));
-      Teuchos::RCP< VectorType> vec_ptr = Teuchos::rcp (new VectorType);
 
-      // Zero all the entries in dealii vector.
-      (*vec_ptr).reinit(*vector_ptr, false);
+  template<typename VectorType>
+  Teuchos::RCP<ROL::Vector<typename VectorType::real_type> >
+  VectorAdaptor<VectorType>::basis (const int i) const
+  {
+    Teuchos::RCP<VectorType> vec_ptr = Teuchos::rcp (new VectorType);
 
-      Teuchos::RCP<VectorAdaptor> e =
-        Teuchos::rcp (new VectorAdaptor(vec_ptr));
+    // Zero all the entries in dealii vector.
+    vec_ptr->reinit(*vector_ptr, false);
 
-      // Set asked basis.
-      (*e->getVector())[i] = 1.0;
+    if (vector_ptr->locally_owned_elements().is_element(i))
+      vec_ptr->operator[](i) = 1.;
 
-      return e;
-    }
-  */
+    vec_ptr->compress(VectorOperation::insert);
+
+    Teuchos::RCP<VectorAdaptor> e = Teuchos::rcp (new VectorAdaptor(vec_ptr));
+
+    return e;
+  }
+
 
 
   template<typename VectorType>
@@ -303,7 +381,7 @@ namespace rol
          iterator++)
       *iterator = f.apply(*iterator);
 
-    vector_ptr->compress (dealii::VectorOperation::insert);
+    vector_ptr->compress (VectorOperation::insert);
   }
 
 
@@ -312,27 +390,28 @@ namespace rol
   void
   VectorAdaptor<VectorType>::
   applyBinary (const ROL::Elementwise::UnaryFunction<real_type> &f,
-               const ROL::Vector<real_type>                     &x)
+               const ROL::Vector<real_type>                     &rol_vector)
   {
-    Assert (vector_ptr->size() == x.dimension(),
-            ExcDimensionMismatch(vector_ptr->size(), x.dimension()))
+    const unsigned int rol_vector_size =
+      static_cast<unsigned int> (rol_vector.dimension());
+
+    const unsigned int current_vector_size = vector_ptr->size();
+
+    Assert (current_vector_size == rol_vector_size,
+            ExcDimensionMismatch(current_vector_size, rol_vector_size));
 
     const VectorAdaptor &vector_adaptor =
-      Teuchos::dyn_cast<const VectorAdaptor>(x);
+      Teuchos::dyn_cast<const VectorAdaptor>(rol_vector);
 
     const VectorType &dealii_vector = *(vector_adaptor.getVector());
 
     for (typename VectorType::iterator
          l_iterator  = vector_ptr->begin(), r_iterator  = dealii_vector.begin();
-         l_iterator != vector_ptr->end();
-         l_iterator++,                      r_iterator)
-      {
-        Assert (r_iterator != dealii_vector.end(),
-                ExcInternalError())
-        *l_iterator = f.apply(*l_iterator, *r_iterator);
-      }
+         l_iterator != vector_ptr->end() && r_iterator != dealii_vector.end();
+         l_iterator++,                      r_iterator++)
+      *l_iterator = f.apply(*l_iterator, *r_iterator);
 
-    vector_ptr->compress (dealii::VectorOperation::insert);
+    vector_ptr->compress (VectorOperation::insert);
   }
 
 
@@ -365,9 +444,13 @@ namespace rol
 
 #endif // DOXYGEN
 
+
 } // namespace rol
 
 
 DEAL_II_QC_NAMESPACE_CLOSE
+
+
+#endif // DEAL_II_WITH_TRILINOS
 
 #endif // __dealii_qc_rol_vector_adaptor_h

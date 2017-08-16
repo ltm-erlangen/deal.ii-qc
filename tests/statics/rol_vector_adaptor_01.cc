@@ -4,16 +4,14 @@
 #include <sstream>
 
 #include <deal.II/lac/generic_linear_algebra.h>
+#include <deal.II-qc/adaptors/rol_vector_adaptor.h>
 
 #include <deal.II-qc/potentials/pair_lj_cut.h>
-#include <deal.II-qc/statics/rol_vector_adaptor.h>
-
 #include "ROL_Objective.hpp"
 #include "ROL_Algorithm.hpp"
 #include "ROL_LineSearchStep.hpp"
 #include "ROL_StatusTest.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
-
 
 using namespace dealii;
 using namespace dealiiqc;
@@ -33,7 +31,7 @@ using VectorType = typename dealii::Vector<double>;
 
 
 
-template<class Real=double, class Xprim=rol::VectorAdaptor<VectorType>, class Xdual=rol::VectorAdaptor<VectorType>>
+template<class Real=double, typename Xprim=rol::VectorAdaptor<VectorType> >
 class Objective_LJ : public ROL::Objective<Real>
 {
 
@@ -41,16 +39,16 @@ private:
   Real epsilon, rmin;
   const dealii::Point<3> a;
 
-  template<class VectorType>
-  Teuchos::RCP<const dealii::Vector<Real>> getVector (const ROL::Vector<Real> &x)
+  Teuchos::RCP<const dealii::Vector<Real> >
+  get_rcp_to_VectorType (const ROL::Vector<Real> &x)
   {
-    return Teuchos::dyn_cast<const VectorType>(x).getVector();
+    return (Teuchos::dyn_cast<const Xprim>(x)).getVector();
   }
 
-  template<class VectorType>
-  Teuchos::RCP<dealii::Vector<Real>> getVector (ROL::Vector<Real> &x)
+  Teuchos::RCP<dealii::Vector<Real> >
+  get_rcp_to_VectorType (ROL::Vector<Real> &x)
   {
-    return Teuchos::dyn_cast< VectorType>(x).getVector();
+    return (Teuchos::dyn_cast<Xprim>(x)).getVector();
   }
 
 public:
@@ -68,7 +66,7 @@ public:
     Assert (x.dimension()==3,
             ExcInternalError());
 
-    Teuchos::RCP<const dealii::Vector<Real>> xp = getVector<Xprim>(x);
+    Teuchos::RCP<const VectorType> xp = this->get_rcp_to_VectorType(x);
     dealii::Point<3> b((*xp)[0], (*xp)[1], (*xp)[2]);
     dealii::Point<3> rel(b-a);
 
@@ -92,9 +90,9 @@ public:
                  const ROL::Vector<Real> &x,
                  Real                    &tol)
   {
-    Teuchos::RCP<const dealii::Vector<Real>> xp = getVector<Xprim>(x);
-    Teuchos::RCP<dealii::Vector<Real> > gp =
-      Teuchos::rcp_const_cast< dealii::Vector<Real> >(getVector<Xdual>(g));
+    Teuchos::RCP<const VectorType> xp = this->get_rcp_to_VectorType(x);
+    Teuchos::RCP<VectorType> gp = this->get_rcp_to_VectorType(g);
+    //Teuchos::rcp_const_cast< dealii::Vector<Real> >(getVector<Xdual>(g));
 
     dealii::Point<3> b((*xp)[0], (*xp)[1], (*xp)[2]);
     dealii::Point<3> rel(b-a);
@@ -136,8 +134,8 @@ int main (int argc, char **argv)
 
       //Teuchos::GlobalMPISession mpiSession(&argc, &argv);
       Teuchos::RCP<std::ostream> outStream = Teuchos::rcp(&std::cout, false);
-      Teuchos::RCP<dealii::Vector<RealT> > x_rcp =
-        Teuchos::rcp (new dealii::Vector<RealT>);
+      Teuchos::RCP<VectorType> x_rcp =
+        Teuchos::rcp (new VectorType);
 
       x_rcp->reinit (3);
 
@@ -156,7 +154,7 @@ int main (int argc, char **argv)
       // Run Algorithm
       algo.run(x, lj, true, *outStream);
 
-      Teuchos::RCP<const dealii::Vector<RealT>> xg = x.getVector();
+      Teuchos::RCP<const VectorType> xg = x.getVector();
       std::cout << "The solution to lj minimization problem is: ";
       std::cout << (*xg)[0] << " " << (*xg)[1] << " " << (*xg)[2] << std::endl;
 
