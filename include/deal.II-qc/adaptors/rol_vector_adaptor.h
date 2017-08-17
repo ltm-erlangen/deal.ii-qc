@@ -96,8 +96,6 @@ namespace rol
    *
    * The current implementation in ROL doesn't support vector sizes above
    * the largest value of int type.
-   *
-   *
    */
   template<typename VectorType>
   class VectorAdaptor : public ROL::Vector<typename VectorType::value_type>
@@ -184,9 +182,7 @@ namespace rol
      * @code
      *   VectorAdaptor::real_type norm() const;
      * @endcode
-     * if real_type and value_type are not of the same type .
-     * with
-     * VectorAdaptor::real_type return.
+     * if real_type and value_type are not of the same type.
      */
     value_type norm() const;
 
