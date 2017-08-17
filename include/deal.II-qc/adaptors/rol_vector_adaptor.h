@@ -11,6 +11,8 @@
 #include <deal.II/base/exceptions.h>
 #include <deal.II/lac/vector.h>
 
+#include <type_traits>
+
 
 DEAL_II_QC_NAMESPACE_OPEN
 
@@ -34,9 +36,17 @@ namespace rol
    *
    * The VectorType should contain the following types.
    * @code
-   * VectorType::size_type;  // The type of size of the vector.
-   * VectorType::value_type; // The type of elements stored in the vector.
+   * VectorType::size_type;  // The type for size of the vector.
+   * VectorType::value_type; // The type for elements stored in the vector.
+   * VectorType::real_type;  // The type for real-valued numbers.
    * @endcode
+   *
+   * However, ROL doesn't distinguish VectorAdaptor::value_type from
+   * VectorAdaptor::real_type. This is due to ROL's assumption that the
+   * VectorAdaptor::value_type itself is a type for real-valued numbers.
+   * Therefore, VectorAdaptor supports vectors with whose real_type is
+   * convertible to value_type in the sense that
+   * `std::is_convertible<real_type, value_type>::value` yields `true`.
    *
    * The VectorType should contain the following methods.
    * @code
@@ -50,6 +60,9 @@ namespace rol
    *
    *                       // Scale all elements by a given scalar.
    * VectorType::operator*=(const VectorType::value_type &);
+   *
+   *                       // Perform dot product with a given vector.
+   * VectorType::operator*=(const VectorType &);
    *
    *                // Scale all elements of the current vector and globally
    *                // add a given vector to it.
@@ -83,9 +96,11 @@ namespace rol
    *
    * The current implementation in ROL doesn't support vector sizes above
    * the largest value of int type.
+   *
+   *
    */
   template<typename VectorType>
-  class VectorAdaptor : public ROL::Vector<typename VectorType::real_type>
+  class VectorAdaptor : public ROL::Vector<typename VectorType::value_type>
   {
 
     /**
@@ -94,7 +109,12 @@ namespace rol
     using size_type = typename VectorType::size_type;
 
     /**
-     * A typedef for real type of VectorType.
+     * A typedef for element type stored in the VectorType.
+     */
+    using value_type = typename VectorType::value_type;
+
+    /**
+     * A typedef for real-valued numbers.
      */
     using real_type = typename VectorType::real_type;
 
@@ -132,62 +152,72 @@ namespace rol
      * Set the Vector to the given ROL::Vector @p rol_vector by copying its
      * contents to the Vector.
      */
-    void set (const ROL::Vector<real_type> &rol_vector);
+    void set (const ROL::Vector<value_type> &rol_vector);
 
     /**
      * Perform addition.
      */
-    void plus (const ROL::Vector<real_type> &rol_vector);
+    void plus (const ROL::Vector<value_type> &rol_vector);
 
     /**
      * Scale the Vector by @p alpha and add ROL::Vector @p rol_vector to it.
      */
-    void axpy (const real_type               alpha,
-               const ROL::Vector<real_type> &rol_vector);
+    void axpy (const value_type               alpha,
+               const ROL::Vector<value_type> &rol_vector);
 
     /**
      * Scale the Vector.
      */
-    void scale (const real_type alpha);
+    void scale (const value_type alpha);
 
     /**
      * Return the dot product with a given ROL::Vector @p rol_vector.
      */
-    real_type dot( const ROL::Vector<real_type> &rol_vector ) const;
+    value_type dot( const ROL::Vector<value_type> &rol_vector ) const;
 
     /**
      * Return the \f$ L_2 \f$ norm of the Vector.
+     *
+     * The returned type is of VectorAdaptor::value_type so as to maintain
+     * consistency with ROL::Vector<VectorAdaptor::value_type> and
+     * more importantly to not to create an overloaded version namely,
+     * @code
+     *   VectorAdaptor::real_type norm() const;
+     * @endcode
+     * if real_type and value_type are not of the same type .
+     * with
+     * VectorAdaptor::real_type return.
      */
-    real_type norm() const;
+    value_type norm() const;
 
     /**
      * Return a clone of the Vector.
      */
-    Teuchos::RCP<ROL::Vector<real_type>> clone() const;
+    Teuchos::RCP<ROL::Vector<value_type>> clone() const;
 
     /**
      * Create and return a Teuchos smart reference counting pointer to the basis
      * vector corresponding to the @p i \f${}^{th}\f$ element of the Vector.
      */
-    Teuchos::RCP<ROL::Vector<real_type>> basis (const int i) const;
+    Teuchos::RCP<ROL::Vector<value_type>> basis (const int i) const;
 
     /**
      * Apply unary function @p f to all the elements of the Vector.
      */
-    void applyUnary (const ROL::Elementwise::UnaryFunction<real_type> &f);
+    void applyUnary (const ROL::Elementwise::UnaryFunction<value_type> &f);
 
     /**
      * Apply binary function @p f along with ROL::Vector @p rol_vector to all
      * the elements of the Vector.
      */
-    void applyBinary (const ROL::Elementwise::UnaryFunction<real_type> &f,
-                      const ROL::Vector<real_type>                     &rol_vector);
+    void applyBinary (const ROL::Elementwise::UnaryFunction<value_type> &f,
+                      const ROL::Vector<value_type>                     &rol_vector);
 
     /**
      * Return the accumulated value on applying reduction operation @p r on
      * all the elements of the Vector.
      */
-    real_type reduce (const ROL::Elementwise::ReductionOp<real_type> &r) const;
+    value_type reduce (const ROL::Elementwise::ReductionOp<value_type> &r) const;
 
     /**
      * Print the Vector to the output stream @p outStream.
@@ -206,7 +236,11 @@ namespace rol
   VectorAdaptor (const Teuchos::RCP<VectorType> &vector_ptr)
     :
     vector_ptr (vector_ptr)
-  {}
+  {
+    Assert ((std::is_convertible<real_type, value_type>::value),
+            ExcMessage("The value_type and the real_type of the current "
+                       "VectorType being used aren't convertible."));
+  }
 
 
 
@@ -230,7 +264,7 @@ namespace rol
 
   template<typename VectorType>
   void
-  VectorAdaptor<VectorType>::set (const ROL::Vector<real_type> &rol_vector)
+  VectorAdaptor<VectorType>::set (const ROL::Vector<value_type> &rol_vector)
   {
     Assert (this->dimension() == rol_vector.dimension(),
             ExcDimensionMismatch(this->dimension(), rol_vector.dimension()));
@@ -245,7 +279,7 @@ namespace rol
 
   template<typename VectorType>
   void
-  VectorAdaptor<VectorType>::plus (const ROL::Vector<real_type> &rol_vector)
+  VectorAdaptor<VectorType>::plus (const ROL::Vector<value_type> &rol_vector)
   {
     Assert (this->dimension() == rol_vector.dimension(),
             ExcDimensionMismatch(this->dimension(), rol_vector.dimension()));
@@ -260,8 +294,8 @@ namespace rol
 
   template<typename VectorType>
   void
-  VectorAdaptor<VectorType>::axpy (const real_type               alpha,
-                                   const ROL::Vector<real_type> &rol_vector)
+  VectorAdaptor<VectorType>::axpy (const value_type               alpha,
+                                   const ROL::Vector<value_type> &rol_vector)
   {
     Assert (this->dimension() == rol_vector.dimension(),
             ExcDimensionMismatch(this->dimension(), rol_vector.dimension()));
@@ -288,7 +322,7 @@ namespace rol
 
   template<typename VectorType>
   void
-  VectorAdaptor<VectorType>::scale (const real_type alpha)
+  VectorAdaptor<VectorType>::scale (const value_type alpha)
   {
     (*vector_ptr) *= alpha;
   }
@@ -296,9 +330,9 @@ namespace rol
 
 
   template<typename VectorType>
-  typename VectorType::real_type
+  typename VectorType::value_type
   VectorAdaptor<VectorType>::
-  dot (const ROL::Vector<real_type> &rol_vector) const
+  dot (const ROL::Vector<value_type> &rol_vector) const
   {
     Assert (this->dimension() == rol_vector.dimension(),
             ExcDimensionMismatch(this->dimension(), rol_vector.dimension()));
@@ -312,16 +346,16 @@ namespace rol
 
 
   template<typename VectorType>
-  typename VectorType::real_type
+  typename VectorType::value_type
   VectorAdaptor<VectorType>::norm() const
   {
-    return vector_ptr->l2_norm();
+    return static_cast<value_type>(vector_ptr->l2_norm());
   }
 
 
 
   template<typename VectorType>
-  Teuchos::RCP<ROL::Vector<typename VectorType::real_type> >
+  Teuchos::RCP<ROL::Vector<typename VectorType::value_type> >
   VectorAdaptor<VectorType>::clone() const
   {
     Teuchos::RCP< VectorType> vec_ptr = Teuchos::rcp (new VectorType);
@@ -333,7 +367,7 @@ namespace rol
 
 
   template<typename VectorType>
-  Teuchos::RCP<ROL::Vector<typename VectorType::real_type> >
+  Teuchos::RCP<ROL::Vector<typename VectorType::value_type> >
   VectorAdaptor<VectorType>::basis (const int i) const
   {
     Teuchos::RCP<VectorType> vec_ptr = Teuchos::rcp (new VectorType);
@@ -356,7 +390,7 @@ namespace rol
   template<typename VectorType>
   void
   VectorAdaptor<VectorType>::
-  applyUnary (const ROL::Elementwise::UnaryFunction<real_type> &f)
+  applyUnary (const ROL::Elementwise::UnaryFunction<value_type> &f)
   {
     for (typename VectorType::iterator
          iterator  = vector_ptr->begin();
@@ -372,8 +406,8 @@ namespace rol
   template<typename VectorType>
   void
   VectorAdaptor<VectorType>::
-  applyBinary (const ROL::Elementwise::UnaryFunction<real_type> &f,
-               const ROL::Vector<real_type>                     &rol_vector)
+  applyBinary (const ROL::Elementwise::UnaryFunction<value_type> &f,
+               const ROL::Vector<value_type>                     &rol_vector)
   {
     Assert (this->dimension() == rol_vector.dimension(),
             ExcDimensionMismatch(this->dimension(), rol_vector.dimension()));
@@ -395,11 +429,11 @@ namespace rol
 
 
   template<typename VectorType>
-  typename VectorType::real_type
+  typename VectorType::value_type
   VectorAdaptor<VectorType>::
-  reduce (const ROL::Elementwise::ReductionOp<real_type> &r) const
+  reduce (const ROL::Elementwise::ReductionOp<value_type> &r) const
   {
-    typename VectorType::real_type result = r.initialValue();
+    typename VectorType::value_type result = r.initialValue();
 
     for (typename VectorType::iterator
          iterator  = vector_ptr->begin();
