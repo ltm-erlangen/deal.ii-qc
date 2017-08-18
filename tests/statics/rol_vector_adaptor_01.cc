@@ -19,6 +19,8 @@ using namespace dealiiqc;
 using VectorType = typename dealii::Vector<double>;
 
 
+// Use ROL to minimize the energy of two atoms where one atom is being fixed
+// and their interaction is given by a Lennard-Jones potential.
 
 //
 // Location of the point `a` is fixed, and epsilon and rmin values are given for

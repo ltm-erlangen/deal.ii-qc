@@ -2,7 +2,8 @@
 #ifndef __dealii_qc_rol_vector_adaptor_h
 #define __dealii_qc_rol_vector_adaptor_h
 
-// FIXME: Require Trilinos and that it is configured with ROL.
+#include <deal.II/base/config.h>
+
 #ifdef DEAL_II_WITH_TRILINOS
 #include "ROL_Vector.hpp"
 
