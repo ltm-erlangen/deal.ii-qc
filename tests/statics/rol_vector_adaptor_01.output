@@ -1,0 +1,13 @@
+
+Quasi-Newton Method with Limited-Memory BFGS
+Line Search: Cubic Interpolation satisfying Strong Wolfe Conditions
+  iter  value          gnorm          snorm          #fval     #grad     ls_#fval  ls_#grad  
+  0     -4.020208e-01  2.025315e+00   
+  1     -8.918010e-01  1.964021e+00   2.025315e+00   3         2         1         0         
+  2     -9.936219e-01  7.261334e-01   9.970987e-02   6         3         2         0         
+  3     -9.972944e-01  4.220477e-01   2.691394e-02   8         4         1         0         
+  4     -9.999678e-01  4.800372e-02   9.893010e-03   10        5         1         0         
+  5     -9.999998e-01  3.811635e-03   1.269640e-03   12        6         1         0         
+  6     -1.000000e+00  3.074304e-05   9.339712e-05   14        7         1         0         
+  7     -1.000000e+00  1.945741e-08   7.472746e-07   16        8         1         0         
+The solution to lj minimization problem is: 0.310332 1.11494 1.71494
