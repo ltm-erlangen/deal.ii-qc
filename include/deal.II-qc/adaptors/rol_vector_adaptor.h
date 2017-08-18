@@ -147,8 +147,8 @@ namespace rol
     int dimension () const;
 
     /**
-     * Set the Vector to the given ROL::Vector @p rol_vector by copying its
-     * contents to the Vector.
+     * Set the Vector to a given ROL::Vector @p rol_vector by overwriting its
+     * contents.
      */
     void set (const ROL::Vector<value_type> &rol_vector);
 
@@ -171,7 +171,7 @@ namespace rol
     /**
      * Return the dot product with a given ROL::Vector @p rol_vector.
      */
-    value_type dot( const ROL::Vector<value_type> &rol_vector ) const;
+    value_type dot (const ROL::Vector<value_type> &rol_vector) const;
 
     /**
      * Return the \f$ L_2 \f$ norm of the Vector.
@@ -234,8 +234,8 @@ namespace rol
     vector_ptr (vector_ptr)
   {
     Assert ((std::is_convertible<real_type, value_type>::value),
-            ExcMessage("The value_type and the real_type of the current "
-                       "VectorType being used aren't convertible."));
+            ExcMessage("The real_type of the current VectorType is not "
+                       "convertible to the value_type."));
   }
 
 
@@ -262,9 +262,6 @@ namespace rol
   void
   VectorAdaptor<VectorType>::set (const ROL::Vector<value_type> &rol_vector)
   {
-    Assert (this->dimension() == rol_vector.dimension(),
-            ExcDimensionMismatch(this->dimension(), rol_vector.dimension()));
-
     const VectorAdaptor &vector_adaptor =
       Teuchos::dyn_cast<const VectorAdaptor>(rol_vector);
 
@@ -411,11 +408,11 @@ namespace rol
     const VectorAdaptor &vector_adaptor =
       Teuchos::dyn_cast<const VectorAdaptor>(rol_vector);
 
-    const VectorType &dealii_vector = *(vector_adaptor.getVector());
+    const VectorType &given_rol_vector = *(vector_adaptor.getVector());
 
     for (typename VectorType::iterator
-         l_iterator  = vector_ptr->begin(), r_iterator  = dealii_vector.begin();
-         l_iterator != vector_ptr->end() && r_iterator != dealii_vector.end();
+         l_iterator  = vector_ptr->begin(), r_iterator  = given_rol_vector.begin();
+         l_iterator != vector_ptr->end() && r_iterator != given_rol_vector.end();
          l_iterator++,                      r_iterator++)
       *l_iterator = f.apply(*l_iterator, *r_iterator);
 
