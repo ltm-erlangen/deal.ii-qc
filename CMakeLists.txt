@@ -167,6 +167,7 @@ ENABLE_TESTING()
 SET (TEST_TIME_LIMIT 900)
 #
 # tests for core functionality
+ADD_SUBDIRECTORY(tests/adaptors)
 ADD_SUBDIRECTORY(tests/atom)
 ADD_SUBDIRECTORY(tests/atom/sampling)
 ADD_SUBDIRECTORY(tests/configure)
