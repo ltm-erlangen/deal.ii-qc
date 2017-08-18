@@ -44,7 +44,7 @@ namespace rol
    * However, ROL doesn't distinguish VectorAdaptor::value_type from
    * VectorAdaptor::real_type. This is due to ROL's assumption that the
    * VectorAdaptor::value_type itself is a type for real-valued numbers.
-   * Therefore, VectorAdaptor supports vectors with whose real_type is
+   * Therefore, VectorAdaptor supports vectors whose real_type is
    * convertible to value_type in the sense that
    * `std::is_convertible<real_type, value_type>::value` yields `true`.
    *
