@@ -149,6 +149,10 @@ namespace rol
     /**
      * Set the Vector to a given ROL::Vector @p rol_vector by overwriting its
      * contents.
+     *
+     * If the current Vector has ghost elements,
+     * then VectorType::operator=(const VectorType&) should still be allowed
+     * on the current Vector.
      */
     void set (const ROL::Vector<value_type> &rol_vector);
 
