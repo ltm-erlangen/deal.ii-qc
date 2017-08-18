@@ -12,7 +12,8 @@ using namespace dealii;
 using namespace dealiiqc;
 
 
-// Check the rol::VectorAdaptor::set() function.
+// Check the rol::VectorAdaptor with MPI fully distributed vectors
+// using ROL::Vector's checkVector method.
 
 
 // Taken from deal.II's test: parallel_vector_07
