@@ -7,6 +7,7 @@
 #include <deal.II/base/timer.h>
 #include <deal.II/base/utilities.h>
 
+#include <deal.II/base/config.h>
 #include <deal.II/lac/constraint_matrix.h>
 
 #include <deal.II/grid/tria.h>
@@ -36,6 +37,11 @@ namespace LA
 #include <deal.II-qc/configure/configure_qc.h>
 #include <deal.II-qc/potentials/potential_field_function_parser.h>
 
+#include <deal.II-qc/adaptors/rol_vector_adaptor.h>
+#ifdef DEAL_II_WITH_TRILINOS
+# include <ROL_Objective.hpp>
+#endif
+
 
 DEAL_II_QC_NAMESPACE_OPEN
 
@@ -53,10 +59,86 @@ template <int dim, typename PotentialType>
 class QC
 {
 public:
+
+  typedef LA::MPI::Vector vector_t;
+  typedef LA::MPI::SparseMatrix matrix_t;
+
   QC (const ConfigureQC &);
   ~QC ();
 
   void run ();
+
+#ifdef DEAL_II_WITH_TRILINOS
+  /**
+   * Class for defining ROL library compliant objective function using the
+   * current QC object.
+   */
+  class Objective : public ROL::Objective<double>
+  {
+    public:
+
+      Objective (QC &qc)
+      :
+      qc(qc),
+      energy(0.)
+      {};
+
+      Teuchos::RCP<const vector_t>
+      get_rcp_to_vector (const ROL::Vector<double> &x)
+      {
+        return
+          Teuchos::dyn_cast<const rol::VectorAdaptor<vector_t> >(x).getVector();
+      }
+
+      Teuchos::RCP<vector_t>
+      get_rcp_to_vector (ROL::Vector<double> &x)
+      {
+        return
+          Teuchos::dyn_cast<rol::VectorAdaptor<vector_t> >(x).getVector();
+      }
+
+      double value (const ROL::Vector<double> &x,
+                    double                    &tol)
+      {
+        (void) x; (void) tol;
+        return energy;
+      }
+
+      void gradient (ROL::Vector<double>       &g,
+                     const ROL::Vector<double> &x,
+                     double                    &tol)
+      {
+        (void) x; (void)tol;
+        *get_rcp_to_vector(g) = qc.locally_relevant_gradient;
+      }
+
+      void update (const ROL::Vector<double> &x, bool flag, int iter)
+      {
+        if(!flag)
+          return;
+
+        qc.distributed_displacement = *get_rcp_to_vector(x);
+        qc.constraints.distribute(qc.distributed_displacement);
+        qc.locally_relevant_displacement = qc.distributed_displacement;
+        qc.update_positions();
+        //if (iter % 5 == 0)
+        //  qc.update_neighbor_lists();
+        energy = qc.compute<true>(qc.locally_relevant_gradient);
+      }
+
+    private:
+      /**
+       * A reference to the current QC object.
+       */
+      QC &qc;
+
+      /**
+       * Energy of the atomistic system computed using QC approach.
+       */
+      double energy;
+
+  } qc_objective;
+#endif
 
   /**
    * Write mesh file into some sort of ostream object
@@ -68,8 +150,6 @@ public:
 
   // keep it in protected so that we can write unit tests with derived classes
 protected:
-  typedef LA::MPI::SparseMatrix matrix_t;
-  typedef LA::MPI::Vector vector_t;
 
   /**
    * Copy @p configure into #configure_qc member to reconfigure QC without

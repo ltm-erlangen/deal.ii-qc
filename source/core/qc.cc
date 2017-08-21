@@ -29,6 +29,9 @@ QC<dim, PotentialType>::~QC ()
 template <int dim, typename PotentialType>
 QC<dim, PotentialType>::QC (const ConfigureQC &config)
   :
+#ifdef DEAL_II_WITH_TRILINOS
+  qc_objective(*this),
+#endif
   mpi_communicator(MPI_COMM_WORLD),
   pcout (std::cout,
          (dealii::Utilities::MPI::this_mpi_process(mpi_communicator)
