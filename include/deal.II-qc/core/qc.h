@@ -61,7 +61,6 @@ class QC
 public:
 
   typedef LA::MPI::Vector vector_t;
-  typedef LA::MPI::SparseMatrix matrix_t;
 
   QC (const ConfigureQC &);
   ~QC ();
@@ -77,6 +76,9 @@ public:
   {
     public:
 
+      /**
+       * Constructor.
+       */
       Objective (QC &qc)
       :
       qc(qc),
@@ -97,18 +99,16 @@ public:
           Teuchos::dyn_cast<rol::VectorAdaptor<vector_t> >(x).getVector();
       }
 
-      double value (const ROL::Vector<double> &x,
-                    double                    &tol)
+      double value (const ROL::Vector<double> &/* x */,
+                    double                    &/* tol */)
       {
-        (void) x; (void) tol;
         return energy;
       }
 
       void gradient (ROL::Vector<double>       &g,
-                     const ROL::Vector<double> &x,
-                     double                    &tol)
+                     const ROL::Vector<double> &/* x */,
+                     double                    &/* tol */)
       {
-        (void) x; (void)tol;
         *get_rcp_to_vector(g) = qc.locally_relevant_gradient;
       }
 
@@ -147,6 +147,12 @@ public:
    */
   template<typename T>
   void write_mesh(T &, const std::string &);
+
+  /**
+   * Set up external potential fields.
+   */
+  virtual
+  void initialize_external_potential_fields (const double initial_time = 0.);
 
   // keep it in protected so that we can write unit tests with derived classes
 protected:
@@ -216,12 +222,6 @@ protected:
    * into #constraints.
    */
   void setup_boundary_conditions(const double time = 0.);
-
-  /**
-   * Set up external potential fields.
-   */
-  virtual
-  void initialize_external_potential_fields (const double initial_time = 0.);
 
   /**
    * Distribute degrees-of-freedom and initialise matrices and vectors.
