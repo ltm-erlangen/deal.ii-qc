@@ -11,8 +11,8 @@ template <int dim>
 SphericalNanoIndentor<dim>::
 SphericalNanoIndentor(const Point<dim>     &initial_location,
                       const Tensor<1, dim> &dir,
-                      const double          A,
                       const double          radius,
+                      const double          A,
                       const double          initial_time)
   :
   NanoIndentor<dim>(initial_location, dir, false, initial_time),
