@@ -74,68 +74,68 @@ public:
    */
   class Objective : public ROL::Objective<double>
   {
-    public:
+  public:
 
-      /**
-       * Constructor.
-       */
-      Objective (QC &qc)
+    /**
+     * Constructor.
+     */
+    Objective (QC &qc)
       :
       qc(qc),
       energy(0.)
-      {};
+    {}
 
-      Teuchos::RCP<const vector_t>
-      get_rcp_to_vector (const ROL::Vector<double> &x)
-      {
-        return
-          Teuchos::dyn_cast<const rol::VectorAdaptor<vector_t> >(x).getVector();
-      }
+    Teuchos::RCP<const vector_t>
+    get_rcp_to_vector (const ROL::Vector<double> &x)
+    {
+      return
+        Teuchos::dyn_cast<const rol::VectorAdaptor<vector_t> >(x).getVector();
+    }
 
-      Teuchos::RCP<vector_t>
-      get_rcp_to_vector (ROL::Vector<double> &x)
-      {
-        return
-          Teuchos::dyn_cast<rol::VectorAdaptor<vector_t> >(x).getVector();
-      }
+    Teuchos::RCP<vector_t>
+    get_rcp_to_vector (ROL::Vector<double> &x)
+    {
+      return
+        Teuchos::dyn_cast<rol::VectorAdaptor<vector_t> >(x).getVector();
+    }
 
-      double value (const ROL::Vector<double> &/* x */,
-                    double                    &/* tol */)
-      {
-        return energy;
-      }
+    double value (const ROL::Vector<double> &/* x */,
+                  double                    &/* tol */)
+    {
+      return energy;
+    }
 
-      void gradient (ROL::Vector<double>       &g,
-                     const ROL::Vector<double> &/* x */,
-                     double                    &/* tol */)
-      {
-        *get_rcp_to_vector(g) = qc.locally_relevant_gradient;
-      }
+    void gradient (ROL::Vector<double>       &g,
+                   const ROL::Vector<double> &/* x */,
+                   double                    &/* tol */)
+    {
+      *get_rcp_to_vector(g) = qc.locally_relevant_gradient;
+    }
 
-      void update (const ROL::Vector<double> &x, bool flag, int iter)
-      {
-        if(!flag)
-          return;
+    void update (const ROL::Vector<double> &x, bool flag, int iter)
+    {
+      if (!flag)
+        return;
 
-        qc.distributed_displacement = *get_rcp_to_vector(x);
-        qc.constraints.distribute(qc.distributed_displacement);
-        qc.locally_relevant_displacement = qc.distributed_displacement;
-        qc.update_positions();
-        //if (iter % 5 == 0)
-        //  qc.update_neighbor_lists();
-        energy = qc.compute<true>(qc.locally_relevant_gradient);
-      }
+      qc.distributed_displacement = *get_rcp_to_vector(x);
+      qc.constraints.distribute(qc.distributed_displacement);
+      qc.locally_relevant_displacement = qc.distributed_displacement;
+      qc.update_positions();
+      //if (iter % 5 == 0)
+      //  qc.update_neighbor_lists();
+      energy = qc.compute<true>(qc.locally_relevant_gradient);
+    }
 
-    private:
-      /**
-       * A reference to the current QC object.
-       */
-      QC &qc;
+  private:
+    /**
+     * A reference to the current QC object.
+     */
+    QC &qc;
 
-      /**
-       * Energy of the atomistic system computed using QC approach.
-       */
-      double energy;
+    /**
+     * Energy of the atomistic system computed using QC approach.
+     */
+    double energy;
 
   } qc_objective;
 #endif
