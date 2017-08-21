@@ -16,8 +16,8 @@ void test (const Point<dim>      &p,
 {
   SphericalNanoIndentor<dim> potential (Point<dim>(),
                                         dir,
-                                        0.001,
                                         4.1,
+                                        0.001,
                                         0.);
 
   potential.initialize ((dim==3) ? "x,y,z,t" :

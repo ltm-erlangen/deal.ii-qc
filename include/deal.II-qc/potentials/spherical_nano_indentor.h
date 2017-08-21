@@ -33,8 +33,8 @@ public:
    * Constructor. Takes the following parameters
    * @param initial_location  the initial location of the indentor,
    * @param dir               the direction of indentation,
-   * @param A                 the strength of the indentor,
-   * @param radius            the radius of the spherical indentor, and
+   * @param radius            the radius of the spherical indentor,
+   * @param A                 the strength of the indentor, and
    * @param initial_time      the initial value of the time variable.
    */
   SphericalNanoIndentor(const Point<dim>     &initial_location,
