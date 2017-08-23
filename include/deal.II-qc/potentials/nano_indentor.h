@@ -44,7 +44,7 @@ public:
   void initialize (const std::string                   &variables,
                    const std::string                   &expression,
                    const std::map<std::string, double> &constants,
-                   const bool                           time_dependent = true);
+                   const bool                           time_dependent = false);
 
   /**
    * Move the indenter at the position corresponding to the time @p new_time.
@@ -57,7 +57,7 @@ protected:
    * FunctionParser object to describe the position of the indentor along
    * the direction of indentation #direction.
    */
-  FunctionParser<dim>  indentor_position_function;
+  FunctionParser<1>  indentor_position_function;
 
   /**
    * Initial location of the indentor.
