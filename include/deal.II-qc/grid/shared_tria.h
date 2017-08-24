@@ -43,9 +43,6 @@ namespace parallel
       Triangulation (MPI_Comm mpi_communicator,
                      const typename dealii::Triangulation<dim,spacedim>::MeshSmoothing =
                        (dealii::Triangulation<dim,spacedim>::none),
-                     const bool allow_artificial_cells = true,
-                     const typename dealii::parallel::shared::Triangulation<dim, spacedim>::Settings settings =
-                       dealii::parallel::shared::Triangulation<dim, spacedim>::partition_metis,
                      const double ghost_cell_layer_thickness = 0.);
 
       // TODO: Need to rework for large deformations?
