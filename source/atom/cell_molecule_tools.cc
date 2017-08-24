@@ -250,6 +250,9 @@ namespace CellMoleculeTools
     // Prepare dof index set in this container.
     IndexSet dof_set;
 
+    // FIXME: Currently all the non-locally owned cells are ghost cells.
+    // This causes the following to pick up dofs that are not locally relevant.
+    // This should be fixed by using a derived class of p::s::T.
     // Get locally relevant dofs first.
     DoFTools::extract_locally_relevant_dofs(dof_handler, dof_set);
 

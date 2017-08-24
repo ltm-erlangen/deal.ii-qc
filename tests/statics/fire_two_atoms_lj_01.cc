@@ -75,7 +75,10 @@ double Problem<dim, PotentialType>::compute (vector_t       &G,
 template <int dim, typename PotentialType>
 void Problem<dim, PotentialType>::statics (const double tol)
 {
-  QC<dim, PotentialType>::run();
+  QC<dim, PotentialType>::setup_cell_energy_molecules();
+  QC<dim, PotentialType>::setup_system();
+  QC<dim, PotentialType>::setup_fe_values_objects();
+  QC<dim, PotentialType>::update_neighbor_lists();
 
   vector_t u (QC<dim, PotentialType>::dof_handler.locally_owned_dofs(),
               QC<dim, PotentialType>::mpi_communicator);
