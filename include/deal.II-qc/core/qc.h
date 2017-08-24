@@ -122,7 +122,7 @@ public:
       qc.locally_relevant_displacement = qc.distributed_displacement;
       qc.update_positions();
       //if (iter % 5 == 0)
-      //  qc.update_neighbor_lists();
+      qc.update_neighbor_lists();
       energy = qc.compute<true>(qc.locally_relevant_gradient);
     }
 

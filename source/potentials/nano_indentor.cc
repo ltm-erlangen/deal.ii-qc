@@ -61,7 +61,7 @@ void NanoIndentor<dim>::set_time (const double new_time)
   FunctionTime<double>::set_time(new_time);
   indentor_position_function.set_time (new_time);
   current_location = initial_location +
-                     indentor_position_function.value(new_time)
+                     indentor_position_function.value(Point<1>(new_time))
                      *
                      direction;
 }
