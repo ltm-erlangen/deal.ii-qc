@@ -30,7 +30,7 @@
 
 /**
  * A macro function that returns 1 if @p DIM is less or equal to @p SPACEDIM
- * and 0 otherwise.
+ * and 0 otherwise among three entries DIM, ATOMICITY and, SPACEDIM.
  */
 #define IS_DIM_LESS_EQUAL_SPACEDIM(DIM, ATOMICITY, SPACEDIM) \
   BOOST_PP_LESS_EQUAL(DIM, SPACEDIM)

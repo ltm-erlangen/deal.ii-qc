@@ -31,6 +31,7 @@ SET(TARGET_SRC
   source/configure/geometry/geometry_base.cc
   source/configure/geometry/geometry_box.cc
   source/configure/geometry/geometry_gmsh.cc
+  source/grid/shared_tria.cc
   source/potentials/pair_base.cc
   source/potentials/pair_coul_wolf.cc
   source/potentials/pair_lj_cut.cc
