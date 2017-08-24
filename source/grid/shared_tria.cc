@@ -43,10 +43,7 @@ namespace parallel
             (*static_cast<dealii::parallel::shared::Triangulation<dim, spacedim>*>(this),
              ghost_cell_layer_thickness);
 
-          types::CellIteratorType<dim, spacedim>
-          cell = this->begin_active();
-
-          for (unsigned int index=0; cell != this->end(); cell++, index++)
+          for (auto cell = this->begin_active(); cell != this->end(); cell++)
             if (cell->is_locally_owned() == false &&
                 ghost_cells.find(cell) == ghost_cells.end())
               cell->set_subdomain_id(dealii::numbers::artificial_subdomain_id);
