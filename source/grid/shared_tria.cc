@@ -18,7 +18,7 @@ namespace parallel
     Triangulation<dim,spacedim>::Triangulation (MPI_Comm mpi_communicator,
                                                 const typename dealii::Triangulation<dim,spacedim>::MeshSmoothing smooth_grid,
                                                 const bool allow_artificial_cells,
-                                                const Settings settings,
+                                                const dealii::parallel::shared::Triangulation::Settings settings,
                                                 const double ghost_cell_layer_thickness)
       :
       dealii::parallel::shared::Triangulation<dim,spacedim> (mpi_communicator,
@@ -36,14 +36,14 @@ namespace parallel
     template <int dim, int spacedim>
     void Triangulation<dim,spacedim>::setup_ghost_cells()
     {
-      if (ghost_cell_layer_thickness > 0. && allow_artificial_cells)
+      if (ghost_cell_layer_thickness > 0. && this->allow_artificial_cells)
         {
           // --- Gather ghost cells within specified thickness.
 
           const std::vector<types::CellIteratorType<dim, spacedim> >
           active_halo_layer_vector =
             dealii::GridTools::compute_ghost_cell_layer_within_distance
-            (*this,
+            (*static_cast<dealii::parallel::shared::Triangulation<dim, spacedim>*>(this),
              ghost_cell_layer_thickness);
 
           std::set<types::CellIteratorType<dim,spacedim> >
@@ -56,7 +56,7 @@ namespace parallel
           for (unsigned int index=0; cell != endc; cell++, index++)
             {
               // store original/true subdomain ids:
-              true_subdomain_ids_of_cells[index] = cell->subdomain_id();
+              this->true_subdomain_ids_of_cells[index] = cell->subdomain_id();
 
               if (cell->is_locally_owned() == false &&
                   ghost_cells.find(cell) == ghost_cells.end())
