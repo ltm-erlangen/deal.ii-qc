@@ -71,6 +71,49 @@ public:
   /**
    * Class for defining ROL library compliant objective function using the
    * current QC object.
+   *
+   * After QC::distributed_displacement is prepared with locally owned
+   * DoF indices, it can be used to prepare an rol::VectorAdaptor of
+   * VectorType QC::vector_t.
+   *
+   * The following code illustrates how ROL library can be used.
+   *
+   * @code
+   *   Teuchos::RCP<vector_t> x_rcp = Teuchos::rcp (&distributed_displacement);
+   *   rol::VectorAdaptor<vector_t> x(x_rcp);
+   * @endcode
+   *
+   * The parameter list for choosing a particular minimization scheme can be
+   * prepared as
+   *
+   * @code
+   *   Teuchos::ParameterList parlist;
+   *   parlist.sublist("Secant").set("Type", "Limited-Memory BFGS");
+   * @endcode
+   *
+   * or using an xml file of parameters as
+   *
+   * @code
+   *   std::string filename = "rol_input.xml";
+   *   Teuchos::RCP<Teuchos::ParameterList> parlist = Teuchos::rcp (new Teuchos::ParameterList());
+   *   Teuchos::updateParametersFromXmlFile (filename, parlist.ptr());
+   * @endcode
+   *
+   * For logging per iteration information,
+   * @code
+   *   Teuchos::RCP<std::ostream> out_stream;
+   *   Teuchos::oblackholestream bhs; // outputs nothing
+   *
+   *   if (dealii::Utilities::MPI::this_mpi_process (MPI_COMM_WORLD) == 0)
+   *     out_stream = Teuchos::rcp(&std::cout, false);
+   *   else
+   *     out_stream = Teuchos::rcp(&bhs, false);
+   *
+   *  // Run Algorithm
+   *  ROL::Algorithm<double> algorithm ("Line Search", *parlist);
+   *  algorithm.run(x, qc_objective, true, *out_stream);
+   * @endcode
+   *
    */
   class Objective : public ROL::Objective<double>
   {
@@ -136,7 +179,12 @@ public:
      */
     double energy;
 
-  } qc_objective;
+  };
+
+  /**
+   * ROL library compliant objective for the current QC object.
+   */
+  Objective qc_objective;
 #endif
 
   /**
