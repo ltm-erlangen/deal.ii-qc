@@ -888,6 +888,7 @@ void QC<dim, PotentialType>::minimize_energy (const double time)
     locally_relevant_displacement = distributed_displacement;
     constraints.set_zero(distributed_displacement);
     update_positions();
+    update_neighbor_lists();
     const double energy = compute<true>(locally_relevant_gradient);
     G = locally_relevant_gradient;
     return energy;
