@@ -1,5 +1,6 @@
 
 #include <deal.II-qc/configure/geometry/geometry_box.h>
+#include <deal.II-qc/grid/shared_tria.h>
 
 
 DEAL_II_QC_NAMESPACE_OPEN
@@ -26,7 +27,7 @@ namespace Geometry
 
 
   template <int dim>
-  void Box<dim>::create_mesh (parallel::shared::Triangulation<dim> &mesh) const
+  void Box<dim>::create_mesh (Triangulation<dim> &mesh) const
   {
     std::vector<unsigned int> rep_vec(repetitions, repetitions+dim);
     Point<dim> bottom_left;
@@ -46,6 +47,22 @@ namespace Geometry
       cell->set_material_id(0);
 
     mesh.refine_global(Base<dim>::n_initial_global_refinements);
+
+    try
+      {
+        auto &mesh_with_artificial_cells =
+          dynamic_cast<dealiiqc::parallel::shared::Triangulation<dim> &>(mesh);
+
+        // In this case, adjust the ghost cells
+        // based on ghost cell layer thickness.
+        mesh_with_artificial_cells.setup_ghost_cells();
+      }
+    catch (...)
+      {
+        // It appears that the mesh is not of type
+        // dealiiqc::parallel::shared::Triangulation<>, do nothing in this case.
+      }
+
   }
 
 

@@ -29,7 +29,7 @@ namespace Geometry
 
     virtual ~Gmsh ();
 
-    virtual void create_mesh (parallel::shared::Triangulation<dim> &tria) const;
+    virtual void create_mesh (Triangulation<dim> &tria) const;
 
     virtual void parse_parameters (ParameterHandler &prm);
 
