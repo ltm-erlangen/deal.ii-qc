@@ -157,9 +157,11 @@ namespace CellMoleculeTools
     // For now just add the number of molecules being thrown.
     types::global_molecule_index n_thrown_molecules=0;
 
-    dealiiqc::Utilities::LocallyRelevantCell locally_relevant_cell_predicate;
     std::function<bool (const types::CellIteratorType<dim, spacedim> &)>
-    predicate (locally_relevant_cell_predicate);
+    predicate = [](const types::CellIteratorType<dim, spacedim> &cell)
+    {
+      return !cell->is_artificial();
+    };
 
     // Prepare a bounding box for the current process.
     const std::pair<Point<spacedim>, Point<spacedim> >
