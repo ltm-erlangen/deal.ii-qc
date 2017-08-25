@@ -30,7 +30,7 @@ namespace Geometry
 
 
   template <int dim>
-  void Gmsh<dim>::create_mesh (Triangulation<dim> &mesh) const
+  void Gmsh<dim>::create_mesh (dealii::parallel::shared::Triangulation<dim> &mesh) const
   {
     GridIn<dim> gridin;
     gridin.attach_triangulation (mesh);

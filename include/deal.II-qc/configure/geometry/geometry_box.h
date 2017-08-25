@@ -25,7 +25,7 @@ namespace Geometry
 
     virtual ~Box ();
 
-    virtual void create_mesh (Triangulation<dim> &tria) const;
+    virtual void create_mesh (dealii::parallel::shared::Triangulation<dim> &tria) const;
 
     virtual void parse_parameters (ParameterHandler &prm);
 
