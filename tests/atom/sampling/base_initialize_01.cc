@@ -1,9 +1,9 @@
 
 #include <deal.II-qc/atom/sampling/cluster_weights_by_base.h>
+#include <deal.II-qc/grid/shared_tria.h>
 #include <deal.II-qc/utilities.h>
 
 #include <deal.II/base/conditional_ostream.h>
-#include <deal.II/distributed/shared_tria.h>
 #include <deal.II/grid/grid_generator.h>
 
 using namespace dealiiqc;
@@ -27,7 +27,8 @@ public:
                                  maximum_cutoff_radius),
     triangulation (MPI_COMM_WORLD,
                    // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
-                   Triangulation<dim>::limit_level_difference_at_vertices),
+                   Triangulation<dim>::limit_level_difference_at_vertices,
+                   -1.),
     mpi_communicator(MPI_COMM_WORLD),
     pcout (std::cout,
            (dealii::Utilities::MPI::this_mpi_process(mpi_communicator)
@@ -58,6 +59,7 @@ public:
 
     triangulation.begin_active()->set_refine_flag();
     triangulation.execute_coarsening_and_refinement();
+    triangulation.setup_ghost_cells();
 
     // +--+--+-----+
     // |  |  |     |
@@ -103,7 +105,7 @@ public:
   }
 
 private:
-  parallel::shared::Triangulation<dim> triangulation;
+  dealiiqc::parallel::shared::Triangulation<dim> triangulation;
   MPI_Comm mpi_communicator;
   ConditionalOStream   pcout;
 };

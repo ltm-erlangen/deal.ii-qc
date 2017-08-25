@@ -72,8 +72,7 @@ public:
     cell_molecule_data =
       CellMoleculeTools::
       build_cell_molecule_data<dim> (*config.get_stream(),
-                                     triangulation,
-                                     config.get_ghost_cell_layer_thickness());
+                                     triangulation);
 
     IndexSet locally_relevant_set;
     DoFTools::extract_locally_relevant_dofs (dof_handler, locally_relevant_set);

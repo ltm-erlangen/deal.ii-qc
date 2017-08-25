@@ -43,13 +43,12 @@ Problem<dim, PotentialType> ::Problem (const std::string &s)
 
   QC<dim, PotentialType>::triangulation.begin_active()->set_refine_flag();
   QC<dim, PotentialType>::triangulation.execute_coarsening_and_refinement();
+  QC<dim, PotentialType>::triangulation.setup_ghost_cells();
 
   QC<dim, PotentialType>::cell_molecule_data =
     CellMoleculeTools::
-    build_cell_molecule_data<dim>
-    (*config.get_stream(),
-     QC<dim, PotentialType>::triangulation,
-     config.get_ghost_cell_layer_thickness());
+    build_cell_molecule_data<dim> (*config.get_stream(),
+                                   QC<dim, PotentialType>::triangulation);
 }
 
 

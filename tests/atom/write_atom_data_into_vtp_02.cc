@@ -1,13 +1,13 @@
 #include <iostream>
 #include <sstream>
 
-#include <deal.II/distributed/shared_tria.h>
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_out.h>
 
 #include <deal.II-qc/atom/cell_molecule_tools.h>
 #include <deal.II-qc/atom/data_out_atom_data.h>
 #include <deal.II-qc/configure/configure_qc.h>
+#include <deal.II-qc/grid/shared_tria.h>
 
 using namespace dealii;
 using namespace dealiiqc;
@@ -31,7 +31,8 @@ public:
     config(config),
     triangulation (MPI_COMM_WORLD,
                    // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
-                   Triangulation<dim>::limit_level_difference_at_vertices),
+                   Triangulation<dim>::limit_level_difference_at_vertices,
+                   -1.),
     dof_handler    (triangulation),
     mpi_communicator(MPI_COMM_WORLD)
   {}
@@ -47,13 +48,13 @@ public:
                                                 repetitions,
                                                 bl,
                                                 tr);
+      triangulation.setup_ghost_cells();
     }
 
     cell_molecule_data =
       CellMoleculeTools::
       build_cell_molecule_data<dim> (*config.get_stream(),
-                                     triangulation,
-                                     config.get_ghost_cell_layer_thickness());
+                                     triangulation);
 
     for (auto &cell_molecule : cell_molecule_data.cell_molecules)
       cell_molecule.second.cluster_weight = 0.;
@@ -111,7 +112,7 @@ public:
 
 private:
   const ConfigureQC &config;
-  parallel::shared::Triangulation<dim> triangulation;
+  dealiiqc::parallel::shared::Triangulation<dim> triangulation;
   DoFHandler<dim>      dof_handler;
   MPI_Comm mpi_communicator;
   CellMoleculeData<dim> cell_molecule_data;
