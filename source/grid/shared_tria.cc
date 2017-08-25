@@ -33,11 +33,15 @@ namespace parallel
       if (ghost_cell_layer_thickness > 0.)
         {
           // --- Gather ghost cells within specified thickness.
+          dealii::IteratorFilters::LocallyOwnedCell locally_owned_cell_predicate;
+          std::function<bool (const types::CellIteratorType<dim, spacedim>&)>
+          predicate (locally_owned_cell_predicate);
 
-          const std::vector<types::CellIteratorType<dim, spacedim> >
+          const std::vector<types::CellIteratorType<dim,spacedim> >
           ghost_cells =
-            dealii::GridTools::compute_ghost_cell_layer_within_distance
+            dealii::GridTools::compute_active_cell_layer_within_distance
             (*static_cast<dealii::parallel::shared::Triangulation<dim, spacedim>*>(this),
+             predicate,
              ghost_cell_layer_thickness);
 
           for (auto cell = this->begin_active(); cell != this->end(); cell++)

@@ -39,7 +39,8 @@ QC<dim, PotentialType>::QC (const ConfigureQC &config)
   configure_qc (config),
   triangulation (mpi_communicator,
                  // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
-                 Triangulation<dim>::limit_level_difference_at_vertices),
+                 Triangulation<dim>::limit_level_difference_at_vertices,
+                 configure_qc.get_ghost_cell_layer_thickness()),
   fe (FE_Q<dim>(1),dim),
   u_fe (0),
   dof_handler (triangulation),
@@ -229,6 +230,7 @@ void QC<dim, PotentialType>::setup_triangulation()
                                                        refinement_parameter, 0);
       triangulation.execute_coarsening_and_refinement();
     }
+  triangulation.setup_ghost_cells();
 }
 
 
@@ -395,10 +397,8 @@ void QC<dim, PotentialType>::setup_system ()
 
   dof_handler.distribute_dofs (fe);
 
-  locally_relevant_set =
-    CellMoleculeTools::
-    extract_locally_relevant_dofs (dof_handler,
-                                   configure_qc.get_ghost_cell_layer_thickness());
+  // Prepare locally relevant set.
+  DoFTools::extract_locally_relevant_dofs (dof_handler, locally_relevant_set);
 
   // set-up constraints objects
   constraints.reinit (locally_relevant_set);

@@ -18,8 +18,6 @@
 #include <deal.II/fe/fe_values.h>
 #include <deal.II/fe/mapping_q1.h>
 
-#include <deal.II/distributed/shared_tria.h>
-
 #include <deal.II/lac/generic_linear_algebra.h>
 #include <deal.II/numerics/data_out.h>
 #include <deal.II/numerics/vector_tools.h>
@@ -35,6 +33,7 @@ namespace LA
 
 #include <deal.II-qc/atom/molecule_handler.h>
 #include <deal.II-qc/configure/configure_qc.h>
+#include <deal.II-qc/grid/shared_tria.h>
 #include <deal.II-qc/potentials/potential_field_function_parser.h>
 
 #include <deal.II-qc/adaptors/rol_vector_adaptor.h>
@@ -350,7 +349,7 @@ protected:
   /**
    * A parallel shared triangulation.
    */
-  parallel::shared::Triangulation<dim> triangulation;
+  dealiiqc::parallel::shared::Triangulation<dim> triangulation;
 
   /**
    * Finite Element.

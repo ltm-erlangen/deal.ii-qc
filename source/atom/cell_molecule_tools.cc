@@ -1,6 +1,7 @@
 
-#include <deal.II/grid/grid_tools.h>
 #include <deal.II/dofs/dof_tools.h>
+#include <deal.II/grid/filtered_iterator.h>
+#include <deal.II/grid/grid_tools.h>
 
 #include <deal.II-qc/atom/cell_molecule_tools.h>
 #include <deal.II-qc/atom/parse_atom_data.h>
@@ -154,12 +155,15 @@ namespace CellMoleculeTools
     // ghost_cells vector will contain all such active ghost cells.
     // If the total number of MPI processes is just one,
     // the size of ghost_cells vector is zero.
-    const
-    std::vector<types::CellIteratorType<dim, spacedim> >
+    IteratorFilters::LocallyOwnedCell locally_owned_cell_predicate;
+    std::function<bool (const types::CellIteratorType<dim, spacedim>&)>
+    predicate (locally_owned_cell_predicate);
+
+    const std::vector<types::CellIteratorType<dim,spacedim> >
     ghost_cells =
-      GridTools::
-      compute_ghost_cell_layer_within_distance (mesh,
-                                                ghost_cell_layer_thickness);
+      GridTools::compute_active_cell_layer_within_distance (mesh,
+                                                            predicate,
+                                                            ghost_cell_layer_thickness);
 
     // Loop through all the ghost cells computed above and
     // mark (true) all the vertices of the locally owned and active
@@ -240,53 +244,6 @@ namespace CellMoleculeTools
   }
 
 
-
-  template <int dim, int spacedim>
-  IndexSet
-  extract_locally_relevant_dofs
-  (const DoFHandler<dim, spacedim> &dof_handler,
-   const double                     ghost_cell_layer_thickness)
-  {
-    // Prepare dof index set in this container.
-    IndexSet dof_set;
-
-    // FIXME: Currently all the non-locally owned cells are ghost cells.
-    // This causes the following to pick up dofs that are not locally relevant.
-    // This should be fixed by using a derived class of p::s::T.
-    // Get locally relevant dofs first.
-    DoFTools::extract_locally_relevant_dofs(dof_handler, dof_set);
-
-    // Note: The logic here is similar to that of
-    // DoFTools::extract_locally_relevant_dofs().
-    std::vector<dealii::types::global_dof_index> dof_indices;
-    std::vector<dealii::types::global_dof_index> dofs_on_ghosts;
-
-    // Get locally relevant ghost cells
-    const auto ghost_cells =
-      GridTools::
-      compute_ghost_cell_layer_within_distance (dof_handler,
-                                                ghost_cell_layer_thickness);
-
-    for (const auto cell : ghost_cells)
-      {
-        dof_indices.resize(cell->get_fe().dofs_per_cell);
-        cell->get_dof_indices(dof_indices);
-        for (unsigned int i=0; i<dof_indices.size(); ++i)
-          if (!dof_set.is_element(dof_indices[i]))
-            dofs_on_ghosts.push_back(dof_indices[i]);
-      }
-
-    // Sort, fill into index set and compress out duplicates.
-    std::sort(dofs_on_ghosts.begin(), dofs_on_ghosts.end());
-    dof_set.add_indices (dofs_on_ghosts.begin(),
-                         std::unique (dofs_on_ghosts.begin(),
-                                      dofs_on_ghosts.end()));
-    dof_set.compress();
-
-    return dof_set;
-  }
-
-
 #define SINGLE_CELL_MOLECULE_TOOLS_INSTANTIATION(DIM, ATOMICITY, SPACEDIM) \
   \
   template                                                                 \
@@ -312,23 +269,8 @@ namespace CellMoleculeTools
               SINGLE_CELL_MOLECULE_TOOLS_INSTANTIATION,                  \
               BOOST_PP_TUPLE_EAT(3)) X
 
-#define CELL_MOLECULE_TOOLS_DIM_SPACEDIM_INSTANTIATION(DIM, SPACEDIM) \
-  \
-  template                                                            \
-  IndexSet                                                            \
-  extract_locally_relevant_dofs<DIM, SPACEDIM>                        \
-  (const DoFHandler<DIM, SPACEDIM> &,                                 \
-   const double           );                                          \
-   
-#define CELL_MOLECULE_TOOLS_DIM_SPACEDIM(R, X)                        \
-  BOOST_PP_IF(IS_DIM_AND_SPACEDIM_PAIR_VALID X,                       \
-              CELL_MOLECULE_TOOLS_DIM_SPACEDIM_INSTANTIATION,         \
-              BOOST_PP_TUPLE_EAT(2)) X
-
   // MoleculeHandler class Instantiations.
   INSTANTIATE_CLASS_WITH_DIM_ATOMICITY_AND_SPACEDIM(CELL_MOLECULE_TOOLS)
-
-  INSTANTIATE_WITH_DIM_AND_SPACEDIM(CELL_MOLECULE_TOOLS_DIM_SPACEDIM)
 
 #undef SINGLE_CELL_MOLECULE_TOOLS_INSTANTIATION
 #undef CELL_MOLECULE_TOOLS

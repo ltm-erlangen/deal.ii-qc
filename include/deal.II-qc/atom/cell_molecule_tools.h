@@ -96,8 +96,7 @@ namespace CellMoleculeTools
   template <int dim, int spacedim>
   IndexSet
   extract_locally_relevant_dofs
-  (const DoFHandler<dim, spacedim> &dof_handler,
-   const double                     ghost_cell_layer_thickness);
+  (const DoFHandler<dim, spacedim> &dof_handler);
 
 
 } // namespace CellMoleculeTools

@@ -26,7 +26,7 @@ namespace Geometry
 
 
   template <int dim>
-  void Box<dim>::create_mesh (parallel::shared::Triangulation<dim> &mesh) const
+  void Box<dim>::create_mesh (dealii::parallel::shared::Triangulation<dim> &mesh) const
   {
     std::vector<unsigned int> rep_vec(repetitions, repetitions+dim);
     Point<dim> bottom_left;
