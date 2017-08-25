@@ -240,22 +240,19 @@ void QC<dim, PotentialType>::setup_cell_molecules()
 {
   TimerOutput::Scope t (computing_timer, "Parse and assign all atoms to cells");
 
-  if (!(configure_qc.get_atom_data_file()).empty() )
+  const std::string atom_data_file = configure_qc.get_atom_data_file();
+
+  if (!atom_data_file.empty())
     {
-      const std::string atom_data_file = configure_qc.get_atom_data_file();
-      std::fstream fin(atom_data_file, std::fstream::in );
-      cell_molecule_data =
-        CellMoleculeTools::build_cell_molecule_data<dim>
-        (fin,
-         triangulation,
-         configure_qc.get_ghost_cell_layer_thickness());
+      std::fstream fin(atom_data_file, std::fstream::in);
+      cell_molecule_data = CellMoleculeTools::build_cell_molecule_data<dim>
+                           (fin,
+                            triangulation);
     }
-  else if ( !(* configure_qc.get_stream()).eof() )
-    cell_molecule_data =
-      CellMoleculeTools::build_cell_molecule_data<dim>
-      (*configure_qc.get_stream(),
-       triangulation,
-       configure_qc.get_ghost_cell_layer_thickness());
+  else if (!configure_qc.get_stream()->eof())
+    cell_molecule_data = CellMoleculeTools::build_cell_molecule_data<dim>
+                         (*configure_qc.get_stream(),
+                          triangulation);
   else
     AssertThrow(false,
                 ExcMessage("Atom data was not provided neither as an auxiliary "
