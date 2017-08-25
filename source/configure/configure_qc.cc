@@ -528,10 +528,10 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
   {
     ghost_cell_layer_thickness = prm.get_double("Ghost cell layer thickness");
 
-    if (ghost_cell_layer_thickness > 0)
-      Assert (maximum_cutoff_radius < ghost_cell_layer_thickness,
-              ExcMessage("Ghost cell layer thickness should be more than or "
-                         "equal to the Maximum cutoff radius."));
+    Assert (ghost_cell_layer_thickness < 0 ||
+            maximum_cutoff_radius      < ghost_cell_layer_thickness,
+            ExcMessage("Ghost cell layer thickness should be more than or "
+                       "equal to the Maximum cutoff radius."));
 
     cluster_radius = prm.get_double( "Cluster radius");
     cluster_weights_type = prm.get("Cluster weights by type");

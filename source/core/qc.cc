@@ -466,80 +466,82 @@ void QC<dim, PotentialType>::setup_fe_values_objects ()
   // local index (within a cell) of energy molecules.
   auto &cell_energy_molecules = cell_molecule_data.cell_energy_molecules;
 
-  // Loop through locally relevant cells.
   for (types::DoFCellIteratorType<dim>
        cell  = dof_handler.begin_active();
        cell != dof_handler.end();
        cell++)
-    if (!cell->is_artificial())
-      {
-        // Include all the energy molecules associated to this active cell
-        // as quadrature points. The quadrature points will be then used to
-        // initialize fe_values object so as to evaluate the displacement
-        // at the initial location of energy molecules in the active cells.
+    {
+      // Loop through locally relevant cells.
+      if (cell->is_artificial())
+        continue;
 
-        const auto energy_molecules_range =
-          CellMoleculeTools::molecules_range_in_cell<dim> (cell,
-                                                           cell_energy_molecules);
+      // Include all the energy molecules associated to this active cell
+      // as quadrature points. The quadrature points will be then used to
+      // initialize fe_values object so as to evaluate the displacement
+      // at the initial location of energy molecules in the active cells.
 
-        const unsigned int n_energy_molecules_in_cell =
-          energy_molecules_range.second;
+      const auto energy_molecules_range =
+        CellMoleculeTools::molecules_range_in_cell<dim> (cell,
+                                                         cell_energy_molecules);
 
-        // If this cell is not within the locally relevant active cells of the
-        // current MPI process continue active cell loop
-        if (n_energy_molecules_in_cell == 0)
-          continue;
+      const unsigned int n_energy_molecules_in_cell =
+        energy_molecules_range.second;
 
-        // Resize containers to known number of energy molecules in cell.
-        points.resize(n_energy_molecules_in_cell);
-        weights_per_atom.resize(n_energy_molecules_in_cell);
+      // If this cell is not within the locally relevant active cells of the
+      // current MPI process continue active cell loop
+      if (n_energy_molecules_in_cell == 0)
+        continue;
 
-        AssemblyData &data = cells_to_data[cell];
+      // Resize containers to known number of energy molecules in cell.
+      points.resize(n_energy_molecules_in_cell);
+      weights_per_atom.resize(n_energy_molecules_in_cell);
 
-        // We need non-const iterator to update local index of energy molecule.
-        // TODO: Move the task of updating local index of energy atoms to
-        //       somewhere else? For now keeping it here.
-        // To get a non-const iterator to the beginning of energy atom range
-        // call erase with the same argument. Strictly no erase is performed
-        // but erase would return a non-const iterator.
-        // This is not exactly a hack as we are using how erase on containers
-        // must behave. Also, this is a constant time operation.
-        types::CellMoleculeIteratorType<dim>
-        cell_energy_molecule_iterator =
-          cell_energy_molecules.erase(energy_molecules_range.first.first,
-                                      energy_molecules_range.first.first);
+      AssemblyData &data = cells_to_data[cell];
 
-        for (unsigned int q = 0; q < n_energy_molecules_in_cell; ++q, ++cell_energy_molecule_iterator)
-          {
-            // const_iter->second yields the actual atom
-            points[q]           = cell_energy_molecule_iterator->second.position_inside_reference_cell;
-            weights_per_atom[q] = cell_energy_molecule_iterator->second.cluster_weight;
-            cell_energy_molecule_iterator->second.local_index = q;
-          }
+      // We need non-const iterator to update local index of energy molecule.
+      // TODO: Move the task of updating local index of energy atoms to
+      //       somewhere else? For now keeping it here.
+      // To get a non-const iterator to the beginning of energy atom range
+      // call erase with the same argument. Strictly no erase is performed
+      // but erase would return a non-const iterator.
+      // This is not exactly a hack as we are using how erase on containers
+      // must behave. Also, this is a constant time operation.
+      types::CellMoleculeIteratorType<dim>
+      cell_energy_molecule_iterator =
+        cell_energy_molecules.erase(energy_molecules_range.first.first,
+                                    energy_molecules_range.first.first);
 
-        Assert (cell_energy_molecule_iterator == energy_molecules_range.first.second,
-                ExcMessage("The number of energy molecule in the cell counted "
-                           "using the distance between the iterator ranges "
-                           "yields a different result than "
-                           "incrementing the iterator to cell_energy_molecules."
-                           "Why wasn't this error thrown earlier?"));
+      for (unsigned int q = 0; q < n_energy_molecules_in_cell; ++q, ++cell_energy_molecule_iterator)
+        {
+          // const_iter->second yields the actual atom
+          points[q]           = cell_energy_molecule_iterator->second.position_inside_reference_cell;
+          weights_per_atom[q] = cell_energy_molecule_iterator->second.cluster_weight;
+          cell_energy_molecule_iterator->second.local_index = q;
+        }
 
-        Assert (data.fe_values.use_count() ==0,
-                ExcInternalError());
+      Assert (cell_energy_molecule_iterator == energy_molecules_range.first.second,
+              ExcMessage("The number of energy molecule in the cell counted "
+                         "using the distance between the iterator ranges "
+                         "yields a different result than "
+                         "incrementing the iterator to cell_energy_molecules."
+                         "Why wasn't this error thrown earlier?"));
 
-        // Now we are ready to initialize FEValues object.
-        data.fe_values =
-          std::make_shared<FEValues<dim>> (mapping, fe,
-                                           Quadrature<dim> (points,
-                                                            weights_per_atom),
-                                           update_values);
+      Assert (data.fe_values.use_count() ==0,
+              ExcInternalError());
 
-        // finally reinit FEValues so that it's ready to provide all required
-        // information:
-        data.fe_values->reinit(cell);
+      // Now we are ready to initialize FEValues object.
+      data.fe_values =
+        std::make_shared<FEValues<dim>> (mapping, fe,
+                                         Quadrature<dim> (points,
+                                                          weights_per_atom),
+                                         update_values);
 
-        data.displacements.resize(points.size());
-      }
+      // finally reinit FEValues so that it's ready to provide all required
+      // information:
+      data.fe_values->reinit(cell);
+
+      data.displacements.resize(points.size());
+    }
 }
 
 
@@ -556,43 +558,45 @@ void QC<dim, PotentialType>::update_positions()
        cell  = dof_handler.begin_active();
        cell != dof_handler.end();
        cell++)
-    if (!cell->is_artificial())
-      {
-        const auto it = cells_to_data.find(cell);
-        Assert (it != cells_to_data.end(),
-                ExcInternalError());
+    {
+      if (cell->is_artificial())
+        continue;
 
-        std::pair<types::CellMoleculeIteratorType<dim>, types::CellMoleculeIteratorType<dim> >
-        cell_energy_molecules_range = cell_molecule_data.cell_energy_molecules.equal_range(cell);
+      const auto it = cells_to_data.find(cell);
+      Assert (it != cells_to_data.end(),
+              ExcInternalError());
 
-        // If this locally relevant active cell doesn't contain any atoms
-        // continue active cell loop
-        if (cell_energy_molecules_range.first==cell_energy_molecules_range.second)
-          {
-            Assert (it->second.displacements.size()==0,
-                    ExcInternalError());
-            continue;
-          }
+      std::pair<types::CellMoleculeIteratorType<dim>, types::CellMoleculeIteratorType<dim> >
+      cell_energy_molecules_range = cell_molecule_data.cell_energy_molecules.equal_range(cell);
 
-        // get displacement field on all quadrature points of this object
-        it->second.fe_values->operator[](u_fe).get_function_values(locally_relevant_displacement,
-                                                                   it->second.displacements);
-        const auto &displacements = it->second.displacements;
+      // If this locally relevant active cell doesn't contain any atoms
+      // continue active cell loop
+      if (cell_energy_molecules_range.first==cell_energy_molecules_range.second)
+        {
+          Assert (it->second.displacements.size()==0,
+                  ExcInternalError());
+          continue;
+        }
 
-        // Update energy molecules positions.
-        for (unsigned int i = 0;
-             i < displacements.size();
-             i++, ++cell_energy_molecules_range.first)
-          // FIXME: loop over all atoms and use BlockVector for displacements
-          cell_energy_molecules_range.first->second.atoms[0].position =
-            cell_energy_molecules_range.first->second.atoms[0].initial_position +
-            displacements[i];
+      // get displacement field on all quadrature points of this object
+      it->second.fe_values->operator[](u_fe).get_function_values(locally_relevant_displacement,
+                                                                 it->second.displacements);
+      const auto &displacements = it->second.displacements;
 
-        // The loop over displacements must have exhausted all the energy
-        // molecules on a per cell basis (and the converse also should be true).
-        Assert (cell_energy_molecules_range.first == cell_energy_molecules_range.second,
-                ExcInternalError());
-      }
+      // Update energy molecules positions.
+      for (unsigned int i = 0;
+           i < displacements.size();
+           i++, ++cell_energy_molecules_range.first)
+        // FIXME: loop over all atoms and use BlockVector for displacements
+        cell_energy_molecules_range.first->second.atoms[0].position =
+          cell_energy_molecules_range.first->second.atoms[0].initial_position +
+          displacements[i];
+
+      // The loop over displacements must have exhausted all the energy
+      // molecules on a per cell basis (and the converse also should be true).
+      Assert (cell_energy_molecules_range.first == cell_energy_molecules_range.second,
+              ExcInternalError());
+    }
 
 }
 
