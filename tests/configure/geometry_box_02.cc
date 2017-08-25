@@ -9,7 +9,8 @@
 using namespace dealii;
 using namespace dealiiqc;
 
-// Short test to check Geometry::Box<dim>::create_coarse_mesh()
+
+// Short test to check dealiiqc::parallel::shared::Triangulation.
 
 
 template<int dim>
@@ -33,6 +34,7 @@ void test (const MPI_Comm    &mpi_communicator,
         with_artificial_cells ? config.get_ghost_cell_layer_thickness() : -1.);
 
   config.get_geometry<dim>()->create_mesh(tria);
+  tria.setup_ghost_cells();
 
   unsigned int n_artificial_cells = 0;
 

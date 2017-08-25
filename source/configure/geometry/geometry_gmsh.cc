@@ -4,7 +4,6 @@
 #include <deal.II/grid/grid_in.h>
 
 #include <deal.II-qc/configure/geometry/geometry_gmsh.h>
-#include <deal.II-qc/grid/shared_tria.h>
 
 
 DEAL_II_QC_NAMESPACE_OPEN
@@ -31,28 +30,13 @@ namespace Geometry
 
 
   template <int dim>
-  void Gmsh<dim>::create_mesh (Triangulation<dim> &mesh) const
+  void Gmsh<dim>::create_mesh (dealii::parallel::shared::Triangulation<dim> &mesh) const
   {
     GridIn<dim> gridin;
     gridin.attach_triangulation (mesh);
     std::ifstream mesh_stream (mesh_file.c_str());
     gridin.read_msh (mesh_stream);
     mesh.refine_global(Base<dim>::n_initial_global_refinements);
-
-    try
-      {
-        auto &mesh_with_artificial_cells =
-          dynamic_cast<dealiiqc::parallel::shared::Triangulation<dim> &>(mesh);
-
-        // In this case, adjust the ghost cells
-        // based on ghost cell layer thickness.
-        mesh_with_artificial_cells.setup_ghost_cells();
-      }
-    catch (...)
-      {
-        // It appears that the mesh is not of type
-        // dealiiqc::parallel::shared::Triangulation<>, do nothing in this case.
-      }
   }
 
 
