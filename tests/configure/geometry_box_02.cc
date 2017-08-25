@@ -13,17 +13,46 @@ using namespace dealiiqc;
 
 
 template<int dim>
-void test (const MPI_Comm &mpi_communicator, const ConfigureQC &config)
+void test (const MPI_Comm    &mpi_communicator,
+           const ConfigureQC &config,
+           const bool         with_artificial_cells)
 {
+  const unsigned int
+  n_mpi_processes  = dealii::Utilities::MPI::n_mpi_processes(mpi_communicator),
+  this_mpi_process = dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
+
+  if (this_mpi_process==0)
+    if (with_artificial_cells)
+      std::cout << "Triangulation with artificial cells:" << std::endl;
+    else
+      std::cout << "Triangulation without artificial cells:" << std::endl;
+
   dealiiqc::parallel::shared::Triangulation<dim>
   tria (mpi_communicator,
         Triangulation<dim>::limit_level_difference_at_vertices,
-        -1.);
+        with_artificial_cells ? config.get_ghost_cell_layer_thickness() : -1.);
 
   config.get_geometry<dim>()->create_mesh(tria);
 
-  GridOut grid_out;
-  grid_out.write_vtk (tria, std::cout);
+  unsigned int n_artificial_cells = 0;
+
+  for (auto cell = tria.begin_active(); cell != tria.end(); cell++)
+    if (cell->is_artificial())
+      n_artificial_cells++;
+
+  MPI_Barrier(mpi_communicator);
+
+  for (unsigned int p = 0; p < n_mpi_processes; ++p)
+    {
+      if (p == this_mpi_process)
+        std::cout << "Process: "
+                  << this_mpi_process
+                  << "\t Number of artificial cells: "
+                  << n_artificial_cells
+                  << std::endl;
+      MPI_Barrier(mpi_communicator);
+    }
+
 }
 
 
@@ -41,18 +70,29 @@ int main (int argc, char **argv)
           << "set Dimension = 3"                              << std::endl
           << "subsection Geometry"                            << std::endl
           << "  set Type = Box"                               << std::endl
-          << "  set Number of initial global refinements = 0" << std::endl
+          << "  set Number of initial global refinements = 2" << std::endl
           << "end"                                            << std::endl
-          << "#end-of-parameter-section" << std::endl;
+
+          << "subsection Configure QC"                        << std::endl
+          << "  set Ghost cell layer thickness = 0.1"         << std::endl
+          << "end"                                            << std::endl
+
+          // Add the following to suppress error throw.
+          << "subsection Configure atoms"                     << std::endl
+          << "  set Maximum cutoff radius = 0.05"             << std::endl
+          << "  set Pair global coefficients = 0.01"          << std::endl
+          << "end"                                            << std::endl
+
+          << "#end-of-parameter-section"                      << std::endl;
 
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());
 
-
       ConfigureQC config( prm_stream );
 
-      test<3>(MPI_COMM_WORLD, config);
+      test<3>(MPI_COMM_WORLD, config, false);
+      test<3>(MPI_COMM_WORLD, config, true);
 
     }
   catch (std::exception &exc)

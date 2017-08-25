@@ -1,0 +1,10 @@
+Triangulation without artificial cells:
+Process: 0       Number of artificial cells: 0
+Process: 1       Number of artificial cells: 0
+Process: 2       Number of artificial cells: 0
+Process: 3       Number of artificial cells: 0
+Triangulation with artificial cells:
+Process: 0       Number of artificial cells: 28
+Process: 1       Number of artificial cells: 28
+Process: 2       Number of artificial cells: 28
+Process: 3       Number of artificial cells: 28
