@@ -21,12 +21,9 @@ namespace parallel
       :
       dealii::parallel::shared::Triangulation<dim,spacedim> (mpi_communicator,
                                                              smooth_grid,
-                                                             true),
+                                                             ghost_cell_layer_thickness >= 0.),
       ghost_cell_layer_thickness(ghost_cell_layer_thickness)
-    {
-      Assert (ghost_cell_layer_thickness >= 0.,
-              ExcMessage("Invalid ghost cells layer thickness specified."));
-    }
+    {}
 
 
 
@@ -45,7 +42,7 @@ namespace parallel
 
           for (auto cell = this->begin_active(); cell != this->end(); cell++)
             if (cell->is_locally_owned() == false &&
-                ghost_cells.find(cell) == ghost_cells.end())
+                std::find(ghost_cells.begin(), ghost_cells.end(), cell) == ghost_cells.end())
               cell->set_subdomain_id(dealii::numbers::artificial_subdomain_id);
 
           this->update_number_cache();

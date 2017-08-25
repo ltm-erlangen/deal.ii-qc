@@ -17,7 +17,7 @@ namespace parallel
   {
 
     /**
-     * This class is minor extension to the parallel::shared::Triangulation of
+     * This class is a minor extension to the parallel::shared::Triangulation of
      * deal.II (that provides a parallel triangulation for which every processor
      * knows about every cell of the global mesh) to allow a thickened ghost
      * cell layer around locally owned cells.
@@ -26,24 +26,26 @@ namespace parallel
      * additionally Triangulation::setup_ghost_cells() must be called to
      * re-adjust the ghost cell layer thickness to the desired.
      */
-    template <int dim, int spacedim>
-    class Triangulation : dealii::parallel::shared::Triangulation<dim, spacedim>
+    template <int dim, int spacedim=dim>
+    class Triangulation : public dealii::parallel::shared::Triangulation<dim, spacedim>
     {
     public:
 
       /**
        * Constructor.
        *
-       * If @p allow_aritifical_cells is true, for each MPI process there is a
-       * unique classification of cells into locally owned, ghost and artificial
-       * cells. In such a case, by default the triangulation on each MPI process
-       * has a single layer of ghost cells. However, this behavior can be
-       * modified using a positive @p ghost_cell_layer_thickness.
+       *
+       * If @p ghost_cell_layer_thickness is negative, there are no artificial
+       * cells. If it is non-negative, then for each MPI process there is a
+       * unique classification of cells into locally owned, ghost and
+       * artificial cells and the extent (or thickness) of the ghost cell layer
+       * around locally owned cells can be altered using
+       * @p ghost_cell_layer_thickness.
        */
       Triangulation (MPI_Comm mpi_communicator,
                      const typename dealii::Triangulation<dim,spacedim>::MeshSmoothing =
                        (dealii::Triangulation<dim,spacedim>::none),
-                     const double ghost_cell_layer_thickness = 0.);
+                     const double ghost_cell_layer_thickness = -1.);
 
       // TODO: Need to rework for large deformations?
       /**

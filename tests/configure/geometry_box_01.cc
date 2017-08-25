@@ -1,10 +1,10 @@
 #include <iostream>
 #include <sstream>
 
-#include <deal.II/distributed/shared_tria.h>
 #include <deal.II/grid/grid_out.h>
 
 #include <deal.II-qc/configure/configure_qc.h>
+#include <deal.II-qc/grid/shared_tria.h>
 
 using namespace dealii;
 using namespace dealiiqc;
@@ -15,8 +15,10 @@ using namespace dealiiqc;
 template<int dim>
 void test (const MPI_Comm &mpi_communicator, const ConfigureQC &config)
 {
-  parallel::shared::Triangulation<dim> tria (mpi_communicator,
-                                             Triangulation<dim>::limit_level_difference_at_vertices);
+  dealiiqc::parallel::shared::Triangulation<dim>
+  tria (mpi_communicator,
+        Triangulation<dim>::limit_level_difference_at_vertices,
+        -1.);
 
   config.get_geometry<dim>()->create_mesh(tria);
 
@@ -51,7 +53,6 @@ int main (int argc, char **argv)
       ConfigureQC config( prm_stream );
 
       test<3>(MPI_COMM_WORLD, config);
-
 
     }
   catch (std::exception &exc)
