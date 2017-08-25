@@ -4,7 +4,6 @@
 #include <deal.II/grid/grid_in.h>
 
 #include <deal.II-qc/configure/geometry/geometry_gmsh.h>
-#include <deal.II-qc/grid/shared_tria.h>
 
 
 DEAL_II_QC_NAMESPACE_OPEN
