@@ -48,17 +48,20 @@ namespace CellMoleculeTools
 
   /**
    * Prepare and return a CellMoleculeData object based on the given @p mesh
-   * by parsing the atom data information in @p is using a
-   * @p ghost_cell_layer_thickness distance to identify locally relevant
-   * cells for each MPI process. All the data members of the returned object
-   * are initialized except CellMoleculeData::cell_energy_molecules, which
-   * can be obtained using MoleculeHandler::get_cell_energy_molecules().
+   * by parsing the atom data information in @p is by identifying locally
+   * relevant cells for each MPI process. All the data members of the returned
+   * object are initialized except CellMoleculeData::cell_energy_molecules,
+   * which can be updated using any of the derived classes of
+   * Cluster::WeightsByBase.
    *
    * <h5>Association between locally relevant cells and molecules</h5>
    *
    * For each MPI process, locally relevant cells (see MoleculeHandler) are
-   * identified using a distance of @p ghost_cell_layer_thickness from the
-   * locally owned cells of the MPI process.
+   * identified each MPI process. It is assumed that the underlying
+   * triangulation i.e., @p mesh has its ghost cells already setup (see
+   * parallel::shared::Triangulation::setup_ghost_cells()). The locally relevant
+   * cells are all the cells excpet artificial cells, if any. In other words,
+   * it is the union of all the locally owned cells and the ghost cells.
    *
    * To associate locally relevant cells and molecules, each MPI process does
    * the following. For each molecule in the system look for a locally
@@ -82,8 +85,7 @@ namespace CellMoleculeTools
   template<int dim, int atomicity=1, int spacedim=dim>
   CellMoleculeData<dim, atomicity, spacedim>
   build_cell_molecule_data (std::istream                       &is,
-                            const Triangulation<dim, spacedim> &mesh,
-                            const double  ghost_cell_layer_thickness);
+                            const Triangulation<dim, spacedim> &mesh);
 
 } // namespace CellMoleculeTools
 

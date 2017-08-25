@@ -304,6 +304,26 @@ namespace Utilities
 
 
 
+  /**
+   * Filter for iterators that evaluates to true if a cell is a ghost cell or
+   * locally owned by the current processor, i.e., if it is a
+   * @ref GlossLocallyRelevantCell "locally relevant cell".
+   */
+  class LocallyRelevantCell
+  {
+  public:
+    /**
+     * Evaluation operator. Returns true if the cell is locally owned.
+     */
+    template <class Iterator>
+    bool operator () (const Iterator &i) const
+    {
+      return (i->is_locally_owned() || i->is_ghost());
+    }
+  };
+
+
+
 } // Utilities
 
 

@@ -106,8 +106,7 @@ namespace CellMoleculeTools
   template<int dim, int atomicity, int spacedim>
   CellMoleculeData<dim, atomicity, spacedim>
   build_cell_molecule_data (std::istream                       &is,
-                            const Triangulation<dim, spacedim> &mesh,
-                            const double  ghost_cell_layer_thickness)
+                            const Triangulation<dim, spacedim> &mesh)
   {
     // TODO: Assign atoms to cells as we parse atom data ?
     //       relevant for when we have a large collection of atoms.
@@ -135,53 +134,55 @@ namespace CellMoleculeTools
 
     // In order to speed-up finding an active cell around atoms through
     // find_active_cell_around_point(), we will need to construct a
-    // mask for vertices of locally owned cells and ghost cells
-    std::vector<bool> locally_active_vertices( n_vertices,
+    // mask for vertices of locally owned cells and relevant ghost cells
+    std::vector<bool> locally_active_vertices (n_vertices,
                                                false);
 
-    // Loop through all the locally owned cells and
-    // mark (true) all the vertices of the locally owned cells.
-    for (types::CellIteratorType<dim, spacedim>
-         cell = mesh.begin_active();
-         cell != mesh.end(); ++cell)
-      if (cell->is_locally_owned())
-        for (unsigned int v=0; v<GeometryInfo<dim>::vertices_per_cell; ++v)
-          locally_active_vertices[cell->vertex_index(v)] = true;
-
-    // This MPI process also needs to know certain active ghost cells
+    // Loop through all the locally relevant cells and
+    // mark (true) all the vertices of the locally relevant cells i.e.,
+    // locally owned cells plus certain active ghost cells
     // within a certain distance from locally owned cells.
     // This MPI process will also keep copy of atoms associated to
     // such active ghost cells.
-    // ghost_cells vector will contain all such active ghost cells.
-    // If the total number of MPI processes is just one,
-    // the size of ghost_cells vector is zero.
-    IteratorFilters::LocallyOwnedCell locally_owned_cell_predicate;
-    std::function<bool (const types::CellIteratorType<dim, spacedim>&)>
-    predicate (locally_owned_cell_predicate);
-
-    const std::vector<types::CellIteratorType<dim,spacedim> >
-    ghost_cells =
-      GridTools::compute_active_cell_layer_within_distance (mesh,
-                                                            predicate,
-                                                            ghost_cell_layer_thickness);
-
-    // Loop through all the ghost cells computed above and
-    // mark (true) all the vertices of the locally owned and active
-    // ghost cells within ConfigureQC::ghost_cell_layer_thickness.
-    for (auto cell : ghost_cells)
-      for (unsigned int v=0; v<GeometryInfo<dim>::vertices_per_cell; ++v)
-        locally_active_vertices[cell->vertex_index(v)] = true;
+    for (types::CellIteratorType<dim, spacedim>
+         cell = mesh.begin_active();
+         cell != mesh.end(); ++cell)
+      if (!cell->is_artificial())
+        for (unsigned int v=0; v<GeometryInfo<dim>::vertices_per_cell; ++v)
+          locally_active_vertices[cell->vertex_index(v)] = true;
 
     // TODO: If/when required collect all non-relevant atoms
     // (those that are not within a ghost_cell_layer_thickness
     // for this MPI process energy computation)
     // For now just add the number of molecules being thrown.
-    // TODO: Add another typedef for molecules index?
-    types::global_atom_index n_thrown_molecules=0;
+    types::global_molecule_index n_thrown_molecules=0;
+
+    dealiiqc::Utilities::LocallyRelevantCell locally_relevant_cell_predicate;
+    std::function<bool (const types::CellIteratorType<dim, spacedim> &)>
+    predicate (locally_relevant_cell_predicate);
+
+    // Prepare a bounding box for the current process.
+    const std::pair<Point<spacedim>, Point<spacedim> >
+    this_process_bounding_box = dealii::GridTools::compute_bounding_box (mesh,
+                                predicate);
 
     for ( auto molecule : vector_molecules )
       {
         bool atom_associated_to_cell = false;
+
+        const Point<spacedim> &molecule_location = molecule_initial_location(molecule);
+
+        // If the molecule is outside the bounding box,
+        // throw the molecule and continue associating remaining molecules.
+        if (dealiiqc::Utilities::
+            is_outside_bounding_box(this_process_bounding_box.first,
+                                    this_process_bounding_box.second,
+                                    molecule_location))
+          {
+            n_thrown_molecules++;
+            continue;
+          }
+
         try
           {
             // Find the locally active cell of the provided mesh which
@@ -191,20 +192,17 @@ namespace CellMoleculeTools
               GridTools::
               find_active_cell_around_point (MappingQ1<dim,spacedim>(),
                                              mesh,
-                                             molecule_initial_location(molecule),
+                                             molecule_location,
                                              locally_active_vertices);
 
-            // Since in locally_active_vertices all the vertices of
-            // the ghost cells are marked true, find_active_cell_around_point
-            // could take the liberty to find a cell that is not a ghost cell
-            // of a current MPI process but has one of it's vertices marked
-            // true.
-            // In such a case, we need to throw the atom and
-            // continue associating remaining atoms.
-            if (!my_pair.first->is_locally_owned() &&
-                (std::find (ghost_cells.begin(),
-                            ghost_cells.end(),
-                            my_pair.first)==ghost_cells.end()))
+            // Since in locally_active_vertices some of the vertices of
+            // the artificial cells are marked true, the function
+            // GridTools::find_active_cell_around_point()
+            // could take the liberty to find an artificial cell of the current
+            // MPI process that has one of it's vertices marked true.
+            // In such a case, we need to throw the molecule and
+            // continue associating remaining molecules.
+            if (my_pair.first->is_artificial())
               {
                 n_thrown_molecules++;
                 continue;
@@ -224,7 +222,7 @@ namespace CellMoleculeTools
               molecule.position_inside_reference_cell[d] =
                 std::numeric_limits<double>::signaling_NaN();
 
-            cell_molecules.insert( std::make_pair( my_pair.first, molecule ));
+            cell_molecules.insert (std::make_pair (my_pair.first, molecule));
             atom_associated_to_cell = true;
           }
         catch (dealii::GridTools::ExcPointNotFound<dim> &)
@@ -261,8 +259,7 @@ namespace CellMoleculeTools
   template                                                               \
   CellMoleculeData<DIM, ATOMICITY, SPACEDIM>                             \
   build_cell_molecule_data (std::istream                       &,        \
-                            const Triangulation<DIM, SPACEDIM> &,        \
-                            const double                       );        \
+                            const Triangulation<DIM, SPACEDIM> &);       \
    
 #define CELL_MOLECULE_TOOLS(R, X)                                        \
   BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,                              \
