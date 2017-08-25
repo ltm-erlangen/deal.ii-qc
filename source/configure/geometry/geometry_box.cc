@@ -1,5 +1,6 @@
 
 #include <deal.II-qc/configure/geometry/geometry_box.h>
+#include <deal.II-qc/grid/shared_tria.h>
 
 
 DEAL_II_QC_NAMESPACE_OPEN
@@ -26,7 +27,7 @@ namespace Geometry
 
 
   template <int dim>
-  void Box<dim>::create_mesh (dealii::parallel::shared::Triangulation<dim> &mesh) const
+  void Box<dim>::create_mesh (Triangulation<dim> &mesh) const
   {
     std::vector<unsigned int> rep_vec(repetitions, repetitions+dim);
     Point<dim> bottom_left;

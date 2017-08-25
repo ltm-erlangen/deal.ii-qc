@@ -4,6 +4,7 @@
 #include <deal.II/grid/grid_in.h>
 
 #include <deal.II-qc/configure/geometry/geometry_gmsh.h>
+#include <deal.II-qc/grid/shared_tria.h>
 
 
 DEAL_II_QC_NAMESPACE_OPEN
@@ -30,7 +31,7 @@ namespace Geometry
 
 
   template <int dim>
-  void Gmsh<dim>::create_mesh (dealii::parallel::shared::Triangulation<dim> &mesh) const
+  void Gmsh<dim>::create_mesh (Triangulation<dim> &mesh) const
   {
     GridIn<dim> gridin;
     gridin.attach_triangulation (mesh);
