@@ -85,20 +85,6 @@ namespace CellMoleculeTools
                             const Triangulation<dim, spacedim> &mesh,
                             const double  ghost_cell_layer_thickness);
 
-  /**
-   * Return the set of global DoF indices of the locally relevant DoFs on the
-   * current MPI process. The set of locally relevant DoF indices is the union
-   * of all the DoF indices enumerated on the @ref LocallyRelevantCells
-   * "locally relevant cells" i.e., the union of
-   * DoFHandler::locally_owned_dofs() and the DoF indices on all locally
-   * relevant ghost cells.
-   */
-  template <int dim, int spacedim>
-  IndexSet
-  extract_locally_relevant_dofs
-  (const DoFHandler<dim, spacedim> &dof_handler);
-
-
 } // namespace CellMoleculeTools
 
 
