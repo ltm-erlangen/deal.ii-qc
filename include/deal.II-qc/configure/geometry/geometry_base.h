@@ -42,7 +42,7 @@ namespace Geometry
     /**
      * Create a parallel::shared::Triangulation @p tria based on the chosen geometry.
      */
-    virtual void create_mesh(dealii::parallel::shared::Triangulation<dim> &tria) const = 0;
+    virtual void create_mesh(parallel::shared::Triangulation<dim> &tria) const = 0;
 
     /**
      * Parse parameter stored in @p prm .
