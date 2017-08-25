@@ -48,27 +48,14 @@ namespace Cluster
     // Initialize tria_ptr data member.
     tria_ptr = &triangulation;
 
-    // Get locally relevant ghost cells
-    /* TODO: This class is not aware of ghost_cell_layer_thickness
-    const auto ghost_cells =
-      GridTools::
-      compute_ghost_cell_layer_within_distance (triangulation,
-                                                ghost_cell_layer_thickness);
-    */
-
     // Initialize cells_to_sampling_indices.
     for (types::CellIteratorType<dim, spacedim>
          cell  = triangulation.begin_active();
          cell != triangulation.end();
          cell++)
       {
-        // If the cell is not locally relevant, jump.
-        /* TODO:
-        if (std::find (ghost_cells.begin(),
-                       ghost_cells.end(),
-                       cell) == ghost_cells.end() && !cell->is_locally_owned())
+        if (cell->is_artificial())
           continue;
-        */
 
         std::set<unsigned int> this_cell_sampling_indices_set;
 

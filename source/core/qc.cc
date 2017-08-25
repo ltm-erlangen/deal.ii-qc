@@ -443,21 +443,9 @@ void QC<dim, PotentialType>::setup_system ()
        cell  = dof_handler.begin_active();
        cell != dof_handler.end();
        cell++)
-    cells_to_data.insert (std::make_pair (cell,
-                                          AssemblyData()));
-
-  /*
-  // FIXME: Do we want to initialize cell_to_data using locally relevant cells?
-  //        Initializing it with all the cells is perhaps not necessary.
-  // Initialize cells_to_data with all the cells in energy_atoms
-  auto &energy_atoms = atom_data.energy_atoms;
-  types::CellMoleculeConstIteratorType<dim> unique_key;
-  for (unique_key  = energy_atoms.cbegin();
-       unique_key != energy_atoms.cend();
-       unique_key  = energy_atoms.upper_bound(unique_key->first))
-    cells_to_data.insert(std::make_pair(unique_key->first, AssemblyData()));
-   */
-
+    if (!cell->is_artificial())
+      cells_to_data.insert (std::make_pair (cell,
+                                            AssemblyData()));
 }
 
 
@@ -478,12 +466,15 @@ void QC<dim, PotentialType>::setup_fe_values_objects ()
   // local index (within a cell) of energy molecules.
   auto &cell_energy_molecules = cell_molecule_data.cell_energy_molecules;
 
-  // FIXME: Loop only over cells associated to energy molecules.
   for (types::DoFCellIteratorType<dim>
        cell  = dof_handler.begin_active();
        cell != dof_handler.end();
        cell++)
     {
+      // Loop through locally relevant cells.
+      if (cell->is_artificial())
+        continue;
+
       // Include all the energy molecules associated to this active cell
       // as quadrature points. The quadrature points will be then used to
       // initialize fe_values object so as to evaluate the displacement
@@ -560,14 +551,17 @@ void QC<dim, PotentialType>::update_positions()
 {
   TimerOutput::Scope t (computing_timer, "Update energy molecules' positions");
 
-  // TODO: Loop over only locally relevant cells (ref FIXME in setup_system()).
-  // First, loop over all cells and evaluate displacement field at quadrature
-  // points. This is needed irrespectively of energy or gradient calculations.
+  // Loop over all the locally relevant cells and evaluate displacement field at
+  // quadrature points.
+  // This is needed irrespectively of energy or gradient calculations.
   for (auto
        cell  = dof_handler.begin_active();
        cell != dof_handler.end();
        cell++)
     {
+      if (cell->is_artificial())
+        continue;
+
       const auto it = cells_to_data.find(cell);
       Assert (it != cells_to_data.end(),
               ExcInternalError());
@@ -575,11 +569,14 @@ void QC<dim, PotentialType>::update_positions()
       std::pair<types::CellMoleculeIteratorType<dim>, types::CellMoleculeIteratorType<dim> >
       cell_energy_molecules_range = cell_molecule_data.cell_energy_molecules.equal_range(cell);
 
-      // FIXME: remove after FIXME in setup_system()
-      // If this cell is not within the locally relevant active cells of the
-      // current MPI process continue active cell loop
+      // If this locally relevant active cell doesn't contain any atoms
+      // continue active cell loop
       if (cell_energy_molecules_range.first==cell_energy_molecules_range.second)
-        continue;
+        {
+          Assert (it->second.displacements.size()==0,
+                  ExcInternalError());
+          continue;
+        }
 
       // get displacement field on all quadrature points of this object
       it->second.fe_values->operator[](u_fe).get_function_values(locally_relevant_displacement,

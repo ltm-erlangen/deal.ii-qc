@@ -65,7 +65,7 @@ void Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
 
   QC<dim, PotentialType>::pcout
       << "The energy computed using PairCoulWolfManager "
-      <<    "of 2 charged atom system is: "
+      <<    "of charged atomistic system is: "
       << energy
       << " eV."
       << std::endl;
@@ -123,7 +123,7 @@ int main (int argc, char *argv[])
           << "end"                                            << std::endl
 
           << "subsection Configure QC"                        << std::endl
-          << "  set Ghost cell layer thickness = 100.1"       << std::endl
+          << "  set Ghost cell layer thickness = -1."         << std::endl
           << "  set Cluster radius = 100"                     << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section"                      << std::endl;

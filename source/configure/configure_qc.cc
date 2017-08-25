@@ -265,7 +265,7 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
   prm.enter_subsection ("Configure QC");
   {
     prm.declare_entry("Ghost cell layer thickness", "6.0",
-                      Patterns::Double(0),
+                      Patterns::Double(),
                       "The maximum distance from the locally "
                       "owned cells of each MPI process to to build "
                       "a layer of ghost cells needed for non-local energy "
@@ -528,7 +528,8 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
   {
     ghost_cell_layer_thickness = prm.get_double("Ghost cell layer thickness");
 
-    Assert (maximum_cutoff_radius < ghost_cell_layer_thickness,
+    Assert (ghost_cell_layer_thickness < 0 ||
+            maximum_cutoff_radius      < ghost_cell_layer_thickness,
             ExcMessage("Ghost cell layer thickness should be more than or "
                        "equal to the Maximum cutoff radius."));
 
