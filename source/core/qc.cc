@@ -397,8 +397,8 @@ void QC<dim, PotentialType>::setup_system ()
 
   dof_handler.distribute_dofs (fe);
 
-  locally_relevant_set =
-    CellMoleculeTools::extract_locally_relevant_dofs (dof_handler);
+  // Prepare locally relevant set.
+  DoFTools::extract_locally_relevant_dofs (dof_handler, locally_relevant_set);
 
   // set-up constraints objects
   constraints.reinit (locally_relevant_set);

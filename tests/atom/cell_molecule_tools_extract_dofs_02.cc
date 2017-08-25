@@ -75,8 +75,8 @@ public:
                                      triangulation,
                                      config.get_ghost_cell_layer_thickness());
 
-    const IndexSet locally_relevant_set =
-      CellMoleculeTools::extract_locally_relevant_dofs (dof_handler);
+    IndexSet locally_relevant_set;
+    DoFTools::extract_locally_relevant_dofs (dof_handler, locally_relevant_set);
 
     unsigned int
     n_mpi_processes = dealii::Utilities::MPI::n_mpi_processes(mpi_communicator),
