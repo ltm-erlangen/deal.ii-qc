@@ -36,7 +36,7 @@ public:
     triangulation (MPI_COMM_WORLD,
                    // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
                    Triangulation<dim>::limit_level_difference_at_vertices,
-                   -1.),
+                   config.get_ghost_cell_layer_thickness()),
     fe(FE_Q<dim>(1), dim),
     dof_handler    (triangulation),
     mpi_communicator(MPI_COMM_WORLD)
@@ -66,8 +66,6 @@ public:
                                                p2,
                                                true);
     triangulation.setup_ghost_cells();
-    std::ofstream g("tria.vtk");
-    GridOut().write_vtk (triangulation, g);
 
     dof_handler.distribute_dofs (fe);
 
@@ -101,6 +99,8 @@ public:
       }
 
 #ifdef WRITE_GRID
+    std::ofstream g("tria.vtk");
+    GridOut().write_vtk (triangulation, g);
     if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator)==0)
       {
         std::map<dealii::types::global_dof_index, Point<dim> > support_points;
