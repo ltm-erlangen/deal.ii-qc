@@ -93,7 +93,10 @@ void Problem<dim, PotentialType>::partial_run()
   const auto &gradient = QC<dim, PotentialType>::locally_relevant_gradient;
 
   // Count the number of zero entries within  locally owned entries.
-  for (auto entry = gradient.begin(); entry != gradient.end(); ++entry)
+  for (auto
+       entry  = gradient.block(0).begin();
+       entry != gradient.block(0).end();
+       entry++)
     if (*entry ==0.)
       n_zeros++;
 
@@ -132,7 +135,7 @@ void Problem<dim, PotentialType>::partial_run()
       {
         for (int d = 0; d < dim; ++d)
           QC<dim, PotentialType>::pcout
-              << QC<dim, PotentialType>::locally_relevant_gradient[i+d]
+              << gradient.block(0)[i+d]
               <<  "\t";
         QC<dim, PotentialType>::pcout << std::endl;
       }

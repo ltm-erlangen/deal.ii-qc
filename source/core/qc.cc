@@ -589,7 +589,7 @@ void QC<dim, PotentialType>::update_positions()
         }
 
       // get displacement field on all quadrature points of this object
-      it->second.fe_values->operator[](u_fe).get_function_values(locally_relevant_displacement,
+      it->second.fe_values->operator[](u_fe).get_function_values(locally_relevant_displacement.block(0),
                                                                  it->second.displacements);
       const auto &displacements = it->second.displacements;
 

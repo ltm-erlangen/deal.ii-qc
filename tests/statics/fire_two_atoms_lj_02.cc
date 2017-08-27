@@ -78,8 +78,7 @@ void Problem<dim, PotentialType>::statics (const double tol)
 {
   QC<dim, PotentialType>::run();
 
-  vector_t u (QC<dim, PotentialType>::dof_handler.locally_owned_dofs(),
-              QC<dim, PotentialType>::mpi_communicator);
+  vector_t u (QC<dim, PotentialType>::distributed_displacement);
 
   // Use this to initialize DiagonalMatrix
   u = 1.;
