@@ -3,8 +3,10 @@
 #include <fstream>
 #include <sstream>
 
-#include <deal.II-qc/atom/cell_molecule_tools.h>
 #include <deal.II-qc/core/qc.h>
+#include <deal.II/dofs/dof_tools.h>
+#include <deal.II/grid/grid_out.h>
+#include <deal.II/grid/tria_accessor.h>
 
 using namespace dealii;
 using namespace dealiiqc;
@@ -14,13 +16,13 @@ using namespace dealiiqc;
 // Calculate and check the correctness of the computation of masses
 // WeightsByBase::compute_inverse_masses().
 //
-// Derived class being used: WeightsBySamplingPoints
+// Derived class being used: WeightsByCell
 //
-// x--x--x-----x
-// |  |  |     |          x  - vertices
-// x--x--x o   |          o  - atom global_atom_index 6
-// |  |  |     |          Only one atom among the 11 atoms is shown.
-// x--x--x-----x
+// x-------x
+// |       |          x  - vertices
+// |       |
+// |       |          atoms are not shown.
+// x-------x
 //
 
 
@@ -29,26 +31,13 @@ template <int dim, typename PotentialType>
 class Problem : public QC<dim, PotentialType>
 {
 public:
-  Problem (const std::string &s);
+  Problem (const ConfigureQC &config)
+    :
+    QC<dim, PotentialType>(config)
+  {}
+
   void partial_run ();
 };
-
-template <int dim, typename PotentialType>
-Problem<dim, PotentialType> ::Problem (const std::string &s)
-  :
-  QC<dim, PotentialType>(ConfigureQC(std::make_shared<std::istringstream>(s.c_str())))
-{
-  ConfigureQC config(std::make_shared<std::istringstream>(s.c_str()));
-
-  QC<dim, PotentialType>::triangulation.begin_active()->set_refine_flag();
-  QC<dim, PotentialType>::triangulation.execute_coarsening_and_refinement();
-  QC<dim, PotentialType>::triangulation.setup_ghost_cells();
-
-  QC<dim, PotentialType>::cell_molecule_data =
-    CellMoleculeTools::
-    build_cell_molecule_data<dim> (*config.get_stream(),
-                                   QC<dim, PotentialType>::triangulation);
-}
 
 
 
@@ -101,13 +90,13 @@ int main (int argc, char *argv[])
           << "subsection Geometry"                            << std::endl
           << "  set Type = Box"                               << std::endl
           << "  subsection Box"                               << std::endl
-          << "    set X center = 1."                          << std::endl
+          << "    set X center = .5"                          << std::endl
           << "    set Y center = .5"                          << std::endl
           << "    set Z center = .5"                          << std::endl
-          << "    set X extent = 2."                          << std::endl
+          << "    set X extent = 1."                          << std::endl
           << "    set Y extent = 1."                          << std::endl
           << "    set Z extent = 1."                          << std::endl
-          << "    set X repetitions = 2"                      << std::endl
+          << "    set X repetitions = 1"                      << std::endl
           << "    set Y repetitions = 1"                      << std::endl
           << "    set Z repetitions = 1"                      << std::endl
           << "  end"                                          << std::endl
@@ -124,34 +113,27 @@ int main (int argc, char *argv[])
           << "subsection Configure QC"                        << std::endl
           << "  set Ghost cell layer thickness = 2.01"        << std::endl
           << "  set Cluster radius = 0.2"                     << std::endl
-          << "  set Cluster weights by type = SamplingPoints" << std::endl
+          << "  set Cluster weights by type = Cell"           << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section"                      << std::endl
 
-          << "LAMMPS Description"            << std::endl   << std::endl
-          << "11 atoms"                      << std::endl   << std::endl
-          << "1  atom types"                 << std::endl   << std::endl
-          << "Masses"                        << std::endl   << std::endl
-          << "    1   0.7"                   << std::endl   << std::endl
-          << "Atoms #"                       << std::endl   << std::endl
-          << "1  1  1 1.0 0.0 0.0 0."                       << std::endl
-          << "2  2  1 1.0 0.5 0.0 0."                       << std::endl
-          << "3  3  1 1.0 1.0 0.0 0."                       << std::endl
-          << "4  4  1 1.0 2.0 0.0 0."                       << std::endl
-          << "5  5  1 1.0 0.0 0.5 0."                       << std::endl
-          << "6  6  1 1.0 0.5 0.5 0."                       << std::endl
-          << "7  7  1 1.0 1.1 0.5 0."                       << std::endl
-          << "8  8  1 1.0 0.0 1.0 0."                       << std::endl
-          << "9  9  1 1.0 0.5 1.0 0."                       << std::endl
-          << "10 10 1 1.0 1.0 1.0 0."                       << std::endl
-          << "11 11 1 1.0 2.0 1.0 0."                       << std::endl;
+          << "LAMMPS Description"              << std::endl   << std::endl
+          << "4 atoms"                         << std::endl   << std::endl
+          << "1  atom types"                   << std::endl   << std::endl
+          << "Masses"                          << std::endl   << std::endl
+          << "    1   0.7"                     << std::endl   << std::endl
+          << "Atoms #"                         << std::endl   << std::endl
+          << "1 1 1 1.0 0. 0. 0."                       << std::endl
+          << "2 2 1 1.0 1. 0. 0."                       << std::endl
+          << "3 3 1 1.0 0. 1. 0."                       << std::endl
+          << "4 4 1 1.0 1. 1. 0."                       << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());
 
-      const std::string s = oss.str();
+      ConfigureQC config (prm_stream);
 
-      Problem<dim, Potential::PairLJCutManager> problem(s);
+      Problem<dim, Potential::PairLJCutManager> problem (config);
       problem.partial_run ();
 
     }

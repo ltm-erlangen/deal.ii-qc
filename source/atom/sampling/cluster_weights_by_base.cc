@@ -220,7 +220,7 @@ namespace Cluster
                        c++)
                     constraints.distribute_local_to_global (cell->vertex_dof_index (v, c),
                                                             masses_at_sampling_points[i],
-                                                            inverse_masses);
+                                                            inverse_masses.block(0));
 
                   this_cell_used_sampling_indices[i] = true;
                   break;
@@ -258,7 +258,7 @@ namespace Cluster
                               constraints.distribute_local_to_global
                               (subface->vertex_dof_index (child_face_v, c),
                                masses_at_sampling_points[i],
-                               inverse_masses);
+                               inverse_masses.block(0));
 
                             this_cell_used_sampling_indices[i] = true;
                             break;
@@ -285,9 +285,9 @@ namespace Cluster
 
     // Take reciprocal of each locally owned entry to get inverse masses
     // from masses.
-    for (typename VectorType::iterator
-         entry  = inverse_masses.begin();
-         entry != inverse_masses.end();
+    for (typename VectorType::BlockType::iterator
+         entry  = inverse_masses.block(0).begin();
+         entry != inverse_masses.block(0).end();
          entry++)
       {
         Assert (*entry >= 0., ExcInternalError())
@@ -297,6 +297,8 @@ namespace Cluster
                  1.         :
                  1./(*entry);
       }
+
+    inverse_masses.compress(VectorOperation::insert);
   }
 
 
@@ -304,7 +306,7 @@ namespace Cluster
   template class WeightsByBase< DIM, ATOMICITY, SPACEDIM >;             \
   template void                                                         \
   WeightsByBase< DIM, ATOMICITY, SPACEDIM >::compute_dof_inverse_masses \
-  (TrilinosWrappers::MPI::Vector                    &,                  \
+  (TrilinosWrappers::MPI::BlockVector               &,                  \
    const CellMoleculeData<DIM, ATOMICITY, SPACEDIM> &,                  \
    const DoFHandler<DIM, SPACEDIM>                  &,                  \
    const ConstraintMatrix                           &) const;
