@@ -20,11 +20,10 @@ void test (const Point<dim>      &p,
                                         0.001,
                                         0.);
 
-  potential.initialize ((dim==3) ? "x,y,z,t" :
-                        (dim==2  ? "x,y,t"   : "x,t"),
+  potential.initialize ("t",
                         "t",
                         typename FunctionParser<dim>::ConstMap(),
-                        true);
+                        false);
 
   potential.set_time(time);
 
