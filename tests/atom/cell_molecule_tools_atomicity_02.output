@@ -1,0 +1,28 @@
+Masses: 0.7 0.2 
+Thrown molecules: 2
+Energy molecules: 6
+
+Energy molecule 0: Cluster weight: 4
+Atom 0: Position 0 0
+Atom 1: Position 1 0
+
+Energy molecule 1: Cluster weight: 0
+Atom 2: Position 2 0
+Atom 3: Position 3 0
+
+Energy molecule 2: Cluster weight: 0
+Atom 4: Position 0 1
+Atom 5: Position 1 1
+
+Energy molecule 3: Cluster weight: 0
+Atom 6: Position 0 2
+Atom 7: Position 1 2
+
+Energy molecule 4: Cluster weight: 4
+Atom 8: Position 0 3
+Atom 9: Position 1 3
+
+Energy molecule 5: Cluster weight: 0
+Atom 10: Position 2 3
+Atom 11: Position 3 3
+
