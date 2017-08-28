@@ -396,9 +396,7 @@ void QC<dim, PotentialType>::setup_system ()
 
   dof_handler.distribute_dofs (fe);
 
-  std::vector<IndexSet>
-  locally_owned_partitioning,
-  locally_relevant_partitioning;
+  std::vector<IndexSet> locally_owned_partitioning, locally_relevant_partitioning;
 
   locally_owned_partitioning.resize(1 /* atomicity */);
   locally_relevant_partitioning.resize(1/* atomicity */);

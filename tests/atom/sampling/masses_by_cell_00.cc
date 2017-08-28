@@ -48,7 +48,7 @@ void Problem<dim, PotentialType>::partial_run()
   QC<dim, PotentialType>::setup_system();
 
   // setup_system() must have prepared the inverse_mass_matrix.
-  typename QC<dim, PotentialType>::vector_t masses =
+  typename QC<dim, PotentialType>::vector_t &masses =
     QC<dim, PotentialType>::inverse_mass_matrix.get_vector();
 
   // Get masses for comparison with blessed output.
