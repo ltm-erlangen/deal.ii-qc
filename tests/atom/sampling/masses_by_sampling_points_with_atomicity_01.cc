@@ -3,10 +3,8 @@
 #include <fstream>
 #include <sstream>
 
+#include <deal.II-qc/atom/cell_molecule_tools.h>
 #include <deal.II-qc/core/qc.h>
-#include <deal.II/dofs/dof_tools.h>
-#include <deal.II/grid/grid_out.h>
-#include <deal.II/grid/tria_accessor.h>
 
 using namespace dealii;
 using namespace dealiiqc;
@@ -18,14 +16,13 @@ using namespace dealiiqc;
 //
 // Derived class being used: WeightsByCell
 //
-// +o-------o+
-// o         o          +  - vertices or (atoms with atom_stamp 0)
-// |         |
-// |         |
-// o         o          o  - atoms with atom_stamp 1 or 2
-// +o-------o+
+// x-----x-----x
+// |     |     |          x  - vertices
+// |     |     |
+// |     |     |
+// x-----x-----x
 //
-// Total 4 molecules each with 3 atoms.
+
 
 
 
@@ -37,7 +34,6 @@ public:
     :
     QC<dim, PotentialType, atomicity>(config)
   {}
-
   void partial_run ();
 };
 
@@ -48,6 +44,19 @@ void Problem<dim, PotentialType, atomicity>::partial_run()
 {
   this->setup_cell_energy_molecules();
   this->setup_system();
+
+  for (const auto &cell_molecule : this->cell_molecule_data.cell_energy_molecules)
+    this->pcout << "Cell: "
+                << cell_molecule.first                                 << "\t"
+                << "Molecule ref position inside cell: "
+                << std::fixed
+                << std::setprecision(1)
+                << cell_molecule.second.position_inside_reference_cell << "\t"
+                << "Cluster weight: "
+                << cell_molecule.second.cluster_weight
+                << std::endl;
+
+  this->pcout << std::endl;
 
   // setup_system() must have prepared the inverse_mass_matrix.
   auto &masses = this->inverse_mass_matrix.get_vector();
@@ -73,7 +82,6 @@ void Problem<dim, PotentialType, atomicity>::partial_run()
 }
 
 
-
 int main (int argc, char *argv[])
 {
   try
@@ -83,10 +91,11 @@ int main (int argc, char *argv[])
                           argv,
                           dealii::numbers::invalid_unsigned_int);
 
+      //if (dealii::Utilities::MPI::this_mpi_process (MPI_COMM_WORLD)==0)
+      deallog.depth_console (10);
+
       // Allow the restriction that user must provide Dimension of the problem
       const unsigned int dim = 2;
-
-      deallog.depth_console(10);
 
       std::ostringstream oss;
       oss << "set Dimension = " << dim                        << std::endl
@@ -94,13 +103,13 @@ int main (int argc, char *argv[])
           << "subsection Geometry"                            << std::endl
           << "  set Type = Box"                               << std::endl
           << "  subsection Box"                               << std::endl
-          << "    set X center = .5"                          << std::endl
+          << "    set X center = 1."                          << std::endl
           << "    set Y center = .5"                          << std::endl
           << "    set Z center = .5"                          << std::endl
-          << "    set X extent = 1."                          << std::endl
+          << "    set X extent = 2."                          << std::endl
           << "    set Y extent = 1."                          << std::endl
           << "    set Z extent = 1."                          << std::endl
-          << "    set X repetitions = 1"                      << std::endl
+          << "    set X repetitions = 2"                      << std::endl
           << "    set Y repetitions = 1"                      << std::endl
           << "    set Z repetitions = 1"                      << std::endl
           << "  end"                                          << std::endl
@@ -113,35 +122,68 @@ int main (int argc, char *argv[])
           << "  set Pair global coefficients = 1.99 "         << std::endl
           << "  set Pair specific coefficients = 0, 0, 0.877, 1.2;" << std::endl
           << "  set Pair specific coefficients = 0, 1, 0.877, 1.2;" << std::endl
+          << "  set Pair specific coefficients = 0, 2, 0.877, 1.2;" << std::endl
           << "end"                                            << std::endl
 
           << "subsection Configure QC"                        << std::endl
-          << "  set Ghost cell layer thickness = 2.01"        << std::endl
-          << "  set Cluster radius = 0.2"                     << std::endl
-          << "  set Cluster weights by type = Cell"           << std::endl
+          << "  set Ghost cell layer thickness = -1"          << std::endl
+          << "  set Cluster radius = .2"                      << std::endl
+          << "  set Cluster weights by type = SamplingPoints" << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section"                      << std::endl
 
-          << "LAMMPS Description"              << std::endl   << std::endl
-          << "12 atoms"                         << std::endl   << std::endl
-          << "3  atom types"                   << std::endl   << std::endl
-          << "Masses"                          << std::endl   << std::endl
-          << "    1   0.7"                     << std::endl   << std::endl
-          << "    2   0.2"                     << std::endl   << std::endl
-          << "    3   0.62"                    << std::endl   << std::endl
-          << "Atoms #"                         << std::endl   << std::endl
-          << "1  1  1 1.0   0.   0.  0."                       << std::endl
-          << "2  1  2 1.0   0.   0.1 0."                       << std::endl
-          << "3  1  3 1.0   0.1  0.  0."                       << std::endl
-          << "4  2  1 1.0   1.   0.  0."                       << std::endl
-          << "5  2  2 1.0   0.9  0.  0."                       << std::endl
-          << "6  2  3 1.0   1.   0.1 0."                       << std::endl
-          << "7  3  1 1.0   0.   1.  0."                       << std::endl
-          << "8  3  2 1.0   0.1  1.  0."                       << std::endl
-          << "9  3  3 1.0   0.   0.9 0."                       << std::endl
-          << "10 4  1 1.0   1.   1.  0."                       << std::endl
-          << "11 4  2 1.0   0.9  1.  0."                       << std::endl
-          << "12 4  3 1.0   1.  0.9  0."                       << std::endl;
+          << "LAMMPS Description"            << std::endl   << std::endl
+          << "33 atoms"                      << std::endl   << std::endl
+          << "3  atom types"                 << std::endl   << std::endl
+          << "Masses"                        << std::endl   << std::endl
+          << "    1   0.7"                   << std::endl   << std::endl
+          << "    2   0.23"                  << std::endl   << std::endl
+          << "    3   0.43"                  << std::endl   << std::endl
+          << "Atoms #"                       << std::endl   << std::endl
+
+          << "1   1  1 1.0   0.0 0.0 0."     << std::endl
+          << "2   1  2 1.0   0.1 0.0 0."     << std::endl
+          << "3   1  3 1.0   0.0 0.1 0."     << std::endl
+
+          << "4   2  1 1.0   0.5 0.0 0."     << std::endl
+          << "5   2  2 1.0   0.6 0.0 0."     << std::endl
+          << "6   2  3 1.0   0.5 0.1 0."     << std::endl
+
+          << "7   3  1 1.0   1.0 0.0 0."     << std::endl
+          << "8   3  2 1.0   1.1 0.0 0."     << std::endl
+          << "9   3  3 1.0   1.0 0.1 0."     << std::endl
+
+          << "10  4  1 1.0   2.0 0.0 0."     << std::endl
+          << "11  4  2 1.0   1.9 0.0 0."     << std::endl
+          << "12  4  3 1.0   2.0 0.1 0."     << std::endl
+
+          << "13  5  1 1.0   0.0 0.5 0."     << std::endl
+          << "14  5  2 1.0   0.1 0.5 0."     << std::endl
+          << "15  5  3 1.0   0.0 0.6 0."     << std::endl
+
+          << "16  6  1 1.0   0.5 0.5 0."     << std::endl
+          << "17  6  2 1.0   0.6 0.5 0."     << std::endl
+          << "18  6  3 1.0   0.5 0.6 0."     << std::endl
+
+          << "19  7  1 1.0   1.1  0.5  0."   << std::endl
+          << "20  7  2 1.0   1.11 0.5  0."   << std::endl
+          << "21  7  3 1.0   1.1  0.51 0."   << std::endl
+
+          << "22  8  1 1.0   0.0 1.0 0."     << std::endl
+          << "23  8  2 1.0   0.1 1.0 0."     << std::endl
+          << "24  8  3 1.0   0.0 0.9 0."     << std::endl
+
+          << "25  9  1 1.0   0.5  1.0 0."    << std::endl
+          << "26  9  2 1.0   0.51 1.0 0."    << std::endl
+          << "27  9  3 1.0   0.5  0.9 0."    << std::endl
+
+          << "28 10  1 1.0   1.0 1.0 0."     << std::endl
+          << "29 10  2 1.0   1.1 1.0 0."     << std::endl
+          << "30 10  3 1.0   1.0 0.9 0."     << std::endl
+
+          << "31 11  1 1.0   2.0 1.0 0."     << std::endl
+          << "32 11  2 1.0   1.9 1.0 0."     << std::endl
+          << "33 11  3 1.0   2.0 0.9 0."     << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());
