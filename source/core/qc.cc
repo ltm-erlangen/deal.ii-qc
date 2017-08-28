@@ -41,9 +41,9 @@ QC<dim, PotentialType>::QC (const ConfigureQC &config)
   configure_qc (config),
   triangulation (mpi_communicator,
                  // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
-                 Triangulation<dim>::limit_level_difference_at_vertices,
+                 Triangulation<dim, spacedim>::limit_level_difference_at_vertices,
                  configure_qc.get_ghost_cell_layer_thickness()),
-  fe (FE_Q<dim>(1),dim),
+  fe (FE_Q<dim, spacedim>(1),dim),
   u_fe (0),
   dof_handler (triangulation),
   molecule_handler (configure_qc),
@@ -203,11 +203,11 @@ void QC<dim, PotentialType>::setup_triangulation()
   ConfigureQC::InitialRefinementParameters initial_refinement_params =
     configure_qc.get_initial_refinement_parameters();
 
-  FunctionParser<dim> refinement_function (1,0.);
+  FunctionParser<spacedim> refinement_function (1,0.);
 
-  refinement_function.initialize(FunctionParser<dim>::default_variable_names(),
+  refinement_function.initialize(FunctionParser<spacedim>::default_variable_names(),
                                  initial_refinement_params.indicator_function,
-                                 typename FunctionParser<dim>::ConstMap());
+                                 typename FunctionParser<spacedim>::ConstMap());
 
   const double refinement_parameter = initial_refinement_params.refinement_parameter;
 
@@ -219,7 +219,7 @@ void QC<dim, PotentialType>::setup_triangulation()
       Vector<float> blind_error_estimate_per_cell (triangulation.n_active_cells());
 
       unsigned int active_cell_i = 0;
-      for (types::CellIteratorType<dim>
+      for (types::CellIteratorType<dim, spacedim>
            cell  = triangulation.begin_active();
            cell != triangulation.end();
            cell++, active_cell_i++)
@@ -247,12 +247,12 @@ void QC<dim, PotentialType>::setup_cell_molecules()
   if (!atom_data_file.empty())
     {
       std::fstream fin(atom_data_file, std::fstream::in);
-      cell_molecule_data = CellMoleculeTools::build_cell_molecule_data<dim>
+      cell_molecule_data = CellMoleculeTools::build_cell_molecule_data<dim, 1, spacedim>
                            (fin,
                             triangulation);
     }
   else if (!configure_qc.get_stream()->eof())
-    cell_molecule_data = CellMoleculeTools::build_cell_molecule_data<dim>
+    cell_molecule_data = CellMoleculeTools::build_cell_molecule_data<dim, 1, spacedim>
                          (*configure_qc.get_stream(),
                           triangulation);
   else
@@ -276,7 +276,7 @@ void QC<dim, PotentialType>::setup_cell_energy_molecules()
   // It is ConfigureQC that actually creates a shared pointer to the derived
   // class object of the Cluster::WeightsByBase according to the parsed input.
 
-  cluster_weights_method = configure_qc.get_cluster_weights<dim>();
+  cluster_weights_method = configure_qc.get_cluster_weights<dim, 1, spacedim>();
 
   //TODO: Get Quadrature from ConfigureQC.
   cluster_weights_method->initialize (triangulation,
@@ -335,15 +335,15 @@ void QC<dim, PotentialType>::initialize_boundary_functions()
       (std::make_pair (single_bc.first,
                        std::make_pair
                        (component_mask,
-                        std::make_shared<FunctionParser</*space*/dim>>(dim*1,
+                        std::make_shared<FunctionParser<spacedim>>(dim*1,
                             0.))
                       )
       );
 
       dirichlet_boundary_functions[single_bc.first].second->
-      initialize (FunctionParser<dim>::default_variable_names(),
+      initialize (FunctionParser<spacedim>::default_variable_names(),
                   single_bc.second,
-                  typename FunctionParser<dim>::ConstMap() /* TODO, true*/);
+                  typename FunctionParser<spacedim>::ConstMap() /* TODO, true*/);
     }
 }
 
@@ -371,18 +371,18 @@ void QC<dim, PotentialType>::initialize_external_potential_fields (const double 
         external_potential_fields.insert
         (
           std::make_pair(entry.first.first,
-                         std::make_shared<PotentialFieldFunctionParser<dim> >
+                         std::make_shared<PotentialFieldFunctionParser<spacedim> >
                          (entry.first.second,
                           initial_time))
         );
 
       // Initialize FunctionParser object of PotentialFieldParser.
-      static_cast<PotentialFieldFunctionParser<dim> *>
+      static_cast<PotentialFieldFunctionParser<spacedim> *>
       (external_potential_field_iterator->second.get())->
-      initialize ((dim==3) ? "x,y,z,t" :
-                  (dim==2  ? "x,y,t"   : "x,t"),
+      initialize ((spacedim==3) ? "x,y,z,t" :
+                  (spacedim==2  ? "x,y,t"   : "x,t"),
                   entry.second,
-                  typename FunctionParser<dim>::ConstMap(),
+                  typename FunctionParser<spacedim>::ConstMap(),
                   true);
     }
 }
@@ -447,7 +447,7 @@ void QC<dim, PotentialType>::setup_system ()
   cells_to_data.clear();
 
   // TODO: use TriaAccessor<>::set_user_pointer() to associate AssemblyData with a cell
-  for (types::DoFCellIteratorType<dim>
+  for (types::DoFCellIteratorType<dim, spacedim>
        cell  = dof_handler.begin_active();
        cell != dof_handler.end();
        cell++)
@@ -474,7 +474,7 @@ void QC<dim, PotentialType>::setup_fe_values_objects ()
   // local index (within a cell) of energy molecules.
   auto &cell_energy_molecules = cell_molecule_data.cell_energy_molecules;
 
-  for (types::DoFCellIteratorType<dim>
+  for (types::DoFCellIteratorType<dim, spacedim>
        cell  = dof_handler.begin_active();
        cell != dof_handler.end();
        cell++)
@@ -489,8 +489,8 @@ void QC<dim, PotentialType>::setup_fe_values_objects ()
       // at the initial location of energy molecules in the active cells.
 
       const auto energy_molecules_range =
-        CellMoleculeTools::molecules_range_in_cell<dim> (cell,
-                                                         cell_energy_molecules);
+        CellMoleculeTools::molecules_range_in_cell<dim, 1, spacedim>
+        (cell, cell_energy_molecules);
 
       const unsigned int n_energy_molecules_in_cell =
         energy_molecules_range.second;
@@ -514,7 +514,7 @@ void QC<dim, PotentialType>::setup_fe_values_objects ()
       // but erase would return a non-const iterator.
       // This is not exactly a hack as we are using how erase on containers
       // must behave. Also, this is a constant time operation.
-      types::CellMoleculeIteratorType<dim>
+      types::CellMoleculeIteratorType<dim, 1, spacedim>
       cell_energy_molecule_iterator =
         cell_energy_molecules.erase(energy_molecules_range.first.first,
                                     energy_molecules_range.first.first);
@@ -522,7 +522,10 @@ void QC<dim, PotentialType>::setup_fe_values_objects ()
       for (unsigned int q = 0; q < n_energy_molecules_in_cell; ++q, ++cell_energy_molecule_iterator)
         {
           // const_iter->second yields the actual atom
-          points[q]           = cell_energy_molecule_iterator->second.position_inside_reference_cell;
+          for (int d=0; d<dim; ++d)
+            // Copying only dim-dimensions.
+            points[q][d]      = cell_energy_molecule_iterator->second.position_inside_reference_cell[d];
+
           weights_per_atom[q] = cell_energy_molecule_iterator->second.cluster_weight;
           cell_energy_molecule_iterator->second.local_index = q;
         }
@@ -539,10 +542,10 @@ void QC<dim, PotentialType>::setup_fe_values_objects ()
 
       // Now we are ready to initialize FEValues object.
       data.fe_values =
-        std::make_shared<FEValues<dim>> (mapping, fe,
-                                         Quadrature<dim> (points,
-                                                          weights_per_atom),
-                                         update_values);
+        std::make_shared<FEValues<dim, spacedim>> (mapping, fe,
+                                                   Quadrature<dim> (points,
+                                                       weights_per_atom),
+                                                   update_values);
 
       // finally reinit FEValues so that it's ready to provide all required
       // information:
@@ -574,31 +577,35 @@ void QC<dim, PotentialType>::update_positions()
       Assert (it != cells_to_data.end(),
               ExcInternalError());
 
-      std::pair<types::CellMoleculeIteratorType<dim>, types::CellMoleculeIteratorType<dim> >
+      auto &data = it->second;
+
+      std::pair<types::CellMoleculeIteratorType<dim, 1, spacedim>, types::CellMoleculeIteratorType<dim, 1, spacedim> >
       cell_energy_molecules_range = cell_molecule_data.cell_energy_molecules.equal_range(cell);
 
       // If this locally relevant active cell doesn't contain any atoms
       // continue active cell loop
       if (cell_energy_molecules_range.first==cell_energy_molecules_range.second)
         {
-          Assert (it->second.displacements.size()==0,
+          Assert (data.displacements.size()==0,
                   ExcInternalError());
           continue;
         }
 
       // get displacement field on all quadrature points of this object
-      it->second.fe_values->operator[](u_fe).get_function_values(locally_relevant_displacement.block(0),
-                                                                 it->second.displacements);
-      const auto &displacements = it->second.displacements;
+      data.fe_values->operator[](u_fe).get_function_values(locally_relevant_displacement.block(0),
+                                                           it->second.displacements);
+      const auto &displacements = data.displacements;
 
       // Update energy molecules positions.
       for (unsigned int i = 0;
            i < displacements.size();
            i++, ++cell_energy_molecules_range.first)
         // FIXME: loop over all atoms and use BlockVector for displacements
-        cell_energy_molecules_range.first->second.atoms[0].position =
-          cell_energy_molecules_range.first->second.atoms[0].initial_position +
-          displacements[i];
+        for (int d=0; d<dim; ++d)
+          // Copy only dim-dimensions.
+          cell_energy_molecules_range.first->second.atoms[0].position[d] =
+            cell_energy_molecules_range.first->second.atoms[0].initial_position[d] +
+            displacements[i][d];
 
       // The loop over displacements must have exhausted all the energy
       // molecules on a per cell basis (and the converse also should be true).
@@ -665,18 +672,18 @@ double QC<dim, PotentialType>::compute_local (vector_t &gradient) const
   Vector<double> local_gradient_I(dofs_per_cell), local_gradient_J(dofs_per_cell);
 
   // start from a first pair of cells I-J in the neighbour list.
-  const types::CellIteratorType<dim>
+  const types::CellIteratorType<dim, spacedim>
   cell_I_first = neighbor_lists.begin()->first.first,
   cell_J_first = neighbor_lists.begin()->first.second;
 
   // Convert tria's cells into dof cells.
-  const types::DoFCellIteratorType<dim>
+  const types::DoFCellIteratorType<dim, spacedim>
   dof_cell_I_first (&triangulation,
                     cell_I_first->level(),
                     cell_I_first->index(),
                     &dof_handler);
 
-  const types::DoFCellIteratorType<dim>
+  const types::DoFCellIteratorType<dim, spacedim>
   dof_cell_J_first (&triangulation,
                     cell_J_first->level(),
                     cell_J_first->index(),
@@ -684,7 +691,7 @@ double QC<dim, PotentialType>::compute_local (vector_t &gradient) const
 
   // Locate the first pair of cells I-J.
   typename
-  std::map<types::DoFCellIteratorType<dim>, AssemblyData>::const_iterator
+  std::map<types::DoFCellIteratorType<dim, spacedim>, AssemblyData>::const_iterator
   cell_data_I = cells_to_data.find(dof_cell_I_first),
   cell_data_J = cells_to_data.find(dof_cell_J_first);
 
@@ -703,11 +710,11 @@ double QC<dim, PotentialType>::compute_local (vector_t &gradient) const
   for (const auto &cell_pair_cell_molecule_pair : neighbor_lists)
     {
       // get reference to current cell pair and molecule pair
-      const types::CellIteratorType<dim>
+      const types::CellIteratorType<dim, spacedim>
       &cell_I  = cell_pair_cell_molecule_pair.first.first,
        &cell_J = cell_pair_cell_molecule_pair.first.second;
 
-      const types::CellMoleculeConstIteratorType<dim>
+      const types::CellMoleculeConstIteratorType<dim, 1, spacedim>
       &cell_molecule_I  = cell_pair_cell_molecule_pair.second.first,
        &cell_molecule_J = cell_pair_cell_molecule_pair.second.second;
 
@@ -784,14 +791,17 @@ double QC<dim, PotentialType>::compute_local (vector_t &gradient) const
 
       if (ComputeGradient)
         {
-          const types::DoFCellIteratorType<dim> dof_cell_I (&triangulation,
-                                                            cell_I->level(),
-                                                            cell_I->index(),
-                                                            &dof_handler);
-          const types::DoFCellIteratorType<dim> dof_cell_J (&triangulation,
-                                                            cell_J->level(),
-                                                            cell_J->index(),
-                                                            &dof_handler);
+          const types::DoFCellIteratorType<dim, spacedim>
+          dof_cell_I (&triangulation,
+                      cell_I->level(),
+                      cell_I->index(),
+                      &dof_handler);
+
+          const types::DoFCellIteratorType<dim, spacedim>
+          dof_cell_J (&triangulation,
+                      cell_J->level(),
+                      cell_J->index(),
+                      &dof_handler);
 
           // Check if I'th or Jth cell changed, if so, update the pointer to
           // the cell data and get dof indices.
