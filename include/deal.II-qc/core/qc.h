@@ -57,6 +57,8 @@ using namespace dealii;
 template <int dim, typename PotentialType>
 class QC
 {
+  // TODO: Remove this after adding spacedim as template parameter.
+  static const unsigned int spacedim = dim;
 public:
 
   typedef LA::MPI::BlockVector vector_t;
@@ -351,24 +353,24 @@ protected:
   /**
    * A parallel shared triangulation.
    */
-  dealiiqc::parallel::shared::Triangulation<dim> triangulation;
+  dealiiqc::parallel::shared::Triangulation<dim, spacedim> triangulation;
 
   /**
    * Finite Element.
    */
-  FESystem<dim>                    fe;
+  FESystem<dim, spacedim>          fe;
 
   const FEValuesExtractors::Vector u_fe;
 
   /**
    * Linear mapping.
    */
-  MappingQ1<dim>                   mapping;
+  MappingQ1<dim, spacedim>         mapping;
 
   /**
    * Degrees-of-freedom handler.
    */
-  DoFHandler<dim>                  dof_handler;
+  DoFHandler<dim, spacedim>        dof_handler;
 
   /**
    * All constraints (hanging nodes + BC).
@@ -399,13 +401,13 @@ protected:
    * Map of boundary ids to Functions describing the corresponding boundary
    * condition.
    */
-  std::map<unsigned int, std::pair<ComponentMask, std::shared_ptr<FunctionParser<dim> > > >
+  std::map<unsigned int, std::pair<ComponentMask, std::shared_ptr<FunctionParser<spacedim> > > >
   dirichlet_boundary_functions;
 
   /**
    * External potential field function.
    */
-  std::multimap<unsigned int, std::shared_ptr<PotentialField<dim> > >
+  std::multimap<unsigned int, std::shared_ptr<PotentialField<spacedim> > >
   external_potential_fields;
 
   /**
@@ -443,7 +445,7 @@ protected:
      * the cell. The displacement within the cell can be obtained using
      * FEValues object of the cell.
      */
-    std::shared_ptr<FEValues<dim>>     fe_values;
+    std::shared_ptr<FEValues<dim, spacedim>> fe_values;
 
     // TODO: do we really need this? FEValues do store displacement already
     // after calling FEValues::reinit(cell), so we might just ask it directly
@@ -457,43 +459,43 @@ protected:
      * in which the energy molecules are stored in energy_atoms on a per cell
      * basis.
      */
-    mutable std::vector<Tensor<1,dim>> displacements;
+    mutable std::vector<Tensor<1,dim>>        displacements;
 
   };
 
   /**
    * Map of cells to data.
    */
-  std::map<types::DoFCellIteratorType<dim>, AssemblyData>
+  std::map<types::DoFCellIteratorType<dim, spacedim>, AssemblyData>
   cells_to_data;
 
   /**
    * Shared pointer to the cluster weights method.
    */
-  std::shared_ptr<Cluster::WeightsByBase<dim> > cluster_weights_method;
+  std::shared_ptr<Cluster::WeightsByBase<dim, 1, spacedim> > cluster_weights_method;
 
   /**
    * The primary atom data object that holds cell based atom data structures.
    * Cell based atom data structures rely on the association between molecules
    * and mesh.
    */
-  CellMoleculeData<dim>                 cell_molecule_data;
+  CellMoleculeData<dim, 1, spacedim>                 cell_molecule_data;
 
   /**
    * MoleculeHandler object to manage the cell based neighbor lists of the
    * system.
    */
-  MoleculeHandler<dim>                  molecule_handler;
+  MoleculeHandler<dim, 1, spacedim>                  molecule_handler;
 
   /**
    * Neighbor lists using cell approach.
    */
-  types::CellMoleculeNeighborLists<dim> neighbor_lists;
+  types::CellMoleculeNeighborLists<dim, 1, spacedim> neighbor_lists;
 
   /**
    * A time object
    */
-  mutable TimerOutput                   computing_timer;
+  mutable TimerOutput                                computing_timer;
 
 private:
 
