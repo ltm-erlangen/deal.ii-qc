@@ -2,6 +2,7 @@
 #include <deal.II-qc/atom/sampling/cluster_weights_by_base.h>
 #include <deal.II-qc/atom/cell_molecule_tools.h>
 
+#include <deal.II/dofs/dof_tools.h>
 #include <deal.II/lac/generic_linear_algebra.h>
 
 
@@ -120,6 +121,22 @@ namespace Cluster
 
 
 
+  namespace
+  {
+    // For the ith DoF at a vertex return the block index (or atom_stamp)
+    // given that there are dim-number of enumerations for each atom_stamp
+    // at a vertex.
+    inline
+    unsigned int
+    get_atom_stamp (unsigned int dof_at_vertex, int dim)
+    {
+      return std::div (dof_at_vertex, dim).quot;
+    }
+  }
+
+
+
+
   template <int dim, int atomicity, int spacedim>
   template <typename VectorType>
   void
@@ -137,11 +154,13 @@ namespace Cluster
                        "The size of the vector should equal to the total "
                        "number of DoFs."))
 
-    // For now support atomicity=1. // TODO: Extend to atomicity>1.
-    AssertThrow (atomicity==1, ExcNotImplemented());
-
     const types::CellMoleculeContainerType<dim, atomicity, spacedim>
     &cell_energy_molecules = cell_molecule_data.cell_energy_molecules;
+
+    // Get number of DoFs per block.
+    // FIXME? Here it is assumed that each block has the same number of DoFs.
+    const dealii::types::global_dof_index
+    n_dofs_per_block = std::div(dof_handler.n_dofs(), atomicity).quot;
 
     for (auto
          cell  = dof_handler.begin_active();
@@ -170,9 +189,17 @@ namespace Cluster
         const unsigned int this_cell_n_sampling_points =
           this_cell_sampling_points.size();
 
-        // Prepare the masses at sampling points in this container.
-        std::vector<double>
-        masses_at_sampling_points (this_cell_n_sampling_points, 0.);
+        // Due to the atomicity of molecules at each sampling point
+        // there are atomicity-number of masses, one for each atom stamp.
+
+        // Prepare the list of masses at the sampling points of this cell here.
+        std::vector<std::array<double, atomicity> >
+        masses_at_sampling_points (this_cell_n_sampling_points);
+
+        // Initialize the list of masses at the sampling points to zero.
+        for (auto &mass_list : masses_at_sampling_points)
+          mass_list.fill(0.);
+
 
         for (auto
              cell_molecule_itr  = molecules_range_and_size.first.first;
@@ -192,9 +219,10 @@ namespace Cluster
             location_in_container = Utilities::find_closest_point(molecule_initial_location(molecule),
                                                                   this_cell_sampling_points          ).first;
 
-            masses_at_sampling_points[location_in_container] +=
-              molecule.cluster_weight *
-              cell_molecule_data.masses[molecule.atoms[0].type];
+            for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
+              masses_at_sampling_points[location_in_container][atom_stamp] +=
+                molecule.cluster_weight *
+                cell_molecule_data.masses[molecule.atoms[atom_stamp].type];
           }
 
 
@@ -218,9 +246,20 @@ namespace Cluster
                        c = 0;
                        c < dof_handler.get_fe().n_dofs_per_vertex();
                        c++)
-                    constraints.distribute_local_to_global (cell->vertex_dof_index (v, c),
-                                                            masses_at_sampling_points[i],
-                                                            inverse_masses.block(0));
+                    {
+                      const unsigned int atom_stamp = get_atom_stamp(c,dim);
+
+                      const dealii::types::global_dof_index
+                      dof_index_inside_block = cell->vertex_dof_index (v, c)
+                                               %
+                                               n_dofs_per_block;
+
+                      constraints.distribute_local_to_global
+                      (dof_index_inside_block,
+                       masses_at_sampling_points[i][atom_stamp],
+                       inverse_masses.block(atom_stamp));
+                    }
+
 
                   this_cell_used_sampling_indices[i] = true;
                   break;
@@ -255,10 +294,19 @@ namespace Cluster
                                  c = 0;
                                  c < dof_handler.get_fe().n_dofs_per_vertex();
                                  c++)
-                              constraints.distribute_local_to_global
-                              (subface->vertex_dof_index (child_face_v, c),
-                               masses_at_sampling_points[i],
-                               inverse_masses.block(0));
+                              {
+                                const unsigned int atom_stamp = get_atom_stamp(c,dim);
+
+                                const dealii::types::global_dof_index
+                                dof_index_inside_block = subface->vertex_dof_index (child_face_v, c)
+                                                         %
+                                                         n_dofs_per_block;
+
+                                constraints.distribute_local_to_global
+                                (dof_index_inside_block,
+                                 masses_at_sampling_points[i][atom_stamp],
+                                 inverse_masses.block(atom_stamp));
+                              }
 
                             this_cell_used_sampling_indices[i] = true;
                             break;
@@ -285,18 +333,19 @@ namespace Cluster
 
     // Take reciprocal of each locally owned entry to get inverse masses
     // from masses.
-    for (typename VectorType::BlockType::iterator
-         entry  = inverse_masses.block(0).begin();
-         entry != inverse_masses.block(0).end();
-         entry++)
-      {
-        Assert (*entry >= 0., ExcInternalError())
+    for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
+      for (typename VectorType::BlockType::iterator
+           entry  = inverse_masses.block(atom_stamp).begin();
+           entry != inverse_masses.block(atom_stamp).end();
+           entry++)
+        {
+          Assert (*entry >= 0., ExcInternalError())
 
-        // Assign a mass of 1. to hanging node DoFs and other zero mass DoFs.
-        *entry = *entry ==0 ?
-                 1.         :
-                 1./(*entry);
-      }
+          // Assign a mass of 1. to hanging node DoFs and other zero mass DoFs.
+          *entry = *entry ==0 ?
+                   1.         :
+                   1./(*entry);
+        }
 
     inverse_masses.compress(VectorOperation::insert);
   }
