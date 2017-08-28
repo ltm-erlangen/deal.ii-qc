@@ -6,6 +6,7 @@
 #include <deal.II/grid/grid_tools.h>
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/dofs/dof_tools.h>
+#include <deal.II/dofs/dof_renumbering.h>
 
 #include <deal.II-qc/atom/cell_molecule_tools.h>
 #include <deal.II-qc/core/compute_tools.h>
@@ -20,16 +21,16 @@ DEAL_II_QC_NAMESPACE_OPEN
 using namespace dealii;
 
 
-template <int dim, typename PotentialType>
-QC<dim, PotentialType>::~QC ()
+template <int dim, typename PotentialType, int atomicity>
+QC<dim, PotentialType, atomicity>::~QC ()
 {
   dof_handler.clear();
 }
 
 
 
-template <int dim, typename PotentialType>
-QC<dim, PotentialType>::QC (const ConfigureQC &config)
+template <int dim, typename PotentialType, int atomicity>
+QC<dim, PotentialType, atomicity>::QC (const ConfigureQC &config)
   :
 #ifdef DEAL_II_WITH_TRILINOS
   qc_objective(*this),
@@ -43,8 +44,8 @@ QC<dim, PotentialType>::QC (const ConfigureQC &config)
                  // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
                  Triangulation<dim, spacedim>::limit_level_difference_at_vertices,
                  configure_qc.get_ghost_cell_layer_thickness()),
-  fe (FE_Q<dim, spacedim>(1),dim),
-  u_fe (0),
+  fe (FE_Q<dim, spacedim>(1), dim *atomicity),
+  u_fe (),
   dof_handler (triangulation),
   molecule_handler (configure_qc),
   computing_timer (mpi_communicator,
@@ -53,6 +54,9 @@ QC<dim, PotentialType>::QC (const ConfigureQC &config)
                    TimerOutput::wall_times)
 {
   Assert (dim==configure_qc.get_dimension(), ExcInternalError());
+
+  for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
+    u_fe[atom_stamp] = atom_stamp;
 
   // Load the mesh by reading from mesh file
   setup_triangulation();
@@ -66,8 +70,8 @@ QC<dim, PotentialType>::QC (const ConfigureQC &config)
 
 
 
-template <int dim, typename PotentialType>
-void QC<dim, PotentialType>::run ()
+template <int dim, typename PotentialType, int atomicity>
+void QC<dim, PotentialType, atomicity>::run ()
 {
   setup_cell_energy_molecules();
   setup_system();
@@ -106,9 +110,11 @@ namespace
   }
 }
 
-template <int dim, typename PotentialType>
-void QC<dim, PotentialType>::output_results (const double time,
-                                             const unsigned int timestep_no) const
+template <int dim, typename PotentialType, int atomicity>
+void
+QC<dim, PotentialType, atomicity>::
+output_results (const double time,
+                const unsigned int timestep_no) const
 {
   DataOut<dim> data_out;
   data_out.attach_dof_handler (dof_handler);
@@ -149,7 +155,7 @@ void QC<dim, PotentialType>::output_results (const double time,
 
   const std::string filename = data_out_solution_filename (timestep_no,
                                                            this_mpi_process);
-
+  // FIXME: for atomicity.
   std::ofstream output (filename.c_str());
   data_out.write_vtu (output);
   if (this_mpi_process==0)
@@ -180,8 +186,9 @@ void QC<dim, PotentialType>::output_results (const double time,
 
 
 
-template <int dim, typename PotentialType>
-void QC<dim, PotentialType>::reconfigure_qc(const ConfigureQC &configure)
+template <int dim, typename PotentialType, int atomicity>
+void
+QC<dim, PotentialType, atomicity>::reconfigure_qc(const ConfigureQC &configure)
 {
   configure_qc = configure;
   setup_cell_energy_molecules();
@@ -193,8 +200,8 @@ void QC<dim, PotentialType>::reconfigure_qc(const ConfigureQC &configure)
 
 
 
-template <int dim, typename PotentialType>
-void QC<dim, PotentialType>::setup_triangulation()
+template <int dim, typename PotentialType, int atomicity>
+void QC<dim, PotentialType, atomicity>::setup_triangulation()
 {
   configure_qc.get_geometry<dim>()->create_mesh(triangulation);
 
@@ -237,8 +244,8 @@ void QC<dim, PotentialType>::setup_triangulation()
 
 
 
-template <int dim, typename PotentialType>
-void QC<dim, PotentialType>::setup_cell_molecules()
+template <int dim, typename PotentialType, int atomicity>
+void QC<dim, PotentialType, atomicity>::setup_cell_molecules()
 {
   TimerOutput::Scope t (computing_timer, "Parse and assign all atoms to cells");
 
@@ -247,14 +254,14 @@ void QC<dim, PotentialType>::setup_cell_molecules()
   if (!atom_data_file.empty())
     {
       std::fstream fin(atom_data_file, std::fstream::in);
-      cell_molecule_data = CellMoleculeTools::build_cell_molecule_data<dim, 1, spacedim>
-                           (fin,
-                            triangulation);
+      cell_molecule_data =
+        CellMoleculeTools::build_cell_molecule_data<dim, atomicity, spacedim>
+        (fin, triangulation);
     }
   else if (!configure_qc.get_stream()->eof())
-    cell_molecule_data = CellMoleculeTools::build_cell_molecule_data<dim, 1, spacedim>
-                         (*configure_qc.get_stream(),
-                          triangulation);
+    cell_molecule_data =
+      CellMoleculeTools::build_cell_molecule_data<dim, atomicity, spacedim>
+      (*configure_qc.get_stream(), triangulation);
   else
     AssertThrow(false,
                 ExcMessage("Atom data was not provided neither as an auxiliary "
@@ -267,8 +274,8 @@ void QC<dim, PotentialType>::setup_cell_molecules()
   configure_qc.get_potential()->set_charges(cell_molecule_data.charges);
 }
 
-template <int dim, typename PotentialType>
-void QC<dim, PotentialType>::setup_cell_energy_molecules()
+template <int dim, typename PotentialType, int atomicity>
+void QC<dim, PotentialType, atomicity>::setup_cell_energy_molecules()
 {
   TimerOutput::Scope t (computing_timer,
                         "Setup energy molecules with cluster weights");
@@ -276,7 +283,7 @@ void QC<dim, PotentialType>::setup_cell_energy_molecules()
   // It is ConfigureQC that actually creates a shared pointer to the derived
   // class object of the Cluster::WeightsByBase according to the parsed input.
 
-  cluster_weights_method = configure_qc.get_cluster_weights<dim, 1, spacedim>();
+  cluster_weights_method = configure_qc.get_cluster_weights<dim, atomicity, spacedim>();
 
   //TODO: Get Quadrature from ConfigureQC.
   cluster_weights_method->initialize (triangulation,
@@ -290,9 +297,9 @@ void QC<dim, PotentialType>::setup_cell_energy_molecules()
 
 
 
-template <int dim, typename PotentialType>
+template <int dim, typename PotentialType, int atomicity>
 template<typename T>
-void QC<dim, PotentialType>::write_mesh (T &os, const std::string &type )
+void QC<dim, PotentialType, atomicity>::write_mesh (T &os, const std::string &type )
 {
   GridOut grid_out;
   if ( !type.compare("eps")  )
@@ -305,8 +312,8 @@ void QC<dim, PotentialType>::write_mesh (T &os, const std::string &type )
 
 
 
-template <int dim, typename PotentialType>
-void QC<dim, PotentialType>::initialize_boundary_functions()
+template <int dim, typename PotentialType, int atomicity>
+void QC<dim, PotentialType, atomicity>::initialize_boundary_functions()
 {
   TimerOutput::Scope t (computing_timer, "Initialize boundary functions");
 
@@ -317,7 +324,7 @@ void QC<dim, PotentialType>::initialize_boundary_functions()
     {
       const unsigned int n_components = single_bc.second.size();
 
-      Assert (n_components == dim /* * atomicity*/,
+      Assert (n_components == dim * atomicity,
               ExcMessage("Invalid number of components."));
 
       std::vector<bool> component_mask (n_components, true);
@@ -335,7 +342,7 @@ void QC<dim, PotentialType>::initialize_boundary_functions()
       (std::make_pair (single_bc.first,
                        std::make_pair
                        (component_mask,
-                        std::make_shared<FunctionParser<spacedim>>(dim*1,
+                        std::make_shared<FunctionParser<spacedim>>(dim*atomicity,
                             0.))
                       )
       );
@@ -349,8 +356,8 @@ void QC<dim, PotentialType>::initialize_boundary_functions()
 
 
 
-template <int dim, typename PotentialType>
-void QC<dim, PotentialType>::setup_boundary_conditions (const double)
+template <int dim, typename PotentialType, int atomicity>
+void QC<dim, PotentialType, atomicity>::setup_boundary_conditions (const double)
 {
   for (const auto &single_bc : dirichlet_boundary_functions)
     VectorTools::interpolate_boundary_values (dof_handler,
@@ -362,8 +369,8 @@ void QC<dim, PotentialType>::setup_boundary_conditions (const double)
 
 
 
-template <int dim, typename PotentialType>
-void QC<dim, PotentialType>::initialize_external_potential_fields (const double initial_time)
+template <int dim, typename PotentialType, int atomicity>
+void QC<dim, PotentialType, atomicity>::initialize_external_potential_fields (const double initial_time)
 {
   for (const auto &entry : configure_qc.get_external_potential_fields())
     {
@@ -389,25 +396,61 @@ void QC<dim, PotentialType>::initialize_external_potential_fields (const double 
 
 
 
-template <int dim, typename PotentialType>
-void QC<dim, PotentialType>::setup_system ()
+template <int dim, typename PotentialType, int atomicity>
+void QC<dim, PotentialType, atomicity>::setup_system ()
 {
   TimerOutput::Scope t (computing_timer, "Setup system");
 
   dof_handler.distribute_dofs (fe);
 
-  std::vector<IndexSet> locally_owned_partitioning, locally_relevant_partitioning;
+  // Define blocks indices.
+  // Here block index is same as atom_stamp
+  std::vector<unsigned int> component_to_block_indices (dim*atomicity, 0);
 
-  locally_owned_partitioning.resize(1 /* atomicity */);
-  locally_relevant_partitioning.resize(1/* atomicity */);
+  for (int i = 0; i < dim*atomicity; ++i)
+    component_to_block_indices[i] = std::div(i, dim).quot;
 
-  locally_owned_partitioning[0] = dof_handler.locally_owned_dofs();
+  // Renumber DoFs block-wise.
+  DoFRenumbering::component_wise (dof_handler, component_to_block_indices);
 
-  DoFTools::extract_locally_relevant_dofs (dof_handler,
-                                           locally_relevant_partitioning[0]);
+  std::vector<dealii::types::global_dof_index> n_dofs_per_block (atomicity);
+
+  // Prepare number of dofs per block
+  DoFTools::count_dofs_per_block (dof_handler,
+                                  n_dofs_per_block,
+                                  component_to_block_indices);
+
+  // All blocks should have equal number of DoFs.
+  Assert (atomicity > 1 ? std::equal(n_dofs_per_block.begin()+1, // Check from the second element.
+                                     n_dofs_per_block.end(),
+                                     n_dofs_per_block.begin())
+          : true,
+          ExcInternalError());
+
+
+  std::vector<IndexSet> locally_owned_partitioning   (atomicity);
+  std::vector<IndexSet> locally_relevant_partitioning(atomicity);
+
+  IndexSet locally_relevant_set;
+  {
+    const IndexSet locally_owned_set = dof_handler.locally_owned_dofs();
+
+    DoFTools::extract_locally_relevant_dofs (dof_handler,
+                                             locally_relevant_set);
+
+    for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
+      {
+        locally_owned_partitioning[atom_stamp]    = locally_owned_set.get_view
+                                                    (n_dofs_per_block[0]*(atom_stamp  ),
+                                                     n_dofs_per_block[0]*(atom_stamp+1));
+        locally_relevant_partitioning[atom_stamp] = locally_relevant_set.get_view
+                                                    (n_dofs_per_block[0]*(atom_stamp  ),
+                                                     n_dofs_per_block[0]*(atom_stamp+1));
+      }
+  }
 
   // set-up constraints objects
-  constraints.reinit (locally_relevant_partitioning[0]);
+  constraints.reinit (locally_relevant_set);
   DoFTools::make_hanging_node_constraints (dof_handler, constraints);
 
   setup_boundary_conditions();
@@ -458,8 +501,8 @@ void QC<dim, PotentialType>::setup_system ()
 
 
 
-template <int dim, typename PotentialType>
-void QC<dim, PotentialType>::setup_fe_values_objects ()
+template <int dim, typename PotentialType, int atomicity>
+void QC<dim, PotentialType, atomicity>::setup_fe_values_objects ()
 {
   TimerOutput::Scope t (computing_timer, "Setup FEValues objects");
 
@@ -489,7 +532,7 @@ void QC<dim, PotentialType>::setup_fe_values_objects ()
       // at the initial location of energy molecules in the active cells.
 
       const auto energy_molecules_range =
-        CellMoleculeTools::molecules_range_in_cell<dim, 1, spacedim>
+        CellMoleculeTools::molecules_range_in_cell<dim, atomicity, spacedim>
         (cell, cell_energy_molecules);
 
       const unsigned int n_energy_molecules_in_cell =
@@ -514,7 +557,7 @@ void QC<dim, PotentialType>::setup_fe_values_objects ()
       // but erase would return a non-const iterator.
       // This is not exactly a hack as we are using how erase on containers
       // must behave. Also, this is a constant time operation.
-      types::CellMoleculeIteratorType<dim, 1, spacedim>
+      types::CellMoleculeIteratorType<dim, atomicity, spacedim>
       cell_energy_molecule_iterator =
         cell_energy_molecules.erase(energy_molecules_range.first.first,
                                     energy_molecules_range.first.first);
@@ -551,14 +594,15 @@ void QC<dim, PotentialType>::setup_fe_values_objects ()
       // information:
       data.fe_values->reinit(cell);
 
-      data.displacements.resize(points.size());
+      for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
+        data.displacements[atom_stamp].resize(points.size());
     }
 }
 
 
 
-template <int dim, typename PotentialType>
-void QC<dim, PotentialType>::update_positions()
+template <int dim, typename PotentialType, int atomicity>
+void QC<dim, PotentialType, atomicity>::update_positions()
 {
   TimerOutput::Scope t (computing_timer, "Update energy molecules' positions");
 
@@ -579,33 +623,41 @@ void QC<dim, PotentialType>::update_positions()
 
       auto &data = it->second;
 
-      std::pair<types::CellMoleculeIteratorType<dim, 1, spacedim>, types::CellMoleculeIteratorType<dim, 1, spacedim> >
+      std::pair<types::CellMoleculeIteratorType<dim, atomicity, spacedim>, types::CellMoleculeIteratorType<dim, atomicity, spacedim> >
       cell_energy_molecules_range = cell_molecule_data.cell_energy_molecules.equal_range(cell);
+
+#ifdef DEBUG
+      const unsigned int
+      n_energy_molecules_in_cell = cell_molecule_data.cell_energy_molecules.count(cell);
+      for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
+        // Size of the displacements should be same as the total number of the
+        // energy molecules on a per cell basis.
+        Assert (data.displacements[atom_stamp].size()==n_energy_molecules_in_cell,
+                ExcInternalError());
+#endif
 
       // If this locally relevant active cell doesn't contain any atoms
       // continue active cell loop
       if (cell_energy_molecules_range.first==cell_energy_molecules_range.second)
-        {
-          Assert (data.displacements.size()==0,
-                  ExcInternalError());
-          continue;
-        }
+        continue;
 
-      // get displacement field on all quadrature points of this object
-      data.fe_values->operator[](u_fe).get_function_values(locally_relevant_displacement.block(0),
-                                                           it->second.displacements);
+      for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
+        // Get displacement field for each atom_stamp at all quadrature points
+        // of this cell.
+        (*data.fe_values)[u_fe[atom_stamp]].get_function_values(locally_relevant_displacement.block(atom_stamp),
+                                                                data.displacements[atom_stamp]);
       const auto &displacements = data.displacements;
 
       // Update energy molecules positions.
       for (unsigned int i = 0;
-           i < displacements.size();
-           i++, ++cell_energy_molecules_range.first)
-        // FIXME: loop over all atoms and use BlockVector for displacements
-        for (int d=0; d<dim; ++d)
-          // Copy only dim-dimensions.
-          cell_energy_molecules_range.first->second.atoms[0].position[d] =
-            cell_energy_molecules_range.first->second.atoms[0].initial_position[d] +
-            displacements[i][d];
+           cell_energy_molecules_range.first != cell_energy_molecules_range.second;
+           cell_energy_molecules_range.first++, i++)
+        for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
+          for (int d=0; d<dim; ++d)
+            // Copy only dim-dimensions.
+            cell_energy_molecules_range.first->second.atoms[0].position[d] =
+              cell_energy_molecules_range.first->second.atoms[0].initial_position[d] +
+              displacements[atom_stamp][i][d];
 
       // The loop over displacements must have exhausted all the energy
       // molecules on a per cell basis (and the converse also should be true).
@@ -617,8 +669,8 @@ void QC<dim, PotentialType>::update_positions()
 
 
 
-template <int dim, typename PotentialType>
-void QC<dim, PotentialType>::update_neighbor_lists()
+template <int dim, typename PotentialType, int atomicity>
+void QC<dim, PotentialType, atomicity>::update_neighbor_lists()
 {
   TimerOutput::Scope t (computing_timer, "Update neighbor lists");
 
@@ -630,9 +682,9 @@ void QC<dim, PotentialType>::update_neighbor_lists()
 
 
 
-template <int dim, typename PotentialType>
+template <int dim, typename PotentialType, int atomicity>
 template <bool ComputeGradient>
-double QC<dim, PotentialType>::compute (vector_t &gradient) const
+double QC<dim, PotentialType, atomicity>::compute (vector_t &gradient) const
 {
   TimerOutput::Scope t (computing_timer, "Compute energy and gradient");
 
@@ -652,9 +704,9 @@ double QC<dim, PotentialType>::compute (vector_t &gradient) const
 
 
 
-template <int dim, typename PotentialType>
+template <int dim, typename PotentialType, int atomicity>
 template <bool ComputeGradient>
-double QC<dim, PotentialType>::compute_local (vector_t &gradient) const
+double QC<dim, PotentialType, atomicity>::compute_local (vector_t &gradient) const
 {
   double energy_per_process = 0.;
 
@@ -714,7 +766,7 @@ double QC<dim, PotentialType>::compute_local (vector_t &gradient) const
       &cell_I  = cell_pair_cell_molecule_pair.first.first,
        &cell_J = cell_pair_cell_molecule_pair.first.second;
 
-      const types::CellMoleculeConstIteratorType<dim, 1, spacedim>
+      const types::CellMoleculeConstIteratorType<dim, atomicity, spacedim>
       &cell_molecule_I  = cell_pair_cell_molecule_pair.second.first,
        &cell_molecule_J = cell_pair_cell_molecule_pair.second.second;
 
@@ -724,8 +776,8 @@ double QC<dim, PotentialType>::compute_local (vector_t &gradient) const
                          "Either cell_I or cell_J doesn't contain "
                          "cell_molecule_I or cell_molecule_J, respectively."));
 
-      const Molecule<dim, 1> &molecule_I = cell_molecule_I->second;
-      const Molecule<dim, 1> &molecule_J = cell_molecule_J->second;
+      const Molecule<spacedim, atomicity> &molecule_I = cell_molecule_I->second;
+      const Molecule<spacedim, atomicity> &molecule_J = cell_molecule_J->second;
 
       // If molecules I and J interact with each other while belonging to
       // different clusters. In this case, we need to account for
@@ -758,9 +810,9 @@ double QC<dim, PotentialType>::compute_local (vector_t &gradient) const
       const std::pair<double, Table<2, Tensor<1, dim> > >
       molecular_energy_and_gradient_IJ =
         ComputeTools::energy_and_gradient
-        <PotentialType, dim, 1, ComputeGradient> (*potential_ptr,
-                                                  molecule_I,
-                                                  molecule_J);
+        <PotentialType, dim, atomicity, ComputeGradient> (*potential_ptr,
+                                                          molecule_I,
+                                                          molecule_J);
 
       // Accumulate energy and gradient due to external potential fields here.
       const std::pair<double, Tensor<1, dim> >
@@ -884,8 +936,8 @@ double QC<dim, PotentialType>::compute_local (vector_t &gradient) const
   return energy_per_process;
 }
 
-template <int dim, typename PotentialType>
-void QC<dim, PotentialType>::minimize_energy (const double time)
+template <int dim, typename PotentialType, int atomicity>
+void QC<dim, PotentialType, atomicity>::minimize_energy (const double time)
 {
   if (time >= 0.)
     for (auto &potential_field : external_potential_fields)
@@ -947,11 +999,14 @@ void QC<dim, PotentialType>::minimize_energy (const double time)
 
 
 // Instantiations
-#define SINGLE_QC_CLASS_INSTANTIATION(R, _POTENTIAL, _DIM)      \
-  template class QC<_DIM, _POTENTIAL>;
+#define SINGLE_QC_INSTANTIATION(_DIM, _POTENTIAL, _ATOMICITY) \
+  template class QC<_DIM, _POTENTIAL, _ATOMICITY>;
 
-BOOST_PP_LIST_FOR_EACH(SINGLE_QC_CLASS_INSTANTIATION, Potential::PairLJCutManager, DIM)
-BOOST_PP_LIST_FOR_EACH(SINGLE_QC_CLASS_INSTANTIATION, Potential::PairCoulWolfManager, DIM)
+#define QC_INSTANTIATIONS(R, X)  \
+  SINGLE_QC_INSTANTIATION(BOOST_PP_TUPLE_ELEM(2, 0, X), Potential::PairLJCutManager,    BOOST_PP_TUPLE_ELEM(2, 1, X)) \
+  SINGLE_QC_INSTANTIATION(BOOST_PP_TUPLE_ELEM(2, 0, X), Potential::PairCoulWolfManager, BOOST_PP_TUPLE_ELEM(2, 1, X))
+
+BOOST_PP_LIST_FOR_EACH_PRODUCT(QC_INSTANTIATIONS, 2, (DIM, ATOMICITY))
 
 
 DEAL_II_QC_NAMESPACE_CLOSE

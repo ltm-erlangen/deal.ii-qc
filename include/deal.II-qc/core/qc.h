@@ -54,7 +54,7 @@ using namespace dealii;
  * @note QC only supports quasicontinuum description of a single Molecule
  * type.
  */
-template <int dim, typename PotentialType>
+template <int dim, typename PotentialType, int atomicity=1>
 class QC
 {
   // TODO: Remove this after adding spacedim as template parameter.
@@ -360,7 +360,10 @@ protected:
    */
   FESystem<dim, spacedim>          fe;
 
-  const FEValuesExtractors::Vector u_fe;
+  /**
+   * Exctractors for displacement fields.
+   */
+  std::array<FEValuesExtractors::Vector, atomicity> u_fe;
 
   /**
    * Linear mapping.
@@ -459,7 +462,7 @@ protected:
      * in which the energy molecules are stored in energy_atoms on a per cell
      * basis.
      */
-    mutable std::vector<Tensor<1,dim>>        displacements;
+    mutable std::array<std::vector<Tensor<1,dim>>, atomicity> displacements;
 
   };
 
@@ -472,30 +475,30 @@ protected:
   /**
    * Shared pointer to the cluster weights method.
    */
-  std::shared_ptr<Cluster::WeightsByBase<dim, 1, spacedim> > cluster_weights_method;
+  std::shared_ptr<Cluster::WeightsByBase<dim, atomicity, spacedim> > cluster_weights_method;
 
   /**
    * The primary atom data object that holds cell based atom data structures.
    * Cell based atom data structures rely on the association between molecules
    * and mesh.
    */
-  CellMoleculeData<dim, 1, spacedim>                 cell_molecule_data;
+  CellMoleculeData<dim, atomicity, spacedim>                 cell_molecule_data;
 
   /**
    * MoleculeHandler object to manage the cell based neighbor lists of the
    * system.
    */
-  MoleculeHandler<dim, 1, spacedim>                  molecule_handler;
+  MoleculeHandler<dim, atomicity, spacedim>                  molecule_handler;
 
   /**
    * Neighbor lists using cell approach.
    */
-  types::CellMoleculeNeighborLists<dim, 1, spacedim> neighbor_lists;
+  types::CellMoleculeNeighborLists<dim, atomicity, spacedim> neighbor_lists;
 
   /**
    * A time object
    */
-  mutable TimerOutput                                computing_timer;
+  mutable TimerOutput                                        computing_timer;
 
 private:
 

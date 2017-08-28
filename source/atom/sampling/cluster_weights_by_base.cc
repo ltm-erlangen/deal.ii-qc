@@ -2,6 +2,7 @@
 #include <deal.II-qc/atom/sampling/cluster_weights_by_base.h>
 #include <deal.II-qc/atom/cell_molecule_tools.h>
 
+#include <deal.II/dofs/dof_tools.h>
 #include <deal.II/lac/generic_linear_algebra.h>
 
 
@@ -140,6 +141,14 @@ namespace Cluster
     const types::CellMoleculeContainerType<dim, atomicity, spacedim>
     &cell_energy_molecules = cell_molecule_data.cell_energy_molecules;
 
+    // Get number of dofs per block.
+    const dealii::types::global_dof_index
+    n_dofs_per_block = atomicity==1
+                       ?
+                       dof_handler.n_dofs()
+                       :
+                       std::div(dof_handler.n_dofs(), atomicity).quot;
+
     for (auto
          cell  = dof_handler.begin_active();
          cell != dof_handler.end();
@@ -226,10 +235,14 @@ namespace Cluster
                        c++)
                     {
                       const unsigned int atom_stamp = std::div(c,dim).quot;
-                      // Here it is assumed that
-                      // c / dim yields the block index (atom_stamp).
+
+                      const dealii::types::global_dof_index
+                      dof_index_inside_block = cell->vertex_dof_index (v, c)
+                                               %
+                                               n_dofs_per_block;
+
                       constraints.distribute_local_to_global
-                      (cell->vertex_dof_index (v, c),
+                      (dof_index_inside_block,
                        masses_at_sampling_points[i][atom_stamp],
                        inverse_masses.block(atom_stamp));
                     }
@@ -270,10 +283,14 @@ namespace Cluster
                                  c++)
                               {
                                 const unsigned int atom_stamp = std::div(c,dim).quot;
-                                // Here it is assumed that
-                                // c / dim yields the block index (atom_stamp).
+
+                                const dealii::types::global_dof_index
+                                dof_index_inside_block = subface->vertex_dof_index (child_face_v, c)
+                                                         %
+                                                         n_dofs_per_block;
+
                                 constraints.distribute_local_to_global
-                                (subface->vertex_dof_index (child_face_v, c),
+                                (dof_index_inside_block,
                                  masses_at_sampling_points[i][atom_stamp],
                                  inverse_masses.block(atom_stamp));
                               }
