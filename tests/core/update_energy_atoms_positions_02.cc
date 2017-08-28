@@ -58,9 +58,8 @@ void Problem<dim, PotentialType>::partial_run()
 {
   // --- Energy at zero displacement.
 
-  typename QC<dim, PotentialType>::vector_t u;
-  u.reinit (QC<dim, PotentialType>::dof_handler.locally_owned_dofs(),
-            QC<dim, PotentialType>::mpi_communicator);
+  typename QC<dim, PotentialType>::vector_t
+  u (QC<dim, PotentialType>::distributed_displacement);
 
   u = 0.;
 

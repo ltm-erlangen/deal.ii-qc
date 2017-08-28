@@ -11,6 +11,8 @@
 #include <deal.II-qc/core/compute_tools.h>
 #include <deal.II-qc/core/qc.h>
 
+#include <boost/preprocessor/list/for_each.hpp>
+
 
 DEAL_II_QC_NAMESPACE_OPEN
 
@@ -394,27 +396,34 @@ void QC<dim, PotentialType>::setup_system ()
 
   dof_handler.distribute_dofs (fe);
 
-  // Prepare locally relevant set.
-  DoFTools::extract_locally_relevant_dofs (dof_handler, locally_relevant_set);
+  std::vector<IndexSet> locally_owned_partitioning, locally_relevant_partitioning;
+
+  locally_owned_partitioning.resize(1 /* atomicity */);
+  locally_relevant_partitioning.resize(1/* atomicity */);
+
+  locally_owned_partitioning[0] = dof_handler.locally_owned_dofs();
+
+  DoFTools::extract_locally_relevant_dofs (dof_handler,
+                                           locally_relevant_partitioning[0]);
 
   // set-up constraints objects
-  constraints.reinit (locally_relevant_set);
+  constraints.reinit (locally_relevant_partitioning[0]);
   DoFTools::make_hanging_node_constraints (dof_handler, constraints);
 
   setup_boundary_conditions();
 
   constraints.close ();
 
-  distributed_displacement.reinit (dof_handler.locally_owned_dofs(),
+  distributed_displacement.reinit (locally_owned_partitioning,
                                    mpi_communicator);
 
-  locally_relevant_displacement.reinit (dof_handler.locally_owned_dofs(),
-                                        locally_relevant_set,
+  locally_relevant_displacement.reinit (locally_owned_partitioning,
+                                        locally_relevant_partitioning,
                                         mpi_communicator,
                                         false);
 
-  locally_relevant_gradient.reinit (dof_handler.locally_owned_dofs(),
-                                    locally_relevant_set,
+  locally_relevant_gradient.reinit (locally_owned_partitioning,
+                                    locally_relevant_partitioning,
                                     mpi_communicator,
                                     true);
 
@@ -423,11 +432,10 @@ void QC<dim, PotentialType>::setup_system ()
   locally_relevant_gradient     = 0.;
 
   // Create a temporary vector to initialize inverse_mass_matrix;
-  vector_t inverse_masses;
-  inverse_masses.reinit (dof_handler.locally_owned_dofs(),
-                         locally_relevant_set,
-                         mpi_communicator,
-                         true);
+  vector_t inverse_masses (locally_owned_partitioning,
+                           locally_relevant_partitioning,
+                           mpi_communicator,
+                           true);
 
   // Compute inverse masses based on cluster weights.
   cluster_weights_method->compute_dof_inverse_masses (inverse_masses,
@@ -579,7 +587,7 @@ void QC<dim, PotentialType>::update_positions()
         }
 
       // get displacement field on all quadrature points of this object
-      it->second.fe_values->operator[](u_fe).get_function_values(locally_relevant_displacement,
+      it->second.fe_values->operator[](u_fe).get_function_values(locally_relevant_displacement.block(0),
                                                                  it->second.displacements);
       const auto &displacements = it->second.displacements;
 
@@ -928,41 +936,12 @@ void QC<dim, PotentialType>::minimize_energy (const double time)
 }
 
 
-
-/**
- * A macro that is used in instantiating QC class and it's functions
- * for 1d, 2d and 3d. Call this macro with the name of another macro that when
- * called with an integer argument and a PotentialType instantiates the
- * respective classes and functions in the given space dimension.
- */
-#define DEAL_II_QC_INSTANTIATE(INSTANTIATIONS)      \
-  INSTANTIATIONS(1, Potential::PairLJCutManager)    \
-  INSTANTIATIONS(2, Potential::PairLJCutManager)    \
-  INSTANTIATIONS(3, Potential::PairLJCutManager)    \
-  INSTANTIATIONS(1, Potential::PairCoulWolfManager) \
-  INSTANTIATIONS(2, Potential::PairCoulWolfManager) \
-  INSTANTIATIONS(3, Potential::PairCoulWolfManager)
-
 // Instantiations
-#define INSTANTIATE(dim, PotentialType)                                      \
-  template QC<dim, PotentialType>::QC (const ConfigureQC&);                  \
-  template QC<dim, PotentialType>::~QC ();                                   \
-  template void QC<dim, PotentialType>::reconfigure_qc (const ConfigureQC&); \
-  template void QC<dim, PotentialType>::run ();                              \
-  template void QC<dim, PotentialType>::setup_cell_molecules ();             \
-  template void QC<dim, PotentialType>::setup_cell_energy_molecules ();      \
-  template void QC<dim, PotentialType>::setup_boundary_conditions(const double); \
-  template void QC<dim, PotentialType>::setup_system ();                     \
-  template void QC<dim, PotentialType>::setup_triangulation();               \
-  template void QC<dim, PotentialType>::write_mesh (std::ofstream &, const std::string &);        \
-  template void QC<dim, PotentialType>::setup_fe_values_objects ();          \
-  template void QC<dim, PotentialType>::update_positions();                  \
-  template double QC<dim, PotentialType>::compute<true >(TrilinosWrappers::MPI::Vector &) const;  \
-  template double QC<dim, PotentialType>::compute<false>(TrilinosWrappers::MPI::Vector &) const;  \
-  template void QC<dim, PotentialType>::initialize_external_potential_fields (const double);      \
-  template void QC<dim, PotentialType>::minimize_energy (const double);      \
-  template void QC<dim, PotentialType>::output_results (const double, const unsigned int) const;
+#define SINGLE_QC_CLASS_INSTANTIATION(R, _POTENTIAL, _DIM)      \
+  template class QC<_DIM, _POTENTIAL>;
 
-DEAL_II_QC_INSTANTIATE(INSTANTIATE)
+BOOST_PP_LIST_FOR_EACH(SINGLE_QC_CLASS_INSTANTIATION, Potential::PairLJCutManager, DIM)
+BOOST_PP_LIST_FOR_EACH(SINGLE_QC_CLASS_INSTANTIATION, Potential::PairCoulWolfManager, DIM)
+
 
 DEAL_II_QC_NAMESPACE_CLOSE

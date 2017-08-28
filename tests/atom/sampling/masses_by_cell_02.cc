@@ -59,33 +59,26 @@ void Problem<dim, PotentialType>::partial_run()
   QC<dim, PotentialType>::setup_cell_energy_molecules();
   QC<dim, PotentialType>::setup_system();
 
-  typename QC<dim, PotentialType>::vector_t inverse_masses;
-
-  inverse_masses.reinit (QC<dim, PotentialType>::dof_handler.locally_owned_dofs(),
-                         QC<dim, PotentialType>::locally_relevant_set,
-                         QC<dim, PotentialType>::mpi_communicator,
-                         true);
-
-  QC<dim, PotentialType>::cluster_weights_method->
-  compute_dof_inverse_masses (inverse_masses,
-                              QC<dim, PotentialType>::cell_molecule_data,
-                              QC<dim, PotentialType>::dof_handler,
-                              QC<dim, PotentialType>::constraints);
+  // setup_system() must have prepared the inverse_mass_matrix.
+  typename QC<dim, PotentialType>::vector_t &masses =
+    QC<dim, PotentialType>::inverse_mass_matrix.get_vector();
 
   // Get masses for comparison with blessed output.
-  for (typename QC<dim, PotentialType>::vector_t::iterator
-       entry  = inverse_masses.begin();
-       entry != inverse_masses.end();
+  for (typename QC<dim, PotentialType>::vector_t::BlockType::iterator
+       entry  = masses.block(0).begin();
+       entry != masses.block(0).end();
        entry++)
     *entry = 1./(*entry);
 
+  masses.compress(VectorOperation::insert);
+
   if (dealii::Utilities::MPI::n_mpi_processes(QC<dim, PotentialType>::mpi_communicator)==1)
-    inverse_masses.print(std::cout);
+    masses.print(std::cout);
 
   QC<dim, PotentialType>::pcout
-      << "\n l1 norm     = " << std::setprecision(6) << inverse_masses.l1_norm ()
-      << "\n l2 norm     = " << std::setprecision(6) << inverse_masses.l2_norm()
-      << "\n linfty norm = " << std::setprecision(6) << inverse_masses.linfty_norm()
+      << "\n l1 norm     = " << std::setprecision(6) << masses.l1_norm ()
+      << "\n l2 norm     = " << std::setprecision(6) << masses.l2_norm()
+      << "\n linfty norm = " << std::setprecision(6) << masses.linfty_norm()
       << std::endl;
 }
 
@@ -98,6 +91,9 @@ int main (int argc, char *argv[])
       mpi_initialization (argc,
                           argv,
                           dealii::numbers::invalid_unsigned_int);
+
+      //if (dealii::Utilities::MPI::this_mpi_process (MPI_COMM_WORLD)==0)
+      deallog.depth_console (10);
 
       // Allow the restriction that user must provide Dimension of the problem
       const unsigned int dim = 2;
@@ -129,7 +125,7 @@ int main (int argc, char *argv[])
           << "end"                                            << std::endl
 
           << "subsection Configure QC"                        << std::endl
-          << "  set Ghost cell layer thickness = 2.01"        << std::endl
+          << "  set Ghost cell layer thickness = -1"        << std::endl
           << "  set Cluster radius = 0.2"                     << std::endl
           << "  set Cluster weights by type = Cell"           << std::endl
           << "end"                                            << std::endl

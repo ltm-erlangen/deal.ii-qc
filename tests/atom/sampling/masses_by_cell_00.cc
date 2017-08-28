@@ -1,26 +1,29 @@
 
 #include <iostream>
 #include <fstream>
-#include <random>
 #include <sstream>
 
 #include <deal.II-qc/core/qc.h>
+#include <deal.II/dofs/dof_tools.h>
+#include <deal.II/grid/grid_out.h>
+#include <deal.II/grid/tria_accessor.h>
 
 using namespace dealii;
 using namespace dealiiqc;
 
 
 
-// Compute the energy of the system of 2 charged atoms
-// interacting exclusively through Coulomb interactions.
+// Calculate and check the correctness of the computation of masses
+// WeightsByBase::compute_inverse_masses().
 //
-// +-------*
-// |       |          *, +  - vertices
-// |       |          *     - atoms
+// Derived class being used: WeightsByCell
+//
+// x-------x
+// |       |          x  - vertices
 // |       |
-// *-------+
+// |       |          atoms are not shown.
+// x-------x
 //
-// Update the positions of atoms
 
 
 
@@ -28,73 +31,43 @@ template <int dim, typename PotentialType>
 class Problem : public QC<dim, PotentialType>
 {
 public:
-  Problem (const ConfigureQC &);
-  void run ();
+  Problem (const ConfigureQC &config)
+    :
+    QC<dim, PotentialType>(config)
+  {}
+
+  void partial_run ();
 };
 
 
 
 template <int dim, typename PotentialType>
-Problem<dim, PotentialType>::Problem (const ConfigureQC &config)
-  :
-  QC<dim, PotentialType>(config)
+void Problem<dim, PotentialType>::partial_run()
 {
   QC<dim, PotentialType>::setup_cell_energy_molecules();
   QC<dim, PotentialType>::setup_system();
-  QC<dim, PotentialType>::setup_fe_values_objects();
-  QC<dim, PotentialType>::update_neighbor_lists();
-}
 
+  // setup_system() must have prepared the inverse_mass_matrix.
+  typename QC<dim, PotentialType>::vector_t &masses =
+    QC<dim, PotentialType>::inverse_mass_matrix.get_vector();
 
+  // Get masses for comparison with blessed output.
+  for (typename QC<dim, PotentialType>::vector_t::BlockType::iterator
+       entry  = masses.block(0).begin();
+       entry != masses.block(0).end();
+       entry++)
+    *entry = 1./(*entry);
 
-template <int dim, typename PotentialType>
-void Problem<dim, PotentialType>::run()
-{
-  // --- Energy at zero displacement.
+  masses.compress(VectorOperation::insert);
 
-  typename QC<dim, PotentialType>::vector_t
-  u (QC<dim, PotentialType>::distributed_displacement);
+  if (dealii::Utilities::MPI::n_mpi_processes(QC<dim, PotentialType>::mpi_communicator)==1)
+    masses.print(std::cout);
 
-  u = 0.;
-
-  QC<dim, PotentialType>::locally_relevant_displacement = u;
-  QC<dim, PotentialType>::update_positions();
-  const double energy_0 =
-    QC<dim, PotentialType>::template
-    compute(QC<dim, PotentialType>::locally_relevant_gradient);
-
-  // --- Random displacements.
-  // manually get locally owned elements parallel vector:
-
-  std::uniform_real_distribution<double> dist (0, 1.);
-  std::default_random_engine engine;
-
-  const IndexSet locally_owned_set =
-    QC<dim, PotentialType>::dof_handler.locally_owned_dofs();
-
-  for (unsigned int i = 0; i < locally_owned_set.n_elements(); ++i)
-    u(locally_owned_set.nth_index_in_set(i)) = dist(engine);
-
-  QC<dim, PotentialType>::locally_relevant_displacement = u;
-  QC<dim, PotentialType>::update_positions();
-  const double energy_1 =
-    QC<dim, PotentialType>::template
-    compute(QC<dim, PotentialType>::locally_relevant_gradient);
-
-  // --- Reset displacement to zero.
-
-  u = 0.;
-
-  QC<dim, PotentialType>::locally_relevant_displacement = u;
-  QC<dim, PotentialType>::update_positions();
-  const double energy_2 =
-    QC<dim, PotentialType>::template
-    compute(QC<dim, PotentialType>::locally_relevant_gradient);
-
-  AssertThrow (energy_0 == energy_2,
-               ExcInternalError());
-
-  std::cout << "TEST PASSED!" << std::endl;
+  QC<dim, PotentialType>::pcout
+      << "\n l1 norm     = " << std::setprecision(6) << masses.l1_norm ()
+      << "\n l2 norm     = " << std::setprecision(6) << masses.l2_norm()
+      << "\n linfty norm = " << std::setprecision(6) << masses.linfty_norm()
+      << std::endl;
 }
 
 
@@ -110,6 +83,7 @@ int main (int argc, char *argv[])
 
       // Allow the restriction that user must provide Dimension of the problem
       const unsigned int dim = 2;
+
       std::ostringstream oss;
       oss << "set Dimension = " << dim                        << std::endl
 
@@ -130,32 +104,38 @@ int main (int argc, char *argv[])
           << "end"                                            << std::endl
 
           << "subsection Configure atoms"                     << std::endl
-          << "  set Maximum cutoff radius = 9.0"              << std::endl
-          << "  set Pair potential type = Coulomb Wolf"       << std::endl
-          << "  set Pair global coefficients = 0.25, 8.25 "   << std::endl
+          << "  set Maximum cutoff radius = 2.0"              << std::endl
+          << "  set Pair potential type = LJ"                 << std::endl
+          << "  set Pair global coefficients = 1.99 "         << std::endl
+          << "  set Pair specific coefficients = 0, 0, 0.877, 1.2;" << std::endl
           << "end"                                            << std::endl
 
           << "subsection Configure QC"                        << std::endl
-          << "  set Ghost cell layer thickness = 10.0"        << std::endl
-          << "  set Cluster radius = 99.0"                    << std::endl
+          << "  set Ghost cell layer thickness = 2.01"        << std::endl
+          << "  set Cluster radius = 0.2"                     << std::endl
+          << "  set Cluster weights by type = Cell"           << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section"                      << std::endl
 
           << "LAMMPS Description"              << std::endl   << std::endl
-          << "2 atoms"                         << std::endl   << std::endl
-          << "2  atom types"                   << std::endl   << std::endl
+          << "4 atoms"                         << std::endl   << std::endl
+          << "1  atom types"                   << std::endl   << std::endl
+          << "Masses"                          << std::endl   << std::endl
+          << "    1   0.7"                     << std::endl   << std::endl
           << "Atoms #"                         << std::endl   << std::endl
-          << "1 1 1  1.0 0.0 0.0 0."                          << std::endl
-          << "2 2 2 -1.0 1.0 1.0 0."                          << std::endl;
+          << "1 1 1 1.0 0. 0. 0."                       << std::endl
+          << "2 2 1 1.0 1. 0. 0."                       << std::endl
+          << "3 3 1 1.0 0. 1. 0."                       << std::endl
+          << "4 4 1 1.0 1. 1. 0."                       << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());
 
-      ConfigureQC config( prm_stream );
+      ConfigureQC config (prm_stream);
 
-      // Define Problem
-      Problem<dim, Potential::PairCoulWolfManager> problem(config);
-      problem.run ();
+      Problem<dim, Potential::PairLJCutManager> problem (config);
+      problem.partial_run ();
+
     }
   catch (std::exception &exc)
     {

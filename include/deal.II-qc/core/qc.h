@@ -59,10 +59,10 @@ class QC
 {
 public:
 
-  typedef LA::MPI::Vector vector_t;
+  typedef LA::MPI::BlockVector vector_t;
 
   QC (const ConfigureQC &);
-  ~QC ();
+  virtual ~QC ();
 
   void run ();
 
@@ -158,6 +158,8 @@ public:
     {
       if (!flag)
         return;
+
+      (void) iter;
 
       qc.distributed_displacement = *get_rcp_to_vector(x);
       qc.constraints.distribute(qc.distributed_displacement);
@@ -334,17 +336,17 @@ protected:
   /**
    * MPI communicator
    */
-  MPI_Comm mpi_communicator;
+  MPI_Comm                         mpi_communicator;
 
   /**
    * Conditional terminal output (root MPI core).
    */
-  ConditionalOStream   pcout;
+  ConditionalOStream               pcout;
 
   /**
    * Read input filename and configure mesh, atoms, etc
    */
-  ConfigureQC configure_qc;
+  ConfigureQC                      configure_qc;
 
   /**
    * A parallel shared triangulation.
@@ -354,49 +356,44 @@ protected:
   /**
    * Finite Element.
    */
-  FESystem<dim>        fe;
+  FESystem<dim>                    fe;
 
   const FEValuesExtractors::Vector u_fe;
 
   /**
    * Linear mapping.
    */
-  MappingQ1<dim>       mapping;
+  MappingQ1<dim>                   mapping;
 
   /**
    * Degrees-of-freedom handler.
    */
-  DoFHandler<dim>      dof_handler;
-
-  /**
-   * Locally relevant DoFs.
-   */
-  IndexSet locally_relevant_set;
+  DoFHandler<dim>                  dof_handler;
 
   /**
    * All constraints (hanging nodes + BC).
    */
-  ConstraintMatrix     constraints;
+  ConstraintMatrix                 constraints;
 
   /**
    * Distributed displacement field.
    */
-  vector_t distributed_displacement;
+  vector_t                         distributed_displacement;
 
   /**
    * Locally relevant unknown displacement filed
    */
-  vector_t locally_relevant_displacement;
+  vector_t                         locally_relevant_displacement;
 
   /**
    * Gradient of the energy (a scalar) w.r.t. to the displacement field.
    */
-  vector_t locally_relevant_gradient;
+  vector_t                         locally_relevant_gradient;
 
   /**
    * Inverse mass matrix.
    */
-  DiagonalMatrix<vector_t> inverse_mass_matrix;
+  DiagonalMatrix<vector_t>         inverse_mass_matrix;
 
   /**
    * Map of boundary ids to Functions describing the corresponding boundary
@@ -446,7 +443,7 @@ protected:
      * the cell. The displacement within the cell can be obtained using
      * FEValues object of the cell.
      */
-    std::shared_ptr<FEValues<dim>> fe_values;
+    std::shared_ptr<FEValues<dim>>     fe_values;
 
     // TODO: do we really need this? FEValues do store displacement already
     // after calling FEValues::reinit(cell), so we might just ask it directly
@@ -480,13 +477,13 @@ protected:
    * Cell based atom data structures rely on the association between molecules
    * and mesh.
    */
-  CellMoleculeData<dim> cell_molecule_data;
+  CellMoleculeData<dim>                 cell_molecule_data;
 
   /**
    * MoleculeHandler object to manage the cell based neighbor lists of the
    * system.
    */
-  MoleculeHandler<dim> molecule_handler;
+  MoleculeHandler<dim>                  molecule_handler;
 
   /**
    * Neighbor lists using cell approach.
@@ -496,7 +493,7 @@ protected:
   /**
    * A time object
    */
-  mutable TimerOutput  computing_timer;
+  mutable TimerOutput                   computing_timer;
 
 private:
 
