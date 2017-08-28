@@ -56,7 +56,7 @@ QC<dim, PotentialType, atomicity>::QC (const ConfigureQC &config)
   Assert (dim==configure_qc.get_dimension(), ExcInternalError());
 
   for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
-    u_fe[atom_stamp] = atom_stamp;
+    u_fe[atom_stamp] = atom_stamp*dim;
 
   // Load the mesh by reading from mesh file
   setup_triangulation();
@@ -913,6 +913,7 @@ double QC<dim, PotentialType, atomicity>::compute_local (vector_t &gradient) con
           for (unsigned int k = 0; k < dofs_per_cell; ++k)
             {
               const unsigned int nonzero_comp = fe.system_to_component_index(k).first;
+              // FIXME: go from global component to atomicity and actual nonzero component
 
               local_gradient_I[k] += gradient_I[nonzero_comp]
                                      *

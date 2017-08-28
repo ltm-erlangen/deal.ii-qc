@@ -121,6 +121,22 @@ namespace Cluster
 
 
 
+  namespace
+  {
+    // For the ith DoF at a vertex return the block index (or atom_stamp)
+    // given that there are dim-number of enumerations for each atom_stamp
+    // at a vertex.
+    inline
+    unsigned int
+    get_atom_stamp (unsigned int dof_at_vertex, int dim)
+    {
+      return std::div (dof_at_vertex, dim).quot;
+    }
+  }
+
+
+
+
   template <int dim, int atomicity, int spacedim>
   template <typename VectorType>
   void
@@ -141,13 +157,10 @@ namespace Cluster
     const types::CellMoleculeContainerType<dim, atomicity, spacedim>
     &cell_energy_molecules = cell_molecule_data.cell_energy_molecules;
 
-    // Get number of dofs per block.
+    // Get number of DoFs per block.
+    // FIXME? Here it is assumed that each block has the same number of DoFs.
     const dealii::types::global_dof_index
-    n_dofs_per_block = atomicity==1
-                       ?
-                       dof_handler.n_dofs()
-                       :
-                       std::div(dof_handler.n_dofs(), atomicity).quot;
+    n_dofs_per_block = std::div(dof_handler.n_dofs(), atomicity).quot;
 
     for (auto
          cell  = dof_handler.begin_active();
@@ -234,7 +247,7 @@ namespace Cluster
                        c < dof_handler.get_fe().n_dofs_per_vertex();
                        c++)
                     {
-                      const unsigned int atom_stamp = std::div(c,dim).quot;
+                      const unsigned int atom_stamp = get_atom_stamp(c,dim);
 
                       const dealii::types::global_dof_index
                       dof_index_inside_block = cell->vertex_dof_index (v, c)
@@ -282,7 +295,7 @@ namespace Cluster
                                  c < dof_handler.get_fe().n_dofs_per_vertex();
                                  c++)
                               {
-                                const unsigned int atom_stamp = std::div(c,dim).quot;
+                                const unsigned int atom_stamp = get_atom_stamp(c,dim);
 
                                 const dealii::types::global_dof_index
                                 dof_index_inside_block = subface->vertex_dof_index (child_face_v, c)
