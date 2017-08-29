@@ -51,6 +51,82 @@ using namespace dealii;
  * A principal class for the fully non-local energy-based quasicontinuum
  * calculations.
  *
+ *
+ * The DoF indices for a single cell in two-dimensions using the current
+ * finite element (#fe) i.e.,
+ * @code
+ *   FESytem<dim> fe (FE_Q<dim>(1), dim*atomicity)
+ * @endcode
+ * with dim=2 and atomicity=3 yields the following enumeration
+ * (before renumbering):
+ *
+ * @image html dim2_atomicity3_before_renumbering.png DoF indices before renumbering
+ *
+ * Different indices for such DoF indices enumeration is summarized
+ * in the following table:
+ *
+ * | DoF    | Component  | Block   (atom stamp)   | Non-zero Component  |
+ * | :----: | :--------: | :--------------------: | :-----------------: |
+ * |  0     |  0         |  0                     |  0                  |
+ * |  1     |  1         |  0                     |  1                  |
+ * |  2     |  2         |  1                     |  0                  |
+ * |  3     |  3         |  1                     |  1                  |
+ * |  4     |  4         |  2                     |  0                  |
+ * |  5     |  5         |  2                     |  1                  |
+ * |  6     |  0         |  0                     |  0                  |
+ * |  7     |  1         |  0                     |  1                  |
+ * |  8     |  2         |  1                     |  0                  |
+ * |  9     |  3         |  1                     |  1                  |
+ * |  10    |  4         |  2                     |  0                  |
+ * |  11    |  5         |  2                     |  1                  |
+ * |  12    |  0         |  0                     |  0                  |
+ * |  13    |  1         |  0                     |  1                  |
+ * |  14    |  2         |  1                     |  0                  |
+ * |  15    |  3         |  1                     |  1                  |
+ * |  16    |  4         |  2                     |  0                  |
+ * |  17    |  5         |  2                     |  1                  |
+ * |  18    |  0         |  0                     |  0                  |
+ * |  19    |  1         |  0                     |  1                  |
+ * |  20    |  2         |  1                     |  0                  |
+ * |  21    |  3         |  1                     |  1                  |
+ * |  22    |  4         |  2                     |  0                  |
+ * |  23    |  5         |  2                     |  1                  |
+ *
+ * After DoF renumbering block-wise:
+ *
+ * @image html dim2_atomicity3_after_renumbering.png DoF indices after renumbering
+ *
+ * **Table showing enumeration of different indices for the above example**
+ *
+ * | DoF    | Component  | Block   (atom stamp)   | Non-zero Component  |
+ * | :----: | :--------: | :--------------------: | :-----------------: |
+ * |  0     |  0         |  0                     |  0                  |
+ * |  1     |  1         |  0                     |  1                  |
+ * |  2     |  0         |  0                     |  0                  |
+ * |  3     |  1         |  0                     |  1                  |
+ * |  4     |  0         |  0                     |  0                  |
+ * |  5     |  1         |  0                     |  1                  |
+ * |  6     |  0         |  0                     |  0                  |
+ * |  7     |  1         |  0                     |  1                  |
+ * |  8     |  2         |  1                     |  0                  |
+ * |  9     |  3         |  1                     |  1                  |
+ * |  10    |  2         |  1                     |  0                  |
+ * |  11    |  3         |  1                     |  1                  |
+ * |  12    |  2         |  1                     |  0                  |
+ * |  13    |  3         |  1                     |  1                  |
+ * |  14    |  2         |  1                     |  0                  |
+ * |  15    |  3         |  1                     |  1                  |
+ * |  16    |  4         |  2                     |  0                  |
+ * |  17    |  5         |  2                     |  1                  |
+ * |  18    |  4         |  2                     |  0                  |
+ * |  19    |  5         |  2                     |  1                  |
+ * |  20    |  4         |  2                     |  0                  |
+ * |  21    |  5         |  2                     |  1                  |
+ * |  22    |  4         |  2                     |  0                  |
+ * |  23    |  5         |  2                     |  1                  |
+ *
+ * The number of blocks is equal to the atomicity.
+ *
  * @note QC only supports quasicontinuum description of a single Molecule
  * type.
  */
