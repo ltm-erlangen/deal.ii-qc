@@ -215,7 +215,8 @@ namespace ComputeTools
               if (ComputeGradient)
                 {
                   gradients(i,j) = energy_and_gradient_tensor.second;
-                  gradients(j,i) = gradients(i,j);
+                  // gradient(j,i) are not populated are left zeros
+                  // for easy computation of term (\delta_{ik}-\delta_{jk}).
                 }
             }
       }

@@ -903,48 +903,37 @@ double QC<dim, PotentialType, atomicity>::compute_local (vector_t &gradient) con
           qI = molecule_I.local_index,
           qJ = molecule_J.local_index;
 
-          std::array<Tensor<1, dim>, atomicity>
-          gradient_I;
+          std::array<Tensor<1, dim>, atomicity>  gradient_I, gradient_J;
 
-          Tensor<1, dim> molecular_IJ_atom_stamp, intra_I_atom_stamp; // Temporary variables.
+          Tensor<1, dim> molecular_IJ_i, intra_I_i; // Temporary variables.
+          Tensor<1, dim> molecular_IJ_j, intra_J_j; // Temporary variables.
           for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
             {
-              molecular_IJ_atom_stamp = 0.;
-              intra_I_atom_stamp      = 0.;
+              molecular_IJ_i = 0.;
+              molecular_IJ_j = 0.;
+              intra_I_i      = 0.;
+              intra_J_j      = 0.;
 
-              // Summation over all j \in J (row sum of the Table).
-              for (int j = 0; j < atomicity; ++j)
-                molecular_IJ_atom_stamp += molecular_IJ.second(atom_stamp, j);
+              for (int i = 0; i < atomicity; ++i)
+                {
+                  // Yields summation over the rows of the Table.
+                  molecular_IJ_i  +=      molecular_IJ.second(atom_stamp, i);
 
-              for (int j = 0; j < atomicity; ++j)
-                intra_I_atom_stamp += intra_molecular_I.second(atom_stamp, j);
+                  // Yields summation over the columns of the Table.
+                  molecular_IJ_j  +=      molecular_IJ.second(i, atom_stamp);
+
+                  // Intra-molecular contributions are always column sums.
+                  intra_J_j      += intra_molecular_J.second(atom_stamp, i);
+                  intra_I_i      += intra_molecular_I.second(atom_stamp, i);
+                }
 
               gradient_I[atom_stamp] =
-                molecular_IJ_atom_stamp           * scale_energy +
-                (intra_I_atom_stamp * 0.5     +
-                 external_I.second[atom_stamp]  ) * molecule_I.cluster_weight;
-            }
-
-          std::array<Tensor<1, dim>, atomicity>
-          gradient_J;
-
-          Tensor<1, dim> molecular_IJ_atom_stamp, intra_J_atom_stamp; // Temporary variables.
-          for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
-            {
-              molecular_IJ_atom_stamp = 0.;
-              intra_J_atom_stamp      = 0.;
-
-              // Summation over all j \in J (row sum of the Table).
-              for (int i = 0; i < atomicity; ++i)
-                molecular_IJ_atom_stamp += molecular_IJ.second(i, atom_stamp);
-
-              for (int i = 0; i < atomicity; ++i)
-                intra_J_atom_stamp += intra_molecular_J.second(i, atom_stamp);
+                molecular_IJ_i                                * scale_energy +
+                (intra_I_i + external_I.second[atom_stamp]  ) * molecule_I.cluster_weight;
 
               gradient_J[atom_stamp] =
-                -molecular_IJ_atom_stamp          *  scale_energy +
-                (intra_J_atom_stamp * 0.5     +
-                 external_J.second[atom_stamp]  ) * molecule_J.cluster_weight;
+                -molecular_IJ_j                                 *  scale_energy +
+                (intra_J_j * + external_J.second[atom_stamp]  ) * molecule_J.cluster_weight;
             }
 
           // FIXME: evaluate gradients for all atoms in molecules.
