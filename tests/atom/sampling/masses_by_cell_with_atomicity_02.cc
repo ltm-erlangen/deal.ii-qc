@@ -16,13 +16,17 @@ using namespace dealiiqc;
 //
 // Derived class being used: WeightsByCell
 //
-// x-----x-----x
-// |     |     |          x  - vertices
-// |     |     |
-// |     |     |
-// x-----x-----x
+// x------x------x
+// |      |      |          x  - vertices
+// |      |      |
+// |      |      |
+// x------x------x
 //
-
+// The atomisitic system consists of 11 molecules with 3 atoms each.
+// Due to the small cluster radius some of the energy molecules have zero
+// cluster weights.
+// This test computes masses for all the DoFs using cluster weights generated
+// from WeightsByCell
 
 
 

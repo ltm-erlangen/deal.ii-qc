@@ -22,7 +22,13 @@ using namespace dealiiqc;
 // |  |  |     |
 // x--x--x-----x
 //
-
+// The atomisitic system consists of 11 molecules with 3 atoms each.
+// All the molecules are picked up as cluster molecules therefore all the
+// molecules have cluster weight 1.
+// This test computes masses for all the DoFs using cluster weights generated
+// from WeightsBySamplingPoints.
+// Due to the presence of hanging nodes, the supporting nodes of the hanging
+// nodes get more masses than the rest.
 
 
 
