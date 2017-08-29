@@ -59,6 +59,43 @@ namespace ComputeTools
 
 
   /**
+   * Compute and return the energy and gradient values due to the presence of
+   * @p molecule, consisting of <tt>atomicity</tt>-number of atoms with given
+   * @p charges, inside domain with @p material_id material id under external
+   * potential fields described through @p external_potential_fields (a mapping
+   * from material ids to PotentialField functions).
+   */
+  template <int spacedim, int atomicity, bool ComputeGradient=true>
+  inline
+  std::pair<double, std::array<Tensor<1, spacedim>, atomicity> >
+  energy_and_gradient
+  (const std::multimap<unsigned int, std::shared_ptr<PotentialField<spacedim>>> &external_potential_fields,
+   const dealii::types::material_id                                              material_id,
+   const Molecule<spacedim, atomicity>                                          &molecule,
+   const std::vector<types::charge>                                             &charges)
+  {
+    double external_energy = 0.;
+    std::array<Tensor<1, spacedim>, atomicity> external_gradients;
+
+    for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
+      {
+        const std::pair<double, Tensor<1, spacedim> >
+        energy_and_gradient_tensor = energy_and_gradient (external_potential_fields,
+                                                          material_id,
+                                                          molecule.atoms[atom_stamp],
+                                                          charges[molecule.atoms[atom_stamp].type]);
+        external_energy += energy_and_gradient_tensor.first;
+
+        if (ComputeGradient)
+          external_gradients[atom_stamp] =  energy_and_gradient_tensor.second;
+      }
+
+    return std::make_pair (external_energy, external_gradients);
+  }
+
+
+
+  /**
    * Compute and return the interaction energy and gradient values between two
    * atoms \f$i\f$ and \f$j\f$ located at \f$ \textbf x^i \f$ and
    * \f$ \textbf x^j \f$, respectively, interacting via a given @p potential.
@@ -166,7 +203,7 @@ namespace ComputeTools
       // Intramolecular interaction.
       {
         for (unsigned int i = 0; i < atomicity; ++i)
-          for (unsigned int j = 0; j < i; ++j)
+          for (unsigned int j = i+1; j < atomicity; ++j)
             {
               const std::pair <double, Tensor<1, spacedim> >
               energy_and_gradient_tensor = energy_and_gradient
