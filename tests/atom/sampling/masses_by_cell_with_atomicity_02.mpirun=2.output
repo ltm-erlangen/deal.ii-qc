@@ -1,0 +1,16 @@
+Cell: 0.0	Molecule ref position inside cell: 0.0 0.0	Cluster weight: 2.0
+Cell: 0.0	Molecule ref position inside cell: 0.5 0.0	Cluster weight: 0.0
+Cell: 0.0	Molecule ref position inside cell: 1.0 0.0	Cluster weight: 2.0
+Cell: 0.0	Molecule ref position inside cell: 0.0 0.5	Cluster weight: 0.0
+Cell: 0.0	Molecule ref position inside cell: 0.5 0.5	Cluster weight: 0.0
+Cell: 0.0	Molecule ref position inside cell: 0.0 1.0	Cluster weight: 2.0
+Cell: 0.0	Molecule ref position inside cell: 0.5 1.0	Cluster weight: 0.0
+Cell: 0.0	Molecule ref position inside cell: 1.0 1.0	Cluster weight: 2.0
+Cell: 0.1	Molecule ref position inside cell: 1.0 0.0	Cluster weight: 1.5
+Cell: 0.1	Molecule ref position inside cell: 0.1 0.5	Cluster weight: 0.0
+Cell: 0.1	Molecule ref position inside cell: 1.0 1.0	Cluster weight: 1.5 
+
+
+ l1 norm     = 29.920000
+ l2 norm     = 5.462582
+ linfty norm = 1.400000
