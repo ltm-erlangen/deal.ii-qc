@@ -59,6 +59,43 @@ namespace ComputeTools
 
 
   /**
+   * Compute and return the energy and gradient values due to the presence of
+   * @p molecule, consisting of <tt>atomicity</tt>-number of atoms with given
+   * @p charges, inside domain with @p material_id material id under external
+   * potential fields described through @p external_potential_fields (a mapping
+   * from material ids to PotentialField functions).
+   */
+  template <int spacedim, int atomicity, bool ComputeGradient=true>
+  inline
+  std::pair<double, std::array<Tensor<1, spacedim>, atomicity> >
+  energy_and_gradient
+  (const std::multimap<unsigned int, std::shared_ptr<PotentialField<spacedim>>> &external_potential_fields,
+   const dealii::types::material_id                                              material_id,
+   const Molecule<spacedim, atomicity>                                          &molecule,
+   const std::vector<types::charge>                                             &charges)
+  {
+    double external_energy = 0.;
+    std::array<Tensor<1, spacedim>, atomicity> external_gradients;
+
+    for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
+      {
+        const std::pair<double, Tensor<1, spacedim> >
+        energy_and_gradient_tensor = energy_and_gradient (external_potential_fields,
+                                                          material_id,
+                                                          molecule.atoms[atom_stamp],
+                                                          charges[molecule.atoms[atom_stamp].type]);
+        external_energy += energy_and_gradient_tensor.first;
+
+        if (ComputeGradient)
+          external_gradients[atom_stamp] =  energy_and_gradient_tensor.second;
+      }
+
+    return std::make_pair (external_energy, external_gradients);
+  }
+
+
+
+  /**
    * Compute and return the interaction energy and gradient values between two
    * atoms \f$i\f$ and \f$j\f$ located at \f$ \textbf x^i \f$ and
    * \f$ \textbf x^j \f$, respectively, interacting via a given @p potential.
@@ -104,23 +141,92 @@ namespace ComputeTools
 
 
   /**
-   * Compute and return the interaction energy and the table of gradient values
-   * between two molecules \f$I\f$ and \f$J\f$ each consisting of
-   * <tt>atomicity</tt>-number of atoms, interacting via a given
-   * @p potential.
+   * Compute and return the intra-molecular interaction energy and
+   * the list of gradient values within a given @p molecule consisting of
+   * <tt>atomicity</tt>-number of atoms interacting via a given @p potential.
    *
-   * The interaction energy of the two molecule \f$I\f$ and \f$J\f$ is given as
+   * The intra-molecular interaction energy of a given molecule \f$I\f$ is
    * \f[
-   *  E^{}_{IJ} =  \begin{cases}                   \,\,
-   *                   \sum\limits_{i \, \in \, I}    \,\,
+   *  E^{}_{I} = \sum\limits_{i \, \in \, I}    \,\,
+   *                 \sum\limits_{I \, \ni \, j \, < \, i} \,
+   *                     \phi^{}_{ij}(r^{ij}),
+   * \f]
+   * where
+   * \f$ r^{ij} = |\textbf r^{ij}| = |\textbf x^{i}_{I} -\textbf x^{j}_{I}| \f$.
+   *
+   * The list of gradient consists of <tt>atomicity</tt>-number of entries.
+   * Each entry is a Tensor of rank 1 and <tt>spacedim</tt>-number of entries.
+   * For a given molecule \f$I\f$, the \f$k^{th}\f$ entry of the returned list
+   * of gradient values is the gradient contribution due to the \f$k^{th}\f$
+   * atom stamp, given as follows
+   * \f[
+   *     G_{I} \, (k) =  \sum\limits_{I \, \ni \, i \, \neq \, k} \,
+   *                         \frac{\partial \phi_{ik}(r^{ik})}
+   *                          {\partial r^{ik}}
+   *                         \frac{\partial \textbf r^{ik}}{r^{ik}}.
+   * \f]
+   */
+  template<typename PotentialType, int spacedim, int atomicity=1, bool ComputeGradient=true>
+  inline
+  std::pair<double, std::array<Tensor<1, spacedim>, atomicity> >
+  energy_and_gradient (const PotentialType                 &potential,
+                       const Molecule<spacedim, atomicity> &molecule)
+  {
+    double energy = 0.;
+    std::array<Tensor<1, spacedim>, atomicity> gradients;
+
+    {
+      // Prepare temporary tensor to initilize gradients.
+      Tensor<1, spacedim> temp;
+
+      for (int i = 0; i < spacedim; ++i)
+        temp[i] = ComputeGradient ?
+                  0.              :
+                  std::numeric_limits<double>::signaling_NaN();
+
+      gradients.fill (temp);
+    }
+
+    if (atomicity==1)
+      return std::make_pair (energy, gradients);
+
+    for (unsigned int k = 0; k < atomicity; ++k)
+      for (unsigned int i = 0; i < atomicity; ++i)
+        if (i != k)
+          {
+            const std::pair <double, Tensor<1, spacedim> >
+            energy_and_gradient_tensor = energy_and_gradient
+                                         <PotentialType, spacedim, ComputeGradient>
+                                         (potential,
+                                          molecule.atoms[k],
+                                          molecule.atoms[i]);
+            energy += energy_and_gradient_tensor.first;
+
+            if (ComputeGradient)
+              gradients[k] += energy_and_gradient_tensor.second;
+          }
+
+    return std::make_pair (0.5*energy, gradients);
+  }
+
+
+
+  /**
+   * Compute and return the inter-molecular interaction energy and
+   * the table of gradient values between two molecules \f$I\f$ and \f$J\f$
+   * each consisting of <tt>atomicity</tt>-number of atoms,
+   * interacting via a given @p potential.
+   *
+   * The iter-molecular interaction energy of the two molecule \f$I\f$ and
+   * \f$J\f$ is given as
+   * \f[
+   *  E^{}_{IJ} =  \sum\limits_{i \, \in \, I}    \,\,
    *                   \sum\limits_{j \, \in \, J}    \,
    *                     \phi^{}_{ij}(r^{ij}),
-   *                  & \text{if } \,  I \neq J \\[1em] \,\,
+   *                   \text{if } \,  I \neq J \\[1em] \,\,
    *                    \sum\limits_{i \, \in \, I}    \,\,
    *                    \sum\limits_{J \, \ni \, j \, < \, i} \,
    *                      \phi^{}_{ij}(r^{ij}),
-   *                  & \text{otherwise},
-   *                \end{cases}
    * \f]
    * where
    * \f$ r^{ij} = |\textbf r^{ij}| = |\textbf x^{i}_{I} -\textbf x^{j}_{J}| \f$.
@@ -145,6 +251,12 @@ namespace ComputeTools
                        const Molecule<spacedim, atomicity> &molecule_I,
                        const Molecule<spacedim, atomicity> &molecule_J)
   {
+    Assert (molecule_I.global_index != molecule_J.global_index,
+            ExcMessage ("You are trying to compute interaction between "
+                        "molecules with same global index."
+                        "To compute intra-molecular energy and gradient "
+                        "use the other function in ComputeTools."));
+
     double energy = 0.;
     Table<2, Tensor<1, spacedim> > gradients (atomicity, atomicity);
 
@@ -162,44 +274,20 @@ namespace ComputeTools
     const auto &atoms_I = molecule_I.atoms;
     const auto &atoms_J = molecule_J.atoms;
 
-    if (molecule_I.global_index == molecule_J.global_index)
-      // Intramolecular interaction.
-      {
-        for (unsigned int i = 0; i < atomicity; ++i)
-          for (unsigned int j = 0; j < i; ++j)
-            {
-              const std::pair <double, Tensor<1, spacedim> >
-              energy_and_gradient_tensor = energy_and_gradient
-                                           <PotentialType, spacedim, ComputeGradient>(potential,
-                                               atoms_I[i],
-                                               atoms_I[j]);
-              energy += energy_and_gradient_tensor.first;
+    for (unsigned int i = 0; i < atomicity; ++i)
+      for (unsigned int j = 0; j < atomicity; ++j)
+        {
+          const std::pair <double, Tensor<1, spacedim> >
+          energy_and_gradient_tensor =
+            energy_and_gradient
+            <PotentialType, spacedim, ComputeGradient>(potential,
+                                                       atoms_I[i],
+                                                       atoms_J[j]);
+          energy += energy_and_gradient_tensor.first;
 
-              if (ComputeGradient)
-                {
-                  gradients(i,j) = energy_and_gradient_tensor.second;
-                  gradients(j,i) = gradients(i,j);
-                }
-            }
-      }
-    else
-      // Intermolecular interaction.
-      {
-        for (unsigned int i = 0; i < atomicity; ++i)
-          for (unsigned int j = 0; j < atomicity; ++j)
-            {
-              const std::pair <double, Tensor<1, spacedim> >
-              energy_and_gradient_tensor =
-                energy_and_gradient
-                <PotentialType, spacedim, ComputeGradient>(potential,
-                                                           atoms_I[i],
-                                                           atoms_J[j]);
-              energy += energy_and_gradient_tensor.first;
-
-              if (ComputeGradient)
-                gradients(i,j) = energy_and_gradient_tensor.second;
-            }
-      }
+          if (ComputeGradient)
+            gradients(i,j) = energy_and_gradient_tensor.second;
+        }
 
     return std::make_pair (energy, gradients);
   }
