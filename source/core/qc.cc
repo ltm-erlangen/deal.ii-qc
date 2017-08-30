@@ -44,7 +44,7 @@ QC<dim, PotentialType, atomicity>::QC (const ConfigureQC &config)
                  // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
                  Triangulation<dim, spacedim>::limit_level_difference_at_vertices,
                  configure_qc.get_ghost_cell_layer_thickness()),
-  fe (FE_Q<dim, spacedim>(1), dim*atomicity),
+  fe (FE_Q<dim, spacedim>(1), dim * atomicity),
   u_fe (),
   dof_handler (triangulation),
   molecule_handler (configure_qc),
@@ -812,24 +812,22 @@ double QC<dim, PotentialType, atomicity>::compute_local (vector_t &gradient) con
                                                           molecule_J);
 
       // 2 --- Intra-molecular contribution from molecule I.
-      const std::pair<double, Table<2, Tensor<1, dim> > >
-      intra_molecular_I =
+      const std::pair<double, std::array<Tensor<1, dim>, atomicity > >
+      intra_I =
         ComputeTools::energy_and_gradient
         <PotentialType, dim, atomicity, ComputeGradient> (*potential_ptr,
-                                                          molecule_I,
                                                           molecule_I);
 
       // 3 --- Intra-molecular contribution from molecule J.
-      const std::pair<double, Table<2, Tensor<1, dim> > >
-      intra_molecular_J =
+      const std::pair<double, std::array<Tensor<1, dim>, atomicity > >
+      intra_J =
         molecule_J.cluster_weight > 0
         ?
         ComputeTools::energy_and_gradient
         <PotentialType, dim, atomicity, ComputeGradient> (*potential_ptr,
-                                                          molecule_J,
                                                           molecule_J)
         :
-        std::make_pair (0., Table<2, Tensor<1, dim> >());;
+        std::make_pair (0., std::array<Tensor<1, dim>, atomicity>());;
 
       // 4 --- Contribution due to external potential field on molecule I.
       std::pair<double, std::array<Tensor<1, dim>, atomicity> >
@@ -856,8 +854,8 @@ double QC<dim, PotentialType, atomicity>::compute_local (vector_t &gradient) con
       // Now we scale the energy according to cluster weights of the molecules.
       energy_per_process +=
         molecular_IJ.first                           * scale_energy              +
-        (intra_molecular_I.first + external_I.first) * molecule_I.cluster_weight +
-        (intra_molecular_J.first + external_J.first) * molecule_J.cluster_weight;
+        (intra_I.first + external_I.first) * molecule_I.cluster_weight +
+        (intra_J.first + external_J.first) * molecule_J.cluster_weight;
 
       if (ComputeGradient)
         {
@@ -905,15 +903,12 @@ double QC<dim, PotentialType, atomicity>::compute_local (vector_t &gradient) con
 
           std::array<Tensor<1, dim>, atomicity>  gradient_I, gradient_J;
 
-          Tensor<1, dim> molecular_IJ_i, intra_I_i; // Temporary variables.
-          Tensor<1, dim> molecular_IJ_j, intra_J_j; // Temporary variables.
+          Tensor<1, dim> molecular_IJ_i; // Temporary variable.
+          Tensor<1, dim> molecular_IJ_j; // Temporary variable.
           for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
             {
               molecular_IJ_i = 0.;
               molecular_IJ_j = 0.;
-              intra_I_i      = 0.;
-              intra_J_j      = 0.;
-
               for (int i = 0; i < atomicity; ++i)
                 {
                   // Yields summation over the rows of the Table.
@@ -921,19 +916,17 @@ double QC<dim, PotentialType, atomicity>::compute_local (vector_t &gradient) con
 
                   // Yields summation over the columns of the Table.
                   molecular_IJ_j  +=      molecular_IJ.second(i, atom_stamp);
-
-                  // Intra-molecular contributions are always column sums.
-                  intra_J_j      += intra_molecular_J.second(atom_stamp, i);
-                  intra_I_i      += intra_molecular_I.second(atom_stamp, i);
                 }
 
               gradient_I[atom_stamp] =
-                molecular_IJ_i                                * scale_energy +
-                (intra_I_i + external_I.second[atom_stamp]  ) * molecule_I.cluster_weight;
+                molecular_IJ_i                    * scale_energy +
+                (intra_I.   second[atom_stamp] +
+                 external_I.second[atom_stamp]  ) * molecule_I.cluster_weight;
 
               gradient_J[atom_stamp] =
-                -molecular_IJ_j                                 *  scale_energy +
-                (intra_J_j * + external_J.second[atom_stamp]  ) * molecule_J.cluster_weight;
+                -molecular_IJ_j                   *  scale_energy +
+                (intra_J.   second[atom_stamp] +
+                 external_J.second[atom_stamp]  ) * molecule_J.cluster_weight;
             }
 
           // FIXME: evaluate gradients for all atoms in molecules.
