@@ -203,7 +203,7 @@ namespace ComputeTools
             energy += energy_and_gradient_tensor.first;
 
             if (ComputeGradient)
-              gradients(k) += energy_and_gradient_tensor.second;
+              gradients[k] += energy_and_gradient_tensor.second;
           }
 
     return std::make_pair (0.5*energy, gradients);
