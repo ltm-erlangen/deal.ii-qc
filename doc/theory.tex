@@ -237,16 +237,20 @@ at the location of rep-molecules.
 
 The total energy would then read as,
 \begin{align}
- E^{tot} = &\sum_{I \, \in \, \mcl C} w^{}_I \,\,
+ E^{tot} = &\sum_{I \, \in \, \mcl C}
             \left[
-		  E^{}_{II} +
-		  \sum_{\mcl M \, \ni \, J < I} 
+		  w^{}_I \,
+		  E^{}_{II} 
+		  +
+		  \sum_{\mcl M \, \ni \, J < I}
+		  \frac{w^{}_I + w^{}_J}{2} \,\,
                   E^{}_{IJ} 
             \right]
 \end{align}
-where $\mcl C$ is the set of all sampling molecules, $w^{}_I$ is the cluster 
-weight of sampling molecule $I$ and $E^{}_{IJ}$ is the contribution of energy 
-due to the two interacting molecules $I$ and $J$ given as,
+where $\mcl C$ is the set of all sampling molecules, $w^{}_I$ and $w^{}_J$ are 
+the cluster weights of molecule $I$ and $J$ respectively, and $E^{}_{IJ}$ is 
+the contribution of energy due to the two interacting molecules $I$ and $J$ 
+given as,
 \begin{equation}
  E^{}_{IJ} =  \begin{cases}                   \,\,
                \sum\limits_{i \, \in \, I}    \,\,
@@ -267,41 +271,56 @@ $r^{ij} = \norm{\bsf r^{ij}} = \norm{ \bsf x^{i}_{I} - \bsf x^{j}_{J} }$.
 The gradient of the total energy with respect to the degree of freedom $d \in 
 \mcl D$ of the atoms with atom stamp $k \in \mcl A$ is
 \begin{align}
- g^k_d = &\sum_{I \, \in \, \mcl C}  \, w^{}_I \,\, 
+ g^k_d = &\sum_{I \, \in \, \mcl C}  \,
 	  \left[
+	        w^{}_I \,\,
 		\frac{\partial E^{}_{II}}{\partial u^k_d}
+		\,\,
 		+
-		\sum_{\mcl M \, \ni \, J < I}  \,
+		\sum_{\mcl M \, \ni \, J < I}
+		\frac{w^{}_I + w^{}_J}{2}
 		\frac{\partial E^{}_{IJ}}{\partial u^k_d}
 	   \right].
 \end{align}
 Using \refeq{inter_and_intra},
 \begin{align}
- g^k_d = \sum_{I \, \in \, \mcl C}  \, w^{}_I
+ g^k_d = \sum_{I \, \in \, \mcl C}  \,
           \Bigg[
-            \,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,
+            \,\,\,\,\,\,\,\,\,\,\,\,
+            \,\,\,\,\,\,\,\,\,\,\,\,
+            \,\,\,\,\,\,\,\,\,\,\,\,
+            \,\,\,\,\,\,\,\,\,\,\,\,
+            w^{}_I
+            &
 	    \sum_{i \, \in \, I}                          \,\,
 	    \sum_{I \, \ni \, j \, < \, i}                \,
-             &\frac{\partial \phi^{}_{ij}(r^{ij})}{\partial r} \, 
+               \frac{\partial \phi^{}_{ij}(r^{ij})}{\partial r} \, 
                \frac{\partial r^{ij}}{\partial \bsf r^{ij}} \cdot
                \frac{\partial \bsf r^{ij}}{\partial u^k_d}     \\
 	    +
-	    \sum_{\mcl M \, \ni \, J < I}  \,\,
+	    \sum_{\mcl M \, \ni \, J < I}
+	    \frac{w^{}_I + w^{}_J}{2}
+	    &
             \sum_{i \, \in \, I}           \,\,
-	    \sum_{j \, \in \, J}           \,
-               &\frac{\partial \phi^{}_{ij}(r^{ij})}{\partial r^{ij}} \, 
+	    \sum_{j \, \in \, J}           \,\,\,\,\,\,\,\,
+                 \frac{\partial \phi^{}_{ij}(r^{ij})}{\partial r^{ij}} \, 
                  \frac{\partial r^{ij}}{\partial \bsf r^{ij}} \cdot
                  \frac{\partial \bsf r^{ij}}{\partial u^k_d}
+	    \,\,\,\,\,\,
            \Bigg],
 \end{align}
 and on using \refeq{current_atom_pos},
 \begin{align}
- g^k_d = \sum_{I \, \in \, \mcl C}  \, w^{}_I
+ g^k_d = \sum_{I \, \in \, \mcl C}
 	  \Bigg[
-		\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,
-		\sum_{i \, \in \, I}       \,\,\,
+            \,\,\,\,\,\,\,\,\,\,\,\,
+            \,\,\,\,\,\,\,\,\,\,\,\,
+            \,\,\,\,\,\,\,\,\,\,\,\,
+            \,\,\,\,\,\,\,\,\,\,\,\,
+		w^{}_I
+		&\sum_{i \, \in \, I}       \,\,\,
 		\sum_{I \, \ni \, j \, < \, i}       \,
-		  &{\phi}^\prime_{ij} (r^{ij})\, \, 
+		  {\phi}^\prime_{ij} (r^{ij})\, \, 
 		    \frac {\bsf r^{ij}}{r^{ij}}
 		    \cdot
 		    \bigg[
@@ -310,10 +329,11 @@ and on using \refeq{current_atom_pos},
 		      \delta_{jk} \,\, \gz N_d( \bsf X_{I})
 		    \bigg] \\
 	      +
-	      \sum_{\mcl M \, \ni \, J < I}  \,
-	      \sum_{i \, \in \, I}       \,\,\,
-	      \sum_{j \, \in \, J}       \,
-		&{\phi}^\prime_{ij} (r^{ij})\, \, 
+	      \sum_{\mcl M \, \ni \, J < I}
+	      \frac{w^{}_I + w^{}_J}{2}
+	      &\sum_{i \, \in \, I}       \,\,\,
+	      \sum_{j \, \in \, J}       \,\,\,\,\,\,\,\,
+		  {\phi}^\prime_{ij} (r^{ij})\, \, 
 		  \frac {\bsf r^{ij}}{r^{ij}}
 		  \cdot
 		  \bigg[
@@ -325,11 +345,13 @@ and on using \refeq{current_atom_pos},
 \end{align}
 factoring out the shape function evaluations at molecules' locations we have
 \begin{align}
- g^k_d = \sum_{I \, \in \, \mcl C}  \, w^{}_I
+ g^k_d = \sum_{I \, \in \, \mcl C}
 	  \Bigg[
 		\,\,\,\,\,\,\,\,\,\,\,\,
 		\,\,\,\,\,\,\,\,\,\,\,\,
 		\,\,\,\,\,\,\,\,\,\,\,\,
+		\,\,\,\,\,\,\,\,\,\,\,\,
+		w^{}_I
 		\,\,\,\,\,\,\,\,\,\,\,\,
 		\gz N_d( \bsf X_{I})
 		&\cdot
@@ -343,8 +365,9 @@ factoring out the shape function evaluations at molecules' locations we have
 			\delta_{jk}
 		      \Big)
 		\\
-	      + \,
-		\sum_{\mcl M \, \ni \, J < I}  \,
+	      + 
+		\sum_{\mcl M \, \ni \, J < I}
+		\frac{w^{}_I + w^{}_J}{2}
 		\Bigg\{
 		  \,\,\,\,\,\,\,
 		  \gz N_d( \bsf X_{I})
@@ -359,16 +382,56 @@ factoring out the shape function evaluations at molecules' locations we have
 		  \gz N_d( \bsf X_{J})
 		  &\cdot
 		    \sum_{i \, \in \, I}    \,\,\,\,\,
-		    \sum_{j \, \in \, J}   \,
+		    \sum_{j \, \in \, J}    \,
 		    \frac{\bsf r^{ij}}{r^{ij}}
 		      {\phi}^\prime_{ij}(r^{ij}) \,
 		      \delta_{jk}           \,
 		\,\,\,
 		\Bigg\}
-		\,\,\,\,\,\,\,\,\,\,\,\,
-		\,\,\,\,\,\,\,\,\,\,\,\,
-		\,\,\,\,\,\,\,\,\,\,\,\,
+		\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,
 	 \Bigg],
 \end{align}
 where $r^{ij} = \norm{\bsf r^{ij}} = \norm{ \bsf x^{i}_{I} - \bsf x^{j}_{J} }$.
+
+Further simplification of the first term yields,
+\begin{align}
+ g^k_d = \sum_{I \, \in \, \mcl C}
+    \Bigg[
+    \,\,\,\,\,\,\,\,\,\,\,\,
+    \,\,\,\,\,\,\,\,\,\,\,\,
+    \,\,\,\,\,\,\,\,\,\,\,\,
+    \,\,\,\,\,\,\,\,\,\,\,\,
+    w^{}_I
+    \,\,\,\,\,\,\,\,\,\,\,\,
+    \gz N_d( \bsf X_{I})
+    &\cdot
+      \sum_{\substack{i \, \in \, I \\ i \, \neq \, k}}            \,\,\,
+      \frac {\bsf r^{ki}}{r^{ki}}               \,
+        {\phi}^\prime_{ki} (r^{ki})        \,
+    \\
+        + 
+    \sum_{\mcl M \, \ni \, J < I}
+    \frac{w^{}_I + w^{}_J}{2}
+    \Bigg\{
+      \,\,\,\,\,\,\,
+      \gz N_d( \bsf X_{I})
+      &\cdot
+        \sum_{i \, \in \, I}    \,\,\,\,\,
+        \sum_{j \, \in \, J}   \,
+        \frac {\bsf r^{ij}}{r^{ij}}       \,
+          {\phi}^\prime_{ij}(r^{ij}) \,
+          \delta_{ik}           \,
+        \\
+      -
+      \gz N_d( \bsf X_{J})
+      &\cdot
+        \sum_{i \, \in \, I}    \,\,\,\,\,
+        \sum_{j \, \in \, J}   \,
+        \frac{\bsf r^{ij}}{r^{ij}}
+          {\phi}^\prime_{ij}(r^{ij}) \,
+          \delta_{jk}           \,
+    \,\,\,
+    \Bigg\}
+   \Bigg],
+\end{align}
 \end{document}
