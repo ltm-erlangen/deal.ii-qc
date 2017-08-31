@@ -44,7 +44,7 @@ QC<dim, PotentialType, atomicity>::QC (const ConfigureQC &config)
                  // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
                  Triangulation<dim, spacedim>::limit_level_difference_at_vertices,
                  configure_qc.get_ghost_cell_layer_thickness()),
-  fe (FE_Q<dim, spacedim>(1), dim * atomicity),
+  fe (FE_Q<dim, spacedim>(1), dim *atomicity),
   u_fe (),
   dof_handler (triangulation),
   molecule_handler (configure_qc),

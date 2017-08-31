@@ -57,7 +57,7 @@ void test (const double eps,
             << "Gradient: "
             << std::endl;
 
-  for (const auto& gradient_tensor : intra_molecular.second)
+  for (const auto &gradient_tensor : intra_molecular.second)
     std::cout << "\t\t"
               << gradient_tensor
               << std::endl;
@@ -68,7 +68,7 @@ void test (const double eps,
   Tensor<1, spacedim> external_forces;
   external_forces = 0.;
 
-  for (const auto& gradient_tensor : intra_molecular.second)
+  for (const auto &gradient_tensor : intra_molecular.second)
     external_forces += gradient_tensor;
 
   std::cout << "External force on molecule: "
