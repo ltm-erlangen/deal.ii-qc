@@ -88,7 +88,7 @@ void test (const double &r,
       AssertThrow (Testing::almost_equal (lj_gradient_1[d],
                                           intra_molecular.second[1][d],
                                           50),
-                         ExcInternalError());
+                   ExcInternalError());
 
       AssertThrow (Testing::almost_equal (lj_gradient_0[d],
                                           -lj_gradient_1[d],

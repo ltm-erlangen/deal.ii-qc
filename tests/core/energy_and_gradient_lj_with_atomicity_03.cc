@@ -42,9 +42,9 @@ template <int dim, typename PotentialType, int atomicity>
 class Problem : public QC<dim, PotentialType, atomicity>
 {
 public:
-  Problem (const ConfigureQC & config)
-  :
-  QC<dim, PotentialType, atomicity>(config)
+  Problem (const ConfigureQC &config)
+    :
+    QC<dim, PotentialType, atomicity>(config)
   {}
 
   void partial_run (const double &blessed_energy,

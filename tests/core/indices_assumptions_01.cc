@@ -82,6 +82,7 @@ void Problem<dim, PotentialType, atomicity>::test ()
                 << " | " << std::setw(18) << nonzero_comp
                 << " |"  << std::endl;
     }
+  std::cout << std::endl;
 
   // print grid and DoFs for visual inspection
   if (true)
