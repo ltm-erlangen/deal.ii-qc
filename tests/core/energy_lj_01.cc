@@ -2,26 +2,14 @@
 // Check the correctness of energy computation with various number of processes.
 // (This test was previously failing for mpirun=4, bugfix in #203 fixes this).
 
-
-#include <iostream>
-#include <fstream>
 #include <sstream>
 
-#include <deal.II-qc/atom/cell_molecule_tools.h>
 #include <deal.II-qc/core/qc.h>
-#include <deal.II-qc/atom/data_out_atom_data.h>
 
-#include <deal.II/dofs/dof_tools.h>
-#include <deal.II/grid/grid_out.h>
 #include <deal.II/grid/tria_accessor.h>
-#include <deal.II/lac/solver_fire.h>
-
 
 using namespace dealii;
 using namespace dealiiqc;
-
-#define WRITE_ATOM_DATA
-
 
 
 template <int dim, typename PotentialType>
