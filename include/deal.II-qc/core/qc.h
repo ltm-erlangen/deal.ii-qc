@@ -51,6 +51,84 @@ using namespace dealii;
  * A principal class for the fully non-local energy-based quasicontinuum
  * calculations.
  *
+ * The atomistic system is considered to be consisting of molecules
+ * (described using Molecule class) consisting of a fixed
+ * <tt>atomicity</tt>-number of atoms. Each atom of a molecule is enumerated
+ * with an "atom stamp". To account for the degrees-of-freedom (DoFs)
+ * associated with each atom stamp, a displacement field can be defined over
+ * the atomistic domain.
+ *
+ * The DoF indices for a single cell in two-dimensions using the current
+ * finite element (#fe) i.e.,
+ * @code
+ *   FESytem<dim> fe (FE_Q<dim>(1), dim*atomicity)
+ *   dof_handler.distribute_dofs (fe);
+ * @endcode
+ * with atomicity=3 yields the following enumeration:
+ *
+ * @image html dim2_atomicity3_before_renumbering.png DoF indices before renumbering
+ *
+ * The displacement field for each atom stamp is encapsulated in
+ * the BlockVector #distributed_displacement such that
+ * `distributed_displacement.block(i)` yields the displacement field
+ * of the \f$ i^{th} \f$ atom stamp. To this end DoF indices need to be
+ * appropriately renumbered and classified into different blocks where the
+ * number of blocks is equal to the <tt>atomicity</tt>. This can be done by
+ * the following code:
+ *
+ * @code
+ *   std::vector<unsigned int> component_to_block_indices (dim*atomicity, 0);
+ *   for (int i = 0; i < dim*atomicity; ++i)
+ *     component_to_block_indices[i] = std::div(i, dim).quot;
+ *   // Renumber DoFs block-wise.
+ *   DoFRenumbering::component_wise (dof_handler, component_to_block_indices);
+ * @endcode
+ *
+ * DoF renumbering yields the following DoF enumeration:
+ *
+ * @image html dim2_atomicity3_after_renumbering.png DoF indices after renumbering
+ *
+ * After DoF renumbering, DoF indices can be associated to atom stamp,
+ * FESystem component and the non-zero component index.
+ * For a given local DoF index "i" of a finite element and different indices
+ * associated to it can be obtained by the following code:
+ * @code
+ *   const unsigned int component    = fe.system_to_component_index(i).first;
+ *   const unsigned int atom_stamp   = std::div(component, dim).quot;
+ *   const unsigned int nonzero_comp = component % dim;
+ * @endcode
+ *
+ * Different indices after DoF renumbering is summarized in the following table:
+ *
+ * | Local DoF | Gloabl DoF | Component | Block (atom stamp) | Non-zero Component |
+ * | :-------: | :--------: | :-------: | :----------------: | :----------------: |
+ * |         0 |          0 |         0 |                  0 |                  0 |
+ * |         1 |          1 |         1 |                  0 |                  1 |
+ * |         2 |          8 |         2 |                  1 |                  0 |
+ * |         3 |          9 |         3 |                  1 |                  1 |
+ * |         4 |         16 |         4 |                  2 |                  0 |
+ * |         5 |         17 |         5 |                  2 |                  1 |
+ * |         6 |          2 |         0 |                  0 |                  0 |
+ * |         7 |          3 |         1 |                  0 |                  1 |
+ * |         8 |         10 |         2 |                  1 |                  0 |
+ * |         9 |         11 |         3 |                  1 |                  1 |
+ * |        10 |         18 |         4 |                  2 |                  0 |
+ * |        11 |         19 |         5 |                  2 |                  1 |
+ * |        12 |          4 |         0 |                  0 |                  0 |
+ * |        13 |          5 |         1 |                  0 |                  1 |
+ * |        14 |         12 |         2 |                  1 |                  0 |
+ * |        15 |         13 |         3 |                  1 |                  1 |
+ * |        16 |         20 |         4 |                  2 |                  0 |
+ * |        17 |         21 |         5 |                  2 |                  1 |
+ * |        18 |          6 |         0 |                  0 |                  0 |
+ * |        19 |          7 |         1 |                  0 |                  1 |
+ * |        20 |         14 |         2 |                  1 |                  0 |
+ * |        21 |         15 |         3 |                  1 |                  1 |
+ * |        22 |         22 |         4 |                  2 |                  0 |
+ * |        23 |         23 |         5 |                  2 |                  1 |
+ *
+ *
+ *
  * @note QC only supports quasicontinuum description of a single Molecule
  * type.
  */

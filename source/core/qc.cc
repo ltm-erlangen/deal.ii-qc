@@ -929,7 +929,6 @@ double QC<dim, PotentialType, atomicity>::compute_local (vector_t &gradient) con
                  external_J.second[atom_stamp]  ) * molecule_J.cluster_weight;
             }
 
-          // FIXME: evaluate gradients for all atoms in molecules.
           // Finally, we evaluated local contribution to the gradient of
           // energy. The main ingredient in forces is
           // r^{ab}_{,k} = n^{ab} * [N_k(X^a) - N_k(X^b)]
@@ -945,7 +944,6 @@ double QC<dim, PotentialType, atomicity>::compute_local (vector_t &gradient) con
 
               const unsigned int atom_stamp   = std::div(component_index, dim).quot;
               const unsigned int nonzero_comp = component_index % dim;
-              // FIXME: go from global component to atomicity and actual nonzero component
 
               local_gradient_I[k] += gradient_I[atom_stamp][nonzero_comp]
                                      *
