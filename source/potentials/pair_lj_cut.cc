@@ -30,7 +30,7 @@ namespace Potential
             ExcMessage("Invalid InteractionTypes specified"));
     Assert (parameters.size() == 2,
             ExcMessage("Invalid parameters list"));
-    Assert (parameters[0] > 0.,
+    Assert (parameters[0] >= 0.,
             ExcMessage("Invalid epsilon value specified for LJ pair potential"));
     Assert (parameters[1] > 0.,
             ExcMessage("Invalid r_m value specified for LJ pair potential"));
