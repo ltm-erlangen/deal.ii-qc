@@ -22,15 +22,14 @@ using namespace dealiiqc;
 // 1  1 - do not interact
 //
 //    x-----x
-//    |     |
-//    o  o  |          o     - atoms
-//    o--o--x
+//    |     |          o, x  - vertices
+//    o     o          o     - atoms
+//    o-----o
 //
-// Only one molecule is picked up as cluster molecule consequently
-// for a block of gradient there should be exactly one non-zero entry.
-// The non-zero entry of gradient should be twice as much of the blessed value
-// in the test energy_and_gradient_lj_01 accounting for both
-// the molecules.
+// As opposed to energy_and_gradient_lj_with_atomicity_01 this test picks up
+// both the molecules as cluster molecules. Consequently, each block of the
+// gradients should have two non-zero entries with magnitude exactly equal to
+// that from energy_and_gradient_lj_01
 
 
 template <int dim, typename PotentialType, int atomicity>
@@ -106,10 +105,10 @@ int main (int argc, char *argv[])
           << "subsection Geometry"                            << std::endl
           << "  set Type = Box"                               << std::endl
           << "  subsection Box"                               << std::endl
-          << "    set X center = 3."                          << std::endl
-          << "    set Y center = .5"                          << std::endl
-          << "    set X extent = 6."                          << std::endl
-          << "    set Y extent = 1."                          << std::endl
+          << "    set X center = 1."                          << std::endl
+          << "    set Y center = 1."                          << std::endl
+          << "    set X extent = 2."                          << std::endl
+          << "    set Y extent = 2."                          << std::endl
           << "    set X repetitions = 1"                      << std::endl
           << "    set Y repetitions = 1"                      << std::endl
           << "  end"                                          << std::endl
@@ -128,7 +127,7 @@ int main (int argc, char *argv[])
 
           << "subsection Configure QC"                        << std::endl
           << "  set Ghost cell layer thickness = 6.1"         << std::endl
-          << "  set Cluster radius = 1.9"                     << std::endl
+          << "  set Cluster radius = 2.0"                     << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section"                      << std::endl
 
@@ -149,7 +148,7 @@ int main (int argc, char *argv[])
       // Define Problem
       Problem<dim, Potential::PairLJCutManager, 2> problem(config);
       problem.partial_run (2.*144.324376994195,
-                           2.*1877.831410474777
+                           1877.831410474777
                            /*blessed values*/);
     }
   catch (std::exception &exc)

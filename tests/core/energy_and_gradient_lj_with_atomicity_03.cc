@@ -2,6 +2,8 @@
 #include "../tests.h"
 
 #include <deal.II-qc/core/qc.h>
+#include <deal.II/dofs/dof_tools.h>
+#include <deal.II/grid/grid_out.h>
 
 #include <iostream>
 #include <fstream>
@@ -10,27 +12,30 @@
 using namespace dealii;
 using namespace dealiiqc;
 
+#define WRITE_GRID
+
 
 // Compute the energy of a system of two molecule each consisting of 2 atoms
 // interacting exclusively through LJ interactions.
-// The two molecules are far apart that the total energy is just the
-// intra molecular interaction.
+//
+// The two molecules see each other. For accessing purely inter-molecular
+// contributions we turn off intra-molecular interactions. This is done by
+// suitably selecting with atom types interact with each other.
 //
 // Each molecule has two atoms with atom types 0 and 1.
 // 0  0 - do not interact
-// 0  1 - interact (also 1  0 - interact)
-// 1  1 - do not interact
+// 0  1 - do not interact (also 1  0 do not interact)
+// 1  1 - interact
 //
 //    x-----x
-//    |     |
-//    o  o  |          o     - atoms
-//    o--o--x
+//    |     |          o, x  - vertices
+//    o     o          o     - atoms
+//    o-----o
 //
-// Only one molecule is picked up as cluster molecule consequently
-// for a block of gradient there should be exactly one non-zero entry.
-// The non-zero entry of gradient should be twice as much of the blessed value
-// in the test energy_and_gradient_lj_01 accounting for both
-// the molecules.
+// gradients.block(1) should have two non-zero entries.
+// gradients.block(0) should be all zeros.
+//
+// Blessed values are taken from energy_and_gradient_lj_01
 
 
 template <int dim, typename PotentialType, int atomicity>
@@ -58,6 +63,34 @@ Problem<dim, PotentialType, atomicity>::partial_run (const double &blessed_energ
   this->setup_fe_values_objects();
   this->update_neighbor_lists();
 
+#ifdef WRITE_GRID
+  if (dealii::Utilities::MPI::this_mpi_process(this->mpi_communicator)==0)
+    {
+      std::map<dealii::types::global_dof_index, Point<dim> > support_points;
+      DoFTools::map_dofs_to_support_points (this->mapping,
+                                            this->dof_handler,
+                                            support_points);
+
+      const std::string filename =
+        "grid" + dealii::Utilities::int_to_string(dim) + ".gp";
+      std::ofstream f(filename.c_str());
+
+      f << "set terminal png size 610,610 enhanced font \"Helvetica,12\"" << std::endl
+        << "set output \"grid" << dealii::Utilities::int_to_string(dim) << ".png\"" << std::endl
+        << "set size square" << std::endl
+        << "set view equal xy" << std::endl
+        << "unset xtics" << std::endl
+        << "unset ytics" << std::endl
+        << "plot '-' using 1:2 with lines notitle, '-' with labels point pt 2 offset 1,1 notitle" << std::endl;
+      GridOut().write_gnuplot (this->triangulation, f);
+      f << "e" << std::endl;
+
+      DoFTools::write_gnuplot_dof_support_point_info(f,
+                                                     support_points);
+      f << "e" << std::endl;
+    }
+#endif
+
   this->pcout << "The number of energy molecules in the system: "
               << this->cell_molecule_data.cell_energy_molecules.size()
               << std::endl;
@@ -79,7 +112,7 @@ Problem<dim, PotentialType, atomicity>::partial_run (const double &blessed_energ
                                       50),
                ExcInternalError());
 
-  const double gradient = this->locally_relevant_gradient.block(0)(1);
+  const double gradient = this->locally_relevant_gradient.block(1)(0);
 
   AssertThrow (Testing::almost_equal (gradient,
                                       blessed_gradient,
@@ -106,10 +139,10 @@ int main (int argc, char *argv[])
           << "subsection Geometry"                            << std::endl
           << "  set Type = Box"                               << std::endl
           << "  subsection Box"                               << std::endl
-          << "    set X center = 3."                          << std::endl
-          << "    set Y center = .5"                          << std::endl
-          << "    set X extent = 6."                          << std::endl
-          << "    set Y extent = 1."                          << std::endl
+          << "    set X center = .5"                          << std::endl
+          << "    set Y center = 1."                          << std::endl
+          << "    set X extent = 1."                          << std::endl
+          << "    set Y extent = 2."                          << std::endl
           << "    set X repetitions = 1"                      << std::endl
           << "    set Y repetitions = 1"                      << std::endl
           << "  end"                                          << std::endl
@@ -121,14 +154,14 @@ int main (int argc, char *argv[])
           << "  set Pair potential type = LJ"                 << std::endl
           << "  set Pair global coefficients = 2.01 "         << std::endl
           << "  set Pair specific coefficients = "
-          << "      0, 1, 0.877, 1.55;"
-          << "      1, 1, 0.000, 1.55;"
+          << "      1, 1, 0.877, 1.55;"
+          << "      0, 1, 0.000, 1.55;"
           << "      0, 0, 0.000, 1.55;"                       << std::endl
           << "end"                                            << std::endl
 
           << "subsection Configure QC"                        << std::endl
           << "  set Ghost cell layer thickness = 6.1"         << std::endl
-          << "  set Cluster radius = 1.9"                     << std::endl
+          << "  set Cluster radius = 2.0"                     << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section"                      << std::endl
 
@@ -138,8 +171,8 @@ int main (int argc, char *argv[])
           << "Atoms #"                         << std::endl   << std::endl
           << "1 1 1  1.0 0.0 0. 0."            << std::endl
           << "2 1 2  1.0 0.0 1. 0."            << std::endl
-          << "3 2 1  1.0 2.0 0. 0."            << std::endl
-          << "4 2 2  1.0 2.0 1. 0."            << std::endl;
+          << "3 2 1  1.0 1.0 0. 0."            << std::endl
+          << "4 2 2  1.0 1.0 1. 0."            << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());
@@ -148,8 +181,8 @@ int main (int argc, char *argv[])
 
       // Define Problem
       Problem<dim, Potential::PairLJCutManager, 2> problem(config);
-      problem.partial_run (2.*144.324376994195,
-                           2.*1877.831410474777
+      problem.partial_run (144.324376994195,
+                           1877.831410474777
                            /*blessed values*/);
     }
   catch (std::exception &exc)
