@@ -12,7 +12,7 @@
 using namespace dealii;
 using namespace dealiiqc;
 
-#define WRITE_GRID
+// #define WRITE_GRID
 
 
 // Compute the energy of a system of two molecule each consisting of 2 atoms
