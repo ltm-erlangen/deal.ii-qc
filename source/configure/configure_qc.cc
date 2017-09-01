@@ -239,6 +239,13 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
                       "provided pair potential type."
                       "Coulomb Wolf: alpha and cutoff radius."
                       "LJ: cutoff radius ");
+    prm.declare_entry("Pair potential with tail", "false",
+                      Patterns::Bool(),
+                      "Whether the potential should have a smooth tail i.e., "
+                      "whether the potential function has continuous first "
+                      "derivative at the cutoff radius."
+                      "Only few pair potentials support this feature. "
+                      "The rest silently ignore this setting.");
     prm.declare_entry("Pair specific coefficients", "0, 0, .8, 1.1;",
                       Patterns::List(Patterns::List(Patterns::Anything(),
                                                     0,
@@ -463,6 +470,8 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
         global_coeffs.push_back(dealii::Utilities::string_to_double(c));
     }
 
+    const bool with_tail = prm.get_bool("Pair potential with tail");
+
     const std::vector<std::vector<std::string> > list_of_coeffs_per_type =
       Utilities::
       split_list_of_string_lists(prm.get("Pair specific coefficients"),';',',');
@@ -489,7 +498,8 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
                      ExcMessage("Maximum cutoff radius should be more than or "
                                 "equal to the provided cutoff radius."));
         pair_potential =
-          std::make_shared<Potential::PairLJCutManager> (global_coeffs[0]);
+          std::make_shared<Potential::PairLJCutManager> (global_coeffs[0],
+                                                         with_tail);
 
         for (const auto &specific_coeffs : list_of_coeffs_per_type)
           {

@@ -40,6 +40,22 @@ namespace Potential
    * \f]
    *
    * where \f$r_m=2^{1/6}\sigma\f$.
+   *
+   * If the potential is constructed with tail, then the empirical form of
+   * the potential function changes to
+   * \f[
+   *     \phi_{ij} =  \epsilon \left[ \left(\frac{r_m}{r_{ij}}\right)^{12}
+   *                               - 2\left(\frac{r_m}{r_{ij}}\right)^6  \right]
+   *                  + A r_{ij}^2 + B
+   * \f]
+   * with
+   * \f[
+   *     A = - \frac{1}{2 r_c}\phi ' (r_c),
+   * \f]
+   * \f[
+   *     B = \frac{r_c}{2}\phi ' (r_c) - \phi (r_c)
+   * \f]
+   * where \f$ r_c \f$ is the cutoff radius for the potential.
    */
   class PairLJCutManager : public PairBaseManager
   {
@@ -52,7 +68,8 @@ namespace Potential
      * are farther than @p cutoff_radius do not interact with each other,
      * consequently do not contribute to either energy or it's derivative.
      */
-    PairLJCutManager (const double &cutoff_radius);
+    PairLJCutManager (const double &cutoff_radius,
+                      const bool    with_tail=false);
 
     /**
      * Declare the type of interaction between the atom types @p i_atom_type
@@ -85,6 +102,11 @@ namespace Potential
      * Cutoff radius squared.
      */
     const double cutoff_radius_squared;
+
+    /**
+     * Whether the potential form has a smoothness near the cutoff radius.
+     */
+    const bool   with_tail;
 
     /**
      * A list of two parameters corresponding to
@@ -129,12 +151,35 @@ namespace Potential
     const double &eps = param->second[0];
     const double &rm6 = param->second[1];
 
-    const double rm_by_r6 = rm6 / dealii::Utilities::fixed_power<3>(squared_distance);
+    const double rm_by_r6  = rm6
+                             /
+                             dealii::Utilities::fixed_power<3>(squared_distance);
 
-    const double energy = eps * rm_by_r6 * ( rm_by_r6 - 2.);
+    const double rm_by_rc6 = rm6
+                             /
+                             dealii::Utilities::fixed_power<3>(cutoff_radius_squared);
+
+    const double A         = with_tail
+                             ?
+                             eps * 6.* rm_by_rc6 * (rm_by_rc6  - 1.) / cutoff_radius_squared
+                             :
+                             0.;
+
+    const double B         = with_tail
+                             ?
+                             eps * rm_by_rc6 * (rm_by_rc6 * 7. - 8.)
+                             :
+                             0.;
+
+    const double energy    = eps * rm_by_r6 * ( rm_by_r6 - 2.) +
+                             A   * squared_distance +
+                             B;
+
     const double gradient  = ComputeGradient
                              ?
-                             12. * eps * rm_by_r6 * ( 1. - rm_by_r6) / sqrt(squared_distance)
+                             rm_by_r6 * ( 1. - rm_by_r6) *
+                             12. * eps / std::sqrt(squared_distance) +
+                             02. * A   * std::sqrt(squared_distance)
                              :
                              std::numeric_limits<double>::signaling_NaN();
 

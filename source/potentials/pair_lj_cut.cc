@@ -15,9 +15,11 @@ namespace Potential
 {
 
 
-  PairLJCutManager::PairLJCutManager (const double &cutoff_radius)
+  PairLJCutManager::PairLJCutManager (const double &cutoff_radius,
+                                      const bool    with_tail)
     :
-    cutoff_radius_squared(cutoff_radius *cutoff_radius)
+    cutoff_radius_squared(cutoff_radius *cutoff_radius),
+    with_tail(with_tail)
   {}
 
   void
