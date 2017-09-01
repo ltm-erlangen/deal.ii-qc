@@ -65,7 +65,7 @@ void Problem<dim, PotentialType, atomicity>::test ()
 
   this->update_positions();
 
-  if (dealii::Utilities::MPI::n_mpi_processes (mpi_communicator)==1)
+  if (dealii::Utilities::MPI::n_mpi_processes (this->mpi_communicator)==1)
     this->pcout << "Updated positions of atoms:" << std::endl;
 
   for (const auto &entry : this->cell_molecule_data.cell_energy_molecules)
