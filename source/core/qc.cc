@@ -644,7 +644,7 @@ void QC<dim, PotentialType, atomicity>::update_positions()
       for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
         // Get displacement field for each atom_stamp at all quadrature points
         // of this cell.
-        (*data.fe_values)[u_fe[atom_stamp]].get_function_values(locally_relevant_displacement.block(atom_stamp),
+        (*data.fe_values)[u_fe[atom_stamp]].get_function_values(locally_relevant_displacement,
                                                                 data.displacements[atom_stamp]);
       const auto &displacements = data.displacements;
 
@@ -655,8 +655,8 @@ void QC<dim, PotentialType, atomicity>::update_positions()
         for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
           for (int d=0; d<dim; ++d)
             // Copy only dim-dimensions.
-            cell_energy_molecules_range.first->second.atoms[0].position[d] =
-              cell_energy_molecules_range.first->second.atoms[0].initial_position[d] +
+            cell_energy_molecules_range.first->second.atoms[atom_stamp].position[d] =
+              cell_energy_molecules_range.first->second.atoms[atom_stamp].initial_position[d] +
               displacements[atom_stamp][i][d];
 
       // The loop over displacements must have exhausted all the energy
