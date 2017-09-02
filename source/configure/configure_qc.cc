@@ -323,7 +323,18 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
                           "For example:"
                           "The expression 0 implies that the current "
                           "component of the current boundary id is subjected "
-                          "to Homogeneous Dirichlet boundary condition.");
+                          "to Homogeneous Dirichlet boundary condition."
+                          "---"
+                          "In the case with more than one atomicity,"
+                          "the order of components should be arranged "
+                          "according to the atom stamps."
+                          "For example: "
+                          "Atomistic system in two dimensions consisting of"
+                          "molecules each with three atoms, the following "
+                          "Function expressions = 0., ,0., ,0., ,"
+                          "result in applying homogeneous dirichlet condition "
+                          "on the x coordinates of all the atom stamps at"
+                          "the current boundary.");
       }
       prm.leave_subsection ();
     }
