@@ -55,7 +55,10 @@ namespace Potential
    * \f[
    *     B = \frac{r_c}{2}\phi ' (r_c) - \phi (r_c)
    * \f]
-   * where \f$ r_c \f$ is the cutoff radius for the potential.
+   * where \f$ r_c \f$ is the cutoff radius for the potential. The addition of
+   * the tail term shifts the potential function and makes it
+   * \f$ \mathcal C^{1}(0,\infty)\f$ continuous, and more, the first and second
+   * derivative of the potential function vanish at the cutoff radius.
    */
   class PairLJCutManager : public PairBaseManager
   {
@@ -131,7 +134,7 @@ namespace Potential
                                          const double &squared_distance) const
   {
 
-    if ( squared_distance > cutoff_radius_squared)
+    if (squared_distance > cutoff_radius_squared)
       return ComputeGradient
              ?
              std::make_pair(0.,0.)
