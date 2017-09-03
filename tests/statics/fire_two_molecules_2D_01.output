@@ -1,0 +1,11 @@
+DEAL:FIRE::Check 0  0.301138
+DEAL:FIRE::Starting value 0.301138
+DEAL:FIRE::Convergence step 85 value 7.19902e-15
+Positions of atoms in the relaxed state:
+Atom ID: 0 Position: 0.0000000000 -0.0009168525
+Atom ID: 1 Position: 0.0000000000 1.0000000000
+Atom ID: 2 Position: 0.0000000000 2.0009168525
+Atom ID: 3 Position: 1.0011849701 0.0000000000
+Atom ID: 4 Position: 0.9932193546 1.0000000000
+Atom ID: 5 Position: 1.0011849701 2.0000000000
+Energy: -6.9869441868
