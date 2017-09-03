@@ -11,10 +11,17 @@ using namespace dealiiqc;
 
 // Check energy minimization of the two molecule system inside a single cell
 // in one dimension.
-// Boundary expressions are assigned to impose dirichlet boundary condition on
-// the right end of the domain (doundary_01).
+// Boundary expressions are assigned to impose homogeneous dirichlet boundary
+// condition on atoms with atom stamp 1. Onle the atoms with atom stamp 0
+// are interacting with each other.
+//
+//  ox-------ox
+//
+//  atom stamp 0:  o
+//  atom stamp 1:  x
+//
 // Since (dim==1 && atomicity==2) is true, two function expression should be
-// provided for correctly specifying at any boundary id.
+// provided for correctly specifying boundary conditions at any boundary id.
 
 
 template <int dim, typename PotentialType, int atomicity>
@@ -57,7 +64,7 @@ void Problem<dim, PotentialType, atomicity>::test ()
                   << atom.global_index
                   << " Position: "
                   << std::fixed
-                  << std::setprecision(10)
+                  << std::setprecision(8)
                   << atom.position
                   << std::endl;
 
@@ -89,8 +96,8 @@ int main (int argc, char *argv[])
           << "subsection Geometry"                            << std::endl
           << "  set Type = Box"                               << std::endl
           << "  subsection Box"                               << std::endl
-          << "    set X center = 1."                          << std::endl
-          << "    set X extent = 2."                          << std::endl
+          << "    set X center = .5"                          << std::endl
+          << "    set X extent = 1."                          << std::endl
           << "    set X repetitions = 1"                      << std::endl
           << "  end"                                          << std::endl
           << "  set Number of initial global refinements = 0" << std::endl
@@ -102,8 +109,8 @@ int main (int argc, char *argv[])
           << "  set Pair global coefficients = 1.99 "         << std::endl
           << "  set Pair specific coefficients = "
           << "                       0, 0, 0.877, 1.01;"
-          << "                       0, 1, 0.877, 1.01;"
-          << "                       1, 1, 0.877, 1.01;"      << std::endl
+          << "                       0, 1, 0.000, 1.01;"
+          << "                       1, 1, 0.000, 1.01;"      << std::endl
           << "end"                                            << std::endl
 
           << "subsection Configure QC"                        << std::endl
@@ -112,11 +119,11 @@ int main (int argc, char *argv[])
           << "end"                                            << std::endl
 
           << "subsection boundary_0"                          << std::endl
-          << "  set Function expressions = ,,"                << std::endl
+          << "  set Function expressions = ,0."                << std::endl
           << "end"                                            << std::endl
 
           << "subsection boundary_1"                          << std::endl
-          << "  set Function expressions = 0.,0."             << std::endl
+          << "  set Function expressions = ,0."             << std::endl
           << "end"                                            << std::endl
 
           << "subsection Minimizer settings"                  << std::endl
@@ -141,9 +148,9 @@ int main (int argc, char *argv[])
           << "2  atom types"                   << std::endl   << std::endl
           << "Atoms #"                         << std::endl   << std::endl
           << "1 1 1 .0 0.0 0.0 0."                            << std::endl
-          << "2 1 2 .0 1.0 0.0 0."                            << std::endl
-          << "3 2 1 .0 2.0 0.0 0."                            << std::endl
-          << "4 2 2 .0 3.0 0.0 0."                            << std::endl;
+          << "2 1 2 .0 0.5 0.0 0."                            << std::endl
+          << "3 2 1 .0 1.0 0.0 0."                            << std::endl
+          << "4 2 2 .0 1.5 0.0 0."                            << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());

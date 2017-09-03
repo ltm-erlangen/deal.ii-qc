@@ -13,8 +13,15 @@ using namespace dealiiqc;
 // energy minimization of the two molecule system inside a single cell
 // in two dimensions.
 //
-// Since (dim==2 && atomicity==3) is true, 6 function expression should be
-// provided for correctly specifying at any boundary id.
+// +-------+
+// |       |
+// o       o          o    - atoms
+// o       o
+// o-------o
+//
+// Since (dim==2 && atomicity==3) is true, the size of the list of boundary
+// function expressions should be 6 for correctly specifying the boundary
+// conditions at any boundary id.
 //
 // Boundary expressions are provided to impose dirichlet boundary conditions.
 // At boundary_0 x coordinates of all atom stamps are constrained to obey
