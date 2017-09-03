@@ -12,7 +12,7 @@ using namespace dealiiqc;
 // Check energy minimization of the two molecule system inside a single cell
 // in one dimension.
 // Boundary expressions are assigned to impose homogeneous dirichlet boundary
-// condition on atoms with atom stamp 1. Onle the atoms with atom stamp 0
+// condition on atoms with atom stamp 1. Only the atoms with atom stamp 0
 // are interacting with each other.
 //
 //  ox-------ox
