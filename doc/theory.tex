@@ -197,8 +197,8 @@ The hanging nodes constrains are accounted only at the local contribution to the
 Consider an atomistic system consisting of a single type of molecules.
 Let $\bsf X_I$ be the location of molecule $I \in \mcl M$ in the initial 
 configuration, where $\mcl M$ is the index set of all the molecules in the 
-atomistic system. $\bsf X_I$ can the center of mass or center of geometry of 
-the molecule $I$ or any other convenient convention to identify the location of 
+atomistic system. $\bsf X_I$ can be the center of mass or center of geometry of 
+the molecule $I$ or any other convention to identify the location of 
 the molecule $I$ in the initial configuration of the atomistic system. Let the 
 atoms of a molecule of the ionic compound be enumerated or stamped as $i \in 
 \mcl A$. The cardinality of the set $\mcl A$ is the atomicity of the molecule. 
@@ -215,7 +215,7 @@ molecule $I$ to its atom stamped $i$.
 To define the displacements of different atoms within a molecule we define
 multiple displacement field variables in the finite element space. The 
 kinematic constraint on atom stamped $i$ in the molecule $I$ can be 
-written as
+expressed as
 \begin{align}
  \bsf x_I^i = \bsf X_I^i + \gz u^i(\bsf X_I),
  \label{eq:current_atom_pos}
