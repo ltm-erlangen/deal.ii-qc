@@ -60,13 +60,13 @@ template <int dim, typename PotentialType>
 double Problem<dim, PotentialType>::compute (vector_t       &G,
                                              const vector_t &u)
 {
-  QC<dim, PotentialType>::locally_relevant_displacement = u;
-  QC<dim, PotentialType>::update_positions ();
+  this->locally_relevant_displacement = u;
+  this->update_positions ();
 
-  const double energy =
-    QC<dim, PotentialType>::template compute<true> (QC<dim, PotentialType>::locally_relevant_gradient);
+  const double energy = QC<dim, PotentialType>::template
+                        compute<true> (QC<dim, PotentialType>::locally_relevant_gradient);
 
-  G = QC<dim, PotentialType>::locally_relevant_gradient;
+  G = this->locally_relevant_gradient;
 
   return energy;
 }
@@ -76,9 +76,13 @@ double Problem<dim, PotentialType>::compute (vector_t       &G,
 template <int dim, typename PotentialType>
 void Problem<dim, PotentialType>::statics (const double tol)
 {
-  QC<dim, PotentialType>::run();
+  this->setup_cell_energy_molecules();
+  this->setup_system();
+  this->setup_fe_values_objects();
+  this->update_neighbor_lists();
+  this->update_positions();
 
-  vector_t u (QC<dim, PotentialType>::distributed_displacement);
+  vector_t u (this->distributed_displacement);
 
   // Use this to initialize DiagonalMatrix
   u = 1.;
@@ -113,21 +117,16 @@ void Problem<dim, PotentialType>::statics (const double tol)
                                 "number of iterations to converge on this "
                                 "machine."));
 
-  QC<dim, PotentialType>::pcout
-      << "SolverFIRE minimized energy to "
-      << QC<dim, PotentialType>:: template
-      compute<false> (QC<dim, PotentialType>::locally_relevant_gradient)
+  this->pcout << "SolverFIRE minimized energy to "
+              << QC<dim, PotentialType>::template compute<false> (QC<dim, PotentialType>::locally_relevant_gradient)
       << "eV within 79 to 81 iterations."
       << std::endl;
 
-  QC<dim, PotentialType>::pcout
-      << "Final positions of the two atoms:"
-      << std::endl;
+  this->pcout << "Final positions of the two atoms:"
+              << std::endl;
 
-  for (const auto &entry :
-       QC<dim, PotentialType>::cell_molecule_data.cell_energy_molecules)
-    QC<dim, PotentialType>::pcout
-        << entry.second.atoms[0].position << std::endl;
+  for (const auto &entry : this->cell_molecule_data.cell_energy_molecules)
+    this->pcout << entry.second.atoms[0].position << std::endl;
 }
 
 
