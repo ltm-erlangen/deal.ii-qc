@@ -340,11 +340,8 @@ void QC<dim, PotentialType, atomicity>::initialize_boundary_functions()
 
       dirichlet_boundary_functions.insert
       (std::make_pair (single_bc.first,
-                       std::make_pair
-                       (component_mask,
-                        std::make_shared<FunctionParser<spacedim>>(dim*atomicity,
-                            0.))
-                      )
+                       std::make_pair (component_mask,
+                                       std::make_shared<FunctionParser<spacedim> >(dim*atomicity, 0.)))
       );
 
       dirichlet_boundary_functions[single_bc.first].second->
@@ -359,12 +356,25 @@ void QC<dim, PotentialType, atomicity>::initialize_boundary_functions()
 template <int dim, typename PotentialType, int atomicity>
 void QC<dim, PotentialType, atomicity>::setup_boundary_conditions (const double)
 {
+  TimerOutput::Scope t (computing_timer, "Setup boundary conditions");
+
+  constraints.clear();
+  constraints.reinit (locally_relevant_set);
+  constraints.merge(hanging_node_constraints);
+
+  // TODO: Add time variable.
+  //for (auto &single_bc : dirichlet_boundary_functions)
+  //  single_bc.second.second->set_time(time);
+
   for (const auto &single_bc : dirichlet_boundary_functions)
     VectorTools::interpolate_boundary_values (dof_handler,
                                               single_bc.first,
                                               *(single_bc.second.second),
                                               constraints,
                                               single_bc.second.first);
+
+  constraints.close ();
+
 }
 
 
@@ -431,7 +441,6 @@ void QC<dim, PotentialType, atomicity>::setup_system ()
   std::vector<IndexSet> locally_owned_partitioning   (atomicity);
   std::vector<IndexSet> locally_relevant_partitioning(atomicity);
 
-  IndexSet locally_relevant_set;
   {
     const IndexSet locally_owned_set = dof_handler.locally_owned_dofs();
 
@@ -450,12 +459,12 @@ void QC<dim, PotentialType, atomicity>::setup_system ()
   }
 
   // set-up constraints objects
-  constraints.reinit (locally_relevant_set);
-  DoFTools::make_hanging_node_constraints (dof_handler, constraints);
+  hanging_node_constraints.reinit (locally_relevant_set);
+  DoFTools::make_hanging_node_constraints (dof_handler, hanging_node_constraints);
+  hanging_node_constraints.close ();
 
-  setup_boundary_conditions();
-
-  constraints.close ();
+  // Merging with `constraints` is faster if hanging_node_constraints is closed.
+  setup_boundary_conditions (0./*initial time*/);
 
   distributed_displacement.reinit (locally_owned_partitioning,
                                    mpi_communicator);
@@ -484,7 +493,7 @@ void QC<dim, PotentialType, atomicity>::setup_system ()
   cluster_weights_method->compute_dof_inverse_masses (inverse_masses,
                                                       cell_molecule_data,
                                                       dof_handler,
-                                                      constraints);
+                                                      hanging_node_constraints);
   inverse_mass_matrix.reinit (inverse_masses);
 
   cells_to_data.clear();
@@ -971,8 +980,12 @@ template <int dim, typename PotentialType, int atomicity>
 void QC<dim, PotentialType, atomicity>::minimize_energy (const double time)
 {
   if (time >= 0.)
-    for (auto &potential_field : external_potential_fields)
-      potential_field.second->set_time (time);
+    {
+      for (auto &potential_field : external_potential_fields)
+        potential_field.second->set_time (time);
+
+      setup_boundary_conditions(time);
+    }
 
   //---------------------------------------------------------------------------
 
