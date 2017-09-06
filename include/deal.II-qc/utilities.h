@@ -16,9 +16,9 @@
 
 
 // Preprocessor definitions for instantiations.
-#define       DIM  BOOST_PP_TUPLE_TO_LIST(3, (1,2,3))
-#define  SPACEDIM  BOOST_PP_TUPLE_TO_LIST(3, (1,2,3))
-#define ATOMICITY  BOOST_PP_TUPLE_TO_LIST(5,(1,2,3,5,10))
+#define       DIM  BOOST_PP_TUPLE_TO_LIST(3,  (1,2,3))
+#define  SPACEDIM  BOOST_PP_TUPLE_TO_LIST(3,  (1,2,3))
+#define ATOMICITY  BOOST_PP_TUPLE_TO_LIST(10, (1,2,3,4,5,6,7,8,9,10))
 
 
 
