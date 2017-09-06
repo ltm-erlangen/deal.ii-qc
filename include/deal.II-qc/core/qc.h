@@ -454,6 +454,11 @@ protected:
   DoFHandler<dim, spacedim>        dof_handler;
 
   /**
+   * Hanging node constraints.
+   */
+  ConstraintMatrix                 hanging_node_constraints;
+
+  /**
    * All constraints (hanging nodes + BC).
    */
   ConstraintMatrix                 constraints;
@@ -477,6 +482,11 @@ protected:
    * Inverse mass matrix.
    */
   DiagonalMatrix<vector_t>         inverse_mass_matrix;
+
+  /**
+   *
+   */
+  IndexSet locally_relevant_set;
 
   /**
    * Map of boundary ids to Functions describing the corresponding boundary
