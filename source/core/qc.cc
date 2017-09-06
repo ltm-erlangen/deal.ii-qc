@@ -354,16 +354,18 @@ void QC<dim, PotentialType, atomicity>::initialize_boundary_functions()
       );
 
       dirichlet_boundary_functions[single_bc.first].second->
-      initialize (FunctionParser<spacedim>::default_variable_names(),
+      initialize ((spacedim==3) ? "x,y,z,t" :
+                  (spacedim==2  ? "x,y,t"   : "x,t"),
                   single_bc.second,
-                  typename FunctionParser<spacedim>::ConstMap() /* TODO, true*/);
+                  typename FunctionParser<spacedim>::ConstMap(),
+                  true);
     }
 }
 
 
 
 template <int dim, typename PotentialType, int atomicity>
-void QC<dim, PotentialType, atomicity>::setup_boundary_conditions (const double)
+void QC<dim, PotentialType, atomicity>::setup_boundary_conditions (const double time)
 {
   TimerOutput::Scope t (computing_timer, "Setup boundary conditions");
 
@@ -371,9 +373,8 @@ void QC<dim, PotentialType, atomicity>::setup_boundary_conditions (const double)
   constraints.reinit (locally_relevant_set);
   constraints.merge(hanging_node_constraints);
 
-  // TODO: Add time variable.
-  //for (auto &single_bc : dirichlet_boundary_functions)
-  //  single_bc.second.second->set_time(time);
+  for (auto &single_bc : dirichlet_boundary_functions)
+    single_bc.second.second->set_time(time);
 
   for (const auto &single_bc : dirichlet_boundary_functions)
     VectorTools::interpolate_boundary_values (dof_handler,
