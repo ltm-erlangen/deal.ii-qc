@@ -71,7 +71,8 @@ QC<dim, PotentialType, atomicity>::QC (const ConfigureQC &config)
 
 
 template <int dim, typename PotentialType, int atomicity>
-void QC<dim, PotentialType, atomicity>::run ()
+void
+QC<dim, PotentialType, atomicity>::run (const bool relaxed_configuration_as_reference)
 {
   setup_cell_energy_molecules();
   setup_system();
@@ -82,12 +83,12 @@ void QC<dim, PotentialType, atomicity>::run ()
   // Molecular statics relaxation.
   minimize_energy (-1.);
 
-  // Reset initial positions after relaxation.
-  // The reference positions of the molecules remain unchanged.
-  for (auto &cell_molecule : cell_molecule_data.cell_energy_molecules)
-    for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
-      cell_molecule.second.atoms[atom_stamp].initial_position =
-        cell_molecule.second.atoms[atom_stamp].position;
+  if (relaxed_configuration_as_reference)
+    // Measure displacement taking the relaxed configuration as reference.
+    for (auto &cell_molecule : cell_molecule_data.cell_energy_molecules)
+      for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
+        cell_molecule.second.atoms[atom_stamp].initial_position =
+          cell_molecule.second.atoms[atom_stamp].position;
 
   // Initialize external potential fields.
   initialize_external_potential_fields();

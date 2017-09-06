@@ -141,10 +141,21 @@ public:
 
   typedef LA::MPI::BlockVector vector_t;
 
+  /**
+   * Constructor.
+   */
   QC (const ConfigureQC &);
+
   virtual ~QC ();
 
-  void run ();
+  /**
+   * Perform QC simulation based on #configure_qc. If
+   * @p relaxed_configuration_as_reference is true then the displacement is
+   * measured from the relaxed configuration i.e., after an energy minimization
+   * step without applying any external potential. Otherwise, the displacement
+   * is measured from the initial configuration.
+   */
+  void run (const bool relaxed_configuration_as_reference=true);
 
 #ifdef DEAL_II_WITH_TRILINOS
   /**
