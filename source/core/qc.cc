@@ -79,7 +79,15 @@ void QC<dim, PotentialType, atomicity>::run ()
   update_neighbor_lists();
   update_positions();
 
+  // Molecular statics relaxation.
   minimize_energy (-1.);
+
+  // Reset initial positions after relaxation.
+  // The reference positions of the molecules remain unchanged.
+  for (auto &cell_molecule : cell_molecule_data.cell_energy_molecules)
+    for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
+      cell_molecule.second.atoms[atom_stamp].initial_position =
+        cell_molecule.second.atoms[atom_stamp].position;
 
   // Initialize external potential fields.
   initialize_external_potential_fields();
