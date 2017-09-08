@@ -1,12 +1,12 @@
 
 // a source file which contains definition of core functions of QC class
 
+#include <deal.II/dofs/dof_tools.h>
+#include <deal.II/dofs/dof_renumbering.h>
 #include <deal.II/grid/grid_in.h>
 #include <deal.II/grid/grid_out.h>
 #include <deal.II/grid/grid_tools.h>
 #include <deal.II/grid/grid_generator.h>
-#include <deal.II/dofs/dof_tools.h>
-#include <deal.II/dofs/dof_renumbering.h>
 
 #include <deal.II-qc/atom/cell_molecule_tools.h>
 #include <deal.II-qc/core/compute_tools.h>
@@ -125,31 +125,31 @@ QC<dim, PotentialType, atomicity>::
 output_results (const double time,
                 const unsigned int timestep_no) const
 {
-  DataOut<dim> data_out;
-  data_out.attach_dof_handler (dof_handler);
   std::vector<std::string> solution_names;
-  switch (dim)
-    {
-    case 1:
-      solution_names.push_back ("u_x");
-      break;
-    case 2:
-      solution_names.push_back ("u_x");
-      solution_names.push_back ("u_y");
-      break;
-    case 3:
-      solution_names.push_back ("u_x");
-      solution_names.push_back ("u_y");
-      solution_names.push_back ("u_z");
-      break;
-    default:
-      Assert (false, ExcNotImplemented());
-    }
-  data_out.add_data_vector (locally_relevant_displacement,
-                            solution_names);
+
+  {
+    for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
+      {
+        const std::string name = "displacement_" +
+                                 dealii::Utilities::int_to_string(atom_stamp,2);
+        for (int d = 0; d < dim; ++d)
+          solution_names.push_back(name);
+      }
+  }
+
+  std::vector<DataComponentInterpretation::DataComponentInterpretation>
+  interpretation (atomicity*dim,
+                  DataComponentInterpretation::component_is_part_of_vector);
+
+  DataOut<dim> data_out;
+  data_out.add_data_vector (dof_handler,
+                            locally_relevant_displacement,
+                            solution_names,
+                            interpretation);
 
   std::vector<dealii::types::subdomain_id> partition_int (triangulation.n_active_cells());
   GridTools::get_subdomain_association (triangulation, partition_int);
+
   const Vector<float> partitioning (partition_int.begin(),
                                     partition_int.end());
   data_out.add_data_vector (partitioning, "partitioning");
@@ -164,7 +164,7 @@ output_results (const double time,
 
   const std::string filename = data_out_solution_filename (timestep_no,
                                                            this_mpi_process);
-  // FIXME: for atomicity.
+
   std::ofstream output (filename.c_str());
   data_out.write_vtu (output);
   if (this_mpi_process==0)
