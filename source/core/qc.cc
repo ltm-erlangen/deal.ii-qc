@@ -127,12 +127,16 @@ output_results (const double time,
 {
   std::vector<std::string> solution_names;
 
-  for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
-    solution_names.push_back("u_" +
-                             dealii::Utilities::int_to_string(atom_stamp,2));
+  {
+    for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
+      for (unsigned int d = 0; d < dim; ++d)
+        solution_names.push_back("u_"                                 +
+                                 (d==0 ? "x_" : (d==1 ? "y_" : "z_")) +
+                                 dealii::Utilities::int_to_string(atom_stamp,2));
+  }
 
   std::vector<DataComponentInterpretation::DataComponentInterpretation>
-  interpretation (atomicity,
+  interpretation (atomicity*dim,
                   DataComponentInterpretation::component_is_part_of_vector);
 
   DataOut<dim> data_out;
