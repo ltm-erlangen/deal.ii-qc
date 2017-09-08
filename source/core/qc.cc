@@ -125,7 +125,17 @@ QC<dim, PotentialType, atomicity>::
 output_results (const double time,
                 const unsigned int timestep_no) const
 {
-  std::vector<std::string> solution_names (dim*atomicity, "displacement");
+  std::vector<std::string> solution_names;
+
+  {
+    for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
+      {
+        const std::string name = "displacement_" +
+                                 dealii::Utilities::int_to_string(atom_stamp,2);
+        for (int d = 0; d < dim; ++d)
+          solution_names.push_back(name);
+      }
+  }
 
   std::vector<DataComponentInterpretation::DataComponentInterpretation>
   interpretation (atomicity*dim,
