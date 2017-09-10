@@ -430,6 +430,16 @@ protected:
   MPI_Comm                         mpi_communicator;
 
   /**
+   * MPI process number of the current process.
+   */
+  const unsigned int               this_mpi_process;
+
+  /**
+   * Total number of MPI processes.
+   */
+  const unsigned int               n_mpi_processes;
+
+  /**
    * Conditional terminal output (root MPI core).
    */
   ConditionalOStream               pcout;
