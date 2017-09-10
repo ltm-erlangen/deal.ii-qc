@@ -109,13 +109,15 @@ QC<dim, PotentialType, atomicity>::run (const bool relaxed_configuration_as_refe
 namespace
 {
   inline
-  std::string data_out_filename (const std::string  &name,
-                                 const unsigned int timestep_no,
-                                 const dealii::types::subdomain_id id)
+  std::string data_out_filename (const std::string                 &name,
+                                 const unsigned int                 timestep_no,
+                                 const dealii::types::subdomain_id  id,
+                                 const std::string                 &suffix)
   {
     return name +
            dealii::Utilities::int_to_string(timestep_no,4) + "." +
-           dealii::Utilities::int_to_string(id,3) + ".vtu";
+           dealii::Utilities::int_to_string(id,3) +
+           suffix;
   }
 }
 
@@ -167,11 +169,12 @@ output_results (const double time,
 
   const std::string solution_filename  = data_out_filename (solution_name,
                                                             timestep_no,
-                                                            this_mpi_process);
+                                                            this_mpi_process,
+                                                            ".vtu");
   const std::string atom_data_filename = data_out_filename (atom_data_name,
                                                             timestep_no,
-                                                            this_mpi_process)
-                                         + ".vtp";
+                                                            this_mpi_process,
+                                                            ".vtp");
 
   std::ofstream solution_output (solution_filename.c_str());
   std::ofstream atom_data_output(atom_data_filename.c_str());
@@ -189,10 +192,12 @@ output_results (const double time,
         {
           solution_filenames.push_back (data_out_filename (solution_name,
                                                            timestep_no,
-                                                           i));
+                                                           i,
+                                                           ".vtu"));
           atom_data_filenames.push_back(data_out_filename (solution_name,
                                                            timestep_no,
-                                                           i));
+                                                           i,
+                                                           ".vtp"));
         }
 
       const std::string
