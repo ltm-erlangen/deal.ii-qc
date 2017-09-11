@@ -194,7 +194,7 @@ output_results (const double time,
                                                            timestep_no,
                                                            i,
                                                            ".vtu"));
-          atom_data_filenames.push_back(data_out_filename (solution_name,
+          atom_data_filenames.push_back(data_out_filename (atom_data_name,
                                                            timestep_no,
                                                            i,
                                                            ".vtp"));
