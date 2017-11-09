@@ -167,6 +167,9 @@ endif(DOXYGEN_FOUND)
 
 # Enable testing and descent into tests/ subdirectory:
 ENABLE_TESTING()
+
+INCLUDE(CTest)
+
 # default 600sec is not enough for some tests, increase:
 SET (TEST_TIME_LIMIT 900)
 #
