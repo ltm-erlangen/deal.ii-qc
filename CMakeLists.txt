@@ -202,3 +202,6 @@ install (FILES
          "${CMAKE_CURRENT_BINARY_DIR}/${DEAL_II_QC_PACKAGE_NAME}Config.cmake"
          "${CMAKE_CURRENT_BINARY_DIR}/${DEAL_II_QC_PACKAGE_NAME}ConfigVersion.cmake"
          DESTINATION ${DEAL_II_QC_PROJECT_CONFIG_RELDIR})
+
+MESSAGE(STATUS "Writing config into detailed.log...")
+INCLUDE(${CMAKE_SOURCE_DIR}/cmake/write_config.cmake)
