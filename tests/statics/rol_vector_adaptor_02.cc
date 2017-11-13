@@ -4,14 +4,15 @@
 #include <sstream>
 
 #include <deal.II/lac/generic_linear_algebra.h>
-#include <deal.II-qc/adaptors/rol_vector_adaptor.h>
+#include <deal.II/optimization/rol/vector_adaptor.h>
 
 #include <deal.II-qc/potentials/pair_lj_cut.h>
-#include "ROL_Objective.hpp"
-#include "ROL_Algorithm.hpp"
-#include "ROL_LineSearchStep.hpp"
-#include "ROL_StatusTest.hpp"
-#include "Teuchos_GlobalMPISession.hpp"
+
+#include <ROL_Objective.hpp>
+#include <ROL_Algorithm.hpp>
+#include <ROL_LineSearchStep.hpp>
+#include <ROL_StatusTest.hpp>
+#include <Teuchos_GlobalMPISession.hpp>
 
 using namespace dealii;
 using namespace dealiiqc;
@@ -32,8 +33,7 @@ using VectorType = typename dealii::Vector<double>;
 //
 
 
-
-template<class Real=double, typename Xprim=rol::VectorAdaptor<VectorType> >
+template<class Real=double, typename Xprim=Rol::VectorAdaptor<VectorType> >
 class Objective_LJ : public ROL::Objective<Real>
 {
 
@@ -145,7 +145,7 @@ int main (int argc, char **argv)
       (*x_rcp)[1] = b[1];
       (*x_rcp)[2] = b[2];
 
-      rol::VectorAdaptor<VectorType> x(x_rcp);
+      Rol::VectorAdaptor<VectorType> x(x_rcp);
 
       Teuchos::ParameterList parlist;
       // Set parameters.

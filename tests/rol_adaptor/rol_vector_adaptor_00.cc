@@ -1,18 +1,13 @@
 
 #include "../tests.h"
 
-#include <deal.II-qc/adaptors/rol_vector_adaptor.h>
-#include <deal.II-qc/utilities.h>
-
 #include <deal.II/lac/generic_linear_algebra.h>
-
-#include <Teuchos_RCP.hpp>
+#include <deal.II/optimization/rol/vector_adaptor.h>
 
 using namespace dealii;
-using namespace dealiiqc;
 
 
-// Check the rol::VectorAdaptor::set() and rol::VectorAdaptor::plus().
+// Test to check Rol::VectorAdaptor::set() and Rol::VectorAdaptor::plus().
 
 
 template <typename VectorType>
@@ -21,12 +16,12 @@ void test (const VectorType &given_vector)
   Teuchos::RCP<VectorType> given_vector_rcp (new VectorType(given_vector));
 
   // --- Testing the constructor
-  rol::VectorAdaptor<VectorType> given_vector_rol (given_vector_rcp);
+  Rol::VectorAdaptor<VectorType> given_vector_rol (given_vector_rcp);
   AssertThrow (given_vector == *given_vector_rol.getVector(), ExcInternalError());
 
 
   Teuchos::RCP<VectorType> w_rcp =  Teuchos::rcp (new VectorType);
-  rol::VectorAdaptor<VectorType> w_rol (w_rcp);
+  Rol::VectorAdaptor<VectorType> w_rol (w_rcp);
 
   // --- Testing VectorAdaptor::set()
   {
@@ -43,7 +38,7 @@ void test (const VectorType &given_vector)
     AssertThrow (u == *w_rol.getVector(), ExcInternalError());
   }
 
-  deallog << "OK" << std::endl << std::endl;
+  deallog << "OK" << std::endl;
 }
 
 
