@@ -2,10 +2,13 @@
 #ifndef __dealii_qc_tests_h
 #define __dealii_qc_tests_h
 
+#include <algorithm>
 #include <limits>
 #include <type_traits>
-#include <algorithm>
+#include <fstream>
 
+#include <deal.II/base/mpi.h>
+#include <deal.II/base/logstream.h>
 
 
 namespace Testing
@@ -70,6 +73,78 @@ namespace Testing
     k=(k+1)%32;
     return (unsigned int)ret >> 1;
   }
+
+
+
+  /**
+   * A class to write output of MPI processes into separate files and
+   * then write the content of the files into a single ostream object.
+   */
+  class SequentialFileStream
+  {
+  public:
+
+    /**
+     * Constructor takes an MPI_Communicator object.
+     */
+    SequentialFileStream (const MPI_Comm &mpi_communicator)
+      :
+      mpi_communicator(mpi_communicator),
+      this_process(dealii::Utilities::MPI::this_mpi_process (mpi_communicator)),
+      n_processes(dealii::Utilities::MPI::n_mpi_processes (mpi_communicator))
+    {
+      std::string deallogname = "output" + dealii::Utilities::int_to_string(this_process);
+      logfile.open (deallogname);
+      dealii::deallog.attach(logfile, /*do not print job id*/ false);
+      dealii::deallog.depth_console(0);
+    }
+
+
+
+    /**
+     * Destructor.
+     */
+    ~SequentialFileStream ()
+    {
+      logfile.close();
+      MPI_Barrier(mpi_communicator);
+
+      if (this_process==0)
+        for (unsigned int p=0; p<n_processes; ++p)
+          {
+            std::string deallogname = "output" + dealii::Utilities::int_to_string(p);
+            std::ifstream f(deallogname);
+            std::string line;
+            while (std::getline(f, line))
+              std::cout << p << ":" << line << std::endl;
+          }
+    }
+
+  private:
+
+    /**
+     * MPI_Comm object that determines which processes are involved
+     * in (current) communication.
+     */
+    const MPI_Comm mpi_communicator;
+
+    /**
+     * Current process.
+     */
+    const unsigned int this_process;
+
+    /**
+     * Total number of processes in #mpi_communicator.
+     */
+    const unsigned int n_processes;
+
+    /**
+     * File stream object to store output of each process.
+     */
+    std::ofstream logfile;
+
+  };
+
 
 } // namespace Testing
 

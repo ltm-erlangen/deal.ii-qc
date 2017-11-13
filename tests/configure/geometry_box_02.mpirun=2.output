@@ -1,6 +1,6 @@
 Triangulation without artificial cells:
-Process: 0       Number of artificial cells: 0
-Process: 1       Number of artificial cells: 0
+0:DEAL::Number of artificial cells: 0
+1:DEAL::Number of artificial cells: 0
 Triangulation with artificial cells:
-Process: 0       Number of artificial cells: 16
-Process: 1       Number of artificial cells: 16
+0:DEAL::Number of artificial cells: 16
+1:DEAL::Number of artificial cells: 16

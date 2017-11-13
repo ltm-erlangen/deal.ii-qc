@@ -1,3 +1,6 @@
+
+#include "../tests.h"
+
 #include <iostream>
 #include <sstream>
 
@@ -19,14 +22,15 @@ void test (const MPI_Comm    &mpi_communicator,
            const bool         with_artificial_cells)
 {
   const unsigned int
-  n_mpi_processes  = dealii::Utilities::MPI::n_mpi_processes(mpi_communicator),
   this_mpi_process = dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
 
   if (this_mpi_process==0)
-    if (with_artificial_cells)
-      std::cout << "Triangulation with artificial cells:" << std::endl;
-    else
-      std::cout << "Triangulation without artificial cells:" << std::endl;
+    {
+      if (with_artificial_cells)
+        std::cout << "Triangulation with artificial cells:" << std::endl;
+      else
+        std::cout << "Triangulation without artificial cells:" << std::endl;
+    }
 
   dealiiqc::parallel::shared::Triangulation<dim>
   tria (mpi_communicator,
@@ -44,17 +48,14 @@ void test (const MPI_Comm    &mpi_communicator,
 
   MPI_Barrier(mpi_communicator);
 
-  for (unsigned int p = 0; p < n_mpi_processes; ++p)
-    {
-      if (p == this_mpi_process)
-        std::cout << "Process: "
-                  << this_mpi_process
-                  << "\t Number of artificial cells: "
-                  << n_artificial_cells
-                  << std::endl;
-      MPI_Barrier(mpi_communicator);
-    }
+  Testing::SequentialFileStream sequiential_output (mpi_communicator);
 
+  deallog << "Number of artificial cells: "
+          << n_artificial_cells
+          << std::endl;
+
+  // Destructor called automatically.
+  // sequiential_output.~SequentialFileStream();
 }
 
 
