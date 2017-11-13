@@ -18,6 +18,7 @@
 #include <deal.II/fe/fe_values.h>
 #include <deal.II/fe/mapping_q1.h>
 
+#include <deal.II/optimization/rol/vector_adaptor.h>
 #include <deal.II/lac/generic_linear_algebra.h>
 #include <deal.II/numerics/data_out.h>
 #include <deal.II/numerics/vector_tools.h>
@@ -36,8 +37,7 @@ namespace LA
 #include <deal.II-qc/grid/shared_tria.h>
 #include <deal.II-qc/potentials/potential_field_function_parser.h>
 
-#include <deal.II-qc/adaptors/rol_vector_adaptor.h>
-#ifdef DEAL_II_WITH_TRILINOS
+#if defined(DEAL_II_WITH_TRILINOS) && defined(DEAL_II_TRILINOS_WITH_ROL)
 # include <ROL_Objective.hpp>
 #endif
 
@@ -157,20 +157,20 @@ public:
    */
   void run (const bool relaxed_configuration_as_reference=true);
 
-#ifdef DEAL_II_WITH_TRILINOS
+#if defined(DEAL_II_WITH_TRILINOS) && defined(DEAL_II_TRILINOS_WITH_ROL)
   /**
    * Class for defining ROL library compliant objective function using the
    * current QC object.
    *
    * After QC::distributed_displacement is prepared with locally owned
-   * DoF indices, it can be used to prepare an rol::VectorAdaptor of
+   * DoF indices, it can be used to prepare an Rol::VectorAdaptor of
    * VectorType QC::vector_t.
    *
    * The following code illustrates how ROL library can be used.
    *
    * @code
    *   Teuchos::RCP<vector_t> x_rcp = Teuchos::rcp (&distributed_displacement);
-   *   rol::VectorAdaptor<vector_t> x(x_rcp);
+   *   Rol::VectorAdaptor<vector_t> x(x_rcp);
    * @endcode
    *
    * The parameter list for choosing a particular minimization scheme can be
@@ -222,14 +222,14 @@ public:
     get_rcp_to_vector (const ROL::Vector<double> &x)
     {
       return
-        Teuchos::dyn_cast<const rol::VectorAdaptor<vector_t> >(x).getVector();
+        Teuchos::dyn_cast<const Rol::VectorAdaptor<vector_t> >(x).getVector();
     }
 
     Teuchos::RCP<vector_t>
     get_rcp_to_vector (ROL::Vector<double> &x)
     {
       return
-        Teuchos::dyn_cast<rol::VectorAdaptor<vector_t> >(x).getVector();
+        Teuchos::dyn_cast<Rol::VectorAdaptor<vector_t> >(x).getVector();
     }
 
     double value (const ROL::Vector<double> &/* x */,
