@@ -1,9 +1,5 @@
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
-
-#include <deal.II/base/conditional_ostream.h>
+#include "../tests.h"
 
 #include <deal.II-qc/atom/parse_atom_data.h>
 
@@ -14,9 +10,6 @@ using namespace dealiiqc;
 template <int dim>
 void test_parse(const MPI_Comm &mpi_communicator, std::istream &is)
 {
-  unsigned int n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_communicator)),
-           this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_communicator));
-
   // In this test, molecules are mono-atomic.
   std::vector<Molecule<dim,1>> atoms;
   std::vector<dealiiqc::types::charge> charges;
@@ -26,35 +19,18 @@ void test_parse(const MPI_Comm &mpi_communicator, std::istream &is)
 
   parsing_object.parse(is, atoms, charges, masses);
 
-  for (unsigned int p = 0; p < n_mpi_processes; ++p)
-    {
-      MPI_Barrier(mpi_communicator);
+  Testing::SequentialFileStream write_sequentially(mpi_communicator);
 
-      if (p==this_mpi_process)
-        {
-          // Check that the number of atoms, charges and masses parsed and added
-          // are same each time we run this test.
-          std::cout << "This is process: " << p << std::endl
+  // Check that the number of atoms, charges and masses parsed and added
+  // are same each time we run this test.
 
-                    << "The number of atoms parsed: " << atoms.size()
-                    << std::endl
-
-                    << "The number of different charged atom types parsed: "
-                    << charges.size()
-                    << std::endl
-
-                    << "The number of different atom types parsed: "
-                    << masses.size()
-                    << std::endl;
-
-
-          // For this particular test case all different atom types are charged.
-          AssertThrow (charges.size()==masses.size(),
-                       ExcInternalError());
-        }
-
-      MPI_Barrier(mpi_communicator);
-    }
+  deallog << "Atoms parsed: "
+          << atoms.size()
+          << ". Charged atom types: "
+          << charges.size()
+          << ". Total atom types: "
+          << masses.size()
+          << std::endl;
 
 }
 

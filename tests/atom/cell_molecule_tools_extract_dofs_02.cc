@@ -1,5 +1,6 @@
 
-#include <iostream>
+#include "../tests.h"
+
 #include <sstream>
 
 #include <deal.II/dofs/dof_tools.h>
@@ -77,25 +78,12 @@ public:
     IndexSet locally_relevant_set;
     DoFTools::extract_locally_relevant_dofs (dof_handler, locally_relevant_set);
 
-    unsigned int
-    n_mpi_processes = dealii::Utilities::MPI::n_mpi_processes(mpi_communicator),
-    this_mpi_process = dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
+    Testing::SequentialFileStream write_sequentially(mpi_communicator);
 
-
-    for (unsigned int p = 0; p < n_mpi_processes; p++)
-      {
-        MPI_Barrier(mpi_communicator);
-        if (p == this_mpi_process)
-          {
-            std::cout << "Process "
-                      << p
-                      << " has "
-                      << locally_relevant_set.n_elements()
-                      << " locally relevant dofs."
-                      << std::endl;
-          }
-        MPI_Barrier(mpi_communicator);
-      }
+    deallog << " has "
+            << locally_relevant_set.n_elements()
+            << " locally relevant dofs."
+            << std::endl;
 
 #ifdef WRITE_GRID
     std::ofstream g("tria.vtk");
