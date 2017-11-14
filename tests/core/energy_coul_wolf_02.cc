@@ -1,7 +1,5 @@
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
+#include "../tests.h"
 
 #include <deal.II-qc/core/qc.h>
 
@@ -58,26 +56,20 @@ Problem<dim, PotentialType>::Problem (const ConfigureQC &config)
 template <int dim, typename PotentialType>
 void Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
 {
-
-  unsigned int n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(QC<dim, PotentialType>::mpi_communicator)),
-           this_mpi_process(dealii::Utilities::MPI::this_mpi_process(QC<dim, PotentialType>::mpi_communicator));
-
   QC<dim, PotentialType>::setup_cell_energy_molecules();
   QC<dim, PotentialType>::setup_system();
   QC<dim, PotentialType>::setup_fe_values_objects();
   QC<dim, PotentialType>::update_neighbor_lists();
 
-  for (unsigned int p = 0; p < n_mpi_processes; p++)
-    {
-      MPI_Barrier(QC<dim, PotentialType>::mpi_communicator);
-      if (p == this_mpi_process)
-        std::cout << "Process: " << p
-                  << " picked up : "
-                  << QC<dim, PotentialType>::cell_molecule_data.cell_energy_molecules.size()
-                  << " number of energy atoms."
-                  << std::endl;
-      MPI_Barrier(QC<dim, PotentialType>::mpi_communicator);
-    }
+  MPI_Barrier(QC<dim, PotentialType>::mpi_communicator);
+
+  Testing::SequentialFileStream
+  write_sequentially(QC<dim, PotentialType>::mpi_communicator);
+
+  deallog << "picked up: "
+          << QC<dim, PotentialType>::cell_molecule_data.cell_energy_molecules.size()
+          << " number of energy atoms."
+          << std::endl;
 
   const double energy =
     QC<dim, PotentialType>::template
@@ -96,30 +88,20 @@ void Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
       << total_n_neighbors
       << std::endl;
 
-  for (unsigned int p = 0; p < n_mpi_processes; p++)
-    {
-      MPI_Barrier(QC<dim, PotentialType>::mpi_communicator);
-      if (p == this_mpi_process)
-        {
-          for ( auto entry : QC<dim, PotentialType>::neighbor_lists)
-            std::cout << "Atom I: "
-                      << entry.second.first->second.atoms[0].global_index
-                      << " Cluster weight: "
-                      << entry.second.first->second.cluster_weight << " "
-
-                      << "Atom J: "
-                      << entry.second.second->second.atoms[0].global_index
-                      << " Cluster weight: "
-                      << entry.second.second->second.cluster_weight << std::endl;
-        }
-      MPI_Barrier(QC<dim, PotentialType>::mpi_communicator);
-    }
-
   MPI_Barrier(QC<dim, PotentialType>::mpi_communicator);
+
+  for (const auto &entry : QC<dim, PotentialType>::neighbor_lists)
+    deallog << "   Atom I: "
+            << entry.second.first->second.atoms[0].global_index
+            << " Cluster weight: "
+            << entry.second.first->second.cluster_weight
+            << " : Atom J: "
+            << entry.second.second->second.atoms[0].global_index
+            << " Cluster weight: "
+            << entry.second.second->second.cluster_weight << std::endl;
 
   AssertThrow (std::fabs(energy-blessed_energy) < 100 * std::numeric_limits<double>::epsilon(),
                ExcInternalError());
-
 }
 
 
