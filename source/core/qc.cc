@@ -1097,7 +1097,11 @@ void QC<dim, PotentialType, atomicity>::minimize_energy (const double time)
 
 // Instantiations
 #define SINGLE_QC_INSTANTIATION(_DIM, _POTENTIAL, _ATOMICITY) \
-  template class QC<_DIM, _POTENTIAL, _ATOMICITY>;
+  template class QC<_DIM, _POTENTIAL, _ATOMICITY>; \
+  template double QC<_DIM, _POTENTIAL, _ATOMICITY>::compute<true>(dealii::TrilinosWrappers::MPI::BlockVector&) const; \
+  template double QC<_DIM, _POTENTIAL, _ATOMICITY>::compute<false>(dealii::TrilinosWrappers::MPI::BlockVector&) const; \
+  template double QC<_DIM, _POTENTIAL, _ATOMICITY>::compute_local<true>(dealii::TrilinosWrappers::MPI::BlockVector&) const; \
+  template double QC<_DIM, _POTENTIAL, _ATOMICITY>::compute_local<false>(dealii::TrilinosWrappers::MPI::BlockVector&) const;
 
 #define QC_INSTANTIATIONS(R, X)  \
   SINGLE_QC_INSTANTIATION(BOOST_PP_TUPLE_ELEM(2, 0, X), Potential::PairLJCutManager,    BOOST_PP_TUPLE_ELEM(2, 1, X)) \
