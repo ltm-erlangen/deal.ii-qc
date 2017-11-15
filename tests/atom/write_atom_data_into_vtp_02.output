@@ -7,18 +7,16 @@
 <Piece NumberOfPoints="7" >
   <Points>
     <DataArray type="Float64" NumberOfComponents="3" format="binary">
-AQAAAKgAAACoAAAAGwAAAA==eNpjYAADBwastAQOcVzyEiTqkyDaPADdJwYZ
-    </DataArray>
+</DataArray>
   </Points>
 
   <PointData Scalars="Atom_Attributes">
     <DataArray type="Float64" Name= "Cluster_Weights" format="binary">
-AQAAADgAAAA4AAAADAAAAA==eNpjYCAPAAAAOAAB
-    </DataArray>
+</DataArray>
     <DataArray type="Float64" Name= "Molecule_ID" format="binary">
-AQAAADgAAAA4AAAAHAAAAA==eNpjYEAGH+yhDAcIJQClOaC0CJSWcAAAShcCtA==
-    </DataArray>
+</DataArray>
   </PointData>
  </Piece>
  </PolyData>
 </VTKFile>
+

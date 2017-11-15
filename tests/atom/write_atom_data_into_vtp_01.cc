@@ -1,3 +1,6 @@
+
+#include "../tests.h"
+
 #include <iostream>
 #include <sstream>
 
@@ -74,8 +77,9 @@ public:
   void write_output()
   {
 
-    unsigned int n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_communicator)),
-             this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_communicator));
+    const unsigned int
+    n_mpi_processes  = dealii::Utilities::MPI::n_mpi_processes(mpi_communicator),
+    this_mpi_process = dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
 
     dealii::DataOutBase::VtkFlags flags( std::numeric_limits<double>::min(),
                                          std::numeric_limits<unsigned int>::min(),
@@ -83,8 +87,47 @@ public:
 
     DataOutAtomData atom_data_out;
 
+    {
+      std::stringstream ss, ss_without_binary;
+      atom_data_out.write_vtp<3> (cell_molecule_data.cell_energy_molecules,
+                                  flags,
+                                  ss);
+
+      // Remove binary content in-between <DataArray> </DataArray>.
+      Testing::filter_out_xml_key(ss, "DataArray", ss_without_binary);
+
+      // Generating "output" file for testing without using deallog.
+      {
+        const std::string
+        output_file_name = "output" +
+                            dealii::Utilities::int_to_string(this_mpi_process);
+        std::ofstream output_file;
+        output_file.open (output_file_name, std::ofstream::trunc);
+        output_file << ss_without_binary.rdbuf()
+                    << std::endl;
+
+        MPI_Barrier(mpi_communicator);
+
+        if (this_mpi_process==0)
+          for (unsigned int p=0; p<n_mpi_processes; ++p)
+            {
+              const std::string file_name = "output" + dealii::Utilities::int_to_string(p);
+              std::ifstream f(file_name);
+              std::string line;
+              while (std::getline(f, line))
+                std::cout << line << std::endl;
+            }
+      }
+    }
+
+    MPI_Barrier(mpi_communicator);
+
 #ifdef WRITE_ATOM_DATA
-    std::string vtp_file_name = "atoms-" + dealii::Utilities::int_to_string(this_mpi_process,3) + ".vtp";
+    // Write individual vtp files.
+    const std::string
+    vtp_file_name = "atoms-" +
+                    dealii::Utilities::int_to_string(this_mpi_process,3) +
+                    ".vtp";
 
     std::ofstream vtp_file;
     vtp_file.open (vtp_file_name.c_str(), std::ofstream::out | std::ofstream::trunc);
@@ -92,15 +135,21 @@ public:
     atom_data_out.write_vtp<3> (cell_molecule_data.cell_energy_molecules,
                                 flags,
                                 vtp_file);
+
     vtp_file.close();
-    if ( this_mpi_process == 0 )
+
+    // Write pvtp master file.
+    if (this_mpi_process == 0)
       {
         std::vector<std::string> vtp_file_names;
         for (unsigned int i=0; i<n_mpi_processes; ++i)
-          vtp_file_names.push_back ("atoms-" + dealii::Utilities::int_to_string(i,3) + ".vtp");
+          vtp_file_names.push_back ("atoms-" +
+                                    dealii::Utilities::int_to_string(i,3) +
+                                    ".vtp");
+
         std::ofstream pvtp_file;
         pvtp_file.open("atoms-.pvtp", std::ofstream::out | std::ofstream::trunc);
-        atom_data_out.write_pvtp_record( vtp_file_names, flags, pvtp_file );
+        atom_data_out.write_pvtp_record (vtp_file_names, flags, pvtp_file);
         pvtp_file.close();
 
         GridOut gridout;
@@ -108,23 +157,14 @@ public:
         gridout.write_vtk(triangulation, f);
       }
 #endif
-
-    for (unsigned int p = 0; p < n_mpi_processes; p++)
-      {
-        MPI_Barrier(mpi_communicator);
-        if (p == this_mpi_process)
-          atom_data_out.write_vtp<3> (cell_molecule_data.cell_energy_molecules,
-                                      flags,
-                                      std::cout);
-      }
   }
 
 private:
-  const ConfigureQC &config;
-  dealiiqc::parallel::shared::Triangulation<dim> triangulation;
-  DoFHandler<dim>      dof_handler;
-  MPI_Comm mpi_communicator;
-  CellMoleculeData<dim> cell_molecule_data;
+  const ConfigureQC                              &config;
+  dealiiqc::parallel::shared::Triangulation<dim>  triangulation;
+  DoFHandler<dim>                                 dof_handler;
+  const MPI_Comm                                  mpi_communicator;
+  CellMoleculeData<dim>                           cell_molecule_data;
 
 };
 
