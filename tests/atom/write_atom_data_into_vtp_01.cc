@@ -88,26 +88,27 @@ public:
     DataOutAtomData atom_data_out;
 
     {
-      std::stringstream ss, ss_without_binary;
+      std::stringstream ss;
       atom_data_out.write_vtp<3> (cell_molecule_data.cell_energy_molecules,
                                   flags,
                                   ss);
 
+      const std::string
+      output_file_name = "output" +
+                          dealii::Utilities::int_to_string(this_mpi_process);
+
+      std::ofstream output_file;
+      output_file.open(output_file_name, std::ofstream::trunc);
+
       // Remove binary content in-between <DataArray> </DataArray>.
-      Testing::filter_out_xml_key(ss, "DataArray", ss_without_binary);
+      Testing::filter_out_xml_key(ss, "DataArray", output_file);
+
+      output_file << std::endl;
+
+      MPI_Barrier(mpi_communicator);
 
       // Generating "output" file for testing without using deallog.
       {
-        const std::string
-        output_file_name = "output" +
-                            dealii::Utilities::int_to_string(this_mpi_process);
-        std::ofstream output_file;
-        output_file.open (output_file_name, std::ofstream::trunc);
-        output_file << ss_without_binary.rdbuf()
-                    << std::endl;
-
-        MPI_Barrier(mpi_communicator);
-
         if (this_mpi_process==0)
           for (unsigned int p=0; p<n_mpi_processes; ++p)
             {
