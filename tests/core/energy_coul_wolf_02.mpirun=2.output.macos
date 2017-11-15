@@ -1,0 +1,5 @@
+The energy computed using PairCoulWolfManager of 2 charged atom system is: -1.76337 eV.
+Total number of neighbors 1
+0:DEAL::picked up: 2 number of energy atoms.
+0:DEAL::   Atom I: 1 Cluster weight: 1.00000 : Atom J: 0 Cluster weight: 1.00000
+1:DEAL::picked up: 2 number of energy atoms.
