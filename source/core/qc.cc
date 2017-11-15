@@ -31,7 +31,7 @@ QC<dim, PotentialType, atomicity>::~QC ()
 template <int dim, typename PotentialType, int atomicity>
 QC<dim, PotentialType, atomicity>::QC (const ConfigureQC &config)
   :
-#ifdef DEAL_II_WITH_TRILINOS
+#ifdef DEAL_II_TRILINOS_WITH_ROL
   qc_objective(*this),
 #endif
   mpi_communicator(MPI_COMM_WORLD),
