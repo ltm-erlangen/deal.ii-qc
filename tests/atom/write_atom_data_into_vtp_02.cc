@@ -84,7 +84,7 @@ public:
 
       const std::string
       output_file_name = "output" +
-                          dealii::Utilities::int_to_string(this_mpi_process);
+                         dealii::Utilities::int_to_string(this_mpi_process);
 
       std::ofstream output_file;
       output_file.open(output_file_name, std::ofstream::trunc);
