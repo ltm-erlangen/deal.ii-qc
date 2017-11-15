@@ -636,13 +636,6 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
 
 
 
-template
-std::shared_ptr<const Geometry::Base<1>> ConfigureQC::get_geometry() const;
-template
-std::shared_ptr<const Geometry::Base<2>> ConfigureQC::get_geometry() const;
-template
-std::shared_ptr<const Geometry::Base<3>> ConfigureQC::get_geometry() const;
-
 #define SINGLE_CONFIGURE_QC_INSTANTIATION(DIM, ATOMICITY, SPACEDIM) \
   template                                                          \
   std::shared_ptr<Cluster::WeightsByBase<DIM, ATOMICITY, SPACEDIM>> \
