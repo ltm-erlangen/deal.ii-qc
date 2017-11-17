@@ -192,16 +192,16 @@ The hanging nodes constrains are accounted only at the local contribution to the
 
 {\color{red}TODO}: discuss parallelization via MPI + TBB within locally owned cells. Also discuss why distributed triangulation can't be used and why each MPI core needs to know the whole geometry.
 
-\subsection{A multi-field approach for ionic crystals}
+\subsection{A multi-field approach for multi-lattice crystals}
 
-Consider an atomistic system consisting of a single type of molecules.
+Consider a multi-lattice atomistic system consisting of a single molecule type.
 Let $\bsf X_I$ be the location of molecule $I \in \mcl M$ in the initial 
 configuration, where $\mcl M$ is the index set of all the molecules in the 
 atomistic system. $\bsf X_I$ can be the center of mass or center of geometry of 
 the molecule $I$ or any other convention to identify the location of 
 the molecule $I$ in the initial configuration of the atomistic system. Let the 
-atoms of a molecule of the ionic compound be enumerated or stamped as $i \in 
-\mcl A$. The cardinality of the set $\mcl A$ is the atomicity of the molecule. 
+atoms in each molecule be enumerated or stamped as $\mcl A := {0, \ldots}$. The
+cardinality of the set $\mcl A$ is the atomicity of the molecule.
 For example, in the case of O$_2$ molecule the set $\mcl A := \left\lbrace 0,1 
 \right\rbrace$. The initial position of the atom stamped $i$ of the molecule 
 $I$ is
@@ -220,12 +220,12 @@ expressed as
  \bsf x_I^i = \bsf X_I^i + \gz u^i(\bsf X_I),
  \label{eq:current_atom_pos}
 \end{align}
-where $x_I^i$ is its current position and $\gz u^i( \gz x)$ is the unknown
+where $\bsf x_I^i$ is its current position and $\gz u^i( \gz X)$ is the unknown
 displacement field of atoms that are stamped as $i$,
 \begin{align}
- \gz u^i (\gz x) = \sum_{d \, \in \, \mcl D} u^i_d \,\, \gz N_d (\gz x),
+ \gz u^i (\gz X) = \sum_{d \, \in \, \mcl D} u^i_d \,\, \gz N_d (\gz X),
 \end{align}
-where $\gz N_d (\gz x)$ are vector-valued shape functions and $\mcl D$ is the 
+where $\gz N_d (\gz X)$ are vector-valued shape functions and $\mcl D$ is the 
 set of all degrees of freedom enumerated at the mesh nodes, one set for each 
 atom stamp.
 Note that in \refeq{current_atom_pos} we evaluate the displacement fields at 
