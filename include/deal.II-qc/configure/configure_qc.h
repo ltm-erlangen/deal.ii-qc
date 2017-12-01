@@ -159,6 +159,11 @@ public:
   std::string get_atom_data_file() const;
 
   /**
+   * Get the number of different atom types in the atomistic system.
+   */
+  types::atom_type get_n_atom_types () const;
+
+  /**
    * Get input stream
    */
   std::shared_ptr<std::istream> get_stream() const;
@@ -289,7 +294,12 @@ private:
   /**
    * Path to the atom data file.
    */
-  std::string atom_data_file;
+  std::string                           atom_data_file;
+
+  /**
+   * The number of different atom types in the atomistic system.
+   */
+  types::atom_type                      n_atom_types;
 
   /**
    * Shared pointer to the input stream passed in to the

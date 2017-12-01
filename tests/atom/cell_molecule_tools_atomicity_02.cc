@@ -138,6 +138,7 @@ int main (int argc, char **argv)
       std::ostringstream oss;
       oss << "set Dimension = 2"                              << std::endl
           << "subsection Configure atoms"                     << std::endl
+          << "  set Number of atom types = 2"                 << std::endl
           << "  set Maximum cutoff radius = 1.1"              << std::endl
           << "end"                                            << std::endl
           << "subsection Configure QC"                        << std::endl
