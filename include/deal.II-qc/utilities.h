@@ -307,7 +307,7 @@ namespace Utilities
   /**
    * Return the range of atom types on parsing a given string
    * @p numeric_string that consists a possible wildcard asterisk and the
-   * maximum number of atom types @p max_atom_types. There are only five
+   * total number of atom types @p n_atom_types. There are only five
    * possible ways to describe a range of atom types using @p numeric_string:
    * a) "i"   to describe the range [i, i+1)
    * b) "*"   to describe the range [0, @p max_atom_types)
@@ -318,53 +318,7 @@ namespace Utilities
   inline
   std::pair<types::atom_type, types::atom_type>
   atom_type_range (const std::string      &numeric_string,
-                   const types::atom_type  max_atom_types)
-  {
-    const std::string
-    numeric_string_trimmed = dealii::Utilities::trim (numeric_string);
-
-    const std::size_t string_size  = numeric_string_trimmed.size();
-
-    AssertThrow (string_size > 0, ExcEmptyObject());
-
-    types::atom_type minimum = 0;
-    types::atom_type maximum = max_atom_types-1;
-
-    const bool
-    found_asterisk = (numeric_string_trimmed.find('*')!=std::string::npos);
-
-    // Handle simple number case and simple asterisk case directly.
-    if (!found_asterisk)
-      {
-        minimum = dealii::Utilities::string_to_int(numeric_string_trimmed);
-        return std::make_pair(minimum, minimum);
-      }
-    else if (found_asterisk && string_size==1)
-      // If the input string is single asterisk return the full range.
-      return std::make_pair(minimum, maximum);
-
-    const std::vector<std::string>
-    s = dealii::Utilities::split_string_list(numeric_string_trimmed, '*');
-
-    Assert (s.size()<=2,
-            ExcMessage("Invalid atom type range specified."));
-
-    if (s.size()==1)
-      minimum = dealii::Utilities::string_to_int(s[0]);
-    else if (s.size()==2)
-      {
-        if (!s[0].empty())
-          minimum = dealii::Utilities::string_to_int(s[0]);
-
-        if (!s[1].empty())
-          maximum = dealii::Utilities::string_to_int(s[1]);
-      }
-
-    Assert (minimum < max_atom_types && maximum < max_atom_types,
-            ExcMessage("Invalid atom type range specified."));
-
-    return std::make_pair(minimum, maximum);
-  }
+                   const types::atom_type  n_atom_types);
 
 } // Utilities
 
