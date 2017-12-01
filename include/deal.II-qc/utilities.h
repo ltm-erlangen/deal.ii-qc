@@ -315,7 +315,6 @@ namespace Utilities
    * d) "*i"  to describe the range [0, i+1)
    * e) "i*j" to describe the range [i, j+1)
    */
-  inline
   std::pair<types::atom_type, types::atom_type>
   atom_type_range (const std::string      &numeric_string,
                    const types::atom_type  n_atom_types);

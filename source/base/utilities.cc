@@ -7,6 +7,8 @@ DEAL_II_QC_NAMESPACE_OPEN
 
 namespace Utilities
 {
+  using namespace dealii;
+
 
   std::pair<types::atom_type, types::atom_type>
   atom_type_range (const std::string      &numeric_string,
