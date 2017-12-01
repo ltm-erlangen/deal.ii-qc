@@ -223,6 +223,9 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
                       Patterns::Anything(),
                       "Name of the atom data file "
                       "that is compatible with LAMMPS");
+    prm.declare_entry("Number of atom types", "1",
+                      Patterns::Integer(1, 256),
+                      "The number of atom types in the atomistic system.");
     prm.declare_entry("Maximum cutoff radius", "5.9",
                       Patterns::Double(0),
                       "Maximum of all the cutoff radii "
@@ -255,8 +258,17 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
                                      std::numeric_limits<unsigned int>::max(),
                                      ";"),
                       "Additional coefficients for a pair of atoms of "
-                      "certain types. Depending on the specific pair "
-                      "potential type this input may not be necessary. "
+                      "certain types. The wildcard asterisk can be used to "
+                      "indicate more than one atom type, for instance "
+                      "a) interacting pair 1*2, 1*4 indicate that atom types "
+                      "   1 and 2 interact with atom types 1, 2, 3 and 4;"
+                      "b) interacting pair *, * indicate that all atom types "
+                      "   interact with every other atom type."
+                      "c) interacting pair *3, 2 indicate that atom types"
+                      "   0, 1, 2, and 3 interact with atom type 2. "
+                      "---"
+                      "Depending on the specific pair potential type this "
+                      "input may not be necessary. "
                       "---"
                       "For the pair potential type: Coulomb Wolf, the pair "
                       "specific coefficients are not necessary."
@@ -466,6 +478,7 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
   prm.enter_subsection("Configure atoms");
   {
     atom_data_file = prm.get("Atom data file");
+    n_atom_types   = dealii::Utilities::string_to_int(prm.get("Number of atom types"));
     maximum_cutoff_radius = prm.get_double("Maximum cutoff radius");
 
     pair_potential_type = prm.get("Pair potential type");
@@ -520,20 +533,26 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
                                     "provided the first element being "
                                     "epsilon and second being r_m as "));
 
-            const types::atom_type
-            i = dealii::Utilities::string_to_int(specific_coeffs[0]),
-            j = dealii::Utilities::string_to_int(specific_coeffs[1]);
+            const std::pair<types::atom_type, types::atom_type>
+            range_i = dealiiqc::Utilities::atom_type_range (specific_coeffs[0],
+                                                            n_atom_types);
+
+            const std::pair<types::atom_type, types::atom_type>
+            range_j = dealiiqc::Utilities::atom_type_range (specific_coeffs[1],
+                                                            n_atom_types);
 
             std::vector<double> coeffs(2);
             coeffs[0] = dealii::Utilities::string_to_double(specific_coeffs[2]);
             coeffs[1] = dealii::Utilities::string_to_double(specific_coeffs[3]);
 
-            (std::static_pointer_cast<Potential::PairLJCutManager>
-             (pair_potential))->
-            declare_interactions (i,
-                                  j,
-                                  Potential::InteractionTypes::LJ,
-                                  coeffs);
+            for (types::atom_type i = range_i.first; i <= range_i.second; ++i)
+              for (types::atom_type j = range_j.first; j <= range_j.second; ++j)
+                (std::static_pointer_cast<Potential::PairLJCutManager>
+                 (pair_potential))->
+                declare_interactions (i,
+                                      j,
+                                      Potential::InteractionTypes::LJ,
+                                      coeffs);
           }
       }
     else

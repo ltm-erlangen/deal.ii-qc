@@ -304,6 +304,21 @@ namespace Utilities
 
 
 
+  /**
+   * Return the range of atom types on parsing a given string
+   * @p numeric_string that consists a possible wildcard asterisk and the
+   * total number of atom types @p n_atom_types. There are only five
+   * possible ways to describe a range of atom types using @p numeric_string:
+   * a) "i"   to describe the range [i, i+1)
+   * b) "*"   to describe the range [0, @p max_atom_types)
+   * c) "i*"  to describe the range [i, @p max_atom_types)
+   * d) "*i"  to describe the range [0, i+1)
+   * e) "i*j" to describe the range [i, j+1)
+   */
+  std::pair<types::atom_type, types::atom_type>
+  atom_type_range (const std::string      &numeric_string,
+                   const types::atom_type  n_atom_types);
+
 } // Utilities
 
 

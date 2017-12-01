@@ -150,6 +150,7 @@ int main (int argc, char *argv[])
           << "end"                                            << std::endl
 
           << "subsection Configure atoms"                     << std::endl
+          << "  set Number of atom types = 2"                 << std::endl
           << "  set Maximum cutoff radius = 6"                << std::endl
           << "  set Pair potential type = LJ"                 << std::endl
           << "  set Pair global coefficients = 2.01 "         << std::endl
