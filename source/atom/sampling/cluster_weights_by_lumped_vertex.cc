@@ -188,6 +188,7 @@ namespace Cluster
                            "yields a different result than "
                            "incrementing the iterator to cell_energy_molecules."
                            "Why wasn't this error thrown earlier?"));
+        (void)cell_molecules_range_end;
 
         Assert (points.size() == weights_per_molecule.size(),
                 ExcDimensionMismatch(points.size(), weights_per_molecule.size()));
