@@ -70,6 +70,13 @@
 
 
 
+/**
+ * Macro to suppress unused variable warnings.
+ */
+#define DEAL_II_QC_UNUSED_VARIABLE(X) ((void)(X))
+
+
+
 /***************************************************************************
  * Two macro names that we put at the top and bottom of all deal.II-qc files
  * and that will be expanded to "namespace dealiiqc {" and "}".
