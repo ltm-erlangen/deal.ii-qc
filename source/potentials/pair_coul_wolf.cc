@@ -31,15 +31,21 @@ namespace Potential
                                              InteractionTypes interaction,
                                              const std::vector<double> &parameters)
   {
-    Assert( interaction==InteractionTypes::Coul_Wolf,
+    Assert (interaction==InteractionTypes::Coul_Wolf,
             ExcMessage("Invalid InteractionTypes specified"));
 
-    Assert( i_atom_type < charges->size() && j_atom_type < charges->size(),
+    Assert (i_atom_type < charges->size() && j_atom_type < charges->size(),
             ExcMessage("Either the list of charges is initialized incorrectly"
                        "Or atom type argument passed is incorrect"));
 
-    Assert( parameters.size() == 0,
+    Assert (parameters.size() == 0,
             ExcMessage("This class does not accept any parameters."));
+
+    // Suppress unused variable warnings.
+    DEAL_II_QC_UNUSED_VARIABLE(i_atom_type);
+    DEAL_II_QC_UNUSED_VARIABLE(j_atom_type);
+    DEAL_II_QC_UNUSED_VARIABLE(interaction);
+    DEAL_II_QC_UNUSED_VARIABLE(parameters);
   }
 
 } // namespace Potential

@@ -41,6 +41,8 @@ namespace Potential
     lj_parameters.insert (std::make_pair (get_pair (i_atom_type,
                                                     j_atom_type),
                                           params) );
+
+    DEAL_II_QC_UNUSED_VARIABLE(interaction);
   }
 
 
