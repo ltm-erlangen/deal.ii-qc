@@ -17,11 +17,13 @@ namespace parallel
     template <int dim, int spacedim>
     Triangulation<dim,spacedim>::Triangulation (MPI_Comm mpi_communicator,
                                                 const typename dealii::Triangulation<dim,spacedim>::MeshSmoothing smooth_grid,
-                                                const double ghost_cell_layer_thickness)
+                                                const double ghost_cell_layer_thickness,
+                                                const Settings settings)
       :
       dealii::parallel::shared::Triangulation<dim,spacedim> (mpi_communicator,
                                                              smooth_grid,
-                                                             ghost_cell_layer_thickness >= 0.),
+                                                             ghost_cell_layer_thickness >= 0.,
+                                                             settings),
       ghost_cell_layer_thickness(ghost_cell_layer_thickness)
     {}
 

@@ -31,6 +31,8 @@ namespace parallel
     {
     public:
 
+      typedef typename dealii::parallel::shared::Triangulation<dim, spacedim>::Settings Settings;
+
       /**
        * Constructor.
        *
@@ -45,7 +47,8 @@ namespace parallel
       Triangulation (MPI_Comm mpi_communicator,
                      const typename dealii::Triangulation<dim,spacedim>::MeshSmoothing =
                        (dealii::Triangulation<dim,spacedim>::none),
-                     const double ghost_cell_layer_thickness = -1.);
+                     const double ghost_cell_layer_thickness = -1.,
+                     const Settings settings = Settings::partition_metis);
 
       // TODO: Need to rework for large deformations?
       /**
