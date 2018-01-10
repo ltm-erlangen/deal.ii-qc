@@ -4,7 +4,7 @@
 -->
 <VTKFile type="PolyData" version="0.1" compressor="vtkZLibDataCompressor" byte_order="LittleEndian">
  <PolyData>
-<Piece NumberOfPoints="1466" >
+<Piece NumberOfPoints="1668" >
   <Points>
     <DataArray type="Float64" NumberOfComponents="3" format="binary">
 </DataArray>
@@ -26,7 +26,7 @@
 -->
 <VTKFile type="PolyData" version="0.1" compressor="vtkZLibDataCompressor" byte_order="LittleEndian">
  <PolyData>
-<Piece NumberOfPoints="1436" >
+<Piece NumberOfPoints="1396" >
   <Points>
     <DataArray type="Float64" NumberOfComponents="3" format="binary">
 </DataArray>
@@ -48,7 +48,7 @@
 -->
 <VTKFile type="PolyData" version="0.1" compressor="vtkZLibDataCompressor" byte_order="LittleEndian">
  <PolyData>
-<Piece NumberOfPoints="1194" >
+<Piece NumberOfPoints="1032" >
   <Points>
     <DataArray type="Float64" NumberOfComponents="3" format="binary">
 </DataArray>
