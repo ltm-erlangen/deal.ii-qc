@@ -27,6 +27,7 @@ SET(TARGET_SRC
   source/atom/sampling/cluster_weights_by_cell.cc
   source/atom/sampling/cluster_weights_by_lumped_vertex.cc
   source/atom/sampling/cluster_weights_by_sampling_points.cc
+  source/base/quadrature_lib.cc
   source/base/utilities.cc
   source/configure/configure_qc.cc
   source/configure/geometry/geometry_base.cc
@@ -178,6 +179,7 @@ SET (TEST_TIME_LIMIT 900)
 ADD_SUBDIRECTORY(tests/rol_adaptor)
 ADD_SUBDIRECTORY(tests/atom)
 ADD_SUBDIRECTORY(tests/atom/sampling)
+ADD_SUBDIRECTORY(tests/base)
 ADD_SUBDIRECTORY(tests/configure)
 ADD_SUBDIRECTORY(tests/core)
 ADD_SUBDIRECTORY(tests/potentials)
