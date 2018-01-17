@@ -26,6 +26,12 @@ namespace Cluster
   (const Triangulation<dim, spacedim>                               &triangulation,
    const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const
   {
+    const unsigned int n_sampling_points =
+      WeightsByBase<dim, atomicity, spacedim>::n_sampling_points();
+
+    AssertThrow (n_sampling_points == triangulation.n_vertices(),
+                 ExcNotImplemented());
+
     // Prepare energy molecules in this container.
     types::CellMoleculeContainerType<dim, atomicity, spacedim>
     cell_energy_molecules;

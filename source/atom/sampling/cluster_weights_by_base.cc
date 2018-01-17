@@ -1,7 +1,11 @@
 
+#include <algorithm>
+
 #include <deal.II-qc/atom/sampling/cluster_weights_by_base.h>
 #include <deal.II-qc/atom/cell_molecule_tools.h>
+#include <deal.II-qc/base/quadrature_lib.h>
 
+#include <deal.II/base/types.h>
 #include <deal.II/dofs/dof_tools.h>
 #include <deal.II/lac/generic_linear_algebra.h>
 
@@ -19,8 +23,7 @@ namespace Cluster
                  const double &maximum_cutoff_radius)
     :
     cluster_radius(cluster_radius),
-    maximum_cutoff_radius(maximum_cutoff_radius),
-    tria_ptr(NULL)
+    maximum_cutoff_radius(maximum_cutoff_radius)
   {}
 
 
@@ -37,17 +40,18 @@ namespace Cluster
   initialize (const Triangulation<dim, spacedim> &triangulation,
               const Quadrature<dim>              &quadrature)
   {
-    AssertThrow (dynamic_cast<const QTrapez<dim> *> (&quadrature) != NULL,
+    const bool trapez_with_midpoint =
+      dynamic_cast<const QTrapezWithMidpoint<dim> *> (&quadrature) != NULL;
+
+    // Assert that the presented quadrature is either:
+    // QTrapez or QTrapezWithMidpoint.
+    AssertThrow (dynamic_cast<const QTrapez<dim> *> (&quadrature) != NULL ||
+                 trapez_with_midpoint,
                  ExcNotImplemented());
 
-    // TODO: Generalize sampling points by adding more sampling points.
-    //       Using quadrature get sampling points from cells.
-    //       Adjust the following code to work with
-    //       generalized sampling points.
-    //       But for now:
-
-    // Initialize tria_ptr data member.
-    tria_ptr = &triangulation;
+    sampling_points = triangulation.get_vertices();
+    quadrature_type_list = std::vector<bool>(triangulation.n_vertices(),
+                                             false);
 
     // Initialize cells_to_sampling_indices.
     for (types::CellIteratorType<dim, spacedim>
@@ -91,6 +95,15 @@ namespace Cluster
                 }
           }
 
+        if (trapez_with_midpoint)
+          {
+            // Q1 mapping would also map the center of the cell to be
+            // the average of the locations of the vertices.
+            sampling_points.push_back(cell->center());
+            quadrature_type_list.push_back(true);
+            this_cell_sampling_indices_set.insert(sampling_points.size()-1);
+          }
+
         std::vector<unsigned int>
         this_cell_sampling_indices (this_cell_sampling_indices_set.size());
 
@@ -103,7 +116,7 @@ namespace Cluster
 
     locally_relevant_sampling_indices.clear();
 
-    locally_relevant_sampling_indices.set_size(this->n_sampling_points());
+    locally_relevant_sampling_indices.set_size(sampling_points.size());
 
     // Initialize locally relevant sampling indices.
     for (const auto &entry : cells_to_sampling_indices)
