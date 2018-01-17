@@ -236,9 +236,39 @@ namespace CellMoleculeTools
         if ( !atom_associated_to_cell )
           n_thrown_molecules++;
       }
-
+#if DEBUG
     Assert (cell_molecules.size()+n_thrown_molecules==vector_molecules.size(),
             ExcInternalError());
+
+    types::global_molecule_index n_molecules_imported = 0;
+
+    for (types::CellIteratorType<dim, spacedim>
+         cell = mesh.begin_active();
+         cell != mesh.end(); ++cell)
+      if (cell->is_locally_owned())
+        n_molecules_imported += molecules_range_in_cell<dim, atomicity, spacedim>
+                                (cell, cell_molecules).second;
+
+    const parallel::Triangulation<dim, spacedim> *const pmesh =
+      dynamic_cast<const parallel::Triangulation<dim, spacedim> *>
+      (&mesh);
+
+    // Get a consistent MPI_Comm.
+    const MPI_Comm &mpi_communicator = pmesh != nullptr
+                                       ?
+                                       pmesh->get_communicator()
+                                       :
+                                       MPI_COMM_SELF;
+
+    n_molecules_imported =
+      dealii::Utilities::MPI::sum(n_molecules_imported, mpi_communicator);
+
+    Assert (n_molecules_imported==vector_molecules.size(),
+            ExcMessage("Some of the molecules are not associated with any cell "
+                       "of the given Triangulation. It is possible that these "
+                       "molecules are located outside the given "
+                       "Triangulation!"));
+#endif
 
     return cell_molecule_data;
   }

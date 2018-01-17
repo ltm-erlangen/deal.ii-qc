@@ -10,10 +10,9 @@ using namespace dealiiqc;
 
 
 
-// Compute the mass of the atomistic system of 10 atoms using
+// Compute the mass of the atomistic system of 2 atoms using
 // sampling points clustering approach (WeightsBySamplingPoints).
-// Only 2 atoms are inside the triangulation and are stored in cel molecules
-// the mass of the system should be 2.
+// The mass of the system should be 2.
 
 
 
@@ -99,19 +98,11 @@ int main (int argc, char *argv[])
           << "end"                                            << std::endl
           << "#end-of-parameter-section" << std::endl
           << "LAMMPS Description"        << std::endl         << std::endl
-          << "10 atoms"                  << std::endl         << std::endl
+          << "2 atoms"                   << std::endl         << std::endl
           << "1  atom types"             << std::endl         << std::endl
           << "Atoms #"                   << std::endl         << std::endl
           << "1 1 1 1.0 2. 2. 2."        << std::endl
-          << "2 2 1 1.0 6. 2. 2."        << std::endl
-          << "3 3 1 1.0 2. 6. 2."        << std::endl
-          << "4 4 1 1.0 2. 2. 6."        << std::endl
-          << "5 5 1 1.0 6. 6. 2."        << std::endl
-          << "6 6 1 1.0 6. 2. 6."        << std::endl
-          << "7 7 1 1.0 2. 6. 6."        << std::endl
-          << "8 8 1 1.0 6. 6. 6."        << std::endl
-          << "9 9 1 1.0 7. 7. 7.9"       << std::endl
-          << "10 10 1 1.0 1. 1. 0.1"     << std::endl;
+          << "2 2 1 1.0 1. 1. 0.1"       << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());
