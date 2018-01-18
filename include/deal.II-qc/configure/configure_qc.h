@@ -16,6 +16,7 @@
 #include <deal.II-qc/atom/sampling/cluster_weights_by_cell.h>
 #include <deal.II-qc/atom/sampling/cluster_weights_by_lumped_vertex.h>
 #include <deal.II-qc/atom/sampling/cluster_weights_by_sampling_points.h>
+#include <deal.II-qc/atom/sampling/weights_by_optimal_summation_rules.h>
 #include <deal.II-qc/configure/geometry/geometry_box.h>
 #include <deal.II-qc/configure/geometry/geometry_gmsh.h>
 #include <deal.II-qc/potentials/pair_coul_wolf.h>
@@ -384,6 +385,11 @@ protected:
    * The cluster radius used in QC.
    */
   double cluster_radius;
+
+  /**
+   * Representative distance of (vertex-type) sampling points.
+   */
+  double rep_distance;
 
   /**
    * The type of method to update cluster weights.

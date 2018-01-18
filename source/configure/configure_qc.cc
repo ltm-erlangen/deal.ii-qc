@@ -111,6 +111,11 @@ ConfigureQC::get_cluster_weights() const
       std::make_shared<Cluster::WeightsBySamplingPoints<dim, atomicity, spacedim>>
       (cluster_radius, maximum_cutoff_radius);
 
+  else if (cluster_weights_type == "OptimalSummationRules")
+    return
+      std::make_shared<Cluster::WeightsByOptimalSummationRules<dim, atomicity, spacedim>>
+      (cluster_radius, maximum_cutoff_radius, rep_distance);
+
   else
     AssertThrow (false, ExcInternalError());
 
@@ -294,10 +299,16 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
                       "Cluster radius used in "
                       "QC simulation");
     prm.declare_entry("Cluster weights by type", "Cell",
-                      Patterns::Selection("Cell|LumpedVertex|SamplingPoints"),
+                      Patterns::Selection("Cell|LumpedVertex|SamplingPoints|"
+                                          "OptimalSummationRules"),
                       "Select the way how cluster "
                       "weights are computed for "
                       "cluster atoms.");
+    prm.declare_entry("Representative distance", "1.0",
+                      Patterns::Double(0),
+                      "Representative distance of vertex-type "
+                      "sampling points used only in the case when "
+                      "the weights are set by OptimalSummationRules.");
   }
   prm.leave_subsection ();
 
@@ -574,6 +585,7 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
 
     cluster_radius = prm.get_double( "Cluster radius");
     cluster_weights_type = prm.get("Cluster weights by type");
+    rep_distance = prm.get("Representative distance");
   }
   prm.leave_subsection();
 
