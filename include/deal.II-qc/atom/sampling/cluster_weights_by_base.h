@@ -5,6 +5,9 @@
 #include <deal.II-qc/atom/cell_molecule_data.h>
 
 #include <deal.II/base/quadrature_lib.h>
+#include <deal.II/dofs/dof_handler.h>
+#include <deal.II/grid/tria.h>
+#include <deal.II/lac/constraint_matrix.h>
 
 
 DEAL_II_QC_NAMESPACE_OPEN
@@ -48,7 +51,7 @@ namespace Cluster
     virtual ~WeightsByBase();
 
     /**
-     * Initialize #locally_relevant_sampling_indices and
+     * Initialize #sampling_points, #locally_relevant_sampling_points and
      * #cells_to_sampling_indices data members using @p triangulation and
      * @p quadrature.
      */
@@ -64,7 +67,7 @@ namespace Cluster
     get_sampling_point (const unsigned int sampling_index) const;
 
     /**
-     * Return the number of sampling points.
+     * Return the total number of sampling points.
      */
     inline
     unsigned int
@@ -83,6 +86,14 @@ namespace Cluster
     inline
     std::vector<Point<spacedim> >
     get_sampling_points (const types::CellIteratorType<dim, spacedim> &cell) const;
+
+    /**
+     * Return whether a sampling point with @p sampling_index is a
+     * quadrature-type sampling point.
+     */
+    inline
+    bool
+    is_quadrature_type (const unsigned int sampling_index) const;
 
     /**
      * Return energy molecules (in a cell based data structure) with
@@ -150,12 +161,19 @@ namespace Cluster
 
   private:
 
-    // TODO: Remove this member when the chosen Quadrature<> is other than
-    //       QTrapez<>.
     /**
-     * A const pointer to a const Triangulation.
+     * A container to hold all the sampling points.
+     *
+     * @note If the class is initialized with QTrapez, then this container
+     * doesn't contain any additional quadrature-type sampling points.
+     * Otherwise, it contains additional quadrature-type sampling points.
      */
-    const Triangulation<dim, spacedim> *tria_ptr;
+    std::vector<Point<spacedim>> sampling_points;
+
+    /**
+     * Mask to identify which sampling points are quadrature-type.
+     */
+    std::vector<bool> quadrature_type_list;
 
     /**
      * Map from cells to their corresponding sampling points' indices.
@@ -179,16 +197,16 @@ namespace Cluster
   WeightsByBase<dim, atomicity, spacedim>::
   get_sampling_point (const unsigned int sampling_index) const
   {
-    Assert (sampling_index < tria_ptr->get_vertices().size(),
+    Assert (sampling_index < sampling_points.size(),
             ExcMessage("Invalid sampling index."));
+
     Assert (locally_relevant_sampling_indices.is_element(sampling_index),
             ExcMessage("Invalid sampling index. This function was called "
                        "with a sampling index that is not locally relevant."
                        "In other words, the given sampling index is not "
                        "associated to any of the locally relevant cells."));
 
-    // TODO: Change when chosen Quadrature<> is other than QTrapez<>.
-    return tria_ptr->get_vertices()[sampling_index];
+    return sampling_points[sampling_index];
   }
 
 
@@ -198,8 +216,7 @@ namespace Cluster
   WeightsByBase<dim, atomicity, spacedim>::
   n_sampling_points () const
   {
-    // TODO: Change when chosen Quadrature<> is other than QTrapez<>.
-    return tria_ptr->get_vertices().size();
+    return sampling_points.size();
   }
 
 
@@ -228,12 +245,21 @@ namespace Cluster
 
     this_cell_sampling_points.reserve(this_cell_sampling_indices.size());
 
-    // TODO: remove get_sampling_point.
     // Prepare sampling points of this cell.
     for (const auto &sampling_index : this_cell_sampling_indices)
       this_cell_sampling_points.push_back(this->get_sampling_point(sampling_index));
 
     return this_cell_sampling_points;
+  }
+
+
+
+  template <int dim, int atomicity, int spacedim>
+  bool
+  WeightsByBase<dim, atomicity, spacedim>::
+  is_quadrature_type (const unsigned int sampling_index) const
+  {
+    return quadrature_type_list[sampling_index];
   }
 
 #endif /* DOXYGEN */
