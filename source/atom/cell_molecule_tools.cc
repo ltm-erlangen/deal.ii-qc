@@ -274,6 +274,46 @@ namespace CellMoleculeTools
   }
 
 
+
+  template<int dim, int atomicity=1, int spacedim=dim>
+  double
+  compute_molecule_density
+  (const Triangulation<dim, spacedim>                               &triangulation,
+   const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules)
+  {
+    double tria_volume = 0.;
+    types::global_molecule_index n_molecules = 0;
+
+    const parallel::Triangulation<dim, spacedim> *const pmesh =
+      dynamic_cast<const parallel::Triangulation<dim, spacedim> *>
+      (&triangulation);
+
+    // Get a consistent MPI_Comm.
+    const MPI_Comm &mpi_communicator = pmesh != nullptr
+                                       ?
+                                       pmesh->get_communicator()
+                                       :
+                                       MPI_COMM_SELF;
+
+    for (types::CellIteratorType<dim, spacedim>
+         cell = triangulation.begin_active();
+         cell != triangulation.end(); ++cell)
+      if (cell->is_locally_owned())
+        {
+          tria_volume += cell->measure();
+          n_molecules += CellMoleculeTools::
+                         molecules_range_in_cell<dim, atomicity, spacedim>
+                         (cell, cell_molecules).second;
+        }
+
+    tria_volume = dealii::Utilities::MPI::sum(tria_volume, mpi_communicator);
+    n_molecules = dealii::Utilities::MPI::sum(n_molecules, mpi_communicator);
+
+    return static_cast<double> (n_molecules) / tria_volume;
+  }
+
+
+
 #define SINGLE_CELL_MOLECULE_TOOLS_INSTANTIATION(DIM, ATOMICITY, SPACEDIM) \
   \
   template                                                                 \
@@ -292,6 +332,12 @@ namespace CellMoleculeTools
   CellMoleculeData<DIM, ATOMICITY, SPACEDIM>                             \
   build_cell_molecule_data (std::istream                       &,        \
                             const Triangulation<DIM, SPACEDIM> &);       \
+  \
+  template                                                               \
+  double                                                                 \
+  compute_molecule_density                                               \
+  (const Triangulation<DIM, SPACEDIM>                               &,   \
+   const types::CellMoleculeContainerType<DIM, ATOMICITY, SPACEDIM> &);  \
    
 #define CELL_MOLECULE_TOOLS(R, X)                                        \
   BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,                              \
