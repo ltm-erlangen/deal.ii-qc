@@ -27,55 +27,12 @@ namespace Cluster
 
 
 
-  namespace
-  {
-
-    /**
-     * Return the dim-dimensional volume of the hyper-ball segment, the region
-     * of the hyper-ball being cutoff by a hyper-plane that is @p d distance
-     * from the center of the hyper-ball of radius @p radius.
-     *
-     * @note The permissible range of @p d is [0, radius].
-     * When the value of @p d is 0 the volume of the half hyper-ball
-     * is returned.
-     */
-    template <int dim>
-    double hyperball_segment_volume (const double &radius, const double &d)
-    {
-      double volume;
-
-      // Height of the segment.
-      const double height = radius-d;
-
-      AssertThrow (0 <= height && height <= 2.*radius,
-                   ExcMessage("This function is called with invalid parameter: "
-                              "d, the distance from the center"
-                              "of the hyper-ball to the hyper-plane."
-                              "Allowed range of d is [0, radius]."));
-      if (dim==1)
-        volume = height;
-      else if (dim==2)
-        {
-          // Half of the angle inscribed at the center of the hyper-ball.
-          const double alpha = std::acos(d/radius);
-          volume = radius* (radius*alpha - d*std::sin(alpha));
-        }
-      else if (dim==3)
-        volume = dealii::numbers::PI * height * height * (3*radius - height)/3.;
-
-      return volume;
-    }
-
-  }
-
-
-
   // TODO: Implementation of second order sampling summation rules.
   // FIXME: Following assumptions are made:
   // 1. All cells are hyper-cubes. This assumption can be omitted later if
   //    the extent of cells in each direction is considered or distances between
   //    the vertex-type sampling points is considered.
-  // 2. Triangulation is always refined/prepared in a such that cells at
+  // 2. Triangulation is always refined/prepared in such a way that cells at
   //    with the finest level can be considered to be in fully atomistic region.
   //    This is primarily to identify fully atomistic region.
   //    If this is not assumed we need lattice constants of the atomistic system
@@ -98,7 +55,7 @@ namespace Cluster
     // 2*rep_distance for dim==1
     // pi*rep_distance^2 for dim==2
     // 4*pi*rep_distance^3/3 for dim==3
-    const double full_weight = 2. *
+    const double full_weight = 2. * dealiiqc::Utilities::
                                hyperball_segment_volume<dim>(rep_distance,
                                                              0);
 
@@ -117,10 +74,10 @@ namespace Cluster
          cell = triangulation.begin_active();
          cell != triangulation.end(); ++cell)
       {
-        std::vector<Point<spacedim> >
+        const std::vector<Point<spacedim> >
         this_cell_sampling_points = this->get_sampling_points(cell);
 
-        std::vector<unsigned int>
+        const std::vector<unsigned int>
         this_cell_sampling_indices = this->get_sampling_indices(cell);
 
         // If the cell is a finest cell of the triangulation (in the fully
@@ -143,15 +100,16 @@ namespace Cluster
       {
         const double half_cell_width = cell->extent_in_direction(0)/2.;
 
-        std::vector<Point<spacedim> >
+        const std::vector<Point<spacedim> >
         this_cell_sampling_points = this->get_sampling_points(cell);
 
-        std::vector<unsigned int>
+        const std::vector<unsigned int>
         this_cell_sampling_indices = this->get_sampling_indices(cell);
 
         // If the cell is in the coarse region, such that none of
         // the representative spheres of the (vertex-type) sampling points
-        // are not overlapping, set that the weights are assigned.
+        // are overlapping, set that the weights are assigned
+        // (to be full_weight).
         if (half_cell_width > rep_distance)
           {
             for (const auto &index : this_cell_sampling_indices)
@@ -171,7 +129,8 @@ namespace Cluster
             for (const auto &index : this_cell_sampling_indices)
               if (!weight_assigned[index] && !(this->is_quadrature_type(index)))
                 {
-                  weight[index] -= hyperball_segment_volume<dim>(rep_distance,
+                  weight[index] -= dealiiqc::Utilities::
+                                   hyperball_segment_volume<dim>(rep_distance,
                                                                  half_cell_width)
                                    /
                                    dealii::Utilities::fixed_power<dim>(2.);
@@ -182,8 +141,8 @@ namespace Cluster
                   // rely on suitable adjustment to the weight of the inner-element
                   // sampling point.
 
-                  // Also, in this loop we do not touch the weights of
-                  // sampling atoms that belong to cells in the finest and coarse
+                  // Here, we do not touch the weights of sampling atoms
+                  // that belong to cells in the finest and coarse
                   // regions of the atomistic system relying again on suitable
                   // adjustment to the weight of the inner-element
                   // sampling point.
@@ -202,10 +161,10 @@ namespace Cluster
         // FIXME: Assuming the cell is a hyper-cube get half of the side length.
         const double half_cell_width = cell->extent_in_direction(0)/2.;
 
-        std::vector<Point<spacedim> >
+        const std::vector<Point<spacedim> >
         this_cell_sampling_points = this->get_sampling_points(cell);
 
-        std::vector<unsigned int>
+        const std::vector<unsigned int>
         this_cell_sampling_indices = this->get_sampling_indices(cell);
 
         double vertex_weights_sum = 0.;
@@ -225,13 +184,15 @@ namespace Cluster
                   const double inner_weight = molecule_density*cell->measure()
                                               -
                                               vertex_weights_sum;
+                  // If inner_weight is positive, update the weight.
+                  // Otherwise leave the weight to be zero.
                   if (inner_weight > 0.)
                     weight[index] = inner_weight;
                 }
           }
       }
 
-    // Now that all the sampling points are assigned weights,
+    // Now that all the sampling points have weights assigned,
     // associate sampling points to sampling molecules.
 
     // Prepare energy molecules in this container.

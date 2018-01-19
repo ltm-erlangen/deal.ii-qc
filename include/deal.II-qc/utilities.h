@@ -326,6 +326,45 @@ namespace Utilities
   atom_type_range (const std::string      &numeric_string,
                    const types::atom_type  n_atom_types);
 
+
+
+  /**
+   * Return the dim-dimensional volume of the hyper-ball segment, the region
+   * of the hyper-ball being cutoff by a hyper-plane that is @p d distance
+   * from the center of the hyper-ball of radius @p radius.
+   *
+   * @note The permissible range of @p d is [0, radius].
+   * When the value of @p d is 0 the volume of the half hyper-ball
+   * is returned.
+   */
+  template <int dim>
+  inline
+  double hyperball_segment_volume (const double &radius, const double &d)
+  {
+    double volume;
+
+    // Height of the segment.
+    const double height = radius-d;
+
+    AssertThrow (0 <= height && height <= 2.*radius,
+                 ExcMessage("This function is called with invalid parameter: "
+                            "d, the distance from the center"
+                            "of the hyper-ball to the hyper-plane."
+                            "Allowed range of d is [0, radius]."));
+    if (dim==1)
+      volume = height;
+    else if (dim==2)
+      {
+        // Half of the angle inscribed at the center of the hyper-ball.
+        const double alpha = std::acos(d/radius);
+        volume = radius* (radius*alpha - d*std::sin(alpha));
+      }
+    else if (dim==3)
+      volume = dealii::numbers::PI * height * height * (3*radius - height)/3.;
+
+    return volume;
+  }
+
 } // Utilities
 
 
