@@ -71,6 +71,15 @@ namespace Cluster
 
 
   // TODO: Implementation of second order sampling summation rules.
+  // FIXME: Following assumptions are made:
+  // 1. All cells are hyper-cubes. This assumption can be omitted later if
+  //    the extent of cells in each direction is considered or distances between
+  //    the vertex-type sampling points is considered.
+  // 2. Triangulation is always refined/prepared in a such that cells at
+  //    with the finest level can be considered to be in fully atomistic region.
+  //    This is primarily to identify fully atomistic region.
+  //    If this is not assumed we need lattice constants of the atomistic system
+  //    to identify the fully atomistic region.
   template<int dim, int atomicity, int spacedim>
   types::CellMoleculeContainerType<dim, atomicity, spacedim>
   WeightsByOptimalSummationRules<dim, atomicity, spacedim>::
@@ -104,17 +113,10 @@ namespace Cluster
       if (this->is_quadrature_type(i))
         weight[i] = 0.;
 
-    // FIXME: Following assumptions are made:
-    // 1. All cells are hyper-cubes.
-    // 2. Triangulation is always refined such that at least one cell
-    //    is considered to be in fully atomistic region.
     for (types::CellIteratorType<dim, spacedim>
          cell = triangulation.begin_active();
          cell != triangulation.end(); ++cell)
       {
-        // FIXME: Assuming the cell is a hyper-cube get half of the side length.
-        const double half_cell_width = cell->extent_in_direction(0)/2.;
-
         std::vector<Point<spacedim> >
         this_cell_sampling_points = this->get_sampling_points(cell);
 
@@ -133,10 +135,24 @@ namespace Cluster
                   weight_assigned[index] = true;
                 }
           }
+      }
+
+    for (types::CellIteratorType<dim, spacedim>
+         cell = triangulation.begin_active();
+         cell != triangulation.end(); ++cell)
+      {
+        const double half_cell_width = cell->extent_in_direction(0)/2.;
+
+        std::vector<Point<spacedim> >
+        this_cell_sampling_points = this->get_sampling_points(cell);
+
+        std::vector<unsigned int>
+        this_cell_sampling_indices = this->get_sampling_indices(cell);
+
         // If the cell is in the coarse region, such that none of
         // the representative spheres of the (vertex-type) sampling points
         // are not overlapping, set that the weights are assigned.
-        else if (half_cell_width > rep_distance)
+        if (half_cell_width > rep_distance)
           {
             for (const auto &index : this_cell_sampling_indices)
               if (!weight_assigned[index] && !(this->is_quadrature_type(index)))
@@ -150,7 +166,7 @@ namespace Cluster
         // overlap, subtract the representative sphere overlap volume from
         // the full weights that were given to all sampling points except
         // inner-element type.
-        else
+        else if (cell->level() < n_levels-1)
           {
             for (const auto &index : this_cell_sampling_indices)
               if (!weight_assigned[index] && !(this->is_quadrature_type(index)))
@@ -215,7 +231,8 @@ namespace Cluster
           }
       }
 
-    // Associate sampling points to sampling molecules.
+    // Now that all the sampling points are assigned weights,
+    // associate sampling points to sampling molecules.
 
     // Prepare energy molecules in this container.
     types::CellMoleculeContainerType<dim, atomicity, spacedim>
@@ -225,7 +242,11 @@ namespace Cluster
     const double squared_energy_radius =
       dealii::Utilities::fixed_power<2>(this->maximum_cutoff_radius);
 
+    // FIXME: Choose a suitable distance within which sampling points are to
+    // find their sampling molecules.
     const double THICK_EPS = 1e-10;
+
+    // Mask to identify which sampling points found their sampling molecules.
     std::vector<bool>  sampling_molecule_found (n_sampling_points, false);
 
     types::CellIteratorType<dim, spacedim> unique_cell =
@@ -285,11 +306,14 @@ namespace Cluster
           }
       }
 
-#if DEBUG
-    // All the samplings points should be able to find a sampling atom unless
-    // they are of quadrature-type.
-
-#endif
+    // All the samplings points with non-zero weights should be able to find
+    // their sampling molecules close to them.
+    for (unsigned int i = 0; i < n_sampling_points; ++i)
+      if (weight[i]>0)
+        AssertThrow (sampling_molecule_found[i],
+                     ExcMessage("At least one of the sampling points with "
+                                "non-zero weight didn't find "
+                                "a sampling atom/molecule near it."));
 
     return cell_energy_molecules;
   }
