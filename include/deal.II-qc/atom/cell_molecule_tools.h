@@ -87,6 +87,16 @@ namespace CellMoleculeTools
   build_cell_molecule_data (std::istream                       &is,
                             const Triangulation<dim, spacedim> &mesh);
 
+  /**
+   * Return molecule number density, the ratio of the total number of molecules
+   * associated to the mesh and the volume of the mesh.
+   */
+  template<int dim, int atomicity=1, int spacedim=dim>
+  double
+  compute_molecule_density
+  (const Triangulation<dim, spacedim>                               &triangulation,
+   const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules);
+
 } // namespace CellMoleculeTools
 
 
