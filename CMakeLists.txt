@@ -27,6 +27,7 @@ SET(TARGET_SRC
   source/atom/sampling/cluster_weights_by_cell.cc
   source/atom/sampling/cluster_weights_by_lumped_vertex.cc
   source/atom/sampling/cluster_weights_by_sampling_points.cc
+  source/atom/sampling/weights_by_optimal_summation_rules.cc
   source/base/quadrature_lib.cc
   source/base/utilities.cc
   source/configure/configure_qc.cc
