@@ -585,7 +585,7 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
 
     cluster_radius = prm.get_double( "Cluster radius");
     cluster_weights_type = prm.get("Cluster weights by type");
-    rep_distance = prm.get("Representative distance");
+    rep_distance = prm.get_double("Representative distance");
   }
   prm.leave_subsection();
 

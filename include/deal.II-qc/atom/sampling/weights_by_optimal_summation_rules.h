@@ -5,6 +5,7 @@
 #include <deal.II-qc/atom/cell_molecule_data.h>
 
 #include <deal.II/base/quadrature_lib.h>
+#include <deal.II-qc/atom/sampling/cluster_weights_by_base.h>
 
 
 DEAL_II_QC_NAMESPACE_OPEN
@@ -53,8 +54,9 @@ namespace Cluster
    * by Amelang, Venturini and Kochmann.
    */
   template <int dim, int atomicity=1, int spacedim=dim>
-  class WeightsByOptimalSummationRules
+  class WeightsByOptimalSummationRules : public WeightsByBase<dim, atomicity, spacedim>
   {
+  public:
 
     // TODO: More documentation.
     /**
@@ -62,8 +64,7 @@ namespace Cluster
      */
     WeightsByOptimalSummationRules (const double &cluster_radius,
                                     const double &maximum_energy_radius,
-                                    const double &rep_distance,
-                                    const double &molecule_density=std::numeric_limits<double>::signaling_NaN());
+                                    const double &rep_distance);
 
     // TODO: More documentation & implementation.
     /**
@@ -103,12 +104,12 @@ namespace Cluster
     (const Triangulation<dim, spacedim>                               &triangulation,
      const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const;
 
-  private:
+  protected:
 
     /**
      * Representative distance of the vertex-type sampling atoms/molecules.
      */
-    const double rep_distance;
+    double rep_distance;
 
   };
 
