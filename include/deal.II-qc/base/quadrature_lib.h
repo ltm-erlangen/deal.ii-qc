@@ -16,11 +16,11 @@ DEAL_II_QC_NAMESPACE_OPEN
 template <int dim>
 class QTrapezWithMidpoint : public dealii::Quadrature<dim>
 {
-  public:
-    /**
-     * Constructor.
-     */
-    QTrapezWithMidpoint();
+public:
+  /**
+   * Constructor.
+   */
+  QTrapezWithMidpoint();
 };
 
 
