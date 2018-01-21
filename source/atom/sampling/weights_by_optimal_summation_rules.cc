@@ -59,7 +59,7 @@ namespace Cluster
                                hyperball_segment_volume<dim>(rep_distance,
                                                              0);
 
-    const unsigned int n_levels = triangulation.n_global_levels();
+    const int n_levels = triangulation.n_global_levels();
     std::vector<bool>  weight_assigned (n_sampling_points, false);
 
     // Initialize with a full weights for all the sampling points.
