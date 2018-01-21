@@ -106,79 +106,38 @@ QC<dim, PotentialType, atomicity>::run (const bool relaxed_configuration_as_refe
 
 
 
-namespace
-{
-  inline
-  std::string data_out_filename (const std::string                 &name,
-                                 const unsigned int                 timestep_no,
-                                 const dealii::types::subdomain_id  id,
-                                 const std::string                 &suffix)
-  {
-    return name +
-           dealii::Utilities::int_to_string(timestep_no,4) + "." +
-           dealii::Utilities::int_to_string(id,3) +
-           suffix;
-  }
-}
-
 template <int dim, typename PotentialType, int atomicity>
 void
 QC<dim, PotentialType, atomicity>::
 output_results (const double time,
                 const unsigned int timestep_no) const
 {
-  const std::string &solution_name  = "solution-";
   const std::string &atom_data_name = "atom_data-";
-
-  dealii::DataOutBase::VtkFlags flags (std::numeric_limits<double>::min(),
-                                       std::numeric_limits<unsigned int>::min(),
-                                       false);
-
-  std::vector<std::string> solution_names;
-
-  {
-    for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
-      {
-        const std::string name = "displacement_" +
-                                 dealii::Utilities::int_to_string(atom_stamp,2);
-        for (int d = 0; d < dim; ++d)
-          solution_names.push_back(name);
-      }
-  }
 
   std::vector<DataComponentInterpretation::DataComponentInterpretation>
   interpretation (atomicity*dim,
                   DataComponentInterpretation::component_is_part_of_vector);
 
-  DataOut<dim> data_out;
-  data_out.add_data_vector (dof_handler,
-                            locally_relevant_displacement,
-                            solution_names,
-                            interpretation);
-
-  std::vector<dealii::types::subdomain_id> partition_int (triangulation.n_active_cells());
-  GridTools::get_subdomain_association (triangulation, partition_int);
-
-  const Vector<float> partitioning (partition_int.begin(),
-                                    partition_int.end());
-  data_out.add_data_vector (partitioning, "partitioning");
-  data_out.build_patches ();
+  dealiiqc::Utilities::write_vector_out (locally_relevant_displacement,
+                                         dof_handler,
+                                         "solution-",
+                                         time,
+                                         timestep_no,
+                                         interpretation);
 
   AssertThrow (n_mpi_processes < 1000,
                ExcNotImplemented());
 
-  const std::string solution_filename  = data_out_filename (solution_name,
-                                                            timestep_no,
-                                                            this_mpi_process,
-                                                            ".vtu");
-  const std::string atom_data_filename = data_out_filename (atom_data_name,
-                                                            timestep_no,
-                                                            this_mpi_process,
-                                                            ".vtp");
-
-  std::ofstream solution_output (solution_filename.c_str());
+  const std::string atom_data_filename =
+    dealiiqc::Utilities::data_out_filename (atom_data_name,
+                                            timestep_no,
+                                            this_mpi_process,
+                                            ".vtp");
   std::ofstream atom_data_output(atom_data_filename.c_str());
-  data_out.write_vtu (solution_output);
+
+  dealii::DataOutBase::VtkFlags flags (std::numeric_limits<double>::min(),
+                                       std::numeric_limits<unsigned int>::min(),
+                                       false);
 
   DataOutAtomData atom_data_out;
   atom_data_out.write_vtp<dim> (cell_molecule_data.cell_energy_molecules,
@@ -187,52 +146,33 @@ output_results (const double time,
 
   if (this_mpi_process==0)
     {
-      std::vector<std::string> solution_filenames, atom_data_filenames;
+      std::vector<std::string> atom_data_filenames;
       for (unsigned int i=0; i<n_mpi_processes; ++i)
-        {
-          solution_filenames.push_back (data_out_filename (solution_name,
-                                                           timestep_no,
-                                                           i,
-                                                           ".vtu"));
-          atom_data_filenames.push_back(data_out_filename (atom_data_name,
-                                                           timestep_no,
-                                                           i,
-                                                           ".vtp"));
-        }
+        atom_data_filenames.push_back
+        (dealiiqc::Utilities::data_out_filename (atom_data_name,
+                                                 timestep_no,
+                                                 i,
+                                                 ".vtp"));
 
-      const std::string
-      visit_master_filename = (solution_name +
-                               dealii::Utilities::int_to_string(timestep_no,4) +
-                               ".visit");
-      std::ofstream visit_master (visit_master_filename.c_str());
-      DataOutBase::write_visit_record (visit_master, solution_filenames);
-
-      const std::string
-      pvtu_solution_master_filename  = (solution_name +
-                                        dealii::Utilities::int_to_string(timestep_no,4) +
-                                        ".pvtu");
       const std::string
       pvtp_atom_data_master_filename = (atom_data_name +
                                         dealii::Utilities::int_to_string(timestep_no,4) +
                                         ".pvtp");
 
-      std::ofstream pvtu_solution_master  (pvtu_solution_master_filename.c_str());
       std::ofstream pvtp_atom_data_master (pvtp_atom_data_master_filename.c_str());
 
-      data_out.write_pvtu_record (pvtu_solution_master, solution_filenames);
-      atom_data_out.write_pvtp_record (atom_data_filenames, flags, pvtp_atom_data_master);
+      atom_data_out.write_pvtp_record (atom_data_filenames,
+                                       flags,
+                                       pvtp_atom_data_master);
 
       static std::vector<std::pair<double, std::string> >
-      times_and_solution_names, times_and_atom_data_names;
+      times_and_atom_data_names;
 
-      times_and_solution_names.push_back (std::make_pair(time, pvtu_solution_master_filename.c_str()));
-      times_and_atom_data_names.push_back(std::make_pair(time, pvtp_atom_data_master_filename.c_str()));
-
-      std::ofstream pvd_solution_output  (solution_name  + ".pvd");
+      times_and_atom_data_names.push_back(std::make_pair(time,
+                                                         pvtp_atom_data_master_filename.c_str()));
       std::ofstream pvd_atom_data_output (atom_data_name + ".pvd");
-
-      DataOutBase::write_pvd_record (pvd_solution_output,  times_and_solution_names);
-      DataOutBase::write_pvd_record (pvd_atom_data_output, times_and_atom_data_names);
+      DataOutBase::write_pvd_record (pvd_atom_data_output,
+                                     times_and_atom_data_names);
     }
 }
 
