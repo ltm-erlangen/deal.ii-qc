@@ -2,16 +2,22 @@
 #ifndef __dealii_qc_utility_h
 #define __dealii_qc_utility_h
 
+#include <fstream>
+
 # include <boost/preprocessor/facilities/empty.hpp>
 # include <boost/preprocessor/list/at.hpp>
 # include <boost/preprocessor/list/for_each_product.hpp>
 # include <boost/preprocessor/tuple/elem.hpp>
 # include <boost/preprocessor/tuple/to_list.hpp>
 
+#include <deal.II/base/data_out_base.h>
 #include <deal.II/base/numbers.h>
+#include <deal.II/grid/grid_tools.h>
 #include <deal.II/grid/tria_iterator.h>
 #include <deal.II/grid/tria_accessor.h>
 #include <deal.II/dofs/dof_accessor.h>
+#include <deal.II/numerics/data_component_interpretation.h>
+#include <deal.II/numerics/data_out.h>
 
 
 
@@ -363,6 +369,125 @@ namespace Utilities
       volume = dealii::numbers::PI * height * height * (3*radius - height)/3.;
 
     return volume;
+  }
+
+
+  namespace
+  {
+    inline
+    std::string data_out_filename (const std::string                 &name,
+                                   const unsigned int                 timestep_no,
+                                   const dealii::types::subdomain_id  id,
+                                   const std::string                 &suffix)
+    {
+      return name +
+             dealii::Utilities::int_to_string(timestep_no,4) + "." +
+             dealii::Utilities::int_to_string(id,3) +
+             suffix;
+    }
+  }
+
+  /**
+   * Write out @p solution_vector at @p time time occurring at time step
+   * @p time_step into vtu and visit file formats, with filenames
+   * prefixed @p solution_base_name, for visualization given a @p dof_handler.
+   * The @p data_component_interpretation argument contains information about
+   * how the individual components of output files (or @p solution_vector) that
+   * consist of more than one data set are to be interpreted.
+   */
+  template <int dim, typename VectorType, int atomicity=1, int spacedim=dim>
+  void write_vector_out (const VectorType                &solution_vector,
+                         const DoFHandler<dim, spacedim> &dof_handler,
+                         const std::string               &solution_base_name,
+                         const double                     time,
+                         const unsigned int               timestep_no,
+                         const std::vector<DataComponentInterpretation::DataComponentInterpretation > &data_component_interpretation=std::vector<DataComponentInterpretation::DataComponentInterpretation>())
+  {
+    const Triangulation<dim, spacedim> &triangulation = dof_handler.get_triangulation ();
+    const parallel::Triangulation<dim, spacedim> *const ptria =
+      dynamic_cast<const parallel::Triangulation<dim, spacedim> *>
+      (&triangulation);
+
+    // Get a consistent MPI_Comm.
+    const MPI_Comm &mpi_communicator = ptria != nullptr
+                                       ?
+                                       ptria->get_communicator()
+                                       :
+                                       MPI_COMM_SELF;
+
+    const unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
+    const unsigned int n_mpi_processes  = dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
+
+    std::vector<std::string> solution_names;
+
+    {
+      for (int atom_stamp=0; atom_stamp<atomicity; ++atom_stamp)
+        {
+          const std::string name = solution_base_name +
+                                   dealii::Utilities::int_to_string(atom_stamp, 2);
+          for (int d=0; d<dim; ++d)
+            solution_names.push_back(name);
+        }
+    }
+
+    DataOut<dim> data_out;
+    data_out.add_data_vector (dof_handler,
+                              solution_vector,
+                              solution_names,
+                              data_component_interpretation);
+
+    std::vector<dealii::types::subdomain_id> partition_int (triangulation.n_active_cells());
+    GridTools::get_subdomain_association (triangulation, partition_int);
+
+    const Vector<float> partitioning (partition_int.begin(),
+                                      partition_int.end());
+    data_out.add_data_vector (partitioning, "partitioning");
+    data_out.build_patches ();
+
+    AssertThrow (n_mpi_processes < 1000,
+                 ExcNotImplemented());
+
+    const std::string solution_filename  = data_out_filename (solution_base_name,
+                                                              timestep_no,
+                                                              this_mpi_process,
+                                                              ".vtu");
+
+    std::ofstream solution_output (solution_filename.c_str());
+    data_out.write_vtu (solution_output);
+
+    if (this_mpi_process==0)
+      {
+        std::vector<std::string> solution_filenames, atom_data_filenames;
+        for (unsigned int i=0; i<n_mpi_processes; ++i)
+          solution_filenames.push_back (data_out_filename (solution_base_name,
+                                                           timestep_no,
+                                                           i,
+                                                           ".vtu"));
+
+        const std::string
+        visit_master_filename = (solution_base_name +
+                                 dealii::Utilities::int_to_string(timestep_no,4) +
+                                 ".visit");
+        std::ofstream visit_master (visit_master_filename.c_str());
+        DataOutBase::write_visit_record (visit_master, solution_filenames);
+
+        const std::string
+        pvtu_solution_master_filename = (solution_base_name +
+                                         dealii::Utilities::int_to_string(timestep_no,4) +
+                                         ".pvtu");
+        std::ofstream pvtu_solution_master  (pvtu_solution_master_filename.c_str());
+        data_out.write_pvtu_record (pvtu_solution_master,
+                                    solution_filenames);
+
+        static std::vector<std::pair<double, std::string> >
+        times_and_solution_names;
+
+        times_and_solution_names.push_back (std::make_pair(time,
+                                                           pvtu_solution_master_filename.c_str()));
+        std::ofstream pvd_solution_output  (solution_base_name  + ".pvd");
+        DataOutBase::write_pvd_record (pvd_solution_output,
+                                       times_and_solution_names);
+      }
   }
 
 } // Utilities

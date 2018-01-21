@@ -405,8 +405,8 @@ protected:
   void minimize_energy (const double time);
 
   /**
-   * Output displacement field at @p time time occurring at time step number
-   * @p timestep_no.
+   * Output displacement field and cell molecule data at @p time time occurring
+   * at time step number @p timestep_no.
    */
   void output_results (const double time,
                        const unsigned int timestep_no) const;
