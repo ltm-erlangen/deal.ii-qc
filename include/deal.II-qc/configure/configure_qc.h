@@ -187,6 +187,11 @@ public:
   double get_cluster_radius() const;
 
   /**
+   * Get representative distance.
+   */
+  double get_rep_distance() const;
+
+  /**
    * Get a shared pointer to the pair potential class object.
    */
   std::shared_ptr<Potential::PairBaseManager> get_potential() const;
