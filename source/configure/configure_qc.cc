@@ -80,6 +80,11 @@ double ConfigureQC::get_cluster_radius() const
   return cluster_radius;
 }
 
+double ConfigureQC::get_rep_distance() const
+{
+  return rep_distance;
+}
+
 std::shared_ptr<Potential::PairBaseManager>
 ConfigureQC::get_potential() const
 {
