@@ -92,6 +92,11 @@ ConfigureQC::get_potential() const
   return pair_potential;
 }
 
+std::string ConfigureQC::get_quadrature_rule () const
+{
+  return quadrature_rule;
+}
+
 template<int dim, int atomicity, int spacedim>
 std::shared_ptr<Cluster::WeightsByBase<dim, atomicity, spacedim> >
 ConfigureQC::get_cluster_weights() const
@@ -303,6 +308,10 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
                       Patterns::Double(0),
                       "Cluster radius used in "
                       "QC simulation");
+    prm.declare_entry("Quadrature rule", "QTrapez",
+                      Patterns::Selection("QTrapez|QTrapezWithMidpoint"),
+                      "The type of quadrature rule for identifying sampling "
+                      "points of a finite element.");
     prm.declare_entry("Cluster weights by type", "Cell",
                       Patterns::Selection("Cell|LumpedVertex|SamplingPoints|"
                                           "OptimalSummationRules"),
@@ -589,7 +598,19 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
                        "equal to the Maximum cutoff radius."));
 
     cluster_radius = prm.get_double( "Cluster radius");
+    quadrature_rule = prm.get("Quadrature rule");
     cluster_weights_type = prm.get("Cluster weights by type");
+
+    // For now allow the use of QTrapezWithMidpoint only for
+    // OptimalSummationRules.
+    if (cluster_weights_type=="OptimalSummationRules")
+      AssertThrow (quadrature_rule=="QTrapezWithMidpoint",
+                   ExcMessage("Invalid quadrature rule or"
+                              "cluster weights method provided."))
+    else
+      AssertThrow (quadrature_rule=="QTrapez",
+                   ExcNotImplemented())
+
     rep_distance = prm.get_double("Representative distance");
   }
   prm.leave_subsection();
