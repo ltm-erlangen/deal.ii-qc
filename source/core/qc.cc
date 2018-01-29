@@ -112,7 +112,7 @@ QC<dim, PotentialType, atomicity>::
 output_results (const double time,
                 const unsigned int timestep_no) const
 {
-  const std::string &atom_data_name = "atom_data-";
+  const std::string &atom_data_name = "atom_data_";
 
   std::vector<DataComponentInterpretation::DataComponentInterpretation>
   interpretation (atomicity*dim,
@@ -120,7 +120,7 @@ output_results (const double time,
 
   dealiiqc::Utilities::write_vector_out (locally_relevant_displacement,
                                          dof_handler,
-                                         "solution-",
+                                         "solution_",
                                          time,
                                          timestep_no,
                                          interpretation);
