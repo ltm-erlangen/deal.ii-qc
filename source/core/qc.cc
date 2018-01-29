@@ -10,6 +10,7 @@
 
 #include <deal.II-qc/atom/cell_molecule_tools.h>
 #include <deal.II-qc/atom/data_out_atom_data.h>
+#include <deal.II-qc/base/quadrature_lib.h>
 #include <deal.II-qc/core/compute_tools.h>
 #include <deal.II-qc/core/qc.h>
 
@@ -277,9 +278,15 @@ void QC<dim, PotentialType, atomicity>::setup_cell_energy_molecules()
 
   cluster_weights_method = configure_qc.get_cluster_weights<dim, atomicity, spacedim>();
 
-  //TODO: Get Quadrature from ConfigureQC.
-  cluster_weights_method->initialize (triangulation,
-                                      QTrapez<dim>());
+  // Get Quadrature from ConfigureQC.
+  if (configure_qc.get_quadrature_rule() == "QTrapezWithMidpoint")
+    cluster_weights_method->initialize (triangulation,
+                                        QTrapezWithMidpoint<dim>());
+  else if (configure_qc.get_quadrature_rule() == "QTrapez")
+    cluster_weights_method->initialize (triangulation,
+                                        QTrapez<dim>());
+  else
+    AssertThrow (false, ExcNotImplemented());
 
   cell_molecule_data.cell_energy_molecules =
     cluster_weights_method->
@@ -483,10 +490,13 @@ void QC<dim, PotentialType, atomicity>::setup_system ()
                            true);
 
   // Compute inverse masses based on cluster weights.
-  cluster_weights_method->compute_dof_inverse_masses (inverse_masses,
-                                                      cell_molecule_data,
-                                                      dof_handler,
-                                                      hanging_node_constraints);
+  // FIXME: Skip preparation if OptimalSummationRules is used.
+  if (std::dynamic_pointer_cast<Cluster::WeightsByOptimalSummationRules<dim> >
+      (cluster_weights_method) == NULL)
+    cluster_weights_method->compute_dof_inverse_masses (inverse_masses,
+                                                        cell_molecule_data,
+                                                        dof_handler,
+                                                        hanging_node_constraints);
   inverse_mass_matrix.reinit (inverse_masses);
 
   cells_to_data.clear();

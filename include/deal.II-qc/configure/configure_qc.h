@@ -197,6 +197,11 @@ public:
   std::shared_ptr<Potential::PairBaseManager> get_potential() const;
 
   /**
+   * Get quadrature rule.
+   */
+  std::string get_quadrature_rule () const;
+
+  /**
    * Create and return a shared pointer to the derived class object of
    * WeightsByBase.
    */
@@ -395,6 +400,11 @@ protected:
    * Representative distance of (vertex-type) sampling points.
    */
   double rep_distance;
+
+  /**
+   * Quadrature rule to identify sampling points for each finite element.
+   */
+  std::string quadrature_rule;
 
   /**
    * The type of method to update cluster weights.
