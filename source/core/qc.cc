@@ -791,8 +791,21 @@ double QC<dim, PotentialType, atomicity>::compute_local (vector_t &gradient) con
       // we can directly use the scaling above without the need to find out
       // whether or not one of the two molecules do not belong to any cluster.
 
+      // For OptimalSummationRules, if molecule_J is not a sampling molecule
+      // then E_{IJ} is scaled by just n_I (the sampling weight of molecule_I).
+
+      const bool optimal_summation_rule_used =
+        std::dynamic_pointer_cast
+        <Cluster::WeightsByOptimalSummationRules<dim, atomicity, spacedim> >
+        (cluster_weights_method) != NULL;
+
       // Compute scaling of energy due to cluster weights.
-      const double scale_energy = 0.5 * (molecule_I.cluster_weight +
+      const double scale_energy = (optimal_summation_rule_used &&
+                                   molecule_J.cluster_weight==0)
+                                  ?
+                                  molecule_I.cluster_weight
+                                  :
+                                  0.5 * (molecule_I.cluster_weight +
                                          molecule_J.cluster_weight );
 
       // Assert that the scaling factor of energy, due to clustering, is
