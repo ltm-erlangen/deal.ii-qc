@@ -101,6 +101,7 @@ int main (int argc, char **argv)
           << "subsection Configure QC"                        << std::endl
           << "  set Ghost cell layer thickness = 9.01"        << std::endl
           << "  set Cluster radius = 0"                       << std::endl
+          << "  set Quadrature rule = QTrapezWithMidpoint"    << std::endl
           << "  set Cluster weights by type = OptimalSummationRules" << std::endl
           << "end"                                            << std::endl
           << "#end-of-parameter-section" << std::endl
