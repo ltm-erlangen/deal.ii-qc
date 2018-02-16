@@ -18,6 +18,7 @@ namespace Potential
     :
     alpha(alpha),
     cutoff_radius(cutoff_radius),
+    cutoff_radius_squared(cutoff_radius*cutoff_radius),
     energy_shift(std::erfc(alpha *cutoff_radius)/cutoff_radius),
     cutoff_radius_inverse(1./cutoff_radius),
     compound_exp_value(std::exp(-alpha *alpha *cutoff_radius *cutoff_radius))
