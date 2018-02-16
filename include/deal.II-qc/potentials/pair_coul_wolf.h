@@ -102,6 +102,11 @@ namespace Potential
     const double cutoff_radius;
 
     /**
+     * Cutoff radius squared.
+     */
+    const double cutoff_radius_squared;
+
+    /**
      * A const member whose value is required during energy computations.
      */
     const double energy_shift;
@@ -131,7 +136,7 @@ namespace Potential
                                             const types::atom_type j_atom_type,
                                             const double &squared_distance) const
   {
-    if ( squared_distance > cutoff_radius*cutoff_radius )
+    if (squared_distance > cutoff_radius_squared)
       return ComputeGradient
              ?
              std::make_pair(0.,0.)
