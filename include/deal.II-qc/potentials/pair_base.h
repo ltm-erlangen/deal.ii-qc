@@ -41,11 +41,20 @@ namespace Potential
      * charges in system are set-up in a separate function as opposed to the
      * constructor of derived classes.
      *
-     * @note This non-virtual function shares ownership
+     * @note This virtual function shares ownership
      * (with the member variable PairBaseManager::charges) over
      * the resources of @p charges_, increasing the use count by one.
      */
-    void set_charges (std::shared_ptr<std::vector<types::charge>> &charges_);
+    virtual void set_charges (std::shared_ptr<std::vector<types::charge>> &charges_);
+
+    /**
+     * Declare the type of interaction between the atom types @p i_atom_type
+     * and @p j_atom_type to be @p interaction through @p parameters.
+     */
+    virtual void declare_interactions (const types::atom_type i_atom_type,
+                                       const types::atom_type j_atom_type,
+                                       InteractionTypes interaction,
+                                       const std::vector<double> &parameters)=0;
 
   protected:
 
