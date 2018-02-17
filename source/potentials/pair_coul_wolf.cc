@@ -35,9 +35,12 @@ namespace Potential
     Assert (interaction==InteractionTypes::Coul_Wolf,
             ExcMessage("Invalid InteractionTypes specified"));
 
-    Assert (i_atom_type < charges->size() && j_atom_type < charges->size(),
-            ExcMessage("Either the list of charges is initialized incorrectly"
-                       "Or atom type argument passed is incorrect"));
+    // If the list of charges is already initialized
+    // then check whether the given atom types are compatible.
+    if (charges)
+      Assert (i_atom_type < charges->size() && j_atom_type < charges->size(),
+              ExcMessage("Either the list of charges is initialized incorrectly"
+                         "Or atom type argument passed is incorrect"));
 
     Assert (parameters.size() == 0,
             ExcMessage("This class does not accept any parameters."));
