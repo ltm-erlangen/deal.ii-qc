@@ -21,6 +21,7 @@
 #include <deal.II-qc/configure/geometry/geometry_gmsh.h>
 #include <deal.II-qc/potentials/pair_coul_wolf.h>
 #include <deal.II-qc/potentials/pair_lj_cut.h>
+#include <deal.II-qc/potentials/pair_lj_cut_coul_wolf.h>
 
 
 DEAL_II_QC_NAMESPACE_OPEN

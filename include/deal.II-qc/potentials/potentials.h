@@ -33,8 +33,14 @@ namespace Potential
      * Coulomb pair potential computed using Wolf summation method.
      * (see PairCoulWolfManager class).
      */
-    Coul_Wolf=1
+    Coul_Wolf=1,
 
+    /**
+     * Truncated Lennard-Jones along with Coulomb pair potential computed
+     * using Wolf summation method.
+     * (see PairLJCutCoulWolfManager)
+     */
+    LJ_Coul_Wolf=2
   };
 
 
