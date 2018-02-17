@@ -30,7 +30,7 @@ namespace Potential
      * @p lj_cutoff_radius for computing Lennard-Jones contribution.
      * If @p with_tail is `true`, the Lennard-Jones potential has a tail that
      * makes interaction energy converge smoothly to zero as opposed to being
-     * abruptly jumping to zero at a separation distance of @p .
+     * abruptly jumping to zero at a separation distance of @p lj_cutoff_radius.
      */
       PairLJCutCoulWolfManager (const double &alpha,
                                 const double &coul_cutoff_radius,
