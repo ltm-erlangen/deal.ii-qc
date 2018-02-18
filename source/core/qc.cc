@@ -878,7 +878,7 @@ double QC<dim, PotentialType, atomicity>::compute_local (vector_t &gradient) con
 
       // Now we scale the energy according to cluster weights of the molecules.
       energy_per_process +=
-        molecular_IJ.first                           * scale_energy              +
+        molecular_IJ.first                           * scale_energy    +
         (intra_I.first + external_I.first) * molecule_I.cluster_weight +
         (intra_J.first + external_J.first) * molecule_J.cluster_weight;
 

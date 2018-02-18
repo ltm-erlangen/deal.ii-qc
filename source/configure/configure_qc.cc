@@ -649,13 +649,13 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
 
     // For now allow the use of QTrapezWithMidpoint only for
     // OptimalSummationRules.
-    if (cluster_weights_type=="OptimalSummationRules")
-      AssertThrow (quadrature_rule=="QTrapezWithMidpoint",
-                   ExcMessage("Invalid quadrature rule or"
-                              "cluster weights method provided."))
-    else
-      AssertThrow (quadrature_rule=="QTrapez",
-                   ExcNotImplemented())
+    AssertThrow (quadrature_rule==(cluster_weights_type=="OptimalSummationRules"
+                                   ?
+                                   "QTrapezWithMidpoint"
+                                   :
+                                   "QTrapez"),
+                 ExcMessage("Invalid quadrature rule or"
+                            "cluster weights method provided."));
 
     rep_distance = prm.get_double("Representative distance");
   }

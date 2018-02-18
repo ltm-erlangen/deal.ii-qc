@@ -17,7 +17,7 @@ void test ( const double &r,
             std::shared_ptr<Potential::PairLJCutCoulWolfManager> lj_cut_coul_wolf_ptr)
 {
   const std::pair<double, double> energy_gradient_0 =
-      lj_cut_coul_wolf_ptr->energy_and_gradient (0, 1, r*r);
+    lj_cut_coul_wolf_ptr->energy_and_gradient (0, 1, r*r);
 
   AssertThrow (Testing::almost_equal (energy_gradient_0.first,
                                       blessed_energy,
@@ -29,7 +29,7 @@ void test ( const double &r,
                ExcInternalError())
 
   const std::pair<double, double> energy_gradient_1 =
-      lj_cut_coul_wolf_ptr->energy_and_gradient (1, 0, r*r);
+    lj_cut_coul_wolf_ptr->energy_and_gradient (1, 0, r*r);
 
   AssertThrow (Testing::almost_equal (energy_gradient_0.first,
                                       energy_gradient_1.first,
