@@ -32,15 +32,15 @@ namespace Potential
      * makes interaction energy converge smoothly to zero as opposed to being
      * abruptly jumping to zero at a separation distance of @p lj_cutoff_radius.
      */
-      PairLJCutCoulWolfManager (const double &alpha,
-                                const double &coul_cutoff_radius,
-                                const double &lj_cutoff_radius,
-                                const bool    with_tail=false);
+    PairLJCutCoulWolfManager (const double &alpha,
+                              const double &coul_cutoff_radius,
+                              const double &lj_cutoff_radius,
+                              const bool    with_tail=false);
 
-      /**
-       * See PairBaseManager::set_charges().
-       */
-      void set_charges (std::shared_ptr<std::vector<types::charge>> &charges_);
+    /**
+     * See PairBaseManager::set_charges().
+     */
+    void set_charges (std::shared_ptr<std::vector<types::charge>> &charges_);
 
     /**
      * Declare the type of interaction between the atom types @p i_atom_type
@@ -82,13 +82,13 @@ namespace Potential
 
   private:
     /**
-     * LJ potential computing object.
-     */
+     * LJ potential computing object.
+     */
     PairLJCutManager    lj_potential;
 
     /**
-     * Coulomb potential computing object using Wolf summation.
-     */
+     * Coulomb potential computing object using Wolf summation.
+     */
     PairCoulWolfManager coul_wolf_potential;
   };
 
