@@ -70,7 +70,7 @@ public:
   Tensor<1, spacedim> gradient (const Point<spacedim> &p,
                                 const double           q) const;
 
-private:
+protected:
   // Allow all dipole properties to change with time.
 
   /**
