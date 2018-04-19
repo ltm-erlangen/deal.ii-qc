@@ -20,9 +20,9 @@ DipolePotentialField (const Point<spacedim>     &dipole_location,
   dipole_location(dipole_location),
   dipole_orientation(orientation),
   dipole_moment(dipole_moment)
-  {
-    dipole_orientation /= dipole_orientation.norm();
-  }
+{
+  dipole_orientation /= dipole_orientation.norm();
+}
 
 
 
@@ -38,8 +38,8 @@ DipolePotentialField<spacedim>::value (const Point<spacedim> &p,
   // The multiplying factor qqrd2e = 14.399645 yields energy in eV
   // and force in eV/Angstrom units
   return 14.399645*q*dipole_moment*(position_vector*dipole_orientation)
-          /
-          dealii::Utilities::fixed_power<3>(distance);
+         /
+         dealii::Utilities::fixed_power<3>(distance);
 }
 
 
@@ -73,8 +73,8 @@ DipolePotentialField<spacedim>::gradient (const Point<spacedim> &p,
 
 
 #define DIPOLE_POTENTIAL_FIELD(R, X, SAPCEDIM)   \
-  template class DipolePotentialField<SAPCEDIM>; \
-
+  template class DipolePotentialField<SAPCEDIM>;
+   
 BOOST_PP_LIST_FOR_EACH (DIPOLE_POTENTIAL_FIELD, BOOST_PP_NIL, SPACEDIM)
 
 
