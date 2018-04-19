@@ -41,6 +41,7 @@ SET(TARGET_SRC
   source/potentials/pair_lj_cut_coul_wolf.cc
   source/potentials/potential_field.cc
   source/potentials/potential_field_function_parser.cc
+  source/potentials/dipole_potential_field.cc
   source/potentials/nano_indentor.cc
   source/potentials/spherical_nano_indentor.cc
   source/core/qc.cc
