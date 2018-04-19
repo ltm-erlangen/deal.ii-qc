@@ -27,6 +27,10 @@ namespace Cluster
 
 
 
+  // FIXME: New scheme needs to be proposed to account for
+  // the presence of hanging nodes.
+  // OptimalSummationRules need to be re-worked and tested
+  // for cases with hanging nodes.
   // TODO: Implementation of second order sampling summation rules.
   // FIXME: Following assumptions are made:
   // 1. All cells are hyper-cubes. This assumption can be omitted later if
@@ -158,8 +162,7 @@ namespace Cluster
          cell = triangulation.begin_active();
          cell != triangulation.end(); ++cell)
       {
-        // FIXME: Assuming the cell is a hyper-cube get half of the side length.
-        const double half_cell_width = cell->extent_in_direction(0)/2.;
+        // FIXME: Here it is assumes that each cell is a hyper-cube.
 
         const std::vector<Point<spacedim> >
         this_cell_sampling_points = this->get_sampling_points(cell);
