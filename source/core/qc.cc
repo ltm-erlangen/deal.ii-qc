@@ -119,12 +119,13 @@ output_results (const double time,
   interpretation (atomicity*dim,
                   DataComponentInterpretation::component_is_part_of_vector);
 
-  dealiiqc::Utilities::write_vector_out (locally_relevant_displacement,
-                                         dof_handler,
-                                         "solution_",
-                                         time,
-                                         timestep_no,
-                                         interpretation);
+  dealiiqc::Utilities::write_vector_out<dim, vector_t, atomicity>
+  (locally_relevant_displacement,
+   dof_handler,
+   "solution_",
+   time,
+   timestep_no,
+   interpretation);
 
   AssertThrow (n_mpi_processes < 1000,
                ExcNotImplemented());
