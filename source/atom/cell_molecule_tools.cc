@@ -105,8 +105,9 @@ namespace CellMoleculeTools
 
   template<int dim, int atomicity, int spacedim>
   CellMoleculeData<dim, atomicity, spacedim>
-  build_cell_molecule_data (std::istream                       &is,
-                            const Triangulation<dim, spacedim> &mesh)
+  build_cell_molecule_data (std::istream                         &is,
+                            const Triangulation<dim, spacedim>   &mesh,
+                            const GridTools::Cache<dim,spacedim> &grid_cache)
   {
     // TODO: Assign atoms to cells as we parse atom data ?
     //       relevant for when we have a large collection of atoms.
@@ -168,7 +169,18 @@ namespace CellMoleculeTools
     this_process_bounding_box = dealii::GridTools::compute_bounding_box (mesh,
                                 predicate);
 
-    for ( auto molecule : vector_molecules )
+    // Prepare an initial guess (which here is the first locally relevant cell).
+    types::CellIteratorType<dim, spacedim> cell_hint;
+    for (types::CellIteratorType<dim, spacedim>
+         cell = mesh.begin_active();
+         cell != mesh.end(); ++cell)
+      if (!cell->is_artificial())
+        {
+          cell_hint = cell;
+          break;
+        }
+
+    for (auto molecule : vector_molecules)
       {
         bool atom_associated_to_cell = false;
 
@@ -192,9 +204,9 @@ namespace CellMoleculeTools
             std::pair<types::CellIteratorType<dim, spacedim>, Point<dim> >
             my_pair =
               GridTools::
-              find_active_cell_around_point (MappingQ1<dim,spacedim>(),
-                                             mesh,
+              find_active_cell_around_point (grid_cache,
                                              molecule_location,
+                                             cell_hint,
                                              locally_active_vertices);
 
             // Since in locally_active_vertices some of the vertices of
@@ -226,6 +238,9 @@ namespace CellMoleculeTools
 
             cell_molecules.insert (std::make_pair (my_pair.first, molecule));
             atom_associated_to_cell = true;
+
+            // The next atom is most likely geometrically inside this cell.
+            cell_hint = my_pair.first;
           }
         catch (dealii::GridTools::ExcPointNotFound<dim> &)
           {
@@ -316,29 +331,31 @@ namespace CellMoleculeTools
 
 #define SINGLE_CELL_MOLECULE_TOOLS_INSTANTIATION(_DIM_, _ATOMICITY_, _SPACE_DIM_) \
   \
-  template                                                                 \
-  std::pair<types::CellMoleculeConstIteratorRangeType<_DIM_, _ATOMICITY_, _SPACE_DIM_>, unsigned int> \
-  molecules_range_in_cell<_DIM_, _ATOMICITY_, _SPACE_DIM_>                      \
+  template                                                                    \
+  std::pair<types::CellMoleculeConstIteratorRangeType                         \
+  <_DIM_, _ATOMICITY_, _SPACE_DIM_>, unsigned int>                            \
+  molecules_range_in_cell<_DIM_, _ATOMICITY_, _SPACE_DIM_>                    \
   (const types::CellIteratorType<_DIM_, _SPACE_DIM_>                     &,   \
-   const types::CellMoleculeContainerType<_DIM_, _ATOMICITY_, _SPACE_DIM_> &);  \
+   const types::CellMoleculeContainerType<_DIM_, _ATOMICITY_, _SPACE_DIM_> &);\
   \
-  template                                                               \
-  unsigned int                                                           \
-  n_cluster_molecules_in_cell<_DIM_, _ATOMICITY_, _SPACE_DIM_>                  \
-  (const types::CellIteratorType<_DIM_, _SPACE_DIM_>                     &,   \
-   const types::CellMoleculeContainerType<_DIM_, _ATOMICITY_, _SPACE_DIM_> &);  \
+  template                                                                    \
+  unsigned int                                                                \
+  n_cluster_molecules_in_cell<_DIM_, _ATOMICITY_, _SPACE_DIM_>                \
+  (const types::CellIteratorType<_DIM_, _SPACE_DIM_>                       &, \
+   const types::CellMoleculeContainerType<_DIM_, _ATOMICITY_, _SPACE_DIM_> &);\
   \
-  template                                                               \
-  CellMoleculeData<_DIM_, _ATOMICITY_, _SPACE_DIM_>                             \
-  build_cell_molecule_data (std::istream                            &,     \
-                            const Triangulation<_DIM_, _SPACE_DIM_> &);    \
+  template                                                                    \
+  CellMoleculeData<_DIM_, _ATOMICITY_, _SPACE_DIM_>                           \
+  build_cell_molecule_data (std::istream                               &,     \
+                            const Triangulation<_DIM_, _SPACE_DIM_>    &,     \
+                            const GridTools::Cache<_DIM_, _SPACE_DIM_> &);    \
   \
-  template                                                               \
-  double                                                                 \
-  compute_molecule_density                                               \
-  (const Triangulation<_DIM_, _SPACE_DIM_>                               &,   \
-   const types::CellMoleculeContainerType<_DIM_, _ATOMICITY_, _SPACE_DIM_> &);  \
-   
+  template                                                                    \
+  double                                                                      \
+  compute_molecule_density                                                    \
+  (const Triangulation<_DIM_, _SPACE_DIM_>                                 &, \
+   const types::CellMoleculeContainerType<_DIM_, _ATOMICITY_, _SPACE_DIM_> &);
+
 #define CELL_MOLECULE_TOOLS(R, X)                                        \
   BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,                              \
               SINGLE_CELL_MOLECULE_TOOLS_INSTANTIATION,                  \

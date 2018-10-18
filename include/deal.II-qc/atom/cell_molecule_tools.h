@@ -49,8 +49,10 @@ namespace CellMoleculeTools
   /**
    * Prepare and return a CellMoleculeData object based on the given @p mesh
    * by parsing the atom data information in @p is by identifying locally
-   * relevant cells for each MPI process. All the data members of the returned
-   * object are initialized except CellMoleculeData::cell_energy_molecules,
+   * relevant cells for each MPI process using @p grid_cache,
+   * which contains computationally intense information about the @p mesh.
+   * All the data members of the returned object are initialized except
+   * CellMoleculeData::cell_energy_molecules,
    * which can be updated using any of the derived classes of
    * Cluster::WeightsByBase.
    *
@@ -84,8 +86,9 @@ namespace CellMoleculeTools
    */
   template<int dim, int atomicity=1, int spacedim=dim>
   CellMoleculeData<dim, atomicity, spacedim>
-  build_cell_molecule_data (std::istream                       &is,
-                            const Triangulation<dim, spacedim> &mesh);
+  build_cell_molecule_data (std::istream                         &is,
+                            const Triangulation<dim, spacedim>   &mesh,
+                            const GridTools::Cache<dim,spacedim> &grid_cache);
 
   /**
    * Return molecule number density, the ratio of the total number of molecules
