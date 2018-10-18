@@ -54,8 +54,8 @@ namespace parallel
     }
 
 
-#define SINGLE_SHARED_TRIA_INSTANTIATION(DIM, SPACEDIM) \
-  template class Triangulation< DIM, SPACEDIM >;        \
+#define SINGLE_SHARED_TRIA_INSTANTIATION(_DIM_, _SPACE_DIM_) \
+  template class Triangulation< _DIM_, _SPACE_DIM_ >;        \
    
 #define SHARED_TRIA(R, X)                       \
   BOOST_PP_IF(IS_DIM_AND_SPACEDIM_PAIR_VALID X, \

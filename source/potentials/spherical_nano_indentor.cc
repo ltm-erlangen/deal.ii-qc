@@ -71,10 +71,10 @@ SphericalNanoIndentor<dim>::gradient (const Point<dim> &p,
 
 
 
-#define SPHERICAL_NANO_INDENTOR(R, X, SAPCEDIM)   \
-  template class SphericalNanoIndentor<SAPCEDIM>; \
+#define SPHERICAL_NANO_INDENTOR(R, X, _SPACE_DIM_)   \
+  template class SphericalNanoIndentor<_SPACE_DIM_>; \
    
-BOOST_PP_LIST_FOR_EACH (SPHERICAL_NANO_INDENTOR, BOOST_PP_NIL, SPACEDIM)
+BOOST_PP_LIST_FOR_EACH (SPHERICAL_NANO_INDENTOR, BOOST_PP_NIL, _SPACE_DIM_)
 
 
 DEAL_II_QC_NAMESPACE_CLOSE

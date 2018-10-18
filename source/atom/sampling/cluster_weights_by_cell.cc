@@ -179,8 +179,8 @@ namespace Cluster
 
 
 
-#define SINGLE_WEIGHTS_BY_CELL_INSTANTIATION(DIM, ATOMICITY, SPACEDIM) \
-  template class WeightsByCell< DIM, ATOMICITY, SPACEDIM >;            \
+#define SINGLE_WEIGHTS_BY_CELL_INSTANTIATION(_DIM_, _ATOMICITY_, _SPACE_DIM_) \
+  template class WeightsByCell< _DIM_, _ATOMICITY_, _SPACE_DIM_ >;            \
    
 #define WEIGHTS_BY_CELL(R, X)                       \
   BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,         \

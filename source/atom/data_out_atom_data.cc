@@ -368,9 +368,9 @@ write_pvtp_record (const std::vector<std::string>      &vtp_file_names,
 
 
 
-#define SINGLE_DATA_OUT_ATOM_DATA_INSTANTIATION(DIM, ATOMICITY, SPACEDIM) \
-  template void DataOutAtomData::write_vtp<DIM, ATOMICITY, SPACEDIM>      \
-  (const types::CellMoleculeContainerType<DIM, ATOMICITY, SPACEDIM> &,    \
+#define SINGLE_DATA_OUT_ATOM_DATA_INSTANTIATION(_DIM_, _ATOMICITY_, _SPACE_DIM_) \
+  template void DataOutAtomData::write_vtp<_DIM_, _ATOMICITY_, _SPACE_DIM_>      \
+  (const types::CellMoleculeContainerType<_DIM_, _ATOMICITY_, _SPACE_DIM_> &,    \
    const dealii::DataOutBase::VtkFlags                              &,    \
    std::ostream                                                     &);   \
    
