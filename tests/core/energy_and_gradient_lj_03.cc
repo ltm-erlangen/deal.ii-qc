@@ -58,7 +58,8 @@ Problem<dim, PotentialType>::Problem (const std::string &s)
 
   QC<dim, PotentialType>::cell_molecule_data =
     CellMoleculeTools::build_cell_molecule_data<dim> (*config.get_stream(),
-                                                      triangulation);
+                                                      triangulation,
+                                                      GridTools::Cache<dim>(triangulation));
 }
 
 

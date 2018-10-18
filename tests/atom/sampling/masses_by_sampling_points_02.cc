@@ -40,14 +40,15 @@ Problem<dim, PotentialType> ::Problem (const std::string &s)
 {
   ConfigureQC config(std::make_shared<std::istringstream>(s.c_str()));
 
-  QC<dim, PotentialType>::triangulation.begin_active()->set_refine_flag();
-  QC<dim, PotentialType>::triangulation.execute_coarsening_and_refinement();
-  QC<dim, PotentialType>::triangulation.setup_ghost_cells();
+  this->triangulation.begin_active()->set_refine_flag();
+  this->triangulation.execute_coarsening_and_refinement();
+  this->triangulation.setup_ghost_cells();
 
-  QC<dim, PotentialType>::cell_molecule_data =
+  this->cell_molecule_data =
     CellMoleculeTools::
     build_cell_molecule_data<dim> (*config.get_stream(),
-                                   QC<dim, PotentialType>::triangulation);
+                                   this->triangulation,
+                                   GridTools::Cache<dim>(this->triangulation));
 }
 
 

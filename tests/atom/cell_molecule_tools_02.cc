@@ -3,6 +3,7 @@
 #include <sstream>
 
 #include <deal.II/grid/grid_generator.h>
+#include <deal.II/grid/grid_tools_cache.h>
 
 #include <deal.II-qc/atom/cell_molecule_tools.h>
 #include <deal.II-qc/configure/configure_qc.h>
@@ -50,7 +51,8 @@ public:
     cell_molecule_data =
       CellMoleculeTools::
       build_cell_molecule_data<dim> (fin,
-                                     triangulation);
+                                     triangulation,
+                                     GridTools::Cache<dim>(triangulation));
 
     std::shared_ptr<Cluster::WeightsByBase<dim> > cluster_weights_method =
       config.get_cluster_weights<dim>();
