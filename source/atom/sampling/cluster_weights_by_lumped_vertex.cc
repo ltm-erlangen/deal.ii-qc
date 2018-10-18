@@ -295,8 +295,8 @@ namespace Cluster
 
 
 
-#define SINGLE_WEIGHTS_BY_LUMPED_VERTEX_INSTANTIATION(DIM, ATOMICITY, SPACEDIM)\
-  template class WeightsByLumpedVertex< DIM, ATOMICITY, SPACEDIM >;            \
+#define SINGLE_WEIGHTS_BY_LUMPED_VERTEX_INSTANTIATION(_DIM_, _ATOMICITY_, _SPACE_DIM_)\
+  template class WeightsByLumpedVertex< _DIM_, _ATOMICITY_, _SPACE_DIM_ >;            \
    
 #define WEIGHTS_BY_LUMPED_VERTEX(R, X)                       \
   BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,                  \

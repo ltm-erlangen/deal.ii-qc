@@ -72,10 +72,10 @@ DipolePotentialField<spacedim>::gradient (const Point<spacedim> &p,
 
 
 
-#define DIPOLE_POTENTIAL_FIELD(R, X, SAPCEDIM)   \
-  template class DipolePotentialField<SAPCEDIM>;
+#define DIPOLE_POTENTIAL_FIELD(R, X, _SPACE_DIM_)   \
+  template class DipolePotentialField<_SPACE_DIM_>; \
 
-BOOST_PP_LIST_FOR_EACH (DIPOLE_POTENTIAL_FIELD, BOOST_PP_NIL, SPACEDIM)
+BOOST_PP_LIST_FOR_EACH (DIPOLE_POTENTIAL_FIELD, BOOST_PP_NIL, _SPACE_DIM_)
 
 
 DEAL_II_QC_NAMESPACE_CLOSE

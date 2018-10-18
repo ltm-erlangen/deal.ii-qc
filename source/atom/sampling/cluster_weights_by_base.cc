@@ -364,14 +364,14 @@ namespace Cluster
   }
 
 
-#define SINGLE_WEIGHTS_BY_BASE_INSTANTIATION(DIM, ATOMICITY, SPACEDIM)  \
-  template class WeightsByBase< DIM, ATOMICITY, SPACEDIM >;             \
-  template void                                                         \
-  WeightsByBase< DIM, ATOMICITY, SPACEDIM >::compute_dof_inverse_masses \
-  (TrilinosWrappers::MPI::BlockVector               &,                  \
-   const CellMoleculeData<DIM, ATOMICITY, SPACEDIM> &,                  \
-   const DoFHandler<DIM, SPACEDIM>                  &,                  \
-   const AffineConstraints<double>                  &) const;
+#define SINGLE_WEIGHTS_BY_BASE_INSTANTIATION(_DIM_, _ATOMICITY_, _SPACE_DIM_)  \
+  template class WeightsByBase< _DIM_, _ATOMICITY_, _SPACE_DIM_ >;             \
+  template void                                                                \
+  WeightsByBase< _DIM_, _ATOMICITY_, _SPACE_DIM_ >::compute_dof_inverse_masses \
+  (TrilinosWrappers::MPI::BlockVector                      &,                  \
+   const CellMoleculeData<_DIM_, _ATOMICITY_, _SPACE_DIM_> &,                  \
+   const DoFHandler<_DIM_, _SPACE_DIM_>                    &,                  \
+   const AffineConstraints<double>                         &) const;
 
 #define WEIGHTS_BY_BASE(R, X)                       \
   BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,         \

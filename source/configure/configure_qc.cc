@@ -739,9 +739,9 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
 
 
 
-#define SINGLE_CONFIGURE_QC_INSTANTIATION(DIM, ATOMICITY, SPACEDIM) \
+#define SINGLE_CONFIGURE_QC_INSTANTIATION(_DIM_, _ATOMICITY_, _SPACE_DIM_) \
   template                                                          \
-  std::shared_ptr<Cluster::WeightsByBase<DIM, ATOMICITY, SPACEDIM>> \
+  std::shared_ptr<Cluster::WeightsByBase<_DIM_, _ATOMICITY_, _SPACE_DIM_>> \
   ConfigureQC::get_cluster_weights() const;                         \
    
 #define CONFIGURE_QC(R, X)                       \

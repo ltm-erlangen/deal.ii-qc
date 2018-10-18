@@ -22,57 +22,57 @@
 
 
 // Preprocessor definitions for instantiations.
-#define       DIM  BOOST_PP_TUPLE_TO_LIST(3,  (1,2,3))
-#define  SPACEDIM  BOOST_PP_TUPLE_TO_LIST(3,  (1,2,3))
-#define ATOMICITY  BOOST_PP_TUPLE_TO_LIST(10, (1,2,3,4,5,6,7,8,9,10))
+#define       _DIM_   BOOST_PP_TUPLE_TO_LIST(3,  (1,2,3))
+#define  _SPACE_DIM_  BOOST_PP_TUPLE_TO_LIST(3,  (1,2,3))
+#define  _ATOMICITY_  BOOST_PP_TUPLE_TO_LIST(10, (1,2,3,4,5,6,7,8,9,10))
 
 
 
-// Accessors for SPACEDIM, ATOMICITY in (two element tuple) X.
+// Accessors for _SPACE_DIM_, _ATOMICITY_ in (two element tuple) X.
 #define  FIRST_OF_TWO_IS_SPACEDIM(X)    BOOST_PP_TUPLE_ELEM(2, 0, X)
 #define SECOND_OF_TWO_IS_ATOMICITY(X)   BOOST_PP_TUPLE_ELEM(2, 1, X)
 
 
 
 /**
- * A macro function that returns 1 if @p DIM is less or equal to @p SPACEDIM
- * and 0 otherwise among three entries DIM, ATOMICITY and, SPACEDIM.
+ * A macro function that returns 1 if @p _DIM_ is less or equal to @p _SPACE_DIM_
+ * and 0 otherwise among three entries _DIM_, _ATOMICITY_ and, _SPACE_DIM_.
  */
-#define IS_DIM_LESS_EQUAL_SPACEDIM(DIM, ATOMICITY, SPACEDIM) \
-  BOOST_PP_LESS_EQUAL(DIM, SPACEDIM)
+#define IS_DIM_LESS_EQUAL_SPACEDIM(_DIM_, _ATOMICITY_, _SPACE_DIM_) \
+  BOOST_PP_LESS_EQUAL(_DIM_, _SPACE_DIM_)
 
 
 
 /**
- * A macro function that returns 1 if @p DIM is less or equal to @p SPACEDIM
+ * A macro function that returns 1 if @p _DIM_ is less or equal to @p _SPACE_DIM_
  * and 0 otherwise.
  */
-#define IS_DIM_AND_SPACEDIM_PAIR_VALID(DIM, SPACEDIM) \
-  BOOST_PP_LESS_EQUAL(DIM, SPACEDIM)
+#define IS_DIM_AND_SPACEDIM_PAIR_VALID(_DIM_, _SPACE_DIM_) \
+  BOOST_PP_LESS_EQUAL(_DIM_, _SPACE_DIM_)
 
 
 
 /**
- * A macro to expand CLASS macro using (DIM, SPACEDIM) tuples.
+ * A macro to expand CLASS macro using (_DIM_, _SPACE_DIM_) tuples.
  */
 #define INSTANTIATE_WITH_DIM_AND_SPACEDIM(CLASS) \
-  BOOST_PP_LIST_FOR_EACH_PRODUCT(CLASS, 2, (DIM, SPACEDIM))
+  BOOST_PP_LIST_FOR_EACH_PRODUCT(CLASS, 2, (_DIM_, _SPACE_DIM_))
 
 
 
 /**
- * A macro to expand CLASS macro using (SPACEDIM, ATOMICITY) tuples.
+ * A macro to expand CLASS macro using (_SPACE_DIM_, _ATOMICITY_) tuples.
  */
 #define INSTANTIATE_WITH_SPACEDIM_AND_ATOMICITY(R, CLASS) \
-  BOOST_PP_LIST_FOR_EACH_PRODUCT(CLASS, 2, (SPACEDIM, ATOMICITY))
+  BOOST_PP_LIST_FOR_EACH_PRODUCT(CLASS, 2, (_SPACE_DIM_, _ATOMICITY_))
 
 
 
 /**
- * A macro to expand CLASS macro using (DIM, SPACEDIM, ATOMICITY) tuples.
+ * A macro to expand CLASS macro using (_DIM_, _SPACE_DIM_, _ATOMICITY_) tuples.
  */
 #define INSTANTIATE_CLASS_WITH_DIM_ATOMICITY_AND_SPACEDIM(CLASS) \
-  BOOST_PP_LIST_FOR_EACH_PRODUCT(CLASS, 3, (DIM, ATOMICITY, SPACEDIM))
+  BOOST_PP_LIST_FOR_EACH_PRODUCT(CLASS, 3, (_DIM_, _ATOMICITY_, _SPACE_DIM_))
 
 
 

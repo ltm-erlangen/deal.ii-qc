@@ -68,10 +68,10 @@ void NanoIndentor<dim>::set_time (const double new_time)
 
 
 
-#define NANO_INDENTOR(R, X, SAPCEDIM)    \
-  template class NanoIndentor<SAPCEDIM>; \
+#define NANO_INDENTOR(R, X, _SPACE_DIM_)    \
+  template class NanoIndentor<_SPACE_DIM_>; \
    
-BOOST_PP_LIST_FOR_EACH (NANO_INDENTOR, BOOST_PP_NIL, SPACEDIM)
+BOOST_PP_LIST_FOR_EACH (NANO_INDENTOR, BOOST_PP_NIL, _SPACE_DIM_)
 
 
 DEAL_II_QC_NAMESPACE_CLOSE
