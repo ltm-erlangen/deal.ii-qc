@@ -47,6 +47,7 @@ QC<dim, PotentialType, atomicity>::QC (const ConfigureQC &config)
   fe (FE_Q<dim, spacedim>(1), dim *atomicity),
   u_fe (),
   dof_handler (triangulation),
+  grid_cache (triangulation),
   molecule_handler (configure_qc),
   computing_timer (mpi_communicator,
                    pcout,
@@ -250,12 +251,12 @@ void QC<dim, PotentialType, atomicity>::setup_cell_molecules()
       std::fstream fin(atom_data_file, std::fstream::in);
       cell_molecule_data =
         CellMoleculeTools::build_cell_molecule_data<dim, atomicity, spacedim>
-        (fin, triangulation);
+        (fin, triangulation, grid_cache);
     }
   else if (!configure_qc.get_stream()->eof())
     cell_molecule_data =
       CellMoleculeTools::build_cell_molecule_data<dim, atomicity, spacedim>
-      (*configure_qc.get_stream(), triangulation);
+      (*configure_qc.get_stream(), triangulation, grid_cache);
   else
     AssertThrow(false,
                 ExcMessage("Atom data was not provided neither as an auxiliary "

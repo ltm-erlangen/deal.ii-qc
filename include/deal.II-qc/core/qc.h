@@ -12,6 +12,7 @@
 
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/grid_refinement.h>
+#include <deal.II/grid/grid_tools_cache.h>
 
 #include <deal.II/fe/component_mask.h>
 #include <deal.II/fe/fe_system.h>
@@ -508,6 +509,11 @@ protected:
    *
    */
   IndexSet locally_relevant_set;
+
+  /**
+   * Member to cache computationally intensive information about #triangulation.
+   */
+  GridTools::Cache<dim, spacedim>  grid_cache;
 
   /**
    * Map of boundary ids to Functions describing the corresponding boundary

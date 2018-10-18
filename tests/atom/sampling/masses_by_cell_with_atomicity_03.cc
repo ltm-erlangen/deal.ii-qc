@@ -50,7 +50,8 @@ public:
     this->cell_molecule_data =
       CellMoleculeTools::
       build_cell_molecule_data<dim, atomicity> (*config.get_stream(),
-                                                this->triangulation);
+                                                this->triangulation,
+                                                GridTools::Cache<dim>(this->triangulation));
   }
   void partial_run ();
 };
