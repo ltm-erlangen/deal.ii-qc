@@ -195,11 +195,11 @@ public:
 
 private:
   parallel::shared::Triangulation<dim> triangulation;
-  const MappingQ1<dim>   mapping;
-  FESystem<dim>          fe;
-  DoFHandler<dim>        dof_handler;
-  dealii::Vector<double> gradient;
-  ConstraintMatrix       constraints;
+  const MappingQ1<dim>      mapping;
+  FESystem<dim>             fe;
+  DoFHandler<dim>           dof_handler;
+  dealii::Vector<double>    gradient;
+  AffineConstraints<double> constraints;
 };
 
 
