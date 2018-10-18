@@ -7,7 +7,7 @@
 #include <deal.II/base/quadrature_lib.h>
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/grid/tria.h>
-#include <deal.II/lac/constraint_matrix.h>
+#include <deal.II/lac/affine_constraints.h>
 
 
 DEAL_II_QC_NAMESPACE_OPEN
@@ -145,7 +145,7 @@ namespace Cluster
     (VectorType                                       &inverse_masses,
      const CellMoleculeData<dim, atomicity, spacedim> &cell_molecule_data,
      const DoFHandler<dim, spacedim>                  &dof_handler,
-     const ConstraintMatrix                           &constraints) const;
+     const AffineConstraints<double>                  &constraints) const;
 
   protected:
 

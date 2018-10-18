@@ -158,7 +158,7 @@ namespace Cluster
   (VectorType                                       &inverse_masses,
    const CellMoleculeData<dim, atomicity, spacedim> &cell_molecule_data,
    const DoFHandler<dim, spacedim>                  &dof_handler,
-   const ConstraintMatrix                           &constraints) const
+   const AffineConstraints<double>                  &constraints) const
   {
     inverse_masses = 0.;
 
@@ -371,7 +371,7 @@ namespace Cluster
   (TrilinosWrappers::MPI::BlockVector               &,                  \
    const CellMoleculeData<DIM, ATOMICITY, SPACEDIM> &,                  \
    const DoFHandler<DIM, SPACEDIM>                  &,                  \
-   const ConstraintMatrix                           &) const;
+   const AffineConstraints<double>                  &) const;
 
 #define WEIGHTS_BY_BASE(R, X)                       \
   BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,         \

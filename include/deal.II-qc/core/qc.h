@@ -8,7 +8,7 @@
 #include <deal.II/base/utilities.h>
 
 #include <deal.II/base/config.h>
-#include <deal.II/lac/constraint_matrix.h>
+#include <deal.II/lac/affine_constraints.h>
 
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/grid_refinement.h>
@@ -477,12 +477,12 @@ protected:
   /**
    * Hanging node constraints.
    */
-  ConstraintMatrix                 hanging_node_constraints;
+  AffineConstraints<double>        hanging_node_constraints;
 
   /**
    * All constraints (hanging nodes + BC).
    */
-  ConstraintMatrix                 constraints;
+  AffineConstraints<double>        constraints;
 
   /**
    * Distributed displacement field.
