@@ -71,9 +71,9 @@ SphericalNanoIndentor<dim>::gradient (const Point<dim> &p,
 
 
 
-#define SPHERICAL_NANO_INDENTOR(R, X, _SPACE_DIM_)   \
-  template class SphericalNanoIndentor<_SPACE_DIM_>; \
-   
+#define SPHERICAL_NANO_INDENTOR(R, X,  _SPACE_DIM)   \
+  template class SphericalNanoIndentor<_SPACE_DIM>;
+
 BOOST_PP_LIST_FOR_EACH (SPHERICAL_NANO_INDENTOR, BOOST_PP_NIL, _SPACE_DIM_)
 
 

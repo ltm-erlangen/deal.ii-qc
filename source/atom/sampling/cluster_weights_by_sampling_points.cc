@@ -215,16 +215,16 @@ namespace Cluster
 
 
 
-#define SINGLE_WEIGHTS_BY_SPOINTS_INSTANTIATION(_DIM_, _ATOMICITY_, _SPACE_DIM_) \
-  template class WeightsBySamplingPoints< _DIM_, _ATOMICITY_, _SPACE_DIM_ >;    \
-   
-#define WEIGHTS_BY_SAMPLING_POINTS(R, X)                       \
+#define SINGLE_WEIGHTS_BY_SPOINTS_INSTANTIATION(_DIM, _ATOMICITY, _SPACE_DIM) \
+  template class WeightsBySamplingPoints       <_DIM, _ATOMICITY, _SPACE_DIM>;
+
+#define WEIGHTS_BY_SAMPLING_POINTS(R, X)              \
   BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,           \
               SINGLE_WEIGHTS_BY_SPOINTS_INSTANTIATION,\
-              BOOST_PP_TUPLE_EAT(3)) X                \
-   
-  // WeightsBySamplingPoints class Instantiations.
-  INSTANTIATE_CLASS_WITH_DIM_ATOMICITY_AND_SPACEDIM(WEIGHTS_BY_SAMPLING_POINTS)
+              BOOST_PP_TUPLE_EAT(3)) X
+
+// WeightsBySamplingPoints class Instantiations.
+INSTANTIATE_CLASS_WITH_DIM_ATOMICITY_AND_SPACEDIM(WEIGHTS_BY_SAMPLING_POINTS)
 
 #undef SINGLE_WEIGHTS_BY_VERTEX_INSTANTIATION
 #undef WEIGHTS_BY_VERTEX

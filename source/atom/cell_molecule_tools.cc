@@ -329,32 +329,33 @@ namespace CellMoleculeTools
 
 
 
-#define SINGLE_CELL_MOLECULE_TOOLS_INSTANTIATION(_DIM_, _ATOMICITY_, _SPACE_DIM_) \
+#define SINGLE_CELL_MOLECULE_TOOLS_INSTANTIATION(_DIM,_ATOMICITY,_SPACE_DIM)   \
   \
-  template                                                                    \
-  std::pair<types::CellMoleculeConstIteratorRangeType                         \
-  <_DIM_, _ATOMICITY_, _SPACE_DIM_>, unsigned int>                            \
-  molecules_range_in_cell<_DIM_, _ATOMICITY_, _SPACE_DIM_>                    \
-  (const types::CellIteratorType<_DIM_, _SPACE_DIM_>                     &,   \
-   const types::CellMoleculeContainerType<_DIM_, _ATOMICITY_, _SPACE_DIM_> &);\
+  template                                                                     \
+  std::pair   <                                                                \
+  types::CellMoleculeConstIteratorRangeType     <_DIM,_ATOMICITY,_SPACE_DIM>,  \
+  unsigned int>                                                                \
+  molecules_range_in_cell                       <_DIM,_ATOMICITY,_SPACE_DIM>   \
+  (const types::CellIteratorType                <_DIM,           _SPACE_DIM>&, \
+   const types::CellMoleculeContainerType       <_DIM,_ATOMICITY,_SPACE_DIM>&);\
   \
-  template                                                                    \
-  unsigned int                                                                \
-  n_cluster_molecules_in_cell<_DIM_, _ATOMICITY_, _SPACE_DIM_>                \
-  (const types::CellIteratorType<_DIM_, _SPACE_DIM_>                       &, \
-   const types::CellMoleculeContainerType<_DIM_, _ATOMICITY_, _SPACE_DIM_> &);\
+  template                                                                     \
+  unsigned int                                                                 \
+  n_cluster_molecules_in_cell                   <_DIM,_ATOMICITY,_SPACE_DIM>   \
+  (const types::CellIteratorType                <_DIM,           _SPACE_DIM>&, \
+   const types::CellMoleculeContainerType       <_DIM,_ATOMICITY,_SPACE_DIM>&);\
   \
-  template                                                                    \
-  CellMoleculeData<_DIM_, _ATOMICITY_, _SPACE_DIM_>                           \
-  build_cell_molecule_data (std::istream                               &,     \
-                            const Triangulation<_DIM_, _SPACE_DIM_>    &,     \
-                            const GridTools::Cache<_DIM_, _SPACE_DIM_> &);    \
+  template                                                                     \
+  CellMoleculeData                              <_DIM,_ATOMICITY,_SPACE_DIM>   \
+  build_cell_molecule_data (std::istream                                    &, \
+                            const Triangulation <_DIM,           _SPACE_DIM>&, \
+                            const GridTools::Cache<_DIM,         _SPACE_DIM>&);\
   \
-  template                                                                    \
-  double                                                                      \
-  compute_molecule_density                                                    \
-  (const Triangulation<_DIM_, _SPACE_DIM_>                                 &, \
-   const types::CellMoleculeContainerType<_DIM_, _ATOMICITY_, _SPACE_DIM_> &);
+  template                                                                     \
+  double                                                                       \
+  compute_molecule_density                                                     \
+  (const Triangulation                          <_DIM,           _SPACE_DIM>&, \
+   const types::CellMoleculeContainerType       <_DIM,_ATOMICITY,_SPACE_DIM>&);
 
 #define CELL_MOLECULE_TOOLS(R, X)                                        \
   BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,                              \

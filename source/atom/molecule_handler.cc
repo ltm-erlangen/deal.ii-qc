@@ -212,14 +212,14 @@ get_neighbor_lists
 
 
 
-#define SINGLE_MOLECULE_HANDLER_INSTANTIATION(_DIM_, _ATOMICITY_, _SPACE_DIM_) \
-  template class MoleculeHandler< _DIM_, _ATOMICITY_, _SPACE_DIM_ >;           \
-   
+#define SINGLE_MOLECULE_HANDLER_INSTANTIATION(_DIM, _ATOMICITY, _SPACE_DIM) \
+  template class MoleculeHandler             <_DIM, _ATOMICITY, _SPACE_DIM>;
+
 #define MOLECULE_HANDLER(R, X)                       \
   BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,          \
               SINGLE_MOLECULE_HANDLER_INSTANTIATION, \
-              BOOST_PP_TUPLE_EAT(3)) X               \
-   
+              BOOST_PP_TUPLE_EAT(3)) X
+
 // MoleculeHandler class Instantiations.
 INSTANTIATE_CLASS_WITH_DIM_ATOMICITY_AND_SPACEDIM(MOLECULE_HANDLER)
 

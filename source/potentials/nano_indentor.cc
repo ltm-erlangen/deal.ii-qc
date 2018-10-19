@@ -68,9 +68,9 @@ void NanoIndentor<dim>::set_time (const double new_time)
 
 
 
-#define NANO_INDENTOR(R, X, _SPACE_DIM_)    \
-  template class NanoIndentor<_SPACE_DIM_>; \
-   
+#define NANO_INDENTOR(R, X,   _SPACE_DIM)  \
+  template class NanoIndentor<_SPACE_DIM>;
+
 BOOST_PP_LIST_FOR_EACH (NANO_INDENTOR, BOOST_PP_NIL, _SPACE_DIM_)
 
 

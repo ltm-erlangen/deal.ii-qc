@@ -179,16 +179,16 @@ namespace Cluster
 
 
 
-#define SINGLE_WEIGHTS_BY_CELL_INSTANTIATION(_DIM_, _ATOMICITY_, _SPACE_DIM_) \
-  template class WeightsByCell< _DIM_, _ATOMICITY_, _SPACE_DIM_ >;            \
-   
+#define SINGLE_WEIGHTS_BY_CELL_INSTANTIATION(_DIM, _ATOMICITY, _SPACE_DIM) \
+  template class WeightsByCell              <_DIM, _ATOMICITY, _SPACE_DIM>;
+
 #define WEIGHTS_BY_CELL(R, X)                       \
   BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,         \
               SINGLE_WEIGHTS_BY_CELL_INSTANTIATION, \
-              BOOST_PP_TUPLE_EAT(3)) X              \
-   
-  // WeightsByCell class Instantiations.
-  INSTANTIATE_CLASS_WITH_DIM_ATOMICITY_AND_SPACEDIM(WEIGHTS_BY_CELL)
+              BOOST_PP_TUPLE_EAT(3)) X
+
+// WeightsByCell class Instantiations.
+INSTANTIATE_CLASS_WITH_DIM_ATOMICITY_AND_SPACEDIM(WEIGHTS_BY_CELL)
 
 #undef SINGLE_WEIGHTS_BY_CELL_INSTANTIATION
 #undef WEIGHTS_BY_CELL

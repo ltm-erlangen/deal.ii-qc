@@ -364,22 +364,23 @@ namespace Cluster
   }
 
 
-#define SINGLE_WEIGHTS_BY_BASE_INSTANTIATION(_DIM_, _ATOMICITY_, _SPACE_DIM_)  \
-  template class WeightsByBase< _DIM_, _ATOMICITY_, _SPACE_DIM_ >;             \
-  template void                                                                \
-  WeightsByBase< _DIM_, _ATOMICITY_, _SPACE_DIM_ >::compute_dof_inverse_masses \
-  (TrilinosWrappers::MPI::BlockVector                      &,                  \
-   const CellMoleculeData<_DIM_, _ATOMICITY_, _SPACE_DIM_> &,                  \
-   const DoFHandler<_DIM_, _SPACE_DIM_>                    &,                  \
-   const AffineConstraints<double>                         &) const;
+#define SINGLE_WEIGHTS_BY_BASE_INSTANTIATION(_DIM, _ATOMICITY, _SPACE_DIM)     \
+  template class WeightsByBase              <_DIM, _ATOMICITY, _SPACE_DIM>;    \
+  template void  WeightsByBase              <_DIM, _ATOMICITY, _SPACE_DIM>::   \
+  compute_dof_inverse_masses                                                   \
+  (TrilinosWrappers::MPI::BlockVector                                      &,  \
+   const CellMoleculeData                   <_DIM, _ATOMICITY, _SPACE_DIM> &,  \
+   const DoFHandler                         <_DIM,             _SPACE_DIM> &,  \
+   const AffineConstraints <double>                                        &)  \
+   const;
 
 #define WEIGHTS_BY_BASE(R, X)                       \
   BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,         \
               SINGLE_WEIGHTS_BY_BASE_INSTANTIATION, \
-              BOOST_PP_TUPLE_EAT(3)) X              \
-   
-  // WeightsByBase class Instantiations.
-  INSTANTIATE_CLASS_WITH_DIM_ATOMICITY_AND_SPACEDIM(WEIGHTS_BY_BASE)
+              BOOST_PP_TUPLE_EAT(3)) X
+
+// WeightsByBase class Instantiations.
+INSTANTIATE_CLASS_WITH_DIM_ATOMICITY_AND_SPACEDIM(WEIGHTS_BY_BASE)
 
 #undef SINGLE_WEIGHTS_BY_BASE_INSTANTIATION
 #undef WEIGHTS_BY_BASE

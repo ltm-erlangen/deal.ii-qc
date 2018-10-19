@@ -368,17 +368,17 @@ write_pvtp_record (const std::vector<std::string>      &vtp_file_names,
 
 
 
-#define SINGLE_DATA_OUT_ATOM_DATA_INSTANTIATION(_DIM_, _ATOMICITY_, _SPACE_DIM_) \
-  template void DataOutAtomData::write_vtp<_DIM_, _ATOMICITY_, _SPACE_DIM_>      \
-  (const types::CellMoleculeContainerType<_DIM_, _ATOMICITY_, _SPACE_DIM_> &,    \
-   const dealii::DataOutBase::VtkFlags                              &,    \
-   std::ostream                                                     &);   \
-   
+#define SINGLE_DATA_OUT_ATOM_DATA_INSTANTIATION(_DIM, _ATOMICITY, _SPACE_DIM)  \
+  template void DataOutAtomData::write_vtp     <_DIM, _ATOMICITY, _SPACE_DIM>  \
+  (const types::CellMoleculeContainerType      <_DIM, _ATOMICITY, _SPACE_DIM>&,\
+   const dealii::DataOutBase::VtkFlags                                       &,\
+   std::ostream                                                              &);
+
 #define DATA_OUT_ATOM_DATA(R, X)                       \
   BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,            \
               SINGLE_DATA_OUT_ATOM_DATA_INSTANTIATION, \
-              BOOST_PP_TUPLE_EAT(3)) X                 \
-   
+              BOOST_PP_TUPLE_EAT(3)) X
+
 // DataOutAtomData class members instantiations.
 INSTANTIATE_CLASS_WITH_DIM_ATOMICITY_AND_SPACEDIM(DATA_OUT_ATOM_DATA)
 

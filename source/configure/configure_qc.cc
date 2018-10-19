@@ -739,16 +739,16 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
 
 
 
-#define SINGLE_CONFIGURE_QC_INSTANTIATION(_DIM_, _ATOMICITY_, _SPACE_DIM_) \
-  template                                                          \
-  std::shared_ptr<Cluster::WeightsByBase<_DIM_, _ATOMICITY_, _SPACE_DIM_>> \
-  ConfigureQC::get_cluster_weights() const;                         \
-   
+#define SINGLE_CONFIGURE_QC_INSTANTIATION(_DIM, _ATOMICITY, _SPACE_DIM)  \
+  template                                                               \
+  std::shared_ptr<Cluster::WeightsByBase <_DIM, _ATOMICITY, _SPACE_DIM>> \
+  ConfigureQC::get_cluster_weights() const;
+
 #define CONFIGURE_QC(R, X)                       \
   BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,      \
               SINGLE_CONFIGURE_QC_INSTANTIATION, \
-              BOOST_PP_TUPLE_EAT(3)) X           \
-   
+              BOOST_PP_TUPLE_EAT(3)) X
+
 // ConfigureQC::get_cluster_weights instantiations
 INSTANTIATE_CLASS_WITH_DIM_ATOMICITY_AND_SPACEDIM(CONFIGURE_QC)
 
