@@ -151,7 +151,11 @@ def format_file(args, task_queue, temp_dir):
         os.remove (temp_file_name)
       else:
         shutil.move (temp_file_name, full_file_name)
-
+    #
+    # Indicate that the current file name is processed by the current thread.
+    # Once task_done() is called by a thread, the total count of
+    # unfinished tasks goes down by one.
+    #
     task_queue.task_done()
 
 def process (args):
@@ -167,21 +171,38 @@ def process (args):
     n_threads = multiprocessing.cpu_count()-1
   print ("Number of threads picked up:", n_threads)
 
+  #
+  # Create n_threads number of queues, one for each thread.
+  #
   task_queue = Queue.Queue(n_threads)
 
+  #
+  # Start n_threads number of thread workers that will execute
+  # a target with given arguments.
+  #
   for _ in range (n_threads):
     thread_worker = threading.Thread(target=format_file,
                                       args=(args, task_queue, tmpdir))
     thread_worker.daemon = True
     thread_worker.start()
 
+  #
+  # Gather all the files that are needed to be formatted in task_queue.
+  # Look through all directories, recursively, and find all files
+  # that match the given regex.
+  #
   for directory in args.directories.split(','):
     for dirpath, _, filenames in os.walk(directory):
       for pattern in args.regex.split(','):
         for file_name in fnmatch.filter(filenames, pattern):
           task_queue.put(os.path.join(dirpath, file_name))
-
-    task_queue.join()
+  #
+  # Blocks (some) threads until all the threads finished their tasks.
+  # Works similar to MPI_Barrier().
+  # In other words, threads wait untill all the tasks in task_queue
+  # have finshed.
+  #
+  task_queue.join()
 
   shutil.rmtree(tmpdir)
 
