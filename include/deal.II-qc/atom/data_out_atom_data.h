@@ -16,7 +16,6 @@ DEAL_II_QC_NAMESPACE_OPEN
 class DataOutAtomData
 {
 public:
-
   /**
    * Write out into ostream @p out the atom data contained in
    * @p cell_molcules in the XML vtp format.
@@ -29,12 +28,12 @@ public:
    * associated to it's locally owned cells. In doing so, each
    * process writes out disjoint sets of atom data.
    */
-  template<int dim, int atomicity=1, int spacedim=dim>
+  template <int dim, int atomicity = 1, int spacedim = dim>
   void
-  write_vtp
-  (const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules,
-   const dealii::DataOutBase::VtkFlags                              &flags,
-   std::ostream                                                     &out);
+  write_vtp(const types::CellMoleculeContainerType<dim, atomicity, spacedim>
+              &                                  cell_molecules,
+            const dealii::DataOutBase::VtkFlags &flags,
+            std::ostream &                       out);
 
   /**
    * Write a pvtp file in order to tell Paraview to group together multiple
@@ -42,9 +41,9 @@ public:
    * to parallelize visualization.
    */
   void
-  write_pvtp_record (const std::vector<std::string>      &vtp_file_names,
-                     const dealii::DataOutBase::VtkFlags &flags,
-                     std::ostream                        &out);
+  write_pvtp_record(const std::vector<std::string> &     vtp_file_names,
+                    const dealii::DataOutBase::VtkFlags &flags,
+                    std::ostream &                       out);
 };
 
 

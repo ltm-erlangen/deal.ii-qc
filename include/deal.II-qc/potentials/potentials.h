@@ -2,9 +2,9 @@
 #ifndef __dealii_qc_potentials_h
 #define __dealii_qc_potentials_h
 
-#include <utility>
-
 #include <deal.II-qc/utilities.h>
+
+#include <utility>
 
 
 DEAL_II_QC_NAMESPACE_OPEN
@@ -16,7 +16,6 @@ DEAL_II_QC_NAMESPACE_OPEN
  */
 namespace Potential
 {
-
   /**
    * An enumeration of all the pair potentials implemented in
    * Potentials namespace.
@@ -33,14 +32,14 @@ namespace Potential
      * Coulomb pair potential computed using Wolf summation method.
      * (see PairCoulWolfManager class).
      */
-    Coul_Wolf=1,
+    Coul_Wolf = 1,
 
     /**
      * Truncated Lennard-Jones along with Coulomb pair potential computed
      * using Wolf summation method.
      * (see PairLJCutCoulWolfManager)
      */
-    LJ_Coul_Wolf=2
+    LJ_Coul_Wolf = 2
   };
 
 
@@ -49,16 +48,13 @@ namespace Potential
    * or equal to that of the second element given the two atom types
    * @p i_atom_type and @p j_atom_type.
    */
-  inline
-  std::pair<types::atom_type, types::atom_type>
-  get_pair (const types::atom_type i_atom_type,
-            const types::atom_type j_atom_type)
+  inline std::pair<types::atom_type, types::atom_type>
+  get_pair(const types::atom_type i_atom_type,
+           const types::atom_type j_atom_type)
   {
-    return ( i_atom_type <= j_atom_type)
-           ?
-           std::make_pair( i_atom_type, j_atom_type)
-           :
-           std::make_pair( j_atom_type, i_atom_type);
+    return (i_atom_type <= j_atom_type) ?
+             std::make_pair(i_atom_type, j_atom_type) :
+             std::make_pair(j_atom_type, i_atom_type);
   }
 
 } // namespace Potential

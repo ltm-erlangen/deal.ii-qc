@@ -1,18 +1,22 @@
 
-#include "../tests.h"
-
-#include <sstream>
-
 #include <deal.II/dofs/dof_tools.h>
+
 #include <deal.II/fe/fe_system.h>
 #include <deal.II/fe/mapping_q1.h>
+
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_out.h>
 #include <deal.II/grid/grid_tools_cache.h>
 
 #include <deal.II-qc/atom/cell_molecule_tools.h>
+
 #include <deal.II-qc/configure/configure_qc.h>
+
 #include <deal.II-qc/grid/shared_tria.h>
+
+#include <sstream>
+
+#include "../tests.h"
 
 using namespace dealii;
 using namespace dealiiqc;
@@ -27,24 +31,25 @@ using namespace dealiiqc;
 
 
 
-template<int dim>
+template <int dim>
 class TestCellMoleculeTools
 {
 public:
-
   TestCellMoleculeTools(const ConfigureQC &config)
-    :
-    config(config),
-    triangulation (MPI_COMM_WORLD,
-                   // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
-                   Triangulation<dim>::limit_level_difference_at_vertices,
-                   config.get_ghost_cell_layer_thickness()),
-    fe(FE_Q<dim>(1), dim),
-    dof_handler    (triangulation),
-    mpi_communicator(MPI_COMM_WORLD)
+    : config(config)
+    , triangulation(
+        MPI_COMM_WORLD,
+        // guarantee that the mesh also does not change by more than refinement
+        // level across vertices that might connect two cells:
+        Triangulation<dim>::limit_level_difference_at_vertices,
+        config.get_ghost_cell_layer_thickness())
+    , fe(FE_Q<dim>(1), dim)
+    , dof_handler(triangulation)
+    , mpi_communicator(MPI_COMM_WORLD)
   {}
 
-  void run()
+  void
+  run()
   {
     std::vector<unsigned int> repetitions;
     repetitions.push_back(8);
@@ -62,40 +67,35 @@ public:
     //   |   |   |   |   |   |   |   |   |        . atom
     //   |___|___|___|___|___|___|___|___|
     //
-    GridGenerator::subdivided_hyper_rectangle (triangulation,
-                                               repetitions,
-                                               p1,
-                                               p2,
-                                               true);
+    GridGenerator::subdivided_hyper_rectangle(
+      triangulation, repetitions, p1, p2, true);
     triangulation.setup_ghost_cells();
 
-    dof_handler.distribute_dofs (fe);
+    dof_handler.distribute_dofs(fe);
 
     cell_molecule_data =
-      CellMoleculeTools::
-      build_cell_molecule_data<dim> (*config.get_stream(),
-                                     triangulation,
-                                     GridTools::Cache<dim>(triangulation));
+      CellMoleculeTools::build_cell_molecule_data<dim>(*config.get_stream(),
+                                                       triangulation,
+                                                       GridTools::Cache<dim>(
+                                                         triangulation));
 
     IndexSet locally_relevant_set;
-    DoFTools::extract_locally_relevant_dofs (dof_handler, locally_relevant_set);
+    DoFTools::extract_locally_relevant_dofs(dof_handler, locally_relevant_set);
 
     Testing::SequentialFileStream write_sequentially(mpi_communicator);
 
-    deallog << " has "
-            << locally_relevant_set.n_elements()
-            << " locally relevant dofs."
-            << std::endl;
+    deallog << " has " << locally_relevant_set.n_elements()
+            << " locally relevant dofs." << std::endl;
 
 #ifdef WRITE_GRID
     std::ofstream g("tria.vtk");
-    GridOut().write_vtk (triangulation, g);
-    if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator)==0)
+    GridOut().write_vtk(triangulation, g);
+    if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
       {
-        std::map<dealii::types::global_dof_index, Point<dim> > support_points;
-        DoFTools::map_dofs_to_support_points (MappingQ1<dim>(),
-                                              dof_handler,
-                                              support_points);
+        std::map<dealii::types::global_dof_index, Point<dim>> support_points;
+        DoFTools::map_dofs_to_support_points(MappingQ1<dim>(),
+                                             dof_handler,
+                                             support_points);
 
         const std::string filename =
           "grid" + dealii::Utilities::int_to_string(dim) + ".gp";
@@ -103,83 +103,85 @@ public:
 
         f << "set terminal png size 400,410 enhanced font \"Helvetica,8\""
           << std::endl
-          << "set output \"grid"  << dealii::Utilities::int_to_string(dim)
-          << ".png\""             << std::endl
-          << "set size square"    << std::endl
-          << "set view equal xy"  << std::endl
-          << "unset xtics"        << std::endl
-          << "unset ytics"        << std::endl
-          << "plot '-' using 1:2 with lines notitle, '-' with labels point pt 2 offset 1,1 notitle" << std::endl;
-        GridOut().write_gnuplot (triangulation, f);
+          << "set output \"grid" << dealii::Utilities::int_to_string(dim)
+          << ".png\"" << std::endl
+          << "set size square" << std::endl
+          << "set view equal xy" << std::endl
+          << "unset xtics" << std::endl
+          << "unset ytics" << std::endl
+          << "plot '-' using 1:2 with lines notitle, '-' with labels point pt 2 offset 1,1 notitle"
+          << std::endl;
+        GridOut().write_gnuplot(triangulation, f);
         f << "e" << std::endl;
 
-        DoFTools::write_gnuplot_dof_support_point_info(f,
-                                                       support_points);
+        DoFTools::write_gnuplot_dof_support_point_info(f, support_points);
         f << "e" << std::endl;
       }
 #endif
   }
 
 private:
-  const ConfigureQC &config;
+  const ConfigureQC &                            config;
   dealiiqc::parallel::shared::Triangulation<dim> triangulation;
-  FESystem<dim>        fe;
-  DoFHandler<dim>      dof_handler;
-  MPI_Comm mpi_communicator;
-  CellMoleculeData<dim> cell_molecule_data;
-
+  FESystem<dim>                                  fe;
+  DoFHandler<dim>                                dof_handler;
+  MPI_Comm                                       mpi_communicator;
+  CellMoleculeData<dim>                          cell_molecule_data;
 };
 
 
-int main (int argc, char **argv)
+int
+main(int argc, char **argv)
 {
   try
     {
-      dealii::Utilities::MPI::MPI_InitFinalize
-      mpi_initialization (argc,
-                          argv,
-                          dealii::numbers::invalid_unsigned_int);
+      dealii::Utilities::MPI::MPI_InitFinalize mpi_initialization(
+        argc, argv, dealii::numbers::invalid_unsigned_int);
 
       std::ostringstream oss;
-      oss << "set Dimension = 2"                              << std::endl
-          << "subsection Configure atoms"                     << std::endl
-          << "  set Maximum cutoff radius = 0.9"              << std::endl
-          << "  set Pair potential type = LJ"                 << std::endl
-          << "  set Pair global coefficients = 0.89 "         << std::endl
-          << "end"                                            << std::endl
-          << "subsection Configure QC"                        << std::endl
-          << "  set Ghost cell layer thickness = 0.99"        << std::endl
-          << "  set Cluster radius = 0.1"                     << std::endl
-          << "  set Cluster weights by type = Cell"           << std::endl
-          << "end"                                            << std::endl
+      oss << "set Dimension = 2" << std::endl
+          << "subsection Configure atoms" << std::endl
+          << "  set Maximum cutoff radius = 0.9" << std::endl
+          << "  set Pair potential type = LJ" << std::endl
+          << "  set Pair global coefficients = 0.89 " << std::endl
+          << "end" << std::endl
+          << "subsection Configure QC" << std::endl
+          << "  set Ghost cell layer thickness = 0.99" << std::endl
+          << "  set Cluster radius = 0.1" << std::endl
+          << "  set Cluster weights by type = Cell" << std::endl
+          << "end" << std::endl
           << "#end-of-parameter-section" << std::endl
-          << "LAMMPS Description"        << std::endl         << std::endl
-          << "9 atoms"                   << std::endl         << std::endl
-          << "1  atom types"             << std::endl         << std::endl
-          << "Atoms #"                   << std::endl         << std::endl
-          << "1 1 1 1.0 0. 1. 0."        << std::endl
-          << "2 2 1 1.0 1. 1. 0."        << std::endl
-          << "3 3 1 1.0 2. 1. 0."        << std::endl
-          << "4 4 1 1.0 3. 1. 0."        << std::endl
-          << "5 5 1 1.0 4. 1. 0."        << std::endl
-          << "6 6 1 1.0 5. 1. 0."        << std::endl
-          << "7 7 1 1.0 6. 1. 0."        << std::endl
-          << "8 8 1 1.0 7. 1. 0."        << std::endl
-          << "9 9 1 1.0 8. 1. 0."        << std::endl;
+          << "LAMMPS Description" << std::endl
+          << std::endl
+          << "9 atoms" << std::endl
+          << std::endl
+          << "1  atom types" << std::endl
+          << std::endl
+          << "Atoms #" << std::endl
+          << std::endl
+          << "1 1 1 1.0 0. 1. 0." << std::endl
+          << "2 2 1 1.0 1. 1. 0." << std::endl
+          << "3 3 1 1.0 2. 1. 0." << std::endl
+          << "4 4 1 1.0 3. 1. 0." << std::endl
+          << "5 5 1 1.0 4. 1. 0." << std::endl
+          << "6 6 1 1.0 5. 1. 0." << std::endl
+          << "7 7 1 1.0 6. 1. 0." << std::endl
+          << "8 8 1 1.0 7. 1. 0." << std::endl
+          << "9 9 1 1.0 8. 1. 0." << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());
 
 
-      ConfigureQC config( prm_stream );
+      ConfigureQC config(prm_stream);
 
-      TestCellMoleculeTools<2> problem (config);
+      TestCellMoleculeTools<2> problem(config);
       problem.run();
-
     }
   catch (std::exception &exc)
     {
-      std::cerr << std::endl << std::endl
+      std::cerr << std::endl
+                << std::endl
                 << "----------------------------------------------------"
                 << std::endl;
       std::cerr << "Exception on processing: " << std::endl
@@ -191,7 +193,8 @@ int main (int argc, char **argv)
     }
   catch (...)
     {
-      std::cerr << std::endl << std::endl
+      std::cerr << std::endl
+                << std::endl
                 << "----------------------------------------------------"
                 << std::endl;
       std::cerr << "Unknown exception!" << std::endl

@@ -67,15 +67,14 @@ DEAL_II_QC_NAMESPACE_OPEN
  * (refer to deal.II documentation for further details about
  * parallel::shared::Triangulation).
  */
-template<int dim, int atomicity=1, int spacedim=dim>
+template <int dim, int atomicity = 1, int spacedim = dim>
 class MoleculeHandler
 {
 public:
-
   /**
    * Constructor takes in a ConfigureQC object @p configure_qc.
    */
-  MoleculeHandler (const ConfigureQC &configure_qc);
+  MoleculeHandler(const ConfigureQC &configure_qc);
 
   /**
    * Return the neighbor lists of @p cell_energy_molecules.
@@ -85,16 +84,16 @@ public:
    * are exactly the same as that of reference (undeformed) configuration.
    */
   types::CellMoleculeNeighborLists<dim, atomicity, spacedim>
-  get_neighbor_lists (const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_energy_molecules) const;
+  get_neighbor_lists(
+    const types::CellMoleculeContainerType<dim, atomicity, spacedim>
+      &cell_energy_molecules) const;
 
 
 protected:
-
   /**
    * A constant reference to ConfigureQC object
    */
   const ConfigureQC &configure_qc;
-
 };
 
 

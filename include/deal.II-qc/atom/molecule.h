@@ -18,10 +18,9 @@ using namespace dealii;
  * within the molecule. For instance, TiO\f$_2\f$ molecule has two atom types
  * within it but its <tt>atomicity</tt> is 3.
  */
-template<int spacedim, int atomicity=1>
+template <int spacedim, int atomicity = 1>
 struct Molecule
 {
-
   /**
    * Molecule's global index in the atomistic system.
    */
@@ -62,7 +61,6 @@ struct Molecule
    * non-zero @p cluster_weight.
    */
   double cluster_weight;
-
 };
 
 
@@ -77,15 +75,15 @@ struct Molecule
  * @note It is assumed here that the atoms of the molecule are already sorted
  * according to their stamps.
  */
-template<int spacedim, int atomicity>
-inline
-Point<spacedim> molecule_initial_location (const Molecule<spacedim, atomicity> &molecule)
+template <int spacedim, int atomicity>
+inline Point<spacedim>
+molecule_initial_location(const Molecule<spacedim, atomicity> &molecule)
 {
-  Assert (molecule.atoms.size()>0, ExcInternalError());
+  Assert(molecule.atoms.size() > 0, ExcInternalError());
 
 #ifdef DEBUG
-  for (int a=0; a<atomicity; a++)
-    for (int b=a+1; b<atomicity; b++)
+  for (int a = 0; a < atomicity; a++)
+    for (int b = a + 1; b < atomicity; b++)
       Assert(molecule.atoms[a].type <= molecule.atoms[b].type,
              ExcMessage("Atoms in the molecule are not sorted according "
                         "to their atom types."));
@@ -100,11 +98,10 @@ Point<spacedim> molecule_initial_location (const Molecule<spacedim, atomicity> &
  * Return the least distance squared between atoms of @p molecule_A and
  * @p molecule_B.
  */
-template<int spacedim, int atomicity>
-inline
-double
-least_distance_squared (const Molecule<spacedim, atomicity> &molecule_A,
-                        const Molecule<spacedim, atomicity> &molecule_B)
+template <int spacedim, int atomicity>
+inline double
+least_distance_squared(const Molecule<spacedim, atomicity> &molecule_A,
+                       const Molecule<spacedim, atomicity> &molecule_B)
 {
   double squared_distance = std::numeric_limits<double>::max();
 

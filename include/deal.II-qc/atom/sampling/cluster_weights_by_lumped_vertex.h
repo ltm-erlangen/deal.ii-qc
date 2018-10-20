@@ -10,7 +10,6 @@ DEAL_II_QC_NAMESPACE_OPEN
 
 namespace Cluster
 {
-
   /**
    * A class which creates a cluster around each sampling point and calculates
    * cluster weights using lumping procedure based on
@@ -25,8 +24,8 @@ namespace Cluster
    * For a given cluster radius, the cluster weights are obtained by
    * requiring that the shape functions are summed exactly. In other words,
    * the weighted sum of all the shape function values at the position of
-   * sampling molecules must be exactly equal to the sum of shape function values
-   * at all the lattice sites. The application of the summation rule to
+   * sampling molecules must be exactly equal to the sum of shape function
+   * values at all the lattice sites. The application of the summation rule to
    * shape functions leads to the system of \f$N^c\f$ linear algebraic
    * equations,
    * \f[
@@ -67,26 +66,25 @@ namespace Cluster
    *     I \, \in \, \mathcal{C}.
    * \f]
    */
-  template <int dim, int atomicity=1, int spacedim=dim>
-  class WeightsByLumpedVertex : public WeightsByBase <dim, atomicity, spacedim>
+  template <int dim, int atomicity = 1, int spacedim = dim>
+  class WeightsByLumpedVertex : public WeightsByBase<dim, atomicity, spacedim>
   {
   public:
-
     /**
      * Constructor.
      */
-    WeightsByLumpedVertex (const double &cluster_radius,
-                           const double &maximum_energy_radius);
+    WeightsByLumpedVertex(const double &cluster_radius,
+                          const double &maximum_energy_radius);
 
     /**
      * @see WeightsByBase::update_cluster_weights() and WeightsByLumpedCell
      * class description.
      */
     types::CellMoleculeContainerType<dim, atomicity, spacedim>
-    update_cluster_weights
-    (const Triangulation<dim, spacedim>                               &triangulation,
-     const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const;
-
+    update_cluster_weights(
+      const Triangulation<dim, spacedim> &triangulation,
+      const types::CellMoleculeContainerType<dim, atomicity, spacedim>
+        &cell_molecules) const;
   };
 
 

@@ -1,7 +1,7 @@
 
-#include "../tests.h"
-
 #include <deal.II-qc/core/qc.h>
+
+#include "../tests.h"
 
 using namespace dealii;
 using namespace dealiiqc;
@@ -20,22 +20,23 @@ template <int dim, typename PotentialType>
 class Problem : public QC<dim, PotentialType>
 {
 public:
-  Problem (const ConfigureQC &);
-  void partial_run (const double &blessed_energy);
+  Problem(const ConfigureQC &);
+  void
+  partial_run(const double &blessed_energy);
 };
 
 
 
 template <int dim, typename PotentialType>
-Problem<dim, PotentialType>::Problem (const ConfigureQC &config)
-  :
-  QC<dim, PotentialType>(config)
+Problem<dim, PotentialType>::Problem(const ConfigureQC &config)
+  : QC<dim, PotentialType>(config)
 {}
 
 
 
 template <int dim, typename PotentialType>
-void Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
+void
+Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
 {
   QC<dim, PotentialType>::setup_cell_energy_molecules();
   QC<dim, PotentialType>::setup_system();
@@ -44,95 +45,92 @@ void Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
 
   MPI_Barrier(QC<dim, PotentialType>::mpi_communicator);
 
-  Testing::SequentialFileStream
-  write_sequentially(QC<dim, PotentialType>::mpi_communicator);
+  Testing::SequentialFileStream write_sequentially(
+    QC<dim, PotentialType>::mpi_communicator);
 
-  deallog << "picked up: "
-          << QC<dim, PotentialType>::cell_molecule_data.cell_energy_molecules.size()
-          << " number of energy atoms."
-          << std::endl;
+  deallog
+    << "picked up: "
+    << QC<dim, PotentialType>::cell_molecule_data.cell_energy_molecules.size()
+    << " number of energy atoms." << std::endl;
 
-  const double energy =
-    QC<dim, PotentialType>::template
-    compute<false> (QC<dim, PotentialType>::locally_relevant_gradient);
+  const double energy = QC<dim, PotentialType>::template compute<false>(
+    QC<dim, PotentialType>::locally_relevant_gradient);
 
   QC<dim, PotentialType>::pcout
-      << "The energy computed using PairCoulWolfManager "
-      << "of charged atomistic system is: "
-      << energy
-      << " eV."
-      << std::endl;
+    << "The energy computed using PairCoulWolfManager "
+    << "of charged atomistic system is: " << energy << " eV." << std::endl;
 
   const unsigned int total_n_neighbors =
     dealii::Utilities::MPI::sum(QC<dim, PotentialType>::neighbor_lists.size(),
                                 QC<dim, PotentialType>::mpi_communicator);
 
-  QC<dim, PotentialType>::pcout
-      << "Total number of neighbors "
-      << total_n_neighbors
-      << std::endl;
+  QC<dim, PotentialType>::pcout << "Total number of neighbors "
+                                << total_n_neighbors << std::endl;
 
   // Accurate to 1e-9 // TODO Check unit and conversions
-  AssertThrow (std::fabs(energy-blessed_energy) < 1e7 * std::numeric_limits<double>::epsilon(),
-               ExcInternalError());
+  AssertThrow(std::fabs(energy - blessed_energy) <
+                1e7 * std::numeric_limits<double>::epsilon(),
+              ExcInternalError());
 }
 
 
 
-int main (int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
   try
     {
-      dealii::Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, dealii::numbers::invalid_unsigned_int);
+      dealii::Utilities::MPI::MPI_InitFinalize mpi_initialization(
+        argc, argv, dealii::numbers::invalid_unsigned_int);
 
       // Allow the restriction that user must provide Dimension of the problem
       const unsigned int dim = 3;
       std::ostringstream oss;
-      oss << "set Dimension = " << dim                        << std::endl
+      oss << "set Dimension = " << dim << std::endl
 
-          << "subsection Geometry"                            << std::endl
-          << "  set Type = Box"                               << std::endl
-          << "  subsection Box"                               << std::endl
-          << "    set X center = 4."                          << std::endl
-          << "    set Y center = 4."                          << std::endl
-          << "    set Z center = 4."                          << std::endl
-          << "    set X extent = 8."                          << std::endl
-          << "    set Y extent = 8."                          << std::endl
-          << "    set Z extent = 8."                          << std::endl
-          << "    set X repetitions = 1"                      << std::endl
-          << "    set Y repetitions = 1"                      << std::endl
-          << "    set Z repetitions = 1"                      << std::endl
-          << "  end"                                          << std::endl
+          << "subsection Geometry" << std::endl
+          << "  set Type = Box" << std::endl
+          << "  subsection Box" << std::endl
+          << "    set X center = 4." << std::endl
+          << "    set Y center = 4." << std::endl
+          << "    set Z center = 4." << std::endl
+          << "    set X extent = 8." << std::endl
+          << "    set Y extent = 8." << std::endl
+          << "    set Z extent = 8." << std::endl
+          << "    set X repetitions = 1" << std::endl
+          << "    set Y repetitions = 1" << std::endl
+          << "    set Z repetitions = 1" << std::endl
+          << "  end" << std::endl
           << "  set Number of initial global refinements = 2" << std::endl
-          << "end"                                            << std::endl
+          << "end" << std::endl
 
-          << "subsection Configure atoms"                     << std::endl
-          << "  set Maximum cutoff radius = 100"              << std::endl
-          << "  set Pair potential type = Coulomb Wolf"       << std::endl
-          << "  set Pair global coefficients = 0.4, 1.5"      << std::endl
+          << "subsection Configure atoms" << std::endl
+          << "  set Maximum cutoff radius = 100" << std::endl
+          << "  set Pair potential type = Coulomb Wolf" << std::endl
+          << "  set Pair global coefficients = 0.4, 1.5" << std::endl
           << "  set Atom data file = " << SOURCE_DIR "/../data/8_NaCl_atom.data"
           << std::endl
-          << "end"                                            << std::endl
+          << "end" << std::endl
 
-          << "subsection Configure QC"                        << std::endl
-          << "  set Ghost cell layer thickness = -1."         << std::endl
-          << "  set Cluster radius = 100"                     << std::endl
-          << "end"                                            << std::endl
-          << "#end-of-parameter-section"                      << std::endl;
+          << "subsection Configure QC" << std::endl
+          << "  set Ghost cell layer thickness = -1." << std::endl
+          << "  set Cluster radius = 100" << std::endl
+          << "end" << std::endl
+          << "#end-of-parameter-section" << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());
 
-      ConfigureQC config( prm_stream );
+      ConfigureQC config(prm_stream);
 
       // Define Problem
       Problem<dim, Potential::PairCoulWolfManager> problem(config);
-      problem.partial_run (-4748.564251019102/*blessed energy from LAMMPS*/);
-
+      problem.partial_run(-4748.564251019102 /*blessed energy from LAMMPS*/);
     }
   catch (std::exception &exc)
     {
-      std::cerr << std::endl << std::endl
+      std::cerr << std::endl
+                << std::endl
                 << "----------------------------------------------------"
                 << std::endl;
       std::cerr << "Exception on processing: " << std::endl
@@ -144,7 +142,8 @@ int main (int argc, char *argv[])
     }
   catch (...)
     {
-      std::cerr << std::endl << std::endl
+      std::cerr << std::endl
+                << std::endl
                 << "----------------------------------------------------"
                 << std::endl;
       std::cerr << "Unknown exception!" << std::endl

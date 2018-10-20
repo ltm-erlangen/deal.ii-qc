@@ -11,21 +11,21 @@ namespace Utilities
 
 
   std::pair<types::atom_type, types::atom_type>
-  atom_type_range (const std::string      &numeric_string,
-                   const types::atom_type  n_atom_types)
+  atom_type_range(const std::string &    numeric_string,
+                  const types::atom_type n_atom_types)
   {
-    const std::string
-    numeric_string_trimmed = dealii::Utilities::trim (numeric_string);
+    const std::string numeric_string_trimmed =
+      dealii::Utilities::trim(numeric_string);
 
-    const std::size_t string_size  = numeric_string_trimmed.size();
+    const std::size_t string_size = numeric_string_trimmed.size();
 
-    AssertThrow (string_size > 0, ExcEmptyObject());
+    AssertThrow(string_size > 0, ExcEmptyObject());
 
     types::atom_type minimum = 0;
-    types::atom_type maximum = n_atom_types-1;
+    types::atom_type maximum = n_atom_types - 1;
 
-    const bool
-    found_asterisk = (numeric_string_trimmed.find('*')!=std::string::npos);
+    const bool found_asterisk =
+      (numeric_string_trimmed.find('*') != std::string::npos);
 
     // Handle simple number case and simple asterisk case directly.
     if (!found_asterisk)
@@ -33,19 +33,19 @@ namespace Utilities
         minimum = dealii::Utilities::string_to_int(numeric_string_trimmed);
         return std::make_pair(minimum, minimum);
       }
-    else if (found_asterisk && string_size==1)
+    else if (found_asterisk && string_size == 1)
       // If the input string is single asterisk return the full range.
       return std::make_pair(minimum, maximum);
 
-    const std::vector<std::string>
-    s = dealii::Utilities::split_string_list(numeric_string_trimmed, '*');
+    const std::vector<std::string> s =
+      dealii::Utilities::split_string_list(numeric_string_trimmed, '*');
 
-    Assert (s.size()<=2,
-            ExcMessage("Invalid atom type range specified: " + numeric_string));
+    Assert(s.size() <= 2,
+           ExcMessage("Invalid atom type range specified: " + numeric_string));
 
-    if (s.size()==1)
+    if (s.size() == 1)
       minimum = dealii::Utilities::string_to_int(s[0]);
-    else if (s.size()==2)
+    else if (s.size() == 2)
       {
         if (!s[0].empty())
           minimum = dealii::Utilities::string_to_int(s[0]);
@@ -54,8 +54,8 @@ namespace Utilities
           maximum = dealii::Utilities::string_to_int(s[1]);
       }
 
-    Assert (minimum < n_atom_types && maximum < n_atom_types,
-            ExcMessage("Invalid atom type range specified: " + numeric_string));
+    Assert(minimum < n_atom_types && maximum < n_atom_types,
+           ExcMessage("Invalid atom type range specified: " + numeric_string));
 
     return std::make_pair(minimum, maximum);
   }
@@ -64,4 +64,3 @@ namespace Utilities
 
 
 DEAL_II_QC_NAMESPACE_CLOSE
-

@@ -2,9 +2,9 @@
 #ifndef __dealii_qc_weights_by_optimal_summation_rules_h_
 #define __dealii_qc_weights_by_optimal_summation_rules_h_
 
-#include <deal.II-qc/atom/cell_molecule_data.h>
-
 #include <deal.II/base/quadrature_lib.h>
+
+#include <deal.II-qc/atom/cell_molecule_data.h>
 #include <deal.II-qc/atom/sampling/cluster_weights_by_base.h>
 
 
@@ -13,7 +13,6 @@ DEAL_II_QC_NAMESPACE_OPEN
 
 namespace Cluster
 {
-
   // TODO: Implementation (first order summation rule for now).
   /**
    * Summation rules can be identified by two numbers: \f$ n_s\f$ the number
@@ -53,18 +52,18 @@ namespace Cluster
    * Summation rules for a fully nonlocal energy-based quasicontinuum method</a>
    * by Amelang, Venturini and Kochmann.
    */
-  template <int dim, int atomicity=1, int spacedim=dim>
-  class WeightsByOptimalSummationRules : public WeightsByBase<dim, atomicity, spacedim>
+  template <int dim, int atomicity = 1, int spacedim = dim>
+  class WeightsByOptimalSummationRules
+    : public WeightsByBase<dim, atomicity, spacedim>
   {
   public:
-
     // TODO: More documentation.
     /**
      * Constructor.
      */
-    WeightsByOptimalSummationRules (const double &cluster_radius,
-                                    const double &maximum_energy_radius,
-                                    const double &rep_distance);
+    WeightsByOptimalSummationRules(const double &cluster_radius,
+                                   const double &maximum_energy_radius,
+                                   const double &rep_distance);
 
     // TODO: More documentation & implementation.
     /**
@@ -80,8 +79,8 @@ namespace Cluster
      *   sampling points of the cell are given sampling weight of 1.
      * - In the interface region (which typically come with hanging nodes),
      *   the representative spheres of (vertex-type) sampling atoms/molecules
-     *   could potentially overlap. The representative spheres should be split to
-     *   determine sampling weights.
+     *   could potentially overlap. The representative spheres should be split
+     * to determine sampling weights.
      * - In the continuum region, cells are large enough that none of the
      *   representative spheres overlap, the vertex-type sampling
      *   atoms/molecules get a sampling weight of
@@ -100,20 +99,19 @@ namespace Cluster
      * cell containing the quadrature-type sampling atom.
      */
     types::CellMoleculeContainerType<dim, atomicity, spacedim>
-    update_cluster_weights
-    (const Triangulation<dim, spacedim>                               &triangulation,
-     const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const;
+    update_cluster_weights(
+      const Triangulation<dim, spacedim> &triangulation,
+      const types::CellMoleculeContainerType<dim, atomicity, spacedim>
+        &cell_molecules) const;
 
   protected:
-
     /**
      * Representative distance of the vertex-type sampling atoms/molecules.
      */
     double rep_distance;
-
   };
 
-}
+} // namespace Cluster
 
 
 DEAL_II_QC_NAMESPACE_CLOSE

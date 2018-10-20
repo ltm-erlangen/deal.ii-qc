@@ -10,20 +10,18 @@ DEAL_II_QC_NAMESPACE_OPEN
 
 namespace Cluster
 {
-
   /**
    * A derived class for updating cluster weights using the cell approach.
    */
-  template <int dim, int atomicity=1, int spacedim=dim>
-  class WeightsByCell : public WeightsByBase <dim, atomicity, spacedim>
+  template <int dim, int atomicity = 1, int spacedim = dim>
+  class WeightsByCell : public WeightsByBase<dim, atomicity, spacedim>
   {
   public:
-
     /**
      * Constructor
      */
-    WeightsByCell (const double &cluster_radius,
-                   const double &maximum_energy_radius);
+    WeightsByCell(const double &cluster_radius,
+                  const double &maximum_energy_radius);
 
     /**
      * @see WeightsByBase::update_cluster_weights().
@@ -33,10 +31,10 @@ namespace Cluster
      * as cluster weights.
      */
     types::CellMoleculeContainerType<dim, atomicity, spacedim>
-    update_cluster_weights
-    (const Triangulation<dim, spacedim>                               &triangulation,
-     const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const;
-
+    update_cluster_weights(
+      const Triangulation<dim, spacedim> &triangulation,
+      const types::CellMoleculeContainerType<dim, atomicity, spacedim>
+        &cell_molecules) const;
   };
 
 

@@ -2,12 +2,15 @@
 #ifndef __dealii_qc_cluster_weights_by_base_h_
 #define __dealii_qc_cluster_weights_by_base_h_
 
-#include <deal.II-qc/atom/cell_molecule_data.h>
-
 #include <deal.II/base/quadrature_lib.h>
+
 #include <deal.II/dofs/dof_handler.h>
+
 #include <deal.II/grid/tria.h>
+
 #include <deal.II/lac/affine_constraints.h>
+
+#include <deal.II-qc/atom/cell_molecule_data.h>
 
 
 DEAL_II_QC_NAMESPACE_OPEN
@@ -15,7 +18,6 @@ DEAL_II_QC_NAMESPACE_OPEN
 
 namespace Cluster
 {
-
   /**
    * Base class for assigning @see cluster_weight to energy molecules.
    *
@@ -34,18 +36,17 @@ namespace Cluster
    * interchangeably; also the terms sampling points and quadrature points
    * in the context of sampling rules are used interchangeably.
    */
-  template <int dim, int atomicity=1, int spacedim=dim>
+  template <int dim, int atomicity = 1, int spacedim = dim>
   class WeightsByBase
   {
   public:
-
     // TODO: Add sampling points around which clusters are to be formed
     //       (points around where sampling molecules are formed).
     /**
      * Constructor.
      */
-    WeightsByBase (const double &cluster_radius,
-                   const double &maximum_cutoff_radius);
+    WeightsByBase(const double &cluster_radius,
+                  const double &maximum_cutoff_radius);
 
 
     virtual ~WeightsByBase();
@@ -56,44 +57,41 @@ namespace Cluster
      * @p quadrature.
      */
     void
-    initialize (const Triangulation<dim, spacedim> &triangulation,
-                const Quadrature<dim>              &quadrature = QTrapez<dim>());
+    initialize(const Triangulation<dim, spacedim> &triangulation,
+               const Quadrature<dim> &             quadrature = QTrapez<dim>());
 
     /**
      * Return the sampling point with the index given by @p sampling_index.
      */
-    inline
-    const Point<spacedim> &
-    get_sampling_point (const unsigned int sampling_index) const;
+    inline const Point<spacedim> &
+    get_sampling_point(const unsigned int sampling_index) const;
 
     /**
      * Return the total number of sampling points.
      */
-    inline
-    unsigned int
-    n_sampling_points () const;
+    inline unsigned int
+    n_sampling_points() const;
 
     /**
      * Return the set of sampling indices associated to the @p cell.
      */
-    inline
-    const std::vector<unsigned int> &
-    get_sampling_indices (const types::CellIteratorType<dim, spacedim> &cell) const;
+    inline const std::vector<unsigned int> &
+    get_sampling_indices(
+      const types::CellIteratorType<dim, spacedim> &cell) const;
 
     /**
      * Return the set of sampling points associated to the @p cell.
      */
-    inline
-    std::vector<Point<spacedim> >
-    get_sampling_points (const types::CellIteratorType<dim, spacedim> &cell) const;
+    inline std::vector<Point<spacedim>>
+    get_sampling_points(
+      const types::CellIteratorType<dim, spacedim> &cell) const;
 
     /**
      * Return whether a sampling point with @p sampling_index is a
      * quadrature-type sampling point.
      */
-    inline
-    bool
-    is_quadrature_type (const unsigned int sampling_index) const;
+    inline bool
+    is_quadrature_type(const unsigned int sampling_index) const;
 
     /**
      * Return energy molecules (in a cell based data structure) with
@@ -101,11 +99,11 @@ namespace Cluster
      * that were associated to @p triangulation, using #cluster_radius and
      * #maximum_cutoff_radius.
      */
-    virtual
-    types::CellMoleculeContainerType<dim, atomicity, spacedim>
-    update_cluster_weights
-    (const Triangulation<dim, spacedim>                               &triangulation,
-     const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const = 0;
+    virtual types::CellMoleculeContainerType<dim, atomicity, spacedim>
+    update_cluster_weights(
+      const Triangulation<dim, spacedim> &triangulation,
+      const types::CellMoleculeContainerType<dim, atomicity, spacedim>
+        &cell_molecules) const = 0;
 
     /**
      * Prepare the inverse masses attributed to the locally relevant
@@ -141,14 +139,13 @@ namespace Cluster
      */
     template <typename VectorType>
     void
-    compute_dof_inverse_masses
-    (VectorType                                       &inverse_masses,
-     const CellMoleculeData<dim, atomicity, spacedim> &cell_molecule_data,
-     const DoFHandler<dim, spacedim>                  &dof_handler,
-     const AffineConstraints<double>                  &constraints) const;
+    compute_dof_inverse_masses(
+      VectorType &                                      inverse_masses,
+      const CellMoleculeData<dim, atomicity, spacedim> &cell_molecule_data,
+      const DoFHandler<dim, spacedim> &                 dof_handler,
+      const AffineConstraints<double> &                 constraints) const;
 
   protected:
-
     /**
      * The cluster radius for the QC approach.
      */
@@ -160,7 +157,6 @@ namespace Cluster
     const double maximum_cutoff_radius;
 
   private:
-
     /**
      * A container to hold all the sampling points.
      *
@@ -178,8 +174,8 @@ namespace Cluster
     /**
      * Map from cells to their corresponding sampling points' indices.
      */
-    std::map<types::CellIteratorType<dim,spacedim>, std::vector<unsigned int> >
-    cells_to_sampling_indices;
+    std::map<types::CellIteratorType<dim, spacedim>, std::vector<unsigned int>>
+      cells_to_sampling_indices;
 
     /**
      * A set of global indices of the sampling points that are relevant for
@@ -194,17 +190,17 @@ namespace Cluster
 
   template <int dim, int atomicity, int spacedim>
   const dealii::Point<spacedim> &
-  WeightsByBase<dim, atomicity, spacedim>::
-  get_sampling_point (const unsigned int sampling_index) const
+  WeightsByBase<dim, atomicity, spacedim>::get_sampling_point(
+    const unsigned int sampling_index) const
   {
-    Assert (sampling_index < sampling_points.size(),
-            ExcMessage("Invalid sampling index."));
+    Assert(sampling_index < sampling_points.size(),
+           ExcMessage("Invalid sampling index."));
 
-    Assert (locally_relevant_sampling_indices.is_element(sampling_index),
-            ExcMessage("Invalid sampling index. This function was called "
-                       "with a sampling index that is not locally relevant."
-                       "In other words, the given sampling index is not "
-                       "associated to any of the locally relevant cells."));
+    Assert(locally_relevant_sampling_indices.is_element(sampling_index),
+           ExcMessage("Invalid sampling index. This function was called "
+                      "with a sampling index that is not locally relevant."
+                      "In other words, the given sampling index is not "
+                      "associated to any of the locally relevant cells."));
 
     return sampling_points[sampling_index];
   }
@@ -213,8 +209,7 @@ namespace Cluster
 
   template <int dim, int atomicity, int spacedim>
   unsigned int
-  WeightsByBase<dim, atomicity, spacedim>::
-  n_sampling_points () const
+  WeightsByBase<dim, atomicity, spacedim>::n_sampling_points() const
   {
     return sampling_points.size();
   }
@@ -223,8 +218,8 @@ namespace Cluster
 
   template <int dim, int atomicity, int spacedim>
   const std::vector<unsigned int> &
-  WeightsByBase<dim, atomicity, spacedim>::
-  get_sampling_indices (const types::CellIteratorType<dim, spacedim> &cell) const
+  WeightsByBase<dim, atomicity, spacedim>::get_sampling_indices(
+    const types::CellIteratorType<dim, spacedim> &cell) const
   {
     return cells_to_sampling_indices.at(cell);
   }
@@ -232,22 +227,23 @@ namespace Cluster
 
 
   template <int dim, int atomicity, int spacedim>
-  std::vector<Point<spacedim> >
-  WeightsByBase<dim, atomicity, spacedim>::
-  get_sampling_points (const types::CellIteratorType<dim, spacedim> &cell) const
+  std::vector<Point<spacedim>>
+  WeightsByBase<dim, atomicity, spacedim>::get_sampling_points(
+    const types::CellIteratorType<dim, spacedim> &cell) const
   {
     // Get the global indices of the sampling points of this cell.
     const std::vector<unsigned int> &this_cell_sampling_indices =
       this->get_sampling_indices(cell);
 
     // Prepare sampling points of this cell in this container.
-    std::vector<Point<spacedim> > this_cell_sampling_points;
+    std::vector<Point<spacedim>> this_cell_sampling_points;
 
     this_cell_sampling_points.reserve(this_cell_sampling_indices.size());
 
     // Prepare sampling points of this cell.
     for (const auto &sampling_index : this_cell_sampling_indices)
-      this_cell_sampling_points.push_back(this->get_sampling_point(sampling_index));
+      this_cell_sampling_points.push_back(
+        this->get_sampling_point(sampling_index));
 
     return this_cell_sampling_points;
   }
@@ -256,8 +252,8 @@ namespace Cluster
 
   template <int dim, int atomicity, int spacedim>
   bool
-  WeightsByBase<dim, atomicity, spacedim>::
-  is_quadrature_type (const unsigned int sampling_index) const
+  WeightsByBase<dim, atomicity, spacedim>::is_quadrature_type(
+    const unsigned int sampling_index) const
   {
     return quadrature_type_list[sampling_index];
   }

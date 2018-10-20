@@ -25,7 +25,6 @@ using namespace dealii;
 template <int spacedim>
 struct Atom
 {
-
   /**
    * Global atom index of this atom.
    */
@@ -45,7 +44,6 @@ struct Atom
    * Current position of the atom in <tt>spacedim</tt>-dimensional space.
    */
   Point<spacedim> position;
-
 };
 
 

@@ -1,29 +1,26 @@
 
 // Test to check QTrapezWithMidpoint's quadrature points.
 
-#include <iostream>
-
 #include <deal.II-qc/base/quadrature_lib.h>
+
+#include <iostream>
 
 
 template <int dim>
-void test ()
+void
+test()
 {
   dealiiqc::QTrapezWithMidpoint<dim> q;
 
-  std::cout << "Dim::"
-            << dim
-            << ":\n";
+  std::cout << "Dim::" << dim << ":\n";
 
   for (unsigned int i = 0; i < q.size(); ++i)
-    std::cout << q.point(i)
-              << "\t"
-              << q.weight(i)
-              << std::endl;
+    std::cout << q.point(i) << "\t" << q.weight(i) << std::endl;
 }
 
 
-int main (int argc, char **argv)
+int
+main(int argc, char **argv)
 {
   try
     {
@@ -33,7 +30,8 @@ int main (int argc, char **argv)
     }
   catch (std::exception &exc)
     {
-      std::cerr << std::endl << std::endl
+      std::cerr << std::endl
+                << std::endl
                 << "----------------------------------------------------"
                 << std::endl;
       std::cerr << "Exception on processing: " << std::endl
@@ -45,7 +43,8 @@ int main (int argc, char **argv)
     }
   catch (...)
     {
-      std::cerr << std::endl << std::endl
+      std::cerr << std::endl
+                << std::endl
                 << "----------------------------------------------------"
                 << std::endl;
       std::cerr << "Unknown exception!" << std::endl
