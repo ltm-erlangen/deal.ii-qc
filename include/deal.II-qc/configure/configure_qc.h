@@ -2,26 +2,29 @@
 #ifndef __dealii_qc_configure_qc_h
 #define __dealii_qc_configure_qc_h
 
-#include <deal.II/base/subscriptor.h>
-#include <deal.II/base/parameter_handler.h>
 #include <deal.II/base/logstream.h>
+#include <deal.II/base/parameter_handler.h>
+#include <deal.II/base/subscriptor.h>
+
 #include <deal.II/lac/generic_linear_algebra.h>
 #include <deal.II/lac/solver_fire.h>
-
-#include <fstream>
-#include <sstream>
-#include <utility>
-#include <memory>
 
 #include <deal.II-qc/atom/sampling/cluster_weights_by_cell.h>
 #include <deal.II-qc/atom/sampling/cluster_weights_by_lumped_vertex.h>
 #include <deal.II-qc/atom/sampling/cluster_weights_by_sampling_points.h>
 #include <deal.II-qc/atom/sampling/weights_by_optimal_summation_rules.h>
+
 #include <deal.II-qc/configure/geometry/geometry_box.h>
 #include <deal.II-qc/configure/geometry/geometry_gmsh.h>
+
 #include <deal.II-qc/potentials/pair_coul_wolf.h>
 #include <deal.II-qc/potentials/pair_lj_cut.h>
 #include <deal.II-qc/potentials/pair_lj_cut_coul_wolf.h>
+
+#include <fstream>
+#include <memory>
+#include <sstream>
+#include <utility>
 
 
 DEAL_II_QC_NAMESPACE_OPEN
@@ -39,7 +42,6 @@ using namespace dealii;
 class ConfigureQC
 {
 public:
-
   /**
    * Parameters to setup SolverControl.
    */
@@ -53,12 +55,12 @@ public:
     /**
      * Prescribed tolerance to be achieved.
      */
-    double       tolerance;
+    double tolerance;
 
     /**
      * Log convergence history to deallog.
      */
-    bool         log_history;
+    bool log_history;
 
     /**
      * Log only every nth step.
@@ -70,7 +72,7 @@ public:
      * success together with last step and value of convergence criteria are
      * logged.
      */
-    bool         log_result;
+    bool log_result;
   };
 
   /**
@@ -133,17 +135,19 @@ public:
   /**
    * Constructor with a shared pointer to an istream object @p is.
    */
-  ConfigureQC( std::shared_ptr<std::istream> is);
+  ConfigureQC(std::shared_ptr<std::istream> is);
 
   /**
    * Get dimensionality of the problem
    */
-  unsigned int get_dimension() const;
+  unsigned int
+  get_dimension() const;
 
   /**
    * Get pair potential type.
    */
-  std::string get_pair_potential_type() const;
+  std::string
+  get_pair_potential_type() const;
 
   /**
    * Get a shared pointer to const dim dimensional Geometry object.
@@ -152,69 +156,79 @@ public:
    * depending on the dimension provided in the input script while
    * constructing the ConfigureQC object.
    */
-  template<int dim>
-  std::shared_ptr<const Geometry::Base<dim>> get_geometry () const;
+  template <int dim>
+  std::shared_ptr<const Geometry::Base<dim>>
+  get_geometry() const;
 
   /**
    * Get atom data file.
    */
-  std::string get_atom_data_file() const;
+  std::string
+  get_atom_data_file() const;
 
   /**
    * Get the number of different atom types in the atomistic system.
    */
-  types::atom_type get_n_atom_types () const;
+  types::atom_type
+  get_n_atom_types() const;
 
   /**
    * Get input stream
    */
-  std::shared_ptr<std::istream> get_stream() const;
+  std::shared_ptr<std::istream>
+  get_stream() const;
 
   /**
    * Return #ghost_cell_layer_thickness.
    */
-  double get_ghost_cell_layer_thickness() const;
+  double
+  get_ghost_cell_layer_thickness() const;
 
   // TODO: take maximum_cutoff_radius from pair potential cutoff radii?
   // maximum_cutoff_radius= max{ cutoff_radii } + skin?
   /**
    * Return #maximum_cutoff_radius.
    */
-  double get_maximum_cutoff_radius() const;
+  double
+  get_maximum_cutoff_radius() const;
 
   /**
    * Get cluster radius.
    */
-  double get_cluster_radius() const;
+  double
+  get_cluster_radius() const;
 
   /**
    * Get representative distance.
    */
-  double get_rep_distance() const;
+  double
+  get_rep_distance() const;
 
   /**
    * Get a shared pointer to the pair potential class object.
    */
-  std::shared_ptr<Potential::PairBaseManager> get_potential() const;
+  std::shared_ptr<Potential::PairBaseManager>
+  get_potential() const;
 
   /**
    * Get quadrature rule.
    */
-  std::string get_quadrature_rule () const;
+  std::string
+  get_quadrature_rule() const;
 
   /**
    * Create and return a shared pointer to the derived class object of
    * WeightsByBase.
    */
-  template <int dim, int atomicity=1, int spacedim=dim>
-  std::shared_ptr<Cluster::WeightsByBase<dim, atomicity, spacedim> >
+  template <int dim, int atomicity = 1, int spacedim = dim>
+  std::shared_ptr<Cluster::WeightsByBase<dim, atomicity, spacedim>>
   get_cluster_weights() const;
 
   /**
    * Get the map from boundary ids to boundary function expressions in
    * the string format.
    */
-  std::map<unsigned int, std::vector<std::string> >
+  std::map<unsigned int, std::vector<std::string>>
   get_boundary_functions() const;
 
   /**
@@ -228,45 +242,52 @@ public:
   /**
    * Get minimizer's name.
    */
-  std::string get_minimizer_name() const;
+  std::string
+  get_minimizer_name() const;
 
   /**
    * Get the time interval between load steps during the quasi-static loading
    * process.
    */
-  double get_time_step() const;
+  double
+  get_time_step() const;
 
   /**
    * Get the number of load steps during the quasi-static loading process.
    */
-  unsigned int get_n_time_steps() const;
+  unsigned int
+  get_n_time_steps() const;
 
   /**
    * Get SolverControl parameters.
    */
-  SolverControlParameters get_solver_control_parameters () const;
+  SolverControlParameters
+  get_solver_control_parameters() const;
 
   /**
    * Get SolverFIRE parameters.
    */
-  FireParameters get_fire_parameters() const;
+  FireParameters
+  get_fire_parameters() const;
 
   /**
    * Get parameters for custom initial refinement.
    */
-  InitialRefinementParameters get_initial_refinement_parameters() const;
+  InitialRefinementParameters
+  get_initial_refinement_parameters() const;
 
 private:
-
   /*
    * Declare parameters to configure QC class.
    */
-  static void declare_parameters( ParameterHandler &prm );
+  static void
+  declare_parameters(ParameterHandler &prm);
 
   /*
    * Parse parameters
    */
-  void parse_parameters( ParameterHandler &prm );
+  void
+  parse_parameters(ParameterHandler &prm);
 
   /**
    * Dimensionality of the problem
@@ -306,12 +327,12 @@ private:
   /**
    * Path to the atom data file.
    */
-  std::string                           atom_data_file;
+  std::string atom_data_file;
 
   /**
    * The number of different atom types in the atomistic system.
    */
-  types::atom_type                      n_atom_types;
+  types::atom_type n_atom_types;
 
   /**
    * Shared pointer to the input stream passed in to the
@@ -320,7 +341,6 @@ private:
   mutable std::shared_ptr<std::istream> input_stream;
 
 protected:
-
   /**
    * A shared pointer to the pair potential object.
    */
@@ -335,8 +355,8 @@ protected:
    * A map from boundary ids to function expressions which describe the boundary
    * conditions.
    */
-  std::map<unsigned int, std::vector<std::string> >
-  boundary_ids_to_function_expressions;
+  std::map<unsigned int, std::vector<std::string>>
+    boundary_ids_to_function_expressions;
 
   /**
    * Maximum number of mateiral ids in the domain.
@@ -351,7 +371,7 @@ protected:
    * external potential field function expression.
    */
   std::map<std::pair<unsigned int, bool>, std::string>
-  external_potential_field_expressions;
+    external_potential_field_expressions;
 
   /**
    * In distributed memory calculation with local h-adaptive FE each
@@ -443,7 +463,6 @@ protected:
    * Initial refinement parameters.
    */
   InitialRefinementParameters initial_refinement_parameters;
-
 };
 
 

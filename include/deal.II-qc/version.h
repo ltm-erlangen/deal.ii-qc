@@ -9,6 +9,6 @@ namespace dealiiqc
   extern const std::string GIT_BRANCH;
   extern const std::string GIT_SHORTREV;
   extern const std::string GIT_TAG;
-}
+} // namespace dealiiqc
 
 #endif

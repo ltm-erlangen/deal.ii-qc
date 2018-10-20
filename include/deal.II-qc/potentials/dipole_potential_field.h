@@ -51,24 +51,24 @@ public:
    * @p dipole moment of the dipole, and
    * @p initial_time that defaults to zero.
    */
-  DipolePotentialField (const Point<spacedim>     &dipole_location,
-                        const Tensor<1, spacedim> &dipole_orientation,
-                        const double               dipole_moment,
-                        const double               initial_time=0.);
+  DipolePotentialField(const Point<spacedim> &    dipole_location,
+                       const Tensor<1, spacedim> &dipole_orientation,
+                       const double               dipole_moment,
+                       const double               initial_time = 0.);
 
   /**
    * Return the potential energy of a charged particle,
    * located at @p p and with charge @p q, due to the presence of dipole.
    */
-  double value (const Point<spacedim> &p,
-                const double           q) const;
+  double
+  value(const Point<spacedim> &p, const double q) const;
 
   /**
    * Return the gradient of the potential energy of a charged particle,
    * located at @p p and with charge @p q, due to the presence of dipole.
    */
-  Tensor<1, spacedim> gradient (const Point<spacedim> &p,
-                                const double           q) const;
+  Tensor<1, spacedim>
+  gradient(const Point<spacedim> &p, const double q) const;
 
 protected:
   // Allow all dipole properties to change with time.
@@ -76,7 +76,7 @@ protected:
   /**
    * Location of the dipole in <tt>spacedim</tt>-dimensional space.
    */
-  Point<spacedim>     dipole_location;
+  Point<spacedim> dipole_location;
 
   /**
    * Orientation of the dipole.
@@ -86,7 +86,7 @@ protected:
   /**
    * Magnitude of the dipole_moment of the dipole.
    */
-  double              dipole_moment;
+  double dipole_moment;
 };
 
 

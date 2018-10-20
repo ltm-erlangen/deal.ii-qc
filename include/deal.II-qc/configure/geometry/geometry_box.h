@@ -20,19 +20,20 @@ namespace Geometry
   class Box : public Base<dim>
   {
   public:
+    Box();
 
-    Box ();
+    virtual ~Box();
 
-    virtual ~Box ();
+    virtual void
+    create_mesh(dealii::parallel::shared::Triangulation<dim> &tria) const;
 
-    virtual void create_mesh (dealii::parallel::shared::Triangulation<dim> &tria) const;
+    virtual void
+    parse_parameters(ParameterHandler &prm);
 
-    virtual void parse_parameters (ParameterHandler &prm);
-
-    static void declare_parameters (ParameterHandler &prm);
+    static void
+    declare_parameters(ParameterHandler &prm);
 
   private:
-
     /**
      * Extent of the box in x-, y-, and z-direction (in 3d).
      */

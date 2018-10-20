@@ -6,11 +6,10 @@ DEAL_II_QC_NAMESPACE_OPEN
 
 
 template <int spacedim>
-PotentialField<spacedim>::PotentialField (const bool   is_electric_field,
-                                          const double initial_time)
-  :
-  FunctionTime<double>(initial_time),
-  is_electric_field (is_electric_field)
+PotentialField<spacedim>::PotentialField(const bool   is_electric_field,
+                                         const double initial_time)
+  : FunctionTime<double>(initial_time)
+  , is_electric_field(is_electric_field)
 {}
 
 

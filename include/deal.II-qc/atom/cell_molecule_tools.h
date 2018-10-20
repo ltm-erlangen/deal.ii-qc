@@ -3,7 +3,7 @@
 #define __dealii_qc_atom_cell_molecule_tools_h
 
 
-#include<deal.II-qc/atom/cell_molecule_data.h>
+#include <deal.II-qc/atom/cell_molecule_data.h>
 
 
 DEAL_II_QC_NAMESPACE_OPEN
@@ -14,7 +14,6 @@ DEAL_II_QC_NAMESPACE_OPEN
  */
 namespace CellMoleculeTools
 {
-
   /**
    * Return a pair of range of constant iterators to CellMoleculeContainerType
    * object of atoms @p cell_molecules and the number of atoms of @p atoms in
@@ -25,26 +24,24 @@ namespace CellMoleculeTools
    * empty CellMoleculeContainer, then the function throws an error that
    * the provided CellMoleculeContainer is empty.
    */
-  template<int dim, int atomicity=1, int spacedim=dim>
-  std::pair
-  <
-  types::CellMoleculeConstIteratorRangeType<dim, atomicity, spacedim>
-  ,
-  unsigned int
-  >
-  molecules_range_in_cell
-  (const types::CellIteratorType<dim, spacedim>                     &cell,
-   const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules);
+  template <int dim, int atomicity = 1, int spacedim = dim>
+  std::pair<types::CellMoleculeConstIteratorRangeType<dim, atomicity, spacedim>,
+            unsigned int>
+  molecules_range_in_cell(
+    const types::CellIteratorType<dim, spacedim> &cell,
+    const types::CellMoleculeContainerType<dim, atomicity, spacedim>
+      &cell_molecules);
 
   /**
    * Return the number of molecules in @p cell_energy_molecules, associated to
    * @p cell, which have non-zero cluster weights.
    */
-  template<int dim, int atomicity=1, int spacedim=dim>
+  template <int dim, int atomicity = 1, int spacedim = dim>
   unsigned int
-  n_cluster_molecules_in_cell
-  (const types::CellIteratorType<dim, spacedim>                     &cell,
-   const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_energy_molecules);
+  n_cluster_molecules_in_cell(
+    const types::CellIteratorType<dim, spacedim> &cell,
+    const types::CellMoleculeContainerType<dim, atomicity, spacedim>
+      &cell_energy_molecules);
 
   /**
    * Prepare and return a CellMoleculeData object based on the given @p mesh
@@ -84,21 +81,22 @@ namespace CellMoleculeTools
    * check whether the molecule's location lies inside the bounding box of
    * the current processor's set of locally relevant cells.
    */
-  template<int dim, int atomicity=1, int spacedim=dim>
+  template <int dim, int atomicity = 1, int spacedim = dim>
   CellMoleculeData<dim, atomicity, spacedim>
-  build_cell_molecule_data (std::istream                         &is,
-                            const Triangulation<dim, spacedim>   &mesh,
-                            const GridTools::Cache<dim,spacedim> &grid_cache);
+  build_cell_molecule_data(std::istream &                         is,
+                           const Triangulation<dim, spacedim> &   mesh,
+                           const GridTools::Cache<dim, spacedim> &grid_cache);
 
   /**
    * Return molecule number density, the ratio of the total number of molecules
    * associated to the mesh and the volume of the mesh.
    */
-  template<int dim, int atomicity=1, int spacedim=dim>
+  template <int dim, int atomicity = 1, int spacedim = dim>
   double
-  compute_molecule_density
-  (const Triangulation<dim, spacedim>                               &triangulation,
-   const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules);
+  compute_molecule_density(
+    const Triangulation<dim, spacedim> &triangulation,
+    const types::CellMoleculeContainerType<dim, atomicity, spacedim>
+      &cell_molecules);
 
 } // namespace CellMoleculeTools
 

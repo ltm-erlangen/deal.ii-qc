@@ -1,28 +1,30 @@
 #ifndef __dealii_qc_qc_h
 #define __dealii_qc_qc_h
 
+#include <deal.II/base/config.h>
+
 #include <deal.II/base/conditional_ostream.h>
 #include <deal.II/base/function_parser.h>
 #include <deal.II/base/quadrature_lib.h>
 #include <deal.II/base/timer.h>
 #include <deal.II/base/utilities.h>
 
-#include <deal.II/base/config.h>
-#include <deal.II/lac/affine_constraints.h>
-
-#include <deal.II/grid/tria.h>
-#include <deal.II/grid/grid_refinement.h>
-#include <deal.II/grid/grid_tools_cache.h>
-
 #include <deal.II/fe/component_mask.h>
 #include <deal.II/fe/fe_system.h>
 #include <deal.II/fe/fe_values.h>
 #include <deal.II/fe/mapping_q1.h>
 
-#include <deal.II/optimization/rol/vector_adaptor.h>
+#include <deal.II/grid/grid_refinement.h>
+#include <deal.II/grid/grid_tools_cache.h>
+#include <deal.II/grid/tria.h>
+
+#include <deal.II/lac/affine_constraints.h>
 #include <deal.II/lac/generic_linear_algebra.h>
+
 #include <deal.II/numerics/data_out.h>
 #include <deal.II/numerics/vector_tools.h>
+
+#include <deal.II/optimization/rol/vector_adaptor.h>
 
 namespace LA
 {
@@ -31,15 +33,18 @@ namespace LA
 #else
   using namespace dealii::LinearAlgebraTrilinos;
 #endif
-}
+} // namespace LA
 
 #include <deal.II-qc/atom/molecule_handler.h>
+
 #include <deal.II-qc/configure/configure_qc.h>
+
 #include <deal.II-qc/grid/shared_tria.h>
+
 #include <deal.II-qc/potentials/potential_field_function_parser.h>
 
 #if defined(DEAL_II_WITH_TRILINOS) && defined(DEAL_II_TRILINOS_WITH_ROL)
-# include <ROL_Objective.hpp>
+#  include <ROL_Objective.hpp>
 #endif
 
 
@@ -133,21 +138,21 @@ using namespace dealii;
  * @note QC only supports quasicontinuum description of a single Molecule
  * type.
  */
-template <int dim, typename PotentialType, int atomicity=1>
+template <int dim, typename PotentialType, int atomicity = 1>
 class QC
 {
   // TODO: Remove this after adding spacedim as template parameter.
   static const unsigned int spacedim = dim;
-public:
 
+public:
   typedef LA::MPI::BlockVector vector_t;
 
   /**
    * Constructor.
    */
-  QC (const ConfigureQC &);
+  QC(const ConfigureQC &);
 
-  virtual ~QC ();
+  virtual ~QC();
 
   /**
    * Perform QC simulation based on #configure_qc. If
@@ -156,7 +161,8 @@ public:
    * step without applying any external potential. Otherwise, the displacement
    * is measured from the initial configuration.
    */
-  void run (const bool relaxed_configuration_as_reference=true);
+  void
+  run(const bool relaxed_configuration_as_reference = true);
 
 #if defined(DEAL_II_WITH_TRILINOS) && defined(DEAL_II_TRILINOS_WITH_ROL)
   /**
@@ -186,8 +192,9 @@ public:
    *
    * @code
    *   std::string filename = "rol_input.xml";
-   *   Teuchos::RCP<Teuchos::ParameterList> parlist = Teuchos::rcp (new Teuchos::ParameterList());
-   *   Teuchos::updateParametersFromXmlFile (filename, parlist.ptr());
+   *   Teuchos::RCP<Teuchos::ParameterList> parlist = Teuchos::rcp (new
+   * Teuchos::ParameterList()); Teuchos::updateParametersFromXmlFile (filename,
+   * parlist.ptr());
    * @endcode
    *
    * For logging per iteration information,
@@ -209,49 +216,48 @@ public:
   class Objective : public ROL::Objective<double>
   {
   public:
-
     /**
      * Constructor.
      */
-    Objective (QC &qc)
-      :
-      qc(qc),
-      energy(0.)
+    Objective(QC &qc)
+      : qc(qc)
+      , energy(0.)
     {}
 
     Teuchos::RCP<const vector_t>
-    get_rcp_to_vector (const ROL::Vector<double> &x)
+    get_rcp_to_vector(const ROL::Vector<double> &x)
     {
-      return
-        Teuchos::dyn_cast<const Rol::VectorAdaptor<vector_t> >(x).getVector();
+      return Teuchos::dyn_cast<const Rol::VectorAdaptor<vector_t>>(x)
+        .getVector();
     }
 
     Teuchos::RCP<vector_t>
-    get_rcp_to_vector (ROL::Vector<double> &x)
+    get_rcp_to_vector(ROL::Vector<double> &x)
     {
-      return
-        Teuchos::dyn_cast<Rol::VectorAdaptor<vector_t> >(x).getVector();
+      return Teuchos::dyn_cast<Rol::VectorAdaptor<vector_t>>(x).getVector();
     }
 
-    double value (const ROL::Vector<double> &/* x */,
-                  double                    &/* tol */)
+    double
+    value(const ROL::Vector<double> & /* x */, double & /* tol */)
     {
       return energy;
     }
 
-    void gradient (ROL::Vector<double>       &g,
-                   const ROL::Vector<double> &/* x */,
-                   double                    &/* tol */)
+    void
+    gradient(ROL::Vector<double> &g,
+             const ROL::Vector<double> & /* x */,
+             double & /* tol */)
     {
       *get_rcp_to_vector(g) = qc.locally_relevant_gradient;
     }
 
-    void update (const ROL::Vector<double> &x, bool flag, int iter)
+    void
+    update(const ROL::Vector<double> &x, bool flag, int iter)
     {
       if (!flag)
         return;
 
-      (void) iter;
+      (void)iter;
 
       qc.distributed_displacement = *get_rcp_to_vector(x);
       qc.constraints.distribute(qc.distributed_displacement);
@@ -271,7 +277,6 @@ public:
      * Energy of the atomistic system computed using QC approach.
      */
     double energy;
-
   };
 
   /**
@@ -285,18 +290,18 @@ public:
    * (passed as the first argument).
    * The type of file should be passed as second argument (eps, msh etc)
    */
-  template<typename T>
-  void write_mesh(T &, const std::string &);
+  template <typename T>
+  void
+  write_mesh(T &, const std::string &);
 
   /**
    * Set up external potential fields.
    */
-  virtual
-  void initialize_external_potential_fields (const double initial_time = 0.);
+  virtual void
+  initialize_external_potential_fields(const double initial_time = 0.);
 
   // keep it in protected so that we can write unit tests with derived classes
 protected:
-
   /**
    * Copy @p configure into #configure_qc member to reconfigure QC without
    * changing CellMoleculeData::cell_molecules of #cell_molecule_data.
@@ -316,12 +321,14 @@ protected:
    * re-setting up of CellMoleculeData::cell_molecules of #cell_molecule_data
    * the current QC object can be reconfigured using this function.
    */
-  void reconfigure_qc(const ConfigureQC &configure);
+  void
+  reconfigure_qc(const ConfigureQC &configure);
 
   /**
    * Setup triangulation.
    */
-  void setup_triangulation();
+  void
+  setup_triangulation();
 
   /**
    * Setup few data members in #cell_molecule_data (namely:
@@ -338,7 +345,8 @@ protected:
    * CellMoleculeData::cell_energy_molecules in #cell_molecule_data should be
    * used to compute energy or force using the quasicontinuum approach.
    */
-  void setup_cell_molecules();
+  void
+  setup_cell_molecules();
 
   /**
    * Setup CellMoleculeData::cell_energy_molecules of #cell_molecule_data of
@@ -350,23 +358,27 @@ protected:
    * class of Cluster::WeightsByBase based on the chosen method
    * (or sampling rule) to update cluster weights of energy molecules.
    */
-  void setup_cell_energy_molecules();
+  void
+  setup_cell_energy_molecules();
 
   /**
    * Initialize #dirichlet_boundary_functions.
    */
-  void initialize_boundary_functions();
+  void
+  initialize_boundary_functions();
 
   /**
    * Insert the (algebraic) constraints due to Dirichlet boundary conditions
    * into #constraints.
    */
-  void setup_boundary_conditions(const double time = 0.);
+  void
+  setup_boundary_conditions(const double time = 0.);
 
   /**
    * Distribute degrees-of-freedom and initialise matrices and vectors.
    */
-  void setup_system ();
+  void
+  setup_system();
 
   /**
    * Update positions of the atoms of energy molecules
@@ -379,7 +391,8 @@ protected:
    * for updating the data members of the objective class. Therefore,
    * the current function is separated from compute().
    */
-  void update_positions();
+  void
+  update_positions();
 
   /**
    * Return the computed energy of the atomistic system using QC approach, and
@@ -389,28 +402,30 @@ protected:
    * computation of the gradient of the energy; when <tt>ComputeGradient</tt>
    * is set false only the value of the energy is computed.
    */
-  template<bool ComputeGradient=true>
-  double compute (vector_t &gradient) const;
+  template <bool ComputeGradient = true>
+  double
+  compute(vector_t &gradient) const;
 
   /**
    * Return the computed energy of the atomistic system using QC approach, and
    * update @p gradient of the energy upon applying a given @p displacement.
    */
-  double compute (vector_t       &gradients,
-                  const vector_t &displacements);
+  double
+  compute(vector_t &gradients, const vector_t &displacements);
 
   /**
    * Minimize the energy (computed using the QC approach) of the atomistic
    * system at time @p time.
    */
-  void minimize_energy (const double time);
+  void
+  minimize_energy(const double time);
 
   /**
    * Output displacement field and cell molecule data at @p time time occurring
    * at time step number @p timestep_no.
    */
-  void output_results (const double time,
-                       const unsigned int timestep_no) const;
+  void
+  output_results(const double time, const unsigned int timestep_no) const;
 
   /**
    * Given cells and dof handler, for each cell set-up FEValues object with
@@ -418,37 +433,39 @@ protected:
    * atoms within clusters and also atoms within a cut-off radios of each
    * cluster (one sphere within another).
    */
-  void setup_fe_values_objects();
+  void
+  setup_fe_values_objects();
 
   /**
    * Update neighbor lists.
    */
-  void update_neighbor_lists();
+  void
+  update_neighbor_lists();
 
   /**
    * MPI communicator
    */
-  MPI_Comm                         mpi_communicator;
+  MPI_Comm mpi_communicator;
 
   /**
    * MPI process number of the current process.
    */
-  const unsigned int               this_mpi_process;
+  const unsigned int this_mpi_process;
 
   /**
    * Total number of MPI processes.
    */
-  const unsigned int               n_mpi_processes;
+  const unsigned int n_mpi_processes;
 
   /**
    * Conditional terminal output (root MPI core).
    */
-  ConditionalOStream               pcout;
+  ConditionalOStream pcout;
 
   /**
    * Read input filename and configure mesh, atoms, etc
    */
-  ConfigureQC                      configure_qc;
+  ConfigureQC configure_qc;
 
   /**
    * A parallel shared triangulation.
@@ -458,7 +475,7 @@ protected:
   /**
    * Finite Element.
    */
-  FESystem<dim, spacedim>          fe;
+  FESystem<dim, spacedim> fe;
 
   /**
    * Exctractors for displacement fields.
@@ -468,42 +485,42 @@ protected:
   /**
    * Linear mapping.
    */
-  MappingQ1<dim, spacedim>         mapping;
+  MappingQ1<dim, spacedim> mapping;
 
   /**
    * Degrees-of-freedom handler.
    */
-  DoFHandler<dim, spacedim>        dof_handler;
+  DoFHandler<dim, spacedim> dof_handler;
 
   /**
    * Hanging node constraints.
    */
-  AffineConstraints<double>        hanging_node_constraints;
+  AffineConstraints<double> hanging_node_constraints;
 
   /**
    * All constraints (hanging nodes + BC).
    */
-  AffineConstraints<double>        constraints;
+  AffineConstraints<double> constraints;
 
   /**
    * Distributed displacement field.
    */
-  vector_t                         distributed_displacement;
+  vector_t distributed_displacement;
 
   /**
    * Locally relevant unknown displacement filed
    */
-  vector_t                         locally_relevant_displacement;
+  vector_t locally_relevant_displacement;
 
   /**
    * Gradient of the energy (a scalar) w.r.t. to the displacement field.
    */
-  vector_t                         locally_relevant_gradient;
+  vector_t locally_relevant_gradient;
 
   /**
    * Inverse mass matrix.
    */
-  DiagonalMatrix<vector_t>         inverse_mass_matrix;
+  DiagonalMatrix<vector_t> inverse_mass_matrix;
 
   /**
    *
@@ -513,20 +530,21 @@ protected:
   /**
    * Member to cache computationally intensive information about #triangulation.
    */
-  GridTools::Cache<dim, spacedim>  grid_cache;
+  GridTools::Cache<dim, spacedim> grid_cache;
 
   /**
    * Map of boundary ids to Functions describing the corresponding boundary
    * condition.
    */
-  std::map<unsigned int, std::pair<ComponentMask, std::shared_ptr<FunctionParser<spacedim> > > >
-  dirichlet_boundary_functions;
+  std::map<unsigned int,
+           std::pair<ComponentMask, std::shared_ptr<FunctionParser<spacedim>>>>
+    dirichlet_boundary_functions;
 
   /**
    * External potential field function.
    */
-  std::multimap<unsigned int, std::shared_ptr<PotentialField<spacedim> > >
-  external_potential_fields;
+  std::multimap<unsigned int, std::shared_ptr<PotentialField<spacedim>>>
+    external_potential_fields;
 
   /**
    * Auxiliary class with all the information needed per cell for
@@ -537,9 +555,7 @@ protected:
    */
   struct AssemblyData
   {
-    AssemblyData()
-    {
-    };
+    AssemblyData(){};
 
     ~AssemblyData()
     {
@@ -577,33 +593,33 @@ protected:
      * in which the energy molecules are stored in energy_atoms on a per cell
      * basis.
      */
-    mutable std::array<std::vector<Tensor<1,dim>>, atomicity> displacements;
-
+    mutable std::array<std::vector<Tensor<1, dim>>, atomicity> displacements;
   };
 
   /**
    * Map of cells to data.
    */
   std::map<types::DoFCellIteratorType<dim, spacedim>, AssemblyData>
-  cells_to_data;
+    cells_to_data;
 
   /**
    * Shared pointer to the cluster weights method.
    */
-  std::shared_ptr<Cluster::WeightsByBase<dim, atomicity, spacedim> > cluster_weights_method;
+  std::shared_ptr<Cluster::WeightsByBase<dim, atomicity, spacedim>>
+    cluster_weights_method;
 
   /**
    * The primary atom data object that holds cell based atom data structures.
    * Cell based atom data structures rely on the association between molecules
    * and mesh.
    */
-  CellMoleculeData<dim, atomicity, spacedim>                 cell_molecule_data;
+  CellMoleculeData<dim, atomicity, spacedim> cell_molecule_data;
 
   /**
    * MoleculeHandler object to manage the cell based neighbor lists of the
    * system.
    */
-  MoleculeHandler<dim, atomicity, spacedim>                  molecule_handler;
+  MoleculeHandler<dim, atomicity, spacedim> molecule_handler;
 
   /**
    * Neighbor lists using cell approach.
@@ -613,18 +629,17 @@ protected:
   /**
    * A time object
    */
-  mutable TimerOutput                                        computing_timer;
+  mutable TimerOutput computing_timer;
 
 private:
-
   /**
    * Return the computed energy of the atomistic system using QC approach
    * for the current MPI process, and update its @p gradient for the current
    * MPI process if <tt>ComputeGradient</tt> is set true.
    */
-  template <bool ComputeGradient=true>
-  double compute_local (vector_t &gradient) const;
-
+  template <bool ComputeGradient = true>
+  double
+  compute_local(vector_t &gradient) const;
 };
 
 

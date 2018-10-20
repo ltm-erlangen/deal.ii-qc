@@ -1,7 +1,7 @@
 
-#include <deal.II-qc/potentials/pair_lj_cut.h>
-
 #include <deal.II/lac/solver_fire.h>
+
+#include <deal.II-qc/potentials/pair_lj_cut.h>
 
 
 using namespace dealii;
@@ -24,23 +24,20 @@ using namespace dealiiqc;
 using vector_t = typename dealii::Vector<double>;
 
 
-double compute (vector_t &G, const vector_t &u, const double a)
+double
+compute(vector_t &G, const vector_t &u, const double a)
 {
-  AssertThrow (u.size() == 1 && G.size() == 1,
-               ExcInternalError());
+  AssertThrow(u.size() == 1 && G.size() == 1, ExcInternalError());
 
-  const std::vector<double> lj_params = { 0.877, 1.55};
+  const std::vector<double> lj_params = {0.877, 1.55};
 
-  Potential::PairLJCutManager lj (20);
-  lj.declare_interactions (0,
-                           1,
-                           Potential::InteractionTypes::LJ,
-                           lj_params);
+  Potential::PairLJCutManager lj(20);
+  lj.declare_interactions(0, 1, Potential::InteractionTypes::LJ, lj_params);
 
   const double x = u(0) + a;
 
   std::pair<double, double> energy_force_0 =
-    lj.energy_and_gradient<true> ( 0, 1, x*x);
+    lj.energy_and_gradient<true>(0, 1, x * x);
 
   G(0) = energy_force_0.second;
 
@@ -48,10 +45,9 @@ double compute (vector_t &G, const vector_t &u, const double a)
 }
 
 
-void test (const double a,
-           const double tol)
+void
+test(const double a, const double tol)
 {
-
   vector_t tmp_mass;
 
   tmp_mass.reinit(1, true);
@@ -67,30 +63,27 @@ void test (const double a,
   auto additional_data =
     SolverFIRE<vector_t>::AdditionalData(1e-3, 1e-3, 0.001);
 
-  SolverControl solver_control (1e06, tol);
+  SolverControl solver_control(1e06, tol);
 
-  SolverFIRE<vector_t> fire (solver_control, additional_data);
+  SolverFIRE<vector_t> fire(solver_control, additional_data);
 
   vector_t u;
   u.reinit(1, false);
 
-  auto compute_function =
-    [&](vector_t &G, const vector_t &U) -> double
-  {
+  auto compute_function = [&](vector_t &G, const vector_t &U) -> double {
     return compute(G, U, a);
   };
 
   fire.solve(compute_function, u, inv_mass);
 
   std::cout << u(0) + a << std::endl;
-
 }
 
 
-int main ()
+int
+main()
 {
-  test (3.1, 1e-15 );
-  test (0.1, 1e-15 );
-  test (9.1, 1e-15 );
-
+  test(3.1, 1e-15);
+  test(0.1, 1e-15);
+  test(9.1, 1e-15);
 }

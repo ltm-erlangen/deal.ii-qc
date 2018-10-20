@@ -1,13 +1,16 @@
 
-#include <algorithm>
+#include <deal.II/base/types.h>
 
-#include <deal.II-qc/atom/sampling/cluster_weights_by_base.h>
-#include <deal.II-qc/atom/cell_molecule_tools.h>
+#include <deal.II/dofs/dof_tools.h>
+
+#include <deal.II/lac/generic_linear_algebra.h>
+
 #include <deal.II-qc/base/quadrature_lib.h>
 
-#include <deal.II/base/types.h>
-#include <deal.II/dofs/dof_tools.h>
-#include <deal.II/lac/generic_linear_algebra.h>
+#include <deal.II-qc/atom/cell_molecule_tools.h>
+#include <deal.II-qc/atom/sampling/cluster_weights_by_base.h>
+
+#include <algorithm>
 
 
 DEAL_II_QC_NAMESPACE_OPEN
@@ -15,15 +18,12 @@ DEAL_II_QC_NAMESPACE_OPEN
 
 namespace Cluster
 {
-
-
   template <int dim, int atomicity, int spacedim>
-  WeightsByBase<dim, atomicity, spacedim>::
-  WeightsByBase (const double &cluster_radius,
-                 const double &maximum_cutoff_radius)
-    :
-    cluster_radius(cluster_radius),
-    maximum_cutoff_radius(maximum_cutoff_radius)
+  WeightsByBase<dim, atomicity, spacedim>::WeightsByBase(
+    const double &cluster_radius,
+    const double &maximum_cutoff_radius)
+    : cluster_radius(cluster_radius)
+    , maximum_cutoff_radius(maximum_cutoff_radius)
   {}
 
 
@@ -36,26 +36,25 @@ namespace Cluster
 
   template <int dim, int atomicity, int spacedim>
   void
-  WeightsByBase<dim, atomicity, spacedim>::
-  initialize (const Triangulation<dim, spacedim> &triangulation,
-              const Quadrature<dim>              &quadrature)
+  WeightsByBase<dim, atomicity, spacedim>::initialize(
+    const Triangulation<dim, spacedim> &triangulation,
+    const Quadrature<dim> &             quadrature)
   {
     const bool trapez_with_midpoint =
-      dynamic_cast<const QTrapezWithMidpoint<dim> *> (&quadrature) != NULL;
+      dynamic_cast<const QTrapezWithMidpoint<dim> *>(&quadrature) != NULL;
 
     // Assert that the presented quadrature is either:
     // QTrapez or QTrapezWithMidpoint.
-    AssertThrow (dynamic_cast<const QTrapez<dim> *> (&quadrature) != NULL ||
-                 trapez_with_midpoint,
-                 ExcNotImplemented());
+    AssertThrow(dynamic_cast<const QTrapez<dim> *>(&quadrature) != NULL ||
+                  trapez_with_midpoint,
+                ExcNotImplemented());
 
-    sampling_points = triangulation.get_vertices();
-    quadrature_type_list = std::vector<bool>(triangulation.n_vertices(),
-                                             false);
+    sampling_points      = triangulation.get_vertices();
+    quadrature_type_list = std::vector<bool>(triangulation.n_vertices(), false);
 
     // Initialize cells_to_sampling_indices.
-    for (types::CellIteratorType<dim, spacedim>
-         cell  = triangulation.begin_active();
+    for (types::CellIteratorType<dim, spacedim> cell =
+           triangulation.begin_active();
          cell != triangulation.end();
          cell++)
       {
@@ -85,13 +84,12 @@ namespace Cluster
               for (unsigned int sf = 0; sf < face->number_of_children(); ++sf)
                 {
                   const auto subface = face->child(sf);
-                  for (unsigned int
-                       v = 0;
+                  for (unsigned int v = 0;
                        v < GeometryInfo<dim>::vertices_per_face;
                        v++)
-                    this_cell_sampling_indices_set.insert(subface->vertex_index(v));
-                  Assert (!subface->has_children(),
-                          ExcInternalError());
+                    this_cell_sampling_indices_set.insert(
+                      subface->vertex_index(v));
+                  Assert(!subface->has_children(), ExcInternalError());
                 }
           }
 
@@ -101,11 +99,11 @@ namespace Cluster
             // the average of the locations of the vertices.
             sampling_points.push_back(cell->center());
             quadrature_type_list.push_back(true);
-            this_cell_sampling_indices_set.insert(sampling_points.size()-1);
+            this_cell_sampling_indices_set.insert(sampling_points.size() - 1);
           }
 
-        std::vector<unsigned int>
-        this_cell_sampling_indices (this_cell_sampling_indices_set.size());
+        std::vector<unsigned int> this_cell_sampling_indices(
+          this_cell_sampling_indices_set.size());
 
         std::copy(this_cell_sampling_indices_set.cbegin(),
                   this_cell_sampling_indices_set.cend(),
@@ -129,7 +127,6 @@ namespace Cluster
         locally_relevant_sampling_indices.add_indices(sampling_indices.begin(),
                                                       sampling_indices.end());
       }
-
   }
 
 
@@ -139,45 +136,40 @@ namespace Cluster
     // For the ith DoF at a vertex return the block index (or atom_stamp)
     // given that there are dim-number of enumerations for each atom_stamp
     // at a vertex.
-    inline
-    unsigned int
-    get_atom_stamp (unsigned int dof_at_vertex, int dim)
+    inline unsigned int
+    get_atom_stamp(unsigned int dof_at_vertex, int dim)
     {
-      return std::div (dof_at_vertex, dim).quot;
+      return std::div(dof_at_vertex, dim).quot;
     }
-  }
-
+  } // namespace
 
 
 
   template <int dim, int atomicity, int spacedim>
   template <typename VectorType>
   void
-  WeightsByBase<dim, atomicity, spacedim>::
-  compute_dof_inverse_masses
-  (VectorType                                       &inverse_masses,
-   const CellMoleculeData<dim, atomicity, spacedim> &cell_molecule_data,
-   const DoFHandler<dim, spacedim>                  &dof_handler,
-   const AffineConstraints<double>                  &constraints) const
+  WeightsByBase<dim, atomicity, spacedim>::compute_dof_inverse_masses(
+    VectorType &                                      inverse_masses,
+    const CellMoleculeData<dim, atomicity, spacedim> &cell_molecule_data,
+    const DoFHandler<dim, spacedim> &                 dof_handler,
+    const AffineConstraints<double> &                 constraints) const
   {
     inverse_masses = 0.;
 
-    Assert (inverse_masses.size() == dof_handler.n_dofs(),
-            ExcMessage("Invalid inverse_masses provided."
-                       "The size of the vector should equal to the total "
-                       "number of DoFs."))
+    Assert(inverse_masses.size() == dof_handler.n_dofs(),
+           ExcMessage("Invalid inverse_masses provided."
+                      "The size of the vector should equal to the total "
+                      "number of DoFs."))
 
-    const types::CellMoleculeContainerType<dim, atomicity, spacedim>
-    &cell_energy_molecules = cell_molecule_data.cell_energy_molecules;
+      const types::CellMoleculeContainerType<dim, atomicity, spacedim>
+        &cell_energy_molecules = cell_molecule_data.cell_energy_molecules;
 
     // Get number of DoFs per block.
     // FIXME? Here it is assumed that each block has the same number of DoFs.
-    const dealii::types::global_dof_index
-    n_dofs_per_block = std::div(dof_handler.n_dofs(), atomicity).quot;
+    const dealii::types::global_dof_index n_dofs_per_block =
+      std::div(dof_handler.n_dofs(), atomicity).quot;
 
-    for (auto
-         cell  = dof_handler.begin_active();
-         cell != dof_handler.end();
+    for (auto cell = dof_handler.begin_active(); cell != dof_handler.end();
          cell++)
       {
         // Each process works only on its locally owned cell to sum up masses.
@@ -187,16 +179,15 @@ namespace Cluster
         const types::CellIteratorType<dim, spacedim> tria_cell = cell;
 
         auto molecules_range_and_size =
-          CellMoleculeTools::molecules_range_in_cell<dim, atomicity, spacedim>
-          (tria_cell,
-           cell_energy_molecules);
+          CellMoleculeTools::molecules_range_in_cell<dim, atomicity, spacedim>(
+            tria_cell, cell_energy_molecules);
 
         // Get the global indices of the sampling points of this cell.
         const std::vector<unsigned int> this_cell_sampling_indices =
           WeightsByBase<dim, atomicity, spacedim>::get_sampling_indices(cell);
 
         // Get the sampling points of this cell in this container.
-        const std::vector<Point<spacedim> > this_cell_sampling_points =
+        const std::vector<Point<spacedim>> this_cell_sampling_points =
           WeightsByBase<dim, atomicity, spacedim>::get_sampling_points(cell);
 
         const unsigned int this_cell_n_sampling_points =
@@ -206,31 +197,32 @@ namespace Cluster
         // there are atomicity-number of masses, one for each atom stamp.
 
         // Prepare the list of masses at the sampling points of this cell here.
-        std::vector<std::array<double, atomicity> >
-        masses_at_sampling_points (this_cell_n_sampling_points);
+        std::vector<std::array<double, atomicity>> masses_at_sampling_points(
+          this_cell_n_sampling_points);
 
         // Initialize the list of masses at the sampling points to zero.
         for (auto &mass_list : masses_at_sampling_points)
           mass_list.fill(0.);
 
 
-        for (auto
-             cell_molecule_itr  = molecules_range_and_size.first.first;
+        for (auto cell_molecule_itr = molecules_range_and_size.first.first;
              cell_molecule_itr != molecules_range_and_size.first.second;
              cell_molecule_itr++)
           {
             const Molecule<spacedim, atomicity> &molecule =
               cell_molecule_itr->second;
 
-            Assert (molecule.cluster_weight != numbers::invalid_cluster_weight,
-                    ExcMessage("Cluster weight of one or more molecules is "
-                               "not set before preparing inverse mass matrix."))
+            Assert(molecule.cluster_weight != numbers::invalid_cluster_weight,
+                   ExcMessage("Cluster weight of one or more molecules is "
+                              "not set before preparing inverse mass matrix."))
 
-            // Get the location of the closest sampling point (of this cell)
-            // to the molecule in this_cell_sampling_points.
-            const unsigned int
-            location_in_container = Utilities::find_closest_point(molecule_initial_location(molecule),
-                                                                  this_cell_sampling_points          ).first;
+              // Get the location of the closest sampling point (of this cell)
+              // to the molecule in this_cell_sampling_points.
+              const unsigned int location_in_container =
+                Utilities::find_closest_point(molecule_initial_location(
+                                                molecule),
+                                              this_cell_sampling_points)
+                  .first;
 
             for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
               masses_at_sampling_points[location_in_container][atom_stamp] +=
@@ -241,8 +233,8 @@ namespace Cluster
 
         // Mask to identify which of the local sampling indices have been
         // accounted.
-        std::vector<bool>
-        this_cell_used_sampling_indices (this_cell_n_sampling_points, false);
+        std::vector<bool> this_cell_used_sampling_indices(
+          this_cell_n_sampling_points, false);
 
         for (unsigned int i = 0; i < this_cell_sampling_indices.size(); i++)
           {
@@ -250,27 +242,27 @@ namespace Cluster
 
             // If the sampling_index is one of the vertices of the current cell,
             // get the corresponding DoFs at the vertex to add masses.
-            for (unsigned int v = 0; v < GeometryInfo<dim>::vertices_per_cell; v++)
-              //FIXME: Logic here needs to change for case when more sampling points
+            for (unsigned int v = 0; v < GeometryInfo<dim>::vertices_per_cell;
+                 v++)
+              // FIXME: Logic here needs to change for case when more sampling
+              // points
               //       are added apart from vertices of the triangulation.
               if (cell->vertex_index(v) == sampling_index)
                 {
-                  for (unsigned int
-                       c = 0;
+                  for (unsigned int c = 0;
                        c < dof_handler.get_fe().n_dofs_per_vertex();
                        c++)
                     {
-                      const unsigned int atom_stamp = get_atom_stamp(c,dim);
+                      const unsigned int atom_stamp = get_atom_stamp(c, dim);
 
                       const dealii::types::global_dof_index
-                      dof_index_inside_block = cell->vertex_dof_index (v, c)
-                                               %
-                                               n_dofs_per_block;
+                        dof_index_inside_block =
+                          cell->vertex_dof_index(v, c) % n_dofs_per_block;
 
-                      constraints.distribute_local_to_global
-                      (dof_index_inside_block,
-                       masses_at_sampling_points[i][atom_stamp],
-                       inverse_masses.block(atom_stamp));
+                      constraints.distribute_local_to_global(
+                        dof_index_inside_block,
+                        masses_at_sampling_points[i][atom_stamp],
+                        inverse_masses.block(atom_stamp));
                     }
 
 
@@ -288,37 +280,40 @@ namespace Cluster
                 const auto &face = cell->face(f);
 
                 if (face->has_children())
-                  for (unsigned int sf = 0; sf < face->number_of_children(); ++sf)
+                  for (unsigned int sf = 0; sf < face->number_of_children();
+                       ++sf)
                     {
                       // Run over all the vertices of this child face
                       // to find if the vertex with a hanging node(s)
                       // on this face has index sampling_index.
                       const auto &subface = face->child(sf);
 
-                      for (unsigned int
-                           child_face_v = 0;
+                      for (unsigned int child_face_v = 0;
                            child_face_v < GeometryInfo<dim>::vertices_per_face;
                            child_face_v++)
-                        //FIXME: Logic here needs to change for case when more sampling points
-                        //       are added apart from vertices of the triangulation.
-                        if (subface->vertex_index(child_face_v) == sampling_index)
+                        // FIXME: Logic here needs to change for case when more
+                        // sampling points
+                        //       are added apart from vertices of the
+                        //       triangulation.
+                        if (subface->vertex_index(child_face_v) ==
+                            sampling_index)
                           {
-                            for (unsigned int
-                                 c = 0;
+                            for (unsigned int c = 0;
                                  c < dof_handler.get_fe().n_dofs_per_vertex();
                                  c++)
                               {
-                                const unsigned int atom_stamp = get_atom_stamp(c,dim);
+                                const unsigned int atom_stamp =
+                                  get_atom_stamp(c, dim);
 
                                 const dealii::types::global_dof_index
-                                dof_index_inside_block = subface->vertex_dof_index (child_face_v, c)
-                                                         %
-                                                         n_dofs_per_block;
+                                  dof_index_inside_block =
+                                    subface->vertex_dof_index(child_face_v, c) %
+                                    n_dofs_per_block;
 
-                                constraints.distribute_local_to_global
-                                (dof_index_inside_block,
-                                 masses_at_sampling_points[i][atom_stamp],
-                                 inverse_masses.block(atom_stamp));
+                                constraints.distribute_local_to_global(
+                                  dof_index_inside_block,
+                                  masses_at_sampling_points[i][atom_stamp],
+                                  inverse_masses.block(atom_stamp));
                               }
 
                             this_cell_used_sampling_indices[i] = true;
@@ -335,8 +330,7 @@ namespace Cluster
 
             // We should have accounted for this sampling index when the control
             // reaches here.
-            AssertThrow (this_cell_used_sampling_indices[i],
-                         ExcInternalError());
+            AssertThrow(this_cell_used_sampling_indices[i], ExcInternalError());
 
           } // for all sampling indices of this cell.
 
@@ -347,40 +341,41 @@ namespace Cluster
     // Take reciprocal of each locally owned entry to get inverse masses
     // from masses.
     for (int atom_stamp = 0; atom_stamp < atomicity; ++atom_stamp)
-      for (typename VectorType::BlockType::iterator
-           entry  = inverse_masses.block(atom_stamp).begin();
+      for (typename VectorType::BlockType::iterator entry =
+             inverse_masses.block(atom_stamp).begin();
            entry != inverse_masses.block(atom_stamp).end();
            entry++)
         {
-          Assert (*entry >= 0., ExcInternalError())
+          Assert(*entry >= 0., ExcInternalError())
 
-          // Assign a mass of 1. to hanging node DoFs and other zero mass DoFs.
-          *entry = *entry ==0 ?
-                   1.         :
-                   1./(*entry);
+            // Assign a mass of 1. to hanging node DoFs and other zero mass
+            // DoFs.
+            *entry = *entry == 0 ? 1. : 1. / (*entry);
         }
 
     inverse_masses.compress(VectorOperation::insert);
   }
 
 
-#define SINGLE_WEIGHTS_BY_BASE_INSTANTIATION(_DIM, _ATOMICITY, _SPACE_DIM)     \
-  template class WeightsByBase              <_DIM, _ATOMICITY, _SPACE_DIM>;    \
-  template void  WeightsByBase              <_DIM, _ATOMICITY, _SPACE_DIM>::   \
-  compute_dof_inverse_masses                                                   \
-  (TrilinosWrappers::MPI::BlockVector                                      &,  \
-   const CellMoleculeData                   <_DIM, _ATOMICITY, _SPACE_DIM> &,  \
-   const DoFHandler                         <_DIM,             _SPACE_DIM> &,  \
-   const AffineConstraints <double>                                        &)  \
-   const;
+#define SINGLE_WEIGHTS_BY_BASE_INSTANTIATION(_DIM, _ATOMICITY, _SPACE_DIM) \
+  template class WeightsByBase<_DIM, _ATOMICITY, _SPACE_DIM>;              \
+  template void                                                            \
+  WeightsByBase<_DIM, _ATOMICITY, _SPACE_DIM>::compute_dof_inverse_masses( \
+    TrilinosWrappers::MPI::BlockVector &,                                  \
+    const CellMoleculeData<_DIM, _ATOMICITY, _SPACE_DIM> &,                \
+    const DoFHandler<_DIM, _SPACE_DIM> &,                                  \
+    const AffineConstraints<double> &) const;
 
 #define WEIGHTS_BY_BASE(R, X)                       \
   BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,         \
               SINGLE_WEIGHTS_BY_BASE_INSTANTIATION, \
-              BOOST_PP_TUPLE_EAT(3)) X
+              BOOST_PP_TUPLE_EAT(3))                \
+  X
 
-// WeightsByBase class Instantiations.
-INSTANTIATE_CLASS_WITH_DIM_ATOMICITY_AND_SPACEDIM(WEIGHTS_BY_BASE)
+
+  // WeightsByBase class Instantiations.
+  INSTANTIATE_CLASS_WITH_DIM_ATOMICITY_AND_SPACEDIM(WEIGHTS_BY_BASE)
+
 
 #undef SINGLE_WEIGHTS_BY_BASE_INSTANTIATION
 #undef WEIGHTS_BY_BASE

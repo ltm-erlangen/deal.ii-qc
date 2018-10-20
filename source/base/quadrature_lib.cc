@@ -1,6 +1,6 @@
 
-#include <deal.II/base/quadrature_lib.h>
 #include <deal.II/base/geometry_info.h>
+#include <deal.II/base/quadrature_lib.h>
 
 #include <deal.II-qc/base/quadrature_lib.h>
 
@@ -12,21 +12,19 @@ using namespace dealii;
 
 template <int dim>
 QTrapezWithMidpoint<dim>::QTrapezWithMidpoint()
-  :
-  Quadrature<dim>(GeometryInfo<dim>::vertices_per_cell +1)
+  : Quadrature<dim>(GeometryInfo<dim>::vertices_per_cell + 1)
 {
-  const unsigned int n_points = GeometryInfo<dim>::vertices_per_cell +1;
-  const double weight = 1./static_cast<double>(n_points);
+  const unsigned int n_points = GeometryInfo<dim>::vertices_per_cell + 1;
+  const double       weight   = 1. / static_cast<double>(n_points);
 
-  QTrapez<dim> q_trapez;
+  QTrapez<dim>   q_trapez;
   QMidpoint<dim> q_midpoint;
   this->quadrature_points = q_trapez.get_points();
 
-  for (unsigned int i=0; i<q_midpoint.size(); ++i)
+  for (unsigned int i = 0; i < q_midpoint.size(); ++i)
     this->quadrature_points.push_back(q_midpoint.point(i));
 
-  Assert (this->quadrature_points.size()==n_points,
-          ExcInternalError());
+  Assert(this->quadrature_points.size() == n_points, ExcInternalError());
 
   this->weights = std::vector<double>(n_points, weight);
 }

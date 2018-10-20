@@ -1,15 +1,19 @@
-#include <iostream>
-#include <sstream>
-
 #include <deal.II/distributed/shared_tria.h>
+
 #include <deal.II/dofs/dof_tools.h>
-#include <deal.II/grid/grid_generator.h>
-#include <deal.II/grid/grid_out.h>
-#include <deal.II/grid/grid_tools.h>
+
 #include <deal.II/fe/fe_system.h>
 #include <deal.II/fe/fe_values.h>
 #include <deal.II/fe/mapping_q1.h>
+
+#include <deal.II/grid/grid_generator.h>
+#include <deal.II/grid/grid_out.h>
+#include <deal.II/grid/grid_tools.h>
+
 #include <deal.II/lac/generic_linear_algebra.h>
+
+#include <iostream>
+#include <sstream>
 
 using namespace dealii;
 
@@ -27,22 +31,22 @@ using namespace dealii;
 
 
 
-template<int dim>
+template <int dim>
 using CellPointType =
   std::pair<typename DoFHandler<dim>::active_cell_iterator, Point<dim>>;
 
-template<int dim>
+template <int dim>
 class Test
 {
 public:
-
   Test()
-    :
-    triangulation (MPI_COMM_WORLD,
-                   // guarantee that the mesh also does not change by more than refinement level across vertices that might connect two cells:
-                   Triangulation<dim>::limit_level_difference_at_vertices),
-    fe (FE_Q<dim>(1), dim),
-    dof_handler(triangulation)
+    : triangulation(
+        MPI_COMM_WORLD,
+        // guarantee that the mesh also does not change by more than refinement
+        // level across vertices that might connect two cells:
+        Triangulation<dim>::limit_level_difference_at_vertices)
+    , fe(FE_Q<dim>(1), dim)
+    , dof_handler(triangulation)
   {
     std::vector<unsigned int> repetitions;
     repetitions.push_back(2);
@@ -61,60 +65,49 @@ public:
     //   |        |        |
     //   |________|________|
     //
-    GridGenerator::subdivided_hyper_rectangle (triangulation,
-                                               repetitions,
-                                               p1,
-                                               p2,
-                                               true);
+    GridGenerator::subdivided_hyper_rectangle(
+      triangulation, repetitions, p1, p2, true);
     std::ofstream f("tria.vtk");
-    GridOut().write_vtk (triangulation, f);
+    GridOut().write_vtk(triangulation, f);
 
-    dof_handler.distribute_dofs (fe);
+    dof_handler.distribute_dofs(fe);
 
     IndexSet locally_relevant_set;
-    DoFTools::extract_locally_relevant_dofs (dof_handler,
-                                             locally_relevant_set);
+    DoFTools::extract_locally_relevant_dofs(dof_handler, locally_relevant_set);
     gradient.reinit(dof_handler.n_dofs());
     // set-up constraints objects
-    constraints.reinit (locally_relevant_set);
-    constraints.close ();
+    constraints.reinit(locally_relevant_set);
+    constraints.close();
   }
 
-  void check(const Point<dim> &p1, const Point<dim> &p2)
+  void
+  check(const Point<dim> &p1, const Point<dim> &p2)
   {
-
     const CellPointType<dim> my_pair_1 =
-      GridTools::find_active_cell_around_point (mapping,
-                                                dof_handler,
-                                                p1);
+      GridTools::find_active_cell_around_point(mapping, dof_handler, p1);
 
     const CellPointType<dim> my_pair_2 =
-      GridTools::find_active_cell_around_point (mapping,
-                                                dof_handler,
-                                                p2);
+      GridTools::find_active_cell_around_point(mapping, dof_handler, p2);
 
-    run (my_pair_1, my_pair_2, p1, p2);
+    run(my_pair_1, my_pair_2, p1, p2);
 
-    std::cout << "Point 1: "
-              << my_pair_1.second
-              << "    "
-              << "Point 2: "
-              << my_pair_2.second
-              << " in their reference cells."
+    std::cout << "Point 1: " << my_pair_1.second << "    "
+              << "Point 2: " << my_pair_2.second << " in their reference cells."
               << std::endl;
 
-    for (unsigned int i = 0; i < dof_handler.n_dofs(); i+=dim)
+    for (unsigned int i = 0; i < dof_handler.n_dofs(); i += dim)
       {
         for (int d = 0; d < dim; ++d)
-          std::cout << gradient[i+d] <<  "\t";
+          std::cout << gradient[i + d] << "\t";
         std::cout << std::endl;
       }
   }
 
-  void run (const CellPointType<dim> &my_pair_1,
-            const CellPointType<dim> &my_pair_2,
-            const Point<dim> &p1,
-            const Point<dim> &p2)
+  void
+  run(const CellPointType<dim> &my_pair_1,
+      const CellPointType<dim> &my_pair_2,
+      const Point<dim> &        p1,
+      const Point<dim> &        p2)
   {
     const unsigned int dofs_per_cell = fe.dofs_per_cell;
 
@@ -122,107 +115,108 @@ public:
     local_gradient_I.reinit(dofs_per_cell);
     local_gradient_II.reinit(dofs_per_cell);
 
-    local_gradient_I = 0.;
+    local_gradient_I  = 0.;
     local_gradient_II = 0.;
-    gradient = 0.;
+    gradient          = 0.;
 
-    std::vector<dealii::types::global_dof_index>
-    local_dof_indices(dofs_per_cell);
+    std::vector<dealii::types::global_dof_index> local_dof_indices(
+      dofs_per_cell);
 
     {
-      FEValues<dim>
-      fe_value_a (mapping,
-                  fe,
-                  Quadrature<dim>(std::vector<Point<dim>> (1, {my_pair_1.second})),
-                  update_values),
-                  fe_value_b (mapping,
-                              fe,
-                              Quadrature<dim>(std::vector<Point<dim>> (1, {my_pair_2.second})),
-                              update_values);
+      FEValues<dim> fe_value_a(
+        mapping,
+        fe,
+        Quadrature<dim>(std::vector<Point<dim>>(1, {my_pair_1.second})),
+        update_values),
+        fe_value_b(mapping,
+                   fe,
+                   Quadrature<dim>(
+                     std::vector<Point<dim>>(1, {my_pair_2.second})),
+                   update_values);
 
       fe_value_a.reinit(my_pair_1.first);
       fe_value_b.reinit(my_pair_2.first);
 
-      Tensor<1,dim> n = (p1-p2) / p1.distance(p2);
+      Tensor<1, dim> n = (p1 - p2) / p1.distance(p2);
 
       for (unsigned int k = 0; k < dofs_per_cell; ++k)
         {
           const unsigned int comp = fe.system_to_component_index(k).first;
-          local_gradient_I[k]  =  n[comp]*fe_value_a.shape_value(k, 0);
-          local_gradient_II[k] = -n[comp]*fe_value_b.shape_value(k, 0);
+          local_gradient_I[k]     = n[comp] * fe_value_a.shape_value(k, 0);
+          local_gradient_II[k]    = -n[comp] * fe_value_b.shape_value(k, 0);
         }
 
-      my_pair_1.first->get_dof_indices (local_dof_indices);
-      constraints.distribute_local_to_global (local_gradient_I,
-                                              local_dof_indices,
-                                              gradient);
+      my_pair_1.first->get_dof_indices(local_dof_indices);
+      constraints.distribute_local_to_global(local_gradient_I,
+                                             local_dof_indices,
+                                             gradient);
 
-      my_pair_2.first->get_dof_indices (local_dof_indices);
-      constraints.distribute_local_to_global (local_gradient_II,
-                                              local_dof_indices,
-                                              gradient);
+      my_pair_2.first->get_dof_indices(local_dof_indices);
+      constraints.distribute_local_to_global(local_gradient_II,
+                                             local_dof_indices,
+                                             gradient);
     }
   }
 
-  void write_dofs_and_support_points_info()
+  void
+  write_dofs_and_support_points_info()
   {
     constraints.print(std::cout);
 
-    std::map<types::global_dof_index, Point<dim> > support_points;
+    std::map<types::global_dof_index, Point<dim>> support_points;
 
-    DoFTools::map_dofs_to_support_points (mapping,
-                                          dof_handler,
-                                          support_points);
+    DoFTools::map_dofs_to_support_points(mapping, dof_handler, support_points);
 
-    const std::string filename =
-      "grid" + Utilities::int_to_string(dim) + ".gp";
-    std::ofstream f(filename.c_str());
+    const std::string filename = "grid" + Utilities::int_to_string(dim) + ".gp";
+    std::ofstream     f(filename.c_str());
 
-    f << "set terminal png size 400,410 enhanced font \"Helvetica,8\"" << std::endl
-      << "set output \"grid" << Utilities::int_to_string(dim) << ".png\"" << std::endl
+    f << "set terminal png size 400,410 enhanced font \"Helvetica,8\""
+      << std::endl
+      << "set output \"grid" << Utilities::int_to_string(dim) << ".png\""
+      << std::endl
       << "set size square" << std::endl
       << "set view equal xy" << std::endl
       << "unset xtics" << std::endl
       << "unset ytics" << std::endl
-      << "plot '-' using 1:2 with lines notitle, '-' with labels point pt 2 offset 1,1 notitle" << std::endl;
-    GridOut().write_gnuplot (triangulation, f);
+      << "plot '-' using 1:2 with lines notitle, '-' with labels point pt 2 offset 1,1 notitle"
+      << std::endl;
+    GridOut().write_gnuplot(triangulation, f);
     f << "e" << std::endl;
 
-    DoFTools::write_gnuplot_dof_support_point_info(f,
-                                                   support_points);
+    DoFTools::write_gnuplot_dof_support_point_info(f, support_points);
     f << "e" << std::endl;
   }
 
 private:
   parallel::shared::Triangulation<dim> triangulation;
-  const MappingQ1<dim>      mapping;
-  FESystem<dim>             fe;
-  DoFHandler<dim>           dof_handler;
-  dealii::Vector<double>    gradient;
-  AffineConstraints<double> constraints;
+  const MappingQ1<dim>                 mapping;
+  FESystem<dim>                        fe;
+  DoFHandler<dim>                      dof_handler;
+  dealii::Vector<double>               gradient;
+  AffineConstraints<double>            constraints;
 };
 
 
-int main (int argc, char **argv)
+int
+main(int argc, char **argv)
 {
   try
     {
-      dealii::Utilities::MPI::MPI_InitFinalize
-      mpi_initialization (argc,
-                          argv,
-                          dealii::numbers::invalid_unsigned_int);
+      dealii::Utilities::MPI::MPI_InitFinalize mpi_initialization(
+        argc, argv, dealii::numbers::invalid_unsigned_int);
 
       Test<2> problem;
-      //problem.write_dofs_and_support_points_info();
+      // problem.write_dofs_and_support_points_info();
       {
         Point<2> p1(0.23, 0.37), p2(1.73, 0.43);
-        problem.check(p1,p2);
-        problem.check(p2,p1);
+        problem.check(p1, p2);
+        problem.check(p2, p1);
       }
     }
   catch (std::exception &exc)
     {
-      std::cerr << std::endl << std::endl
+      std::cerr << std::endl
+                << std::endl
                 << "----------------------------------------------------"
                 << std::endl;
       std::cerr << "Exception on processing: " << std::endl
@@ -234,7 +228,8 @@ int main (int argc, char **argv)
     }
   catch (...)
     {
-      std::cerr << std::endl << std::endl
+      std::cerr << std::endl
+                << std::endl
                 << "----------------------------------------------------"
                 << std::endl;
       std::cerr << "Unknown exception!" << std::endl

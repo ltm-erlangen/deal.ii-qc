@@ -9,78 +9,88 @@ using namespace dealii;
 
 // Initialize dimension to a default unusable value
 // Imposes user to `set Dimension`
-ConfigureQC::ConfigureQC (std::shared_ptr<std::istream> is)
-  :
-  dimension(0),
-  input_stream(is)
+ConfigureQC::ConfigureQC(std::shared_ptr<std::istream> is)
+  : dimension(0)
+  , input_stream(is)
 {
-  AssertThrow (*input_stream, ExcIO());
+  AssertThrow(*input_stream, ExcIO());
   ParameterHandler prm;
   declare_parameters(prm);
-  prm.parse_input (*input_stream, "dummy", "#end-of-parameter-section");
+  prm.parse_input(*input_stream, "dummy", "#end-of-parameter-section");
   parse_parameters(prm);
 }
 
-unsigned int ConfigureQC::get_dimension() const
+unsigned int
+ConfigureQC::get_dimension() const
 {
   return dimension;
 }
 
-std::string ConfigureQC::get_pair_potential_type() const
+std::string
+ConfigureQC::get_pair_potential_type() const
 {
   return pair_potential_type;
 }
 
-template<>
-std::shared_ptr<const Geometry::Base<1>> ConfigureQC::get_geometry() const
+template <>
+std::shared_ptr<const Geometry::Base<1>>
+ConfigureQC::get_geometry() const
 {
-  AssertThrow (dimension == 1, ExcInternalError());
+  AssertThrow(dimension == 1, ExcInternalError());
   Assert(geometry_1d, ExcInternalError());
   return geometry_1d;
 }
 
-template<>
-std::shared_ptr<const Geometry::Base<2>> ConfigureQC::get_geometry() const
+template <>
+std::shared_ptr<const Geometry::Base<2>>
+ConfigureQC::get_geometry() const
 {
-  AssertThrow (dimension == 2, ExcInternalError());
+  AssertThrow(dimension == 2, ExcInternalError());
   Assert(geometry_2d, ExcInternalError());
   return geometry_2d;
 }
 
-template<>
-std::shared_ptr<const Geometry::Base<3>> ConfigureQC::get_geometry() const
+template <>
+std::shared_ptr<const Geometry::Base<3>>
+ConfigureQC::get_geometry() const
 {
-  AssertThrow (dimension == 3, ExcInternalError());
+  AssertThrow(dimension == 3, ExcInternalError());
   Assert(geometry_3d, ExcInternalError());
   return geometry_3d;
 }
 
-std::string ConfigureQC::get_atom_data_file () const
+std::string
+ConfigureQC::get_atom_data_file() const
 {
   return atom_data_file;
 }
 
-std::shared_ptr<std::istream> ConfigureQC::get_stream() const
+std::shared_ptr<std::istream>
+ConfigureQC::get_stream() const
 {
   return input_stream;
 }
 
-double ConfigureQC::get_ghost_cell_layer_thickness() const
+double
+ConfigureQC::get_ghost_cell_layer_thickness() const
 {
   return ghost_cell_layer_thickness;
 }
 
-double ConfigureQC::get_maximum_cutoff_radius() const
+double
+ConfigureQC::get_maximum_cutoff_radius() const
 {
   return maximum_cutoff_radius;
 }
 
-double ConfigureQC::get_cluster_radius() const
+double
+ConfigureQC::get_cluster_radius() const
 {
   return cluster_radius;
 }
 
-double ConfigureQC::get_rep_distance() const
+double
+ConfigureQC::get_rep_distance() const
 {
   return rep_distance;
 }
@@ -88,17 +98,18 @@ double ConfigureQC::get_rep_distance() const
 std::shared_ptr<Potential::PairBaseManager>
 ConfigureQC::get_potential() const
 {
-  Assert (pair_potential, ExcInternalError());
+  Assert(pair_potential, ExcInternalError());
   return pair_potential;
 }
 
-std::string ConfigureQC::get_quadrature_rule () const
+std::string
+ConfigureQC::get_quadrature_rule() const
 {
   return quadrature_rule;
 }
 
-template<int dim, int atomicity, int spacedim>
-std::shared_ptr<Cluster::WeightsByBase<dim, atomicity, spacedim> >
+template <int dim, int atomicity, int spacedim>
+std::shared_ptr<Cluster::WeightsByBase<dim, atomicity, spacedim>>
 ConfigureQC::get_cluster_weights() const
 {
   AssertDimension(dim, dimension);
@@ -107,34 +118,33 @@ ConfigureQC::get_cluster_weights() const
   // we either need to make ConfigureQC templated with dim, or keep around
   // three different shared pointers.
   if (cluster_weights_type == "Cell")
-    return
-      std::make_shared<Cluster::WeightsByCell<dim, atomicity, spacedim>>
-      (cluster_radius, maximum_cutoff_radius);
+    return std::make_shared<Cluster::WeightsByCell<dim, atomicity, spacedim>>(
+      cluster_radius, maximum_cutoff_radius);
 
   else if (cluster_weights_type == "LumpedVertex")
-    return
-      std::make_shared<Cluster::WeightsByLumpedVertex<dim, atomicity, spacedim>>
-      (cluster_radius, maximum_cutoff_radius);
+    return std::make_shared<
+      Cluster::WeightsByLumpedVertex<dim, atomicity, spacedim>>(
+      cluster_radius, maximum_cutoff_radius);
 
   else if (cluster_weights_type == "SamplingPoints")
-    return
-      std::make_shared<Cluster::WeightsBySamplingPoints<dim, atomicity, spacedim>>
-      (cluster_radius, maximum_cutoff_radius);
+    return std::make_shared<
+      Cluster::WeightsBySamplingPoints<dim, atomicity, spacedim>>(
+      cluster_radius, maximum_cutoff_radius);
 
   else if (cluster_weights_type == "OptimalSummationRules")
-    return
-      std::make_shared<Cluster::WeightsByOptimalSummationRules<dim, atomicity, spacedim>>
-      (cluster_radius, maximum_cutoff_radius, rep_distance);
+    return std::make_shared<
+      Cluster::WeightsByOptimalSummationRules<dim, atomicity, spacedim>>(
+      cluster_radius, maximum_cutoff_radius, rep_distance);
 
   else
-    AssertThrow (false, ExcInternalError());
+    AssertThrow(false, ExcInternalError());
 
   return NULL;
 }
 
 
 
-std::map<unsigned int, std::vector<std::string> >
+std::map<unsigned int, std::vector<std::string>>
 ConfigureQC::get_boundary_functions() const
 {
   return boundary_ids_to_function_expressions;
@@ -150,21 +160,24 @@ ConfigureQC::get_external_potential_fields() const
 
 
 
-std::string ConfigureQC::get_minimizer_name() const
+std::string
+ConfigureQC::get_minimizer_name() const
 {
   return minimizer;
 }
 
 
 
-double ConfigureQC::get_time_step() const
+double
+ConfigureQC::get_time_step() const
 {
   return time_step;
 }
 
 
 
-unsigned int ConfigureQC::get_n_time_steps() const
+unsigned int
+ConfigureQC::get_n_time_steps() const
 {
   return n_time_steps;
 }
@@ -172,14 +185,15 @@ unsigned int ConfigureQC::get_n_time_steps() const
 
 
 ConfigureQC::SolverControlParameters
-ConfigureQC::get_solver_control_parameters () const
+ConfigureQC::get_solver_control_parameters() const
 {
   return solver_control_parameters;
 }
 
 
 
-ConfigureQC::FireParameters ConfigureQC::get_fire_parameters () const
+ConfigureQC::FireParameters
+ConfigureQC::get_fire_parameters() const
 {
   return fire_parameters;
 }
@@ -194,19 +208,21 @@ ConfigureQC::get_initial_refinement_parameters() const
 
 
 
-void ConfigureQC::declare_parameters (ParameterHandler &prm)
+void
+ConfigureQC::declare_parameters(ParameterHandler &prm)
 {
   // TODO: Write intput file name to the screen
-  //deallog << std::endl << "Parsing qc input file " << filename << std::endl
+  // deallog << std::endl << "Parsing qc input file " << filename << std::endl
   //        << "for a " << dim << " dimensional simulation. " << std::endl;
 
-  prm.declare_entry("Dimension", "2",
-                    Patterns::Integer(1,3),
+  prm.declare_entry("Dimension",
+                    "2",
+                    Patterns::Integer(1, 3),
                     "Dimensionality of the problem ");
 
   Geometry::declare_parameters(prm);
 
-  prm.enter_subsection ("A priori refinement");
+  prm.enter_subsection("A priori refinement");
   {
     prm.declare_entry("Error indicator function",
                       "0",
@@ -216,7 +232,8 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
                       "See InitialRefinementParameters::refinement_function.");
     prm.declare_entry("Marking strategy",
                       "FixedFraction",
-                      Patterns::Selection("FixedFraction"/*|FixedNumber|Global"*/),
+                      Patterns::Selection(
+                        "FixedFraction" /*|FixedNumber|Global"*/),
                       "Marking strategy for mesh refinement.");
     prm.declare_entry("Refinement parameter",
                       "0",
@@ -232,171 +249,181 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
 
   // TODO: Declare atom information
   // Use LAMMPS-like atom data file
-  prm.enter_subsection ("Configure atoms");
+  prm.enter_subsection("Configure atoms");
   {
-    prm.declare_entry("Atom data file", "",
+    prm.declare_entry("Atom data file",
+                      "",
                       Patterns::Anything(),
                       "Name of the atom data file "
                       "that is compatible with LAMMPS");
-    prm.declare_entry("Number of atom types", "1",
+    prm.declare_entry("Number of atom types",
+                      "1",
                       Patterns::Integer(1, 256),
                       "The number of atom types in the atomistic system.");
-    prm.declare_entry("Maximum cutoff radius", "5.9",
+    prm.declare_entry("Maximum cutoff radius",
+                      "5.9",
                       Patterns::Double(0),
                       "Maximum of all the cutoff radii "
                       "plus a skin thickness "
                       "used to update the neighbor lists "
                       "of atoms");
-    prm.declare_entry("Pair potential type", "LJ",
+    prm.declare_entry("Pair potential type",
+                      "LJ",
                       Patterns::Selection("Coulomb Wolf|LJ|LJ Coulomb Wolf"),
                       "Pairwise interactions type of the "
                       "pair potential energy function");
-    prm.declare_entry("Pair global coefficients", ".90",
-                      Patterns::List(Patterns::Anything(),1),
+    prm.declare_entry("Pair global coefficients",
+                      ".90",
+                      Patterns::List(Patterns::Anything(), 1),
                       "Comma separated global coefficient values for the "
                       "provided pair potential type."
                       "Coulomb Wolf: alpha and cutoff radius."
                       "LJ: cutoff radius"
                       "LJ Coulomb Wolf: alpha, coulomb and lj cutoff radii");
-    prm.declare_entry("Pair potential with tail", "false",
+    prm.declare_entry("Pair potential with tail",
+                      "false",
                       Patterns::Bool(),
                       "Whether the potential should have a smooth tail i.e., "
                       "whether the potential function has continuous first "
                       "derivative at the cutoff radius."
                       "Only few pair potentials support this feature. "
                       "The rest silently ignore this setting.");
-    prm.declare_entry("Pair specific coefficients", "0, 0, .8, 1.1;",
-                      Patterns::List(Patterns::List(Patterns::Anything(),
-                                                    0,
-                                                    std::numeric_limits<unsigned int>::max(),
-                                                    ","),
-                                     0,
-                                     std::numeric_limits<unsigned int>::max(),
-                                     ";"),
-                      "Additional coefficients for a pair of atoms of "
-                      "certain types. The wildcard asterisk can be used to "
-                      "indicate more than one atom type, for instance "
-                      "a) interacting pair 1*2, 1*4 indicate that atom types "
-                      "   1 and 2 interact with atom types 1, 2, 3 and 4;"
-                      "b) interacting pair *, * indicate that all atom types "
-                      "   interact with every other atom type."
-                      "c) interacting pair *3, 2 indicate that atom types"
-                      "   0, 1, 2, and 3 interact with atom type 2. "
-                      "---"
-                      "Depending on the specific pair potential type this "
-                      "input may not be necessary. "
-                      "---"
-                      "For the pair potential type: Coulomb Wolf, the pair "
-                      "specific coefficients are not necessary."
-                      "---"
-                      "For the pair potential type: LJ and LJ Coulomb Wolf,"
-                      "the first two entries are the atom types and"
-                      "the remaining two are epsilon and rm LJ parameters,"
-                      "respectively."
-                      "Note that the atom data counts the atom types from 1 "
-                      "but deal.II-qc from 0. Therefore atom type 2 in the "
-                      "atom data is atom type 1 in deal.II-qc.");
+    prm.declare_entry(
+      "Pair specific coefficients",
+      "0, 0, .8, 1.1;",
+      Patterns::List(Patterns::List(Patterns::Anything(),
+                                    0,
+                                    std::numeric_limits<unsigned int>::max(),
+                                    ","),
+                     0,
+                     std::numeric_limits<unsigned int>::max(),
+                     ";"),
+      "Additional coefficients for a pair of atoms of "
+      "certain types. The wildcard asterisk can be used to "
+      "indicate more than one atom type, for instance "
+      "a) interacting pair 1*2, 1*4 indicate that atom types "
+      "   1 and 2 interact with atom types 1, 2, 3 and 4;"
+      "b) interacting pair *, * indicate that all atom types "
+      "   interact with every other atom type."
+      "c) interacting pair *3, 2 indicate that atom types"
+      "   0, 1, 2, and 3 interact with atom type 2. "
+      "---"
+      "Depending on the specific pair potential type this "
+      "input may not be necessary. "
+      "---"
+      "For the pair potential type: Coulomb Wolf, the pair "
+      "specific coefficients are not necessary."
+      "---"
+      "For the pair potential type: LJ and LJ Coulomb Wolf,"
+      "the first two entries are the atom types and"
+      "the remaining two are epsilon and rm LJ parameters,"
+      "respectively."
+      "Note that the atom data counts the atom types from 1 "
+      "but deal.II-qc from 0. Therefore atom type 2 in the "
+      "atom data is atom type 1 in deal.II-qc.");
   }
-  prm.leave_subsection ();
-  prm.enter_subsection ("Configure QC");
+  prm.leave_subsection();
+  prm.enter_subsection("Configure QC");
   {
-    prm.declare_entry("Ghost cell layer thickness", "6.0",
+    prm.declare_entry("Ghost cell layer thickness",
+                      "6.0",
                       Patterns::Double(),
                       "The maximum distance from the locally "
                       "owned cells of each MPI process to to build "
                       "a layer of ghost cells needed for non-local energy "
                       "evaluation.");
-    prm.declare_entry("Cluster radius", "2.0",
+    prm.declare_entry("Cluster radius",
+                      "2.0",
                       Patterns::Double(0),
                       "Cluster radius used in "
                       "QC simulation");
-    prm.declare_entry("Quadrature rule", "QTrapez",
+    prm.declare_entry("Quadrature rule",
+                      "QTrapez",
                       Patterns::Selection("QTrapez|QTrapezWithMidpoint"),
                       "The type of quadrature rule for identifying sampling "
                       "points of a finite element.");
-    prm.declare_entry("Cluster weights by type", "Cell",
+    prm.declare_entry("Cluster weights by type",
+                      "Cell",
                       Patterns::Selection("Cell|LumpedVertex|SamplingPoints|"
                                           "OptimalSummationRules"),
                       "Select the way how cluster "
                       "weights are computed for "
                       "cluster atoms.");
-    prm.declare_entry("Representative distance", "1.0",
+    prm.declare_entry("Representative distance",
+                      "1.0",
                       Patterns::Double(0),
                       "Representative distance of vertex-type "
                       "sampling points used only in the case when "
                       "the weights are set by OptimalSummationRules.");
   }
-  prm.leave_subsection ();
+  prm.leave_subsection();
 
-  for (unsigned int
-       boundary_id = 0;
-       boundary_id < max_n_boundaries;
+  for (unsigned int boundary_id = 0; boundary_id < max_n_boundaries;
        boundary_id++)
     {
-      prm.enter_subsection ("boundary_" +
-                            dealii::Utilities::int_to_string(boundary_id));
+      prm.enter_subsection("boundary_" +
+                           dealii::Utilities::int_to_string(boundary_id));
       {
-        prm.declare_entry("Function expressions",
-                          ", , ,",
-                          Patterns::List(Patterns::Anything(),
-                                         0,
-                                         std::numeric_limits<unsigned int>::max(),
-                                         ","),
-                          "Function expressions that describes the boundary "
-                          "condition for all the components of the "
-                          "vector-valued solution at the current boundary id."
-                          "Each expression should end with a comma."
-                          "If the function expression of a particular "
-                          "component is empty then the corresponding component "
-                          "of the vector-valued solution at the boundary "
-                          "corresponding to the current boundary id is not "
-                          "constrained. This is then equivalent to having the "
-                          "corresponding entry in the component mask set to "
-                          "false. In this way only certain components of the "
-                          "vector-valued solution at the boundary can be "
-                          "constrained."
-                          "For example:"
-                          "If the solution of the problem being solved is "
-                          "vector valued displacements in two dimensions, "
-                          "the component mask with true false implies that "
-                          "only the first component of the displacements is "
-                          "being constrained to the given function "
-                          "describing the boundary condition."
-                          "Non empty function expressions would be passed in "
-                          "to initialize valid Function objects using "
-                          "FunctionParser."
-                          "For example:"
-                          "The expression 0 implies that the current "
-                          "component of the current boundary id is subjected "
-                          "to Homogeneous Dirichlet boundary condition."
-                          "---"
-                          "In the case with more than one atomicity,"
-                          "the components in the function expression should"
-                          "be arranged according to the atom stamps."
-                          "For example: "
-                          "Atomistic system in two dimensions consisting of"
-                          "molecules each with three atoms, the following "
-                          "Function expressions = 0., ,0., ,0., ,"
-                          "result in applying homogeneous dirichlet condition "
-                          "on the x coordinates of all the atom stamps at"
-                          "the current boundary.");
+        prm.declare_entry(
+          "Function expressions",
+          ", , ,",
+          Patterns::List(Patterns::Anything(),
+                         0,
+                         std::numeric_limits<unsigned int>::max(),
+                         ","),
+          "Function expressions that describes the boundary "
+          "condition for all the components of the "
+          "vector-valued solution at the current boundary id."
+          "Each expression should end with a comma."
+          "If the function expression of a particular "
+          "component is empty then the corresponding component "
+          "of the vector-valued solution at the boundary "
+          "corresponding to the current boundary id is not "
+          "constrained. This is then equivalent to having the "
+          "corresponding entry in the component mask set to "
+          "false. In this way only certain components of the "
+          "vector-valued solution at the boundary can be "
+          "constrained."
+          "For example:"
+          "If the solution of the problem being solved is "
+          "vector valued displacements in two dimensions, "
+          "the component mask with true false implies that "
+          "only the first component of the displacements is "
+          "being constrained to the given function "
+          "describing the boundary condition."
+          "Non empty function expressions would be passed in "
+          "to initialize valid Function objects using "
+          "FunctionParser."
+          "For example:"
+          "The expression 0 implies that the current "
+          "component of the current boundary id is subjected "
+          "to Homogeneous Dirichlet boundary condition."
+          "---"
+          "In the case with more than one atomicity,"
+          "the components in the function expression should"
+          "be arranged according to the atom stamps."
+          "For example: "
+          "Atomistic system in two dimensions consisting of"
+          "molecules each with three atoms, the following "
+          "Function expressions = 0., ,0., ,0., ,"
+          "result in applying homogeneous dirichlet condition "
+          "on the x coordinates of all the atom stamps at"
+          "the current boundary.");
       }
-      prm.leave_subsection ();
+      prm.leave_subsection();
     }
 
-  for (unsigned int
-       material_id = 0;
-       material_id < max_n_material_ids;
+  for (unsigned int material_id = 0; material_id < max_n_material_ids;
        material_id++)
     {
-      prm.enter_subsection ("ext_potential_material_id_" +
-                            dealii::Utilities::int_to_string(material_id));
+      prm.enter_subsection("ext_potential_material_id_" +
+                           dealii::Utilities::int_to_string(material_id));
       {
-        prm.declare_entry ("Is electric field",
-                           "false",
-                           Patterns::Bool(),
-                           "Specify whether the potential field is an electric "
-                           "potential field.");
+        prm.declare_entry("Is electric field",
+                          "false",
+                          Patterns::Bool(),
+                          "Specify whether the potential field is an electric "
+                          "potential field.");
         prm.declare_entry("Function expression",
                           "",
                           Patterns::Anything(),
@@ -413,38 +440,38 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
                           "location of a point where the value is to be "
                           "computed followed by the time variable.");
       }
-      prm.leave_subsection ();
+      prm.leave_subsection();
     }
 
-  prm.enter_subsection ("Minimizer settings");
+  prm.enter_subsection("Minimizer settings");
   {
     SolverControl::declare_parameters(prm);
 
-    prm.declare_entry ("Minimizer",
-                       "FIRE",
-                       Patterns::Selection("FIRE"/* TODO Add more minimizers*/),
-                       "Choose minimizer.");
+    prm.declare_entry("Minimizer",
+                      "FIRE",
+                      Patterns::Selection("FIRE" /* TODO Add more minimizers*/),
+                      "Choose minimizer.");
 
-    prm.enter_subsection ("FIRE");
+    prm.enter_subsection("FIRE");
     {
-      prm.declare_entry ("Initial time step",
-                         "0.2",
-                         Patterns::Double(1e-16),
-                         "FIRE minimizer initial time step.");
-      prm.declare_entry ("Maximum time step",
-                         "0.5",
-                         Patterns::Double(1e-16),
-                         "FIRE minimizer maximum time step.");
-      prm.declare_entry ("Maximum linfty norm",
-                         "0.5",
-                         Patterns::Double(1e-16),
-                         "FIRE minimizer maximum linfty norm. This refers "
-                         "to the maximum allowable change in any degree of "
-                         "freedom.");
+      prm.declare_entry("Initial time step",
+                        "0.2",
+                        Patterns::Double(1e-16),
+                        "FIRE minimizer initial time step.");
+      prm.declare_entry("Maximum time step",
+                        "0.5",
+                        Patterns::Double(1e-16),
+                        "FIRE minimizer maximum time step.");
+      prm.declare_entry("Maximum linfty norm",
+                        "0.5",
+                        Patterns::Double(1e-16),
+                        "FIRE minimizer maximum linfty norm. This refers "
+                        "to the maximum allowable change in any degree of "
+                        "freedom.");
     }
-    prm.leave_subsection ();
+    prm.leave_subsection();
   }
-  prm.leave_subsection ();
+  prm.leave_subsection();
 
   prm.declare_entry("Number of time steps",
                     "0",
@@ -459,37 +486,37 @@ void ConfigureQC::declare_parameters (ParameterHandler &prm)
 
   // TODO: Declare Run 0
   //       Compute energy and force at the initial configuration.
-
 }
 
 
 
-void ConfigureQC::parse_parameters (ParameterHandler &prm)
+void
+ConfigureQC::parse_parameters(ParameterHandler &prm)
 {
   dimension = prm.get_integer("Dimension");
 
-  if (dimension==3)
+  if (dimension == 3)
     {
       geometry_3d = Geometry::parse_parameters_and_get_geometry<3>(prm);
-      Assert (!geometry_1d, ExcInternalError());
-      Assert (!geometry_2d, ExcInternalError());
+      Assert(!geometry_1d, ExcInternalError());
+      Assert(!geometry_2d, ExcInternalError());
     }
-  else if (dimension==2)
+  else if (dimension == 2)
     {
       geometry_2d = Geometry::parse_parameters_and_get_geometry<2>(prm);
-      Assert (!geometry_1d, ExcInternalError());
-      Assert (!geometry_3d, ExcInternalError());
+      Assert(!geometry_1d, ExcInternalError());
+      Assert(!geometry_3d, ExcInternalError());
     }
-  else if (dimension==1)
+  else if (dimension == 1)
     {
       geometry_1d = Geometry::parse_parameters_and_get_geometry<1>(prm);
-      Assert (!geometry_2d, ExcInternalError());
-      Assert (!geometry_3d, ExcInternalError());
+      Assert(!geometry_2d, ExcInternalError());
+      Assert(!geometry_3d, ExcInternalError());
     }
   else
-    AssertThrow (false, ExcNotImplemented());
+    AssertThrow(false, ExcNotImplemented());
 
-  prm.enter_subsection ("A priori refinement");
+  prm.enter_subsection("A priori refinement");
   {
     initial_refinement_parameters.indicator_function =
       prm.get("Error indicator function");
@@ -505,68 +532,68 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
   prm.enter_subsection("Configure atoms");
   {
     atom_data_file = prm.get("Atom data file");
-    n_atom_types   = dealii::Utilities::string_to_int(prm.get("Number of atom types"));
+    n_atom_types =
+      dealii::Utilities::string_to_int(prm.get("Number of atom types"));
     maximum_cutoff_radius = prm.get_double("Maximum cutoff radius");
 
     pair_potential_type = prm.get("Pair potential type");
 
     std::vector<double> global_coeffs;
     {
-      const std::vector<std::string> tmp =
-        dealii::Utilities::
-        split_string_list(prm.get("Pair global coefficients"), ',');
+      const std::vector<std::string> tmp = dealii::Utilities::split_string_list(
+        prm.get("Pair global coefficients"), ',');
 
-      for ( const auto &c : tmp)
+      for (const auto &c : tmp)
         global_coeffs.push_back(dealii::Utilities::string_to_double(c));
     }
 
     const bool with_tail = prm.get_bool("Pair potential with tail");
 
-    const std::vector<std::vector<std::string> > list_of_coeffs_per_type =
-      Utilities::
-      split_list_of_string_lists(prm.get("Pair specific coefficients"),';',',');
+    const std::vector<std::vector<std::string>> list_of_coeffs_per_type =
+      Utilities::split_list_of_string_lists(
+        prm.get("Pair specific coefficients"), ';', ',');
 
     if (pair_potential_type == "Coulomb Wolf")
       {
-        AssertThrow (global_coeffs.size()==2,
-                     ExcMessage("Invalid Pair global coefficients provided "
-                                "for the Pair potential type: "
-                                "Coulomb Wolf."));
-        AssertThrow (global_coeffs[1] < maximum_cutoff_radius,
-                     ExcMessage("Maximum cutoff radius should be more than or "
-                                "equal to the provided cutoff radius."));
+        AssertThrow(global_coeffs.size() == 2,
+                    ExcMessage("Invalid Pair global coefficients provided "
+                               "for the Pair potential type: "
+                               "Coulomb Wolf."));
+        AssertThrow(global_coeffs[1] < maximum_cutoff_radius,
+                    ExcMessage("Maximum cutoff radius should be more than or "
+                               "equal to the provided cutoff radius."));
         pair_potential =
-          std::make_shared<Potential::PairCoulWolfManager> (global_coeffs[0],
-                                                            global_coeffs[1]);
+          std::make_shared<Potential::PairCoulWolfManager>(global_coeffs[0],
+                                                           global_coeffs[1]);
       }
     else if (pair_potential_type == "LJ")
       {
-        AssertThrow (global_coeffs.size()==1,
-                     ExcMessage("Invalid Pair global coefficients provided "
-                                "for the Pair potential type: LJ."));
-        AssertThrow (global_coeffs[0] < maximum_cutoff_radius,
-                     ExcMessage("Maximum cutoff radius should be more than or "
-                                "equal to the provided cutoff radius."));
+        AssertThrow(global_coeffs.size() == 1,
+                    ExcMessage("Invalid Pair global coefficients provided "
+                               "for the Pair potential type: LJ."));
+        AssertThrow(global_coeffs[0] < maximum_cutoff_radius,
+                    ExcMessage("Maximum cutoff radius should be more than or "
+                               "equal to the provided cutoff radius."));
         pair_potential =
-          std::make_shared<Potential::PairLJCutManager> (global_coeffs[0],
-                                                         with_tail);
+          std::make_shared<Potential::PairLJCutManager>(global_coeffs[0],
+                                                        with_tail);
 
         for (const auto &specific_coeffs : list_of_coeffs_per_type)
           {
             // Pair specific coefficients = 0, 1, 2.5, 1.0
             // atom type 0 and 1 interact with epsilon = 2.5 and r_m = 1.
-            AssertThrow (specific_coeffs.size() == 4,
-                         ExcMessage("Only two specific coefficients should be "
-                                    "provided the first element being "
-                                    "epsilon and second being r_m as "));
+            AssertThrow(specific_coeffs.size() == 4,
+                        ExcMessage("Only two specific coefficients should be "
+                                   "provided the first element being "
+                                   "epsilon and second being r_m as "));
 
-            const std::pair<types::atom_type, types::atom_type>
-            range_i = dealiiqc::Utilities::atom_type_range (specific_coeffs[0],
-                                                            n_atom_types);
+            const std::pair<types::atom_type, types::atom_type> range_i =
+              dealiiqc::Utilities::atom_type_range(specific_coeffs[0],
+                                                   n_atom_types);
 
-            const std::pair<types::atom_type, types::atom_type>
-            range_j = dealiiqc::Utilities::atom_type_range (specific_coeffs[1],
-                                                            n_atom_types);
+            const std::pair<types::atom_type, types::atom_type> range_j =
+              dealiiqc::Utilities::atom_type_range(specific_coeffs[1],
+                                                   n_atom_types);
 
             std::vector<double> coeffs(2);
             coeffs[0] = dealii::Utilities::string_to_double(specific_coeffs[2]);
@@ -574,44 +601,39 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
 
             for (types::atom_type i = range_i.first; i <= range_i.second; ++i)
               for (types::atom_type j = range_j.first; j <= range_j.second; ++j)
-                pair_potential->
-                declare_interactions (i,
-                                      j,
-                                      Potential::InteractionTypes::LJ,
-                                      coeffs);
+                pair_potential->declare_interactions(
+                  i, j, Potential::InteractionTypes::LJ, coeffs);
           }
       }
     else if (pair_potential_type == "LJ Coulomb Wolf")
       {
-        AssertThrow (global_coeffs.size()==3,
-                     ExcMessage("Invalid Pair global coefficients provided "
-                                "for the Pair potential type: LJ Coulomb Wolf."));
-        AssertThrow (global_coeffs[1] < maximum_cutoff_radius &&
-                     global_coeffs[2] < maximum_cutoff_radius,
-                     ExcMessage("Maximum cutoff radius should be more than or "
-                                "equal to the provided cutoff radius."));
-        pair_potential =
-          std::make_shared<Potential::PairLJCutCoulWolfManager> (global_coeffs[0],
-                                                                 global_coeffs[1],
-                                                                 global_coeffs[2],
-                                                                 with_tail);
+        AssertThrow(global_coeffs.size() == 3,
+                    ExcMessage(
+                      "Invalid Pair global coefficients provided "
+                      "for the Pair potential type: LJ Coulomb Wolf."));
+        AssertThrow(global_coeffs[1] < maximum_cutoff_radius &&
+                      global_coeffs[2] < maximum_cutoff_radius,
+                    ExcMessage("Maximum cutoff radius should be more than or "
+                               "equal to the provided cutoff radius."));
+        pair_potential = std::make_shared<Potential::PairLJCutCoulWolfManager>(
+          global_coeffs[0], global_coeffs[1], global_coeffs[2], with_tail);
 
         for (const auto &specific_coeffs : list_of_coeffs_per_type)
           {
             // Pair specific coefficients = 0, 1, 2.5, 1.0
             // atom type 0 and 1 interact with epsilon = 2.5 and r_m = 1.
-            AssertThrow (specific_coeffs.size() == 4,
-                         ExcMessage("Only two specific coefficients should be "
-                                    "provided the first element being "
-                                    "epsilon and second being r_m."));
+            AssertThrow(specific_coeffs.size() == 4,
+                        ExcMessage("Only two specific coefficients should be "
+                                   "provided the first element being "
+                                   "epsilon and second being r_m."));
 
-            const std::pair<types::atom_type, types::atom_type>
-            range_i = dealiiqc::Utilities::atom_type_range (specific_coeffs[0],
-                                                            n_atom_types);
+            const std::pair<types::atom_type, types::atom_type> range_i =
+              dealiiqc::Utilities::atom_type_range(specific_coeffs[0],
+                                                   n_atom_types);
 
-            const std::pair<types::atom_type, types::atom_type>
-            range_j = dealiiqc::Utilities::atom_type_range (specific_coeffs[1],
-                                                            n_atom_types);
+            const std::pair<types::atom_type, types::atom_type> range_j =
+              dealiiqc::Utilities::atom_type_range(specific_coeffs[1],
+                                                   n_atom_types);
 
             std::vector<double> coeffs(2);
             coeffs[0] = dealii::Utilities::string_to_double(specific_coeffs[2]);
@@ -619,18 +641,14 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
 
             for (types::atom_type i = range_i.first; i <= range_i.second; ++i)
               for (types::atom_type j = range_j.first; j <= range_j.second; ++j)
-                pair_potential->
-                declare_interactions (i,
-                                      j,
-                                      Potential::InteractionTypes::LJ_Coul_Wolf,
-                                      coeffs);
+                pair_potential->declare_interactions(
+                  i, j, Potential::InteractionTypes::LJ_Coul_Wolf, coeffs);
           }
       }
     else
       {
-        AssertThrow (false, ExcInternalError());
+        AssertThrow(false, ExcInternalError());
       }
-
   }
   prm.leave_subsection();
 
@@ -638,40 +656,37 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
   {
     ghost_cell_layer_thickness = prm.get_double("Ghost cell layer thickness");
 
-    Assert (ghost_cell_layer_thickness < 0 ||
-            maximum_cutoff_radius      < ghost_cell_layer_thickness,
-            ExcMessage("Ghost cell layer thickness should be more than or "
-                       "equal to the Maximum cutoff radius."));
+    Assert(ghost_cell_layer_thickness < 0 ||
+             maximum_cutoff_radius < ghost_cell_layer_thickness,
+           ExcMessage("Ghost cell layer thickness should be more than or "
+                      "equal to the Maximum cutoff radius."));
 
-    cluster_radius = prm.get_double( "Cluster radius");
-    quadrature_rule = prm.get("Quadrature rule");
+    cluster_radius       = prm.get_double("Cluster radius");
+    quadrature_rule      = prm.get("Quadrature rule");
     cluster_weights_type = prm.get("Cluster weights by type");
 
     // For now allow the use of QTrapezWithMidpoint only for
     // OptimalSummationRules.
-    AssertThrow (quadrature_rule==(cluster_weights_type=="OptimalSummationRules"
-                                   ?
-                                   "QTrapezWithMidpoint"
-                                   :
-                                   "QTrapez"),
-                 ExcMessage("Invalid quadrature rule or"
-                            "cluster weights method provided."));
+    AssertThrow(quadrature_rule ==
+                  (cluster_weights_type == "OptimalSummationRules" ?
+                     "QTrapezWithMidpoint" :
+                     "QTrapez"),
+                ExcMessage("Invalid quadrature rule or"
+                           "cluster weights method provided."));
 
     rep_distance = prm.get_double("Representative distance");
   }
   prm.leave_subsection();
 
-  for (unsigned int
-       boundary_id = 0;
-       boundary_id < max_n_boundaries;
+  for (unsigned int boundary_id = 0; boundary_id < max_n_boundaries;
        boundary_id++)
     {
       prm.enter_subsection("boundary_" +
                            dealii::Utilities::int_to_string(boundary_id));
       {
         const std::vector<std::string> function_expressions =
-          dealii::Utilities::split_string_list (prm.get("Function expressions"),
-                                                ',');
+          dealii::Utilities::split_string_list(prm.get("Function expressions"),
+                                               ',');
 
         bool ignore_boundary_id = true;
 
@@ -687,9 +702,7 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
       prm.leave_subsection();
     }
 
-  for (unsigned int
-       material_id = 0;
-       material_id < max_n_material_ids;
+  for (unsigned int material_id = 0; material_id < max_n_material_ids;
        material_id++)
     {
       prm.enter_subsection("ext_potential_material_id_" +
@@ -698,8 +711,7 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
         const std::pair<unsigned int, bool> unique_key =
           std::make_pair(material_id, prm.get_bool("Is electric field"));
 
-        const std::string function_expression =
-          prm.get("Function expression");
+        const std::string function_expression = prm.get("Function expression");
 
         // If the provided function expression is not empty,
         // then prepare potential field function expression for this
@@ -711,7 +723,7 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
       prm.leave_subsection();
     }
 
-  prm.enter_subsection ("Minimizer settings");
+  prm.enter_subsection("Minimizer settings");
   {
     solver_control_parameters.max_steps     = prm.get_integer("Max steps");
     solver_control_parameters.tolerance     = prm.get_double("Tolerance");
@@ -719,35 +731,36 @@ void ConfigureQC::parse_parameters (ParameterHandler &prm)
     solver_control_parameters.log_result    = prm.get_bool("Log result");
     solver_control_parameters.log_frequency = prm.get_integer("Log frequency");
 
-    minimizer              = prm.get("Minimizer");
+    minimizer = prm.get("Minimizer");
 
     prm.enter_subsection("FIRE");
     {
       fire_parameters.initial_time_step = prm.get_double("Initial time step");
       fire_parameters.maximum_time_step = prm.get_double("Maximum time step");
-      fire_parameters.maximum_linfty_norm = prm.get_double("Maximum linfty norm");
+      fire_parameters.maximum_linfty_norm =
+        prm.get_double("Maximum linfty norm");
     }
     prm.leave_subsection();
   }
-  prm.leave_subsection ();
+  prm.leave_subsection();
 
 
   n_time_steps = prm.get_integer("Number of time steps");
   time_step    = prm.get_double("Time step size");
-
 }
 
 
 
-#define SINGLE_CONFIGURE_QC_INSTANTIATION(_DIM, _ATOMICITY, _SPACE_DIM)  \
-  template                                                               \
-  std::shared_ptr<Cluster::WeightsByBase <_DIM, _ATOMICITY, _SPACE_DIM>> \
+#define SINGLE_CONFIGURE_QC_INSTANTIATION(_DIM, _ATOMICITY, _SPACE_DIM) \
+  template std::shared_ptr<                                             \
+    Cluster::WeightsByBase<_DIM, _ATOMICITY, _SPACE_DIM>>               \
   ConfigureQC::get_cluster_weights() const;
 
 #define CONFIGURE_QC(R, X)                       \
   BOOST_PP_IF(IS_DIM_LESS_EQUAL_SPACEDIM X,      \
               SINGLE_CONFIGURE_QC_INSTANTIATION, \
-              BOOST_PP_TUPLE_EAT(3)) X
+              BOOST_PP_TUPLE_EAT(3))             \
+  X
 
 // ConfigureQC::get_cluster_weights instantiations
 INSTANTIATE_CLASS_WITH_DIM_ATOMICITY_AND_SPACEDIM(CONFIGURE_QC)

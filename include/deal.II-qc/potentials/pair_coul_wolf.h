@@ -3,6 +3,7 @@
 #define __dealii_qc_pair_coul_wolf_h
 
 #include <deal.II/base/exceptions.h>
+
 #include <deal.II-qc/potentials/pair_base.h>
 
 
@@ -11,7 +12,6 @@ DEAL_II_QC_NAMESPACE_OPEN
 
 namespace Potential
 {
-
   /**
    * Coulomb pair potential computed using Wolf summation method as
    *
@@ -40,9 +40,7 @@ namespace Potential
    */
   class PairCoulWolfManager : public PairBaseManager
   {
-
   public:
-
     /**
      * Constructor that takes in the damping coefficient @p alpha,
      * the cutoff radius @p cutoff_radius to be used for computation of
@@ -51,8 +49,7 @@ namespace Potential
      * interact with each other, consequently do not contribute to either
      * energy or its derivative.
      */
-    PairCoulWolfManager (const double &alpha,
-                         const double &cutoff_radius);
+    PairCoulWolfManager(const double &alpha, const double &cutoff_radius);
 
     /**
      * Declare the type of interaction between the atom types @p i_atom_type
@@ -60,10 +57,12 @@ namespace Potential
      * this class and is present here only for consistency with the other
      * potentials.
      */
-    void declare_interactions (const types::atom_type i_atom_type,
-                               const types::atom_type j_atom_type,
-                               InteractionTypes interaction,
-                               const std::vector<double> &parameters=std::vector<double>());
+    void
+    declare_interactions(
+      const types::atom_type     i_atom_type,
+      const types::atom_type     j_atom_type,
+      InteractionTypes           interaction,
+      const std::vector<double> &parameters = std::vector<double>());
 
     /**
      * Returns a pair of computed values of energy and its gradient between
@@ -82,15 +81,13 @@ namespace Potential
      * this function can be called by passing @p false as template
      * parameter to query only the computation of the energy.
      */
-    template<bool ComputeGradient=true>
-    inline
-    std::pair<double, double>
-    energy_and_gradient (const types::atom_type i_atom_type,
-                         const types::atom_type j_atom_type,
-                         const double &squared_distance) const;
+    template <bool ComputeGradient = true>
+    inline std::pair<double, double>
+    energy_and_gradient(const types::atom_type i_atom_type,
+                        const types::atom_type j_atom_type,
+                        const double &         squared_distance) const;
 
   private:
-
     /**
      * Damping coefficient.
      */
@@ -120,67 +117,58 @@ namespace Potential
      * A const member whose value is required during energy computations.
      */
     const double compound_exp_value;
-
   };
 
 
 
-  /*----------------------- Inline functions ----------------------------------*/
+  /*----------------------- Inline functions
+   * ----------------------------------*/
 
 #ifndef DOXYGEN
 
-  template<bool ComputeGradient>
-  inline
-  std::pair<double, double>
-  PairCoulWolfManager::energy_and_gradient (const types::atom_type i_atom_type,
-                                            const types::atom_type j_atom_type,
-                                            const double &squared_distance) const
+  template <bool ComputeGradient>
+  inline std::pair<double, double>
+  PairCoulWolfManager::energy_and_gradient(const types::atom_type i_atom_type,
+                                           const types::atom_type j_atom_type,
+                                           const double &squared_distance) const
   {
     if (squared_distance > cutoff_radius_squared)
-      return ComputeGradient
-             ?
-             std::make_pair(0.,0.)
-             :
-             std::make_pair(0., std::numeric_limits<double>::signaling_NaN());
+      return ComputeGradient ?
+               std::make_pair(0., 0.) :
+               std::make_pair(0., std::numeric_limits<double>::signaling_NaN());
 
-    Assert (charges, dealii::ExcInternalError());
+    Assert(charges, dealii::ExcInternalError());
 
     // TODO: Need to setup units
     // The multiplying factor qqrd2e = 14.399645 yields energy in eV
     // and force in eV/Angstrom units
-    const double qqrd2e = 14.399645;
+    const double qqrd2e   = 14.399645;
     const double distance = std::sqrt(squared_distance);
 
-    Assert (i_atom_type < charges->size() && i_atom_type < charges->size(),
-            dealii::ExcMessage("The function is called with a value of "
-                               "atom type larger than the size of "
-                               "PairCoulWolf::charges."
-                               "Please ensure that the PairCoulWolf::charges "
-                               "is initialized accurately."));
+    Assert(i_atom_type < charges->size() && i_atom_type < charges->size(),
+           dealii::ExcMessage("The function is called with a value of "
+                              "atom type larger than the size of "
+                              "PairCoulWolf::charges."
+                              "Please ensure that the PairCoulWolf::charges "
+                              "is initialized accurately."));
 
-    const double qiqj = (double)(*charges)[i_atom_type]*(*charges)[j_atom_type];
-    const double distance_inverse = 1.0/distance;
-    const double erfc_a_distance = std::erfc(alpha*distance) * distance_inverse;
+    const double qiqj =
+      (double)(*charges)[i_atom_type] * (*charges)[j_atom_type];
+    const double distance_inverse = 1.0 / distance;
+    const double erfc_a_distance =
+      std::erfc(alpha * distance) * distance_inverse;
 
-    const double energy = qiqj * ( erfc_a_distance - energy_shift ) * qqrd2e;
+    const double energy = qiqj * (erfc_a_distance - energy_shift) * qqrd2e;
 
-    const double gradient = ComputeGradient
-                            ?
-                            qqrd2e * qiqj *
-                            ( distance_inverse *
-                              (
-                                erfc_a_distance + alpha*M_2_SQRTPI *
-                                std::exp(-alpha*alpha*squared_distance)
-                              )
-                              -
-                              cutoff_radius_inverse *
-                              (
-                                energy_shift + alpha * M_2_SQRTPI *
-                                compound_exp_value
-                              )
-                            )
-                            :
-                            std::numeric_limits<double>::signaling_NaN();
+    const double gradient =
+      ComputeGradient ?
+        qqrd2e * qiqj *
+          (distance_inverse *
+             (erfc_a_distance + alpha * M_2_SQRTPI *
+                                  std::exp(-alpha * alpha * squared_distance)) -
+           cutoff_radius_inverse *
+             (energy_shift + alpha * M_2_SQRTPI * compound_exp_value)) :
+        std::numeric_limits<double>::signaling_NaN();
 
     return std::make_pair(energy, gradient);
   }

@@ -24,19 +24,20 @@ namespace Geometry
   class Gmsh : public Base<dim>
   {
   public:
+    Gmsh();
 
-    Gmsh ();
+    virtual ~Gmsh();
 
-    virtual ~Gmsh ();
+    virtual void
+    create_mesh(dealii::parallel::shared::Triangulation<dim> &tria) const;
 
-    virtual void create_mesh (dealii::parallel::shared::Triangulation<dim> &tria) const;
+    virtual void
+    parse_parameters(ParameterHandler &prm);
 
-    virtual void parse_parameters (ParameterHandler &prm);
-
-    static void declare_parameters (ParameterHandler &prm);
+    static void
+    declare_parameters(ParameterHandler &prm);
 
   private:
-
     /**
      * Path to the mesh.
      */
@@ -44,7 +45,7 @@ namespace Geometry
   };
 
 
-} // namesapce Geometry
+} // namespace Geometry
 
 
 DEAL_II_QC_NAMESPACE_CLOSE

@@ -10,22 +10,20 @@ DEAL_II_QC_NAMESPACE_OPEN
 
 namespace Cluster
 {
-
   /**
    * A derived class for updating cluster weights using the sampling points
    * approach, in other words using Voronoi tessellation of the cluster's
    * sampling points.
    */
-  template <int dim, int atomicity=1, int spacedim=dim>
-  class WeightsBySamplingPoints : public WeightsByBase <dim, atomicity, spacedim>
+  template <int dim, int atomicity = 1, int spacedim = dim>
+  class WeightsBySamplingPoints : public WeightsByBase<dim, atomicity, spacedim>
   {
   public:
-
     /**
      * Constructor.
      */
-    WeightsBySamplingPoints (const double &cluster_radius,
-                             const double &maximum_energy_radius);
+    WeightsBySamplingPoints(const double &cluster_radius,
+                            const double &maximum_energy_radius);
 
     /**
      * @see WeightsByBase::update_cluster_weights().
@@ -38,10 +36,10 @@ namespace Cluster
      * point.
      */
     types::CellMoleculeContainerType<dim, atomicity, spacedim>
-    update_cluster_weights
-    (const Triangulation<dim, spacedim>                               &triangulation,
-     const types::CellMoleculeContainerType<dim, atomicity, spacedim> &cell_molecules) const;
-
+    update_cluster_weights(
+      const Triangulation<dim, spacedim> &triangulation,
+      const types::CellMoleculeContainerType<dim, atomicity, spacedim>
+        &cell_molecules) const;
   };
 
 } // namespace Cluster

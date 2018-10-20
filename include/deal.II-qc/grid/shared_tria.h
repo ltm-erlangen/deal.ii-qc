@@ -2,9 +2,9 @@
 #ifndef __dealii_qc_shared_tria_h
 #define __dealii_qc_shared_tria_h
 
-#include <deal.II-qc/utilities.h>
-
 #include <deal.II/distributed/shared_tria.h>
+
+#include <deal.II-qc/utilities.h>
 
 
 DEAL_II_QC_NAMESPACE_OPEN
@@ -15,7 +15,6 @@ namespace parallel
 {
   namespace shared
   {
-
     /**
      * This class is a minor extension to the parallel::shared::Triangulation of
      * deal.II (that provides a parallel triangulation for which every processor
@@ -26,11 +25,11 @@ namespace parallel
      * additionally Triangulation::setup_ghost_cells() must be called to
      * re-adjust the ghost cell layer thickness to the desired.
      */
-    template <int dim, int spacedim=dim>
-    class Triangulation : public dealii::parallel::shared::Triangulation<dim, spacedim>
+    template <int dim, int spacedim = dim>
+    class Triangulation
+      : public dealii::parallel::shared::Triangulation<dim, spacedim>
     {
     public:
-
       /**
        * Constructor.
        *
@@ -42,30 +41,30 @@ namespace parallel
        * around locally owned cells can be altered using
        * @p ghost_cell_layer_thickness.
        */
-      Triangulation (MPI_Comm mpi_communicator,
-                     const typename dealii::Triangulation<dim,spacedim>::MeshSmoothing =
-                       (dealii::Triangulation<dim,spacedim>::none),
-                     const double ghost_cell_layer_thickness = -1.);
+      Triangulation(
+        MPI_Comm mpi_communicator,
+        const typename dealii::Triangulation<dim, spacedim>::MeshSmoothing =
+          (dealii::Triangulation<dim, spacedim>::none),
+        const double ghost_cell_layer_thickness = -1.);
 
       // TODO: Need to rework for large deformations?
       /**
        * Re-adjust the ghost cell layer thickness.
        */
-      void setup_ghost_cells ();
+      void
+      setup_ghost_cells();
 
     private:
       /**
        * Ghost cell layer thickness.
        */
       const double ghost_cell_layer_thickness;
-
     };
-  }
-}
+  } // namespace shared
+} // namespace parallel
 
 #endif
 DEAL_II_QC_NAMESPACE_CLOSE
-
 
 
 
