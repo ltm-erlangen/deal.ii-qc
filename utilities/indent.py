@@ -18,6 +18,19 @@ import threading
 from tempfile import mkdtemp, mkstemp
 from filecmp  import cmp
 
+#
+# This program formats code using 'clang-format'.
+# If this program is executed on dry run mode, only the file names of
+# the files that are not formatted correctly are reported
+# without actually formatting them.
+#
+
+def conditional_log(string, condition=True):
+  """
+  Print provided string if and only if the provided condition is True.
+  """
+  if condition:
+    print(string)
 
 def parse_arguments ():
   """
@@ -78,7 +91,8 @@ def sanity_checks(args):
     version_number = re.search(r'Version\s*([\d.]+)',
                                clang_format_version,
                                re.IGNORECASE).group(1)
-    print ("Found clang-format Version: ", version_number)
+    conditional_log("Found clang-format Version: %s" %version_number,
+                    not args.dry_run)
     assert (version_number == "6.0.0" or version_number == "6.0.1")
   except subprocess.CalledProcessError:
     print("***"
@@ -145,6 +159,7 @@ def format_file(args, task_queue, temp_dir):
     #
     if not cmp(full_file_name, temp_file_name):
       if args.dry_run:
+        print (full_file_name, " - file indented incorrectly")
         os.remove (temp_file_name)
       else:
         shutil.move (temp_file_name, full_file_name)
@@ -166,7 +181,9 @@ def process (args):
   n_threads = args.j
   if n_threads == 0:
     n_threads = multiprocessing.cpu_count()-1
-  print ("Number of threads picked up:", n_threads)
+
+  conditional_log("Number of threads picked up: %d" %n_threads,
+                  not args.dry_run)
 
   #
   # Create n_threads number of queues, one for each thread.
@@ -204,13 +221,13 @@ def process (args):
   shutil.rmtree(tmpdir)
 
 
-start = time.time()
+
 
 if __name__ == "__main__":
+  start = time.time()
   args = parse_arguments()
   sanity_checks(args)
   process(args)
-
-finish = time.time()
-
-print("Finished code formatting in: ", (finish-start), " seconds.")
+  finish = time.time()
+  conditional_log("Finished code formatting in: %f seconds." %(finish-start),
+                  not args.dry_run)
