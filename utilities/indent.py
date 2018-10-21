@@ -80,7 +80,7 @@ def sanity_checks(args):
                                re.IGNORECASE).group(1)
     print ("Found clang-format Version: ", version_number)
     assert (version_number == "6.0.0" or version_number == "6.0.1")
-  except OSError:
+  except subprocess.CalledProcessError:
     print("***"
           "***   No clang-format program found."
           "***"
@@ -90,9 +90,6 @@ def sanity_checks(args):
           "***       'python utilities/compile_clang_format'"
           "***   to install a compatible binary into './utilities/programs'."
           "***")
-    raise
-  except subprocess.CalledProcessError as e:
-    print(e.output)
     raise
 
 def format_file(args, task_queue, temp_dir):
@@ -135,7 +132,7 @@ def format_file(args, task_queue, temp_dir):
     try:
       subprocess.call (apply_clang_format_str, shell=True)
     except OSError:
-      print("Unknown OSError")
+      print("Unknown OSError.")
       raise
     except subprocess.CalledProcessError as e:
       print(e.output)

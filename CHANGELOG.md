@@ -6,4 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- A `GridTools::Cache` object is added to cache computationally intensive information about Triangulation. This information is saved to used when associating atoms with cells.
+- `GridTools::Cache` object to cache computationally intensive information
+about Triangulation.
+Information in `GridTools::Cache` is used while associating atoms with cells,
+more specifically in finding active cells around atoms.
+
+### Changed
+- Code formatting tool from astyle to `clang-format`.
