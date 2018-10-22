@@ -10,4 +10,5 @@ Line Search: Cubic Interpolation satisfying Strong Wolfe Conditions
   5     -9.999998e-01  3.811635e-03   1.269640e-03   7         6         1         0
   6     -1.000000e+00  3.074304e-05   9.339712e-05   8         7         1         0
   7     -1.000000e+00  1.945741e-08   7.472746e-07   9         8         1         0
+Optimization Terminated with Status: Converged
 The solution to lj minimization problem is: 0.310332 1.11494 1.71494
