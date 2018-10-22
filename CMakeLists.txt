@@ -211,3 +211,4 @@ install (FILES
 
 MESSAGE(STATUS "Writing config into detailed.log...")
 INCLUDE(${CMAKE_SOURCE_DIR}/cmake/write_config.cmake)
+INCLUDE(${CMAKE_SOURCE_DIR}/cmake/install_git_hooks.cmake)

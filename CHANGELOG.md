@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 about Triangulation.
 Information in `GridTools::Cache` is used while associating atoms with cells,
 more specifically in finding active cells around atoms.
+- Automatic installation of git-hooks into `./git/hooks` folder using `cmake`.
 
 ### Changed
 - Code formatting tool from astyle to `clang-format`.

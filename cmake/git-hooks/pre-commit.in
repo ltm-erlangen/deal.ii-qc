@@ -1,0 +1,24 @@
+#!/bin/bash
+
+#
+# This pre-commit hook checks formatting before each commit.
+#
+
+cd "@CMAKE_SOURCE_DIR@"
+
+#
+# Check the output of code formatting program on a dry run mode.
+# If it writes out names of files that are not formatted correctly,
+# capture and display this output, and abort commit.
+#
+OUTPUT="$(python utilities/indent.py --dry-run=true)"
+
+if [ ! -z "${OUTPUT}" ]; then
+  echo ""
+  echo "Aborting 'git commit' due to formatting issues:"
+  echo ""
+  echo "${OUTPUT}"
+  echo ""
+  echo "use 'python utilities/indent' to fix these issues and try again."
+  exit 1
+fi
