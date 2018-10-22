@@ -63,7 +63,7 @@ public:
   {}
 
   Real
-  value(const ROL::Vector<Real> &x, Real &tol)
+  value(const ROL::Vector<Real> &x, Real &)
   {
     Assert(x.dimension() == 3, ExcInternalError());
 
@@ -85,7 +85,7 @@ public:
   }
 
   void
-  gradient(ROL::Vector<Real> &g, const ROL::Vector<Real> &x, Real &tol)
+  gradient(ROL::Vector<Real> &g, const ROL::Vector<Real> &x, Real &)
   {
     Teuchos::RCP<const VectorType> xp = this->get_rcp_to_VectorType(x);
     Teuchos::RCP<VectorType>       gp = this->get_rcp_to_VectorType(g);
