@@ -19,21 +19,21 @@ test(const double &r, const double &cutoff_radius)
                             Potential::InteractionTypes::Born,
                             born_params);
 
-  std::pair<double, double> energy_gradient_0 =
+  const std::pair<double, double> energy_gradient_0 =
     born.energy_and_gradient(0, 1, r * r);
 
   std::cout << "Energy: " << energy_gradient_0.first << " "
             << "Gradient scalar value: " << energy_gradient_0.second
             << std::endl;
 
-  std::pair<double, double> energy_gradient_1 =
+  const std::pair<double, double> energy_gradient_1 =
     born.energy_and_gradient(1, 0, r * r);
 
   std::cout << "Energy: " << energy_gradient_1.first << " "
             << "Gradient scalar value: " << energy_gradient_1.second
             << std::endl;
 
-  std::pair<double, double> energy_gradient_2 =
+  const std::pair<double, double> energy_gradient_2 =
     born.energy_and_gradient<false>(0, 1, r * r);
 
   std::cout << "Energy: " << energy_gradient_2.first << " "
