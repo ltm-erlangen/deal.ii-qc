@@ -85,31 +85,6 @@ namespace Potential
     std::map<std::pair<types::atom_type, types::atom_type>,
              std::array<double, 5>>
       born_parameters;
-
-    /**
-     * Variable to store value during computations.
-     */
-    mutable double r;
-
-    /**
-     * Variable to store value during computations.
-     */
-    mutable double rexp;
-
-    /**
-     * Variable to store value during computations.
-     */
-    mutable double r2inv;
-
-    /**
-     * Variable to store value during computations.
-     */
-    mutable double r6inv;
-
-    /**
-     * Variable to store value during computations.
-     */
-    mutable double r8inv;
   };
 
   /*----------------------- Inline functions
@@ -134,7 +109,7 @@ namespace Potential
     const auto &param = born_parameters.find(interacting_atom_types);
 
     Assert(param != born_parameters.end(),
-           dealii::ExcMessage("LJ parameter not set for "
+           dealii::ExcMessage("Born-Mayer-Huggins parameter not set for "
                               "the given interacting atom types"));
 
     // get Born-Mayer-Huggings parameters
@@ -144,13 +119,13 @@ namespace Potential
     const double &C      = param->second[3];
     const double &D      = param->second[4];
 
-    r = std::sqrt(squared_distance);
+    const double r = std::sqrt(squared_distance);
 
-    r2inv = 1.0 / squared_distance;
-    r6inv = dealii::Utilities::fixed_power<3>(r2inv);
-    r8inv = r6inv * r2inv;
+    const double r2inv = 1.0 / squared_distance;
+    const double r6inv = dealii::Utilities::fixed_power<3>(r2inv);
+    const double r8inv = r6inv * r2inv;
 
-    rexp = std::exp((sigma - r) * rhoinv);
+    const double rexp = std::exp((sigma - r) * rhoinv);
 
     const double energy = A * rexp - C * r6inv + D * r8inv;
 

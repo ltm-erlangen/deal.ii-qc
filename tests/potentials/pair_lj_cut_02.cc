@@ -20,7 +20,8 @@ test(const double &r,
 
   Potential::PairLJCutManager lj(cutoff_radius);
   lj.declare_interactions(0, 1, Potential::InteractionTypes::LJ, lj_params);
-  std::pair<double, double> energy_gradient_0 =
+
+  const std::pair<double, double> energy_gradient_0 =
     lj.energy_and_gradient(0, 1, r * r);
 
   AssertThrow(Testing::almost_equal(energy_gradient_0.first,
@@ -32,7 +33,7 @@ test(const double &r,
                                     200),
               ExcInternalError());
 
-  std::pair<double, double> energy_gradient_1 =
+  const std::pair<double, double> energy_gradient_1 =
     lj.energy_and_gradient(1, 0, r * r);
 
   AssertThrow(Testing::almost_equal(energy_gradient_1.first,
