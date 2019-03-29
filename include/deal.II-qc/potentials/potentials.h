@@ -39,7 +39,13 @@ namespace Potential
      * using Wolf summation method.
      * (see PairLJCutCoulWolfManager)
      */
-    LJ_Coul_Wolf = 2
+    LJ_Coul_Wolf = 2,
+
+    /**
+     * Born-Mayer-Huggins or Tosi/Fumi pair potential.
+     * (see PairBornCutManager)
+     */
+    Born = 3
   };
 
 

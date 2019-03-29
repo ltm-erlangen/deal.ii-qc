@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- `PotentialBornCutManager` to compute truncated Born-Mayer-Huggins or
+Tosi-Fumi pair potential.
 - `GridTools::Cache` object to cache computationally intensive information
 about Triangulation.
 Information in `GridTools::Cache` is used while associating atoms with cells,
