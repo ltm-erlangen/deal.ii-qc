@@ -69,3 +69,81 @@ main()
 
   return 0;
 }
+
+/*
+#!/usr/bin/env python
+""" Python script to generate LAMMPS blessed output.
+"""
+
+F_ATOM_DATA = open("atom_data", "w")
+F_ATOM_DATA.write(
+"""LAMMPS Description
+
+     2  atoms
+
+     2  atom types
+
+  0.0 8000.0 xlo xhi
+  0.0 8000.0 ylo yhi
+  0.0 8000.0 zlo zhi
+
+Masses
+
+      1		1.327
+      2     2.000
+
+Atoms # full
+
+1 1 1 +1 1.2 2.09 0.8
+2 2 2 -1 1.2 2.99 0.8
+""")
+F_ATOM_DATA.close()
+
+from lammps import lammps
+
+lmp=lammps()
+lmp.command("units metal")
+lmp.command("dimension 3")
+lmp.command("boundary s s s")
+lmp.command("atom_style full")
+lmp.command("read_data atom_data")
+
+lmp.command("thermo_style custom step epair evdwl ecoul elong ebond fmax")
+lmp.command("thermo_modify format 3 %20.16g")
+lmp.command("thermo_modify format 7 %20.16g")
+
+sigma = 1.55*2.0**(-1./6.)
+
+# first call
+lmp.command("pair_style lj/cut 0.95")
+lmp.command("pair_coeff * * 0.877 {}".format(sigma))
+lmp.command("run 0")
+lmp.command("variable energy equal epair")
+lmp.command("variable force equal fmax")
+lmp.command("variable energy_1 equal ${energy}")
+lmp.command("variable force_1 equal ${force}")
+
+# second call
+lmp.command("set atom 1 x 1.2  y 2.09 z 0.8")
+lmp.command("set atom 1 x 2.7  y 2.09 z 0.8")
+lmp.command("pair_style lj/cut 0.95")
+lmp.command("pair_coeff * * 0.877 {}".format(sigma))
+lmp.command("run 0")
+lmp.command("variable energy_2 equal ${energy}")
+lmp.command("variable force_2 equal ${force}")
+
+# third call
+lmp.command("set atom 1 x 1.20  y 2.09 z 0.8")
+lmp.command("set atom 2 x 2.75  y 2.09 z 0.8")
+lmp.command("pair_style lj/cut 1.75")
+lmp.command("pair_coeff * * 0.877 {}".format(sigma))
+lmp.command("run 0")
+lmp.command("variable energy_3 equal ${energy}")
+lmp.command("variable force_3 equal ${force}")
+
+
+lmp.command("""print       "Energy: ${energy_1} Force: ${force_1}" """)
+lmp.command("""print       "Energy: ${energy_2} Force: ${force_2}" """)
+lmp.command("""print       "Energy: ${energy_3} Force: ${force_3}" """)
+
+*/
