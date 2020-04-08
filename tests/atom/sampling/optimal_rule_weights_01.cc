@@ -17,6 +17,10 @@ using namespace dealiiqc;
 
 
 
+// WeightsByOptimalSummationRules is still not developed or
+// implemented satisfactorily.
+// It needs some additional inputs from Prof. Kochmann or other workers.
+
 // Test WeightsByOptimalSummationRules::update_cluster_weights().
 // Consider a simple hyper_cube with 8 atoms for computation (single process).
 // All the atoms should be picked up as vertex-type sampling points and receive
