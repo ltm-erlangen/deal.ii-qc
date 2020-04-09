@@ -67,8 +67,7 @@ Problem<dim, PotentialType>::partial_run(const ConfigureQC &config)
 
   dealii::Utilities::MPI::sum(mass, QC<dim, PotentialType>::mpi_communicator);
 
-  QC<dim, PotentialType>::pcout << cluster_radius << "\t" << mass << "\t"
-                                << std::endl;
+  QC<dim, PotentialType>::pcout << cluster_radius << "\t" << mass << std::endl;
 }
 
 
