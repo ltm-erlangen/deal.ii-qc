@@ -11,7 +11,7 @@ cd "@CMAKE_SOURCE_DIR@"
 # If it writes out names of files that are not formatted correctly,
 # capture and display this output, and abort commit.
 #
-OUTPUT="$(python utilities/indent.py --dry-run=true)"
+OUTPUT=$(python utilities/indent.py --dry-run)
 
 if [ ! -z "${OUTPUT}" ]; then
   echo ""
