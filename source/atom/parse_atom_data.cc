@@ -306,23 +306,12 @@ ParseAtomData<spacedim, atomicity>::parse_atoms(
                       "equal to its atomicity."));
 #endif
 
-  //---At this point atoms in molecules are not sorted according to their
-  //   stamps.
+  //---Now sort atoms within molecules according to their global_atom_index.
 
-  //---For now it is not possible to ensure correct order of stamps for
-  //   repeated atom types.
-  //   Example: A2B molecule could have two possible stamp orderings.
-  //
-  //   case 1:  0 1 2         ----------> stamp order
-  //            0 0 1         ----------> type order
-  //
-  //   case 2:  1 0 2         ----------> stamp order
-  //            0 0 1         ----------> type order
-
-  // Making a lambda for atom type comparision
+  // Making a lambda for atom stamp comparision
   auto comparator_atom_type = [](const decltype(temporary_atom) &a,
                                  const decltype(temporary_atom) &b) {
-    return a.type < b.type;
+    return a.global_index < b.global_index;
   };
 
   for (auto &molecule : molecules)
