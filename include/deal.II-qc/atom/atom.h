@@ -26,12 +26,12 @@ template <int spacedim>
 struct Atom
 {
   /**
-   * Global atom index of this atom.
+   * Global atom index of the atom.
    */
   types::global_atom_index global_index;
 
   /**
-   * Atom species type.
+   * Atom type of the atom.
    */
   types::atom_type type;
 
