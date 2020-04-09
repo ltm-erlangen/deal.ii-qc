@@ -1,4 +1,6 @@
-The number of energy atoms in the system: 2
+The number of energy molecules in the system: 2
 Neighbor lists: 
-Atom I: 1 Atom J: 0
-The energy computed using PairLJCutManager of 2 atom system is: 154.324 eV
+Molecule I: 0 Molecule J: 0
+Molecule I: 1 Molecule J: 1
+Molecule I: 1 Molecule J: 0
+The energy computed using PairLJCutManager of 2 molecule system is: 154.324 eV

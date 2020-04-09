@@ -26,6 +26,12 @@ MoleculeHandler<dim, atomicity, spacedim>::get_neighbor_lists(
 
   types::CellMoleculeNeighborLists<dim, atomicity, spacedim> neighbor_lists;
 
+  // Container to keep track of molecules (using their global_index)
+  // that are accounted for intra-molecular interactions.
+  // We need this container in order to avoid duplicate entries
+  // in neighbor_lists.
+  std::unordered_set<types::global_molecule_index> intra_molecules;
+
   // cell_neighbor_lists contains all the pairs of cell
   // whose molecules interact with each other.
   std::list<std::pair<types::CellIteratorType<dim, spacedim>,
@@ -104,44 +110,57 @@ MoleculeHandler<dim, atomicity, spacedim>::get_neighbor_lists(
 
           // Check if the molecule_I is cluster molecule,
           // only cluster molecules get to be in neighbor lists.
-          if (molecule_I.cluster_weight != 0)
+          if (molecule_I.cluster_weight == 0)
+            continue;
 
-            for (types::CellMoleculeConstIteratorType<dim, atomicity, spacedim>
-                   cell_molecule_J = range_of_cell_J.first;
-                 cell_molecule_J != range_of_cell_J.second;
-                 cell_molecule_J++)
-              {
-                const Molecule<spacedim, atomicity> &molecule_J =
-                  cell_molecule_J->second;
+          // If the molecule is not already added to neighbor_lists to
+          // account for self interaction,
+          // then add add it.
+          if (intra_molecules.find(molecule_I.global_index) ==
+              intra_molecules.end())
+            {
+              intra_molecules.insert(molecule_I.global_index);
+              neighbor_lists.insert(std::make_pair(
+                std::make_pair(cell_I, cell_I),
+                std::make_pair(cell_molecule_I, cell_molecule_I)));
+            }
 
-                // Check whether molecule_J is cluster molecule
-                const bool molecule_J_is_cluster_molecule =
-                  (molecule_J.cluster_weight != 0);
+          for (types::CellMoleculeConstIteratorType<dim, atomicity, spacedim>
+                 cell_molecule_J = range_of_cell_J.first;
+               cell_molecule_J != range_of_cell_J.second;
+               cell_molecule_J++)
+            {
+              const Molecule<spacedim, atomicity> &molecule_J =
+                cell_molecule_J->second;
 
-                // If molecule_J is also a cluster molecule,
-                // then molecule_J could be only added to molecule_I's neighbor
-                // list when molecule_I's index is greater than that of
-                // molecule_J. This ensures that there is no double counting of
-                // energy contribution thorugh both the cluster molecules:
-                // molecule_I and molecule_J.
-                // OR
-                // If molecule_J is not cluster molecule,
-                // then molecule_J could be added to (cluster) molecule_I's
-                // neighbor list.
-                if ((molecule_J_is_cluster_molecule &&
-                     (molecule_I.global_index > molecule_J.global_index)) ||
-                    !molecule_J_is_cluster_molecule)
+              // Check whether molecule_J is cluster molecule
+              const bool molecule_J_is_cluster_molecule =
+                (molecule_J.cluster_weight != 0);
 
-                  // Check distances between all atoms of one molecule to
-                  // all atoms of the other molecule. If any two atoms of
-                  // different molecules interact, then the molecules are in
-                  // neighbor lists.
-                  if (least_distance_squared(molecule_I, molecule_J) <
-                      squared_cutoff_radius)
-                    neighbor_lists.insert(std::make_pair(
-                      cell_pair_IJ,
-                      std::make_pair(cell_molecule_I, cell_molecule_J)));
-              }
+              // If molecule_J is also a cluster molecule,
+              // then molecule_J could be only added to molecule_I's neighbor
+              // list when molecule_I's index is greater than that of
+              // molecule_J. This ensures that there is no double counting of
+              // energy contribution thorugh both the cluster molecules:
+              // molecule_I and molecule_J.
+              // OR
+              // If molecule_J is not cluster molecule,
+              // then molecule_J could be added to (cluster) molecule_I's
+              // neighbor list.
+              if ((molecule_J_is_cluster_molecule &&
+                   (molecule_I.global_index > molecule_J.global_index)) ||
+                  !molecule_J_is_cluster_molecule)
+
+                // Check distances between all atoms of one molecule to
+                // all atoms of the other molecule. If any two atoms of
+                // different molecules interact, then the molecules are in
+                // neighbor lists.
+                if (least_distance_squared(molecule_I, molecule_J) <
+                    squared_cutoff_radius)
+                  neighbor_lists.insert(std::make_pair(
+                    cell_pair_IJ,
+                    std::make_pair(cell_molecule_I, cell_molecule_J)));
+            }
         }
     }
 
@@ -168,24 +187,30 @@ MoleculeHandler<dim, atomicity, spacedim>::get_neighbor_lists(
 
         // Check if the molecule_I is cluster molecule,
         // only cluster molecules get to be in neighbor lists.
-        if (molecule_I.cluster_weight != 0)
-          for (const auto &cell_molecule_J : cell_energy_molecules)
-            {
-              const Molecule<spacedim, atomicity> &molecule_J =
-                cell_molecule_J.second;
+        if (molecule_I.cluster_weight == 0)
+          continue;
 
-              // Check whether molecule_J is cluster molecule
-              const bool molecule_J_is_cluster_molecule =
-                (molecule_J.cluster_weight != 0);
+        // Add one for accounting for interactions within molecule
+        total_number_of_interactions++;
 
-              if ((molecule_J_is_cluster_molecule &&
-                   (molecule_I.global_index > molecule_J.global_index)) ||
-                  !molecule_J_is_cluster_molecule)
-                if (least_distance_squared(molecule_I, molecule_J) <
-                    squared_cutoff_radius)
-                  total_number_of_interactions++;
-            }
+        for (const auto &cell_molecule_J : cell_energy_molecules)
+          {
+            const Molecule<spacedim, atomicity> &molecule_J =
+              cell_molecule_J.second;
+
+            // Check whether molecule_J is cluster molecule
+            const bool molecule_J_is_cluster_molecule =
+              (molecule_J.cluster_weight != 0);
+
+            if ((molecule_J_is_cluster_molecule &&
+                 (molecule_I.global_index > molecule_J.global_index)) ||
+                !molecule_J_is_cluster_molecule)
+              if (least_distance_squared(molecule_I, molecule_J) <
+                  squared_cutoff_radius)
+                total_number_of_interactions++;
+          }
       }
+
   Assert(total_number_of_interactions == neighbor_lists.size(),
          ExcMessage("Some of the interactions are not accounted "
                     "while updating neighbor lists"));

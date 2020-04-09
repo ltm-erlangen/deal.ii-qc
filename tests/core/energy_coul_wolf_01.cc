@@ -14,8 +14,8 @@ using namespace dealiiqc;
 
 
 
-template <int dim, typename PotentialType>
-class Problem : public QC<dim, PotentialType>
+template <int dim, typename PotentialType, int atomicity>
+class Problem : public QC<dim, PotentialType, atomicity>
 {
 public:
   Problem(const ConfigureQC &);
@@ -25,39 +25,47 @@ public:
 
 
 
-template <int dim, typename PotentialType>
-Problem<dim, PotentialType>::Problem(const ConfigureQC &config)
-  : QC<dim, PotentialType>(config)
+template <int dim, typename PotentialType, int atomicity>
+Problem<dim, PotentialType, atomicity>::Problem(const ConfigureQC &config)
+  : QC<dim, PotentialType, atomicity>(config)
 {}
 
 
 
-template <int dim, typename PotentialType>
+template <int dim, typename PotentialType, int atomicity>
 void
-Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
+Problem<dim, PotentialType, atomicity>::partial_run(
+  const double &blessed_energy)
 {
-  QC<dim, PotentialType>::setup_cell_energy_molecules();
-  QC<dim, PotentialType>::setup_system();
-  QC<dim, PotentialType>::setup_fe_values_objects();
-  QC<dim, PotentialType>::update_neighbor_lists();
+  QC<dim, PotentialType, atomicity>::setup_cell_energy_molecules();
+  QC<dim, PotentialType, atomicity>::setup_system();
+  QC<dim, PotentialType, atomicity>::setup_fe_values_objects();
+  QC<dim, PotentialType, atomicity>::update_neighbor_lists();
 
-  QC<dim, PotentialType>::pcout
-    << "The number of energy atoms in the system: "
-    << QC<dim, PotentialType>::cell_molecule_data.cell_energy_molecules.size()
+  QC<dim, PotentialType, atomicity>::pcout
+    << "The number of energy molecules in the system: "
+    << QC<dim, PotentialType, atomicity>::cell_molecule_data
+         .cell_energy_molecules.size()
     << std::endl;
 
-  QC<dim, PotentialType>::pcout << "Neighbor lists: " << std::endl;
+  QC<dim, PotentialType, atomicity>::pcout << "Neighbor lists: " << std::endl;
 
-  for (auto entry : QC<dim, PotentialType>::neighbor_lists)
-    std::cout << "Atom I: " << entry.second.first->second.atoms[0].global_index
-              << " "
-              << "Atom J: " << entry.second.second->second.atoms[0].global_index
-              << std::endl;
+  for (auto entry : QC<dim, PotentialType, atomicity>::neighbor_lists)
+    {
+      auto first_molecule  = entry.second.first->second;
+      auto second_molecule = entry.second.second->second;
+      for (auto i = 0; i < atomicity; ++i)
+        std::cout << "Molecule I: " << first_molecule.atoms[i].global_index
+                  << " "
+                  << "Molecule J: " << second_molecule.atoms[i].global_index
+                  << std::endl;
+    }
 
-  const double energy = QC<dim, PotentialType>::template compute<false>(
-    QC<dim, PotentialType>::locally_relevant_gradient);
+  const double energy =
+    QC<dim, PotentialType, atomicity>::template compute<false>(
+      QC<dim, PotentialType, atomicity>::locally_relevant_gradient);
 
-  QC<dim, PotentialType>::pcout
+  QC<dim, PotentialType, atomicity>::pcout
     << "The energy computed using PairCoulWolfManager of 4 charged atom system is: "
     << energy << " eV" << std::endl;
 
@@ -118,9 +126,9 @@ main(int argc, char *argv[])
           << "Atoms #" << std::endl
           << std::endl
           << "1 1 1  1.0 0.00 0. 0." << std::endl
-          << "2 2 2 -1.0 0.25 0. 0." << std::endl
-          << "3 3 1  1.0 0.50 0. 0." << std::endl
-          << "4 4 2 -1.0 0.75 0. 0." << std::endl;
+          << "2 1 2 -1.0 0.25 0. 0." << std::endl
+          << "3 2 1  1.0 0.50 0. 0." << std::endl
+          << "4 2 2 -1.0 0.75 0. 0." << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());
@@ -129,7 +137,7 @@ main(int argc, char *argv[])
 
       // Define Problem
       // FIXME: PotentialType
-      Problem<dim, Potential::PairCoulWolfManager> problem(config);
+      Problem<dim, Potential::PairCoulWolfManager, 2> problem(config);
       problem.partial_run(-111.1212060485294 /*blessed energy from Maxima*/);
     }
   catch (std::exception &exc)

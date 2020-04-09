@@ -17,6 +17,7 @@
 #include <deal.II-qc/core/compute_tools.h>
 #include <deal.II-qc/core/qc.h>
 
+#include <unordered_map>
 
 DEAL_II_QC_NAMESPACE_OPEN
 
@@ -841,49 +842,40 @@ QC<dim, PotentialType, atomicity>::compute_local(vector_t &gradient) const
       Assert(spacedim == dim, ExcNotImplemented());
 
       // 1 --- Inter-molecular contribution from molecule I and J interactions.
-      const std::pair<double, Table<2, Tensor<1, dim>>> molecular_IJ =
-        ComputeTools::
-          energy_and_gradient<PotentialType, dim, atomicity, ComputeGradient>(
-            *potential_ptr, molecule_I, molecule_J);
+      std::pair<double, Table<2, Tensor<1, dim>>> molecular_IJ;
 
       // 2 --- Intra-molecular contribution from molecule I.
-      const std::pair<double, std::array<Tensor<1, dim>, atomicity>> intra_I =
-        ComputeTools::
-          energy_and_gradient<PotentialType, dim, atomicity, ComputeGradient>(
-            *potential_ptr, molecule_I);
+      std::pair<double, std::array<Tensor<1, dim>, atomicity>> intra_I;
 
-      // 3 --- Intra-molecular contribution from molecule J.
-      const std::pair<double, std::array<Tensor<1, dim>, atomicity>> intra_J =
-        molecule_J.cluster_weight > 0 ?
-          ComputeTools::
+      // 3 --- Contribution due to external potential field on molecule I.
+      std::pair<double, std::array<Tensor<1, dim>, atomicity>> external_I;
+
+      // If molecule_I and molecule_J are same, then compute
+      // both the intra-molecular and external potential interactions.
+      // If a molecule has a positive cluster weight, then it will have
+      // an entry in neighbor lists with with I and J being same exactly once.
+      if (molecule_I.global_index == molecule_J.global_index)
+        {
+          intra_I = ComputeTools::
             energy_and_gradient<PotentialType, dim, atomicity, ComputeGradient>(
-              *potential_ptr, molecule_J) :
-          std::make_pair(0., std::array<Tensor<1, dim>, atomicity>());
-      ;
+              *potential_ptr, molecule_I);
 
-      // 4 --- Contribution due to external potential field on molecule I.
-      std::pair<double, std::array<Tensor<1, dim>, atomicity>> external_I =
-        ComputeTools::energy_and_gradient<dim, atomicity, ComputeGradient>(
-          external_potential_fields,
-          cell_I->material_id(),
-          molecule_I,
-          *cell_molecule_data.charges);
-
-      // 5 --- Contribution due to external potential field on molecule J.
-      std::pair<double, std::array<Tensor<1, dim>, atomicity>> external_J =
-        molecule_J.cluster_weight > 0 ?
-          ComputeTools::energy_and_gradient<dim, atomicity, ComputeGradient>(
-            external_potential_fields,
-            cell_J->material_id(),
-            molecule_J,
-            *cell_molecule_data.charges) :
-          std::make_pair(0., std::array<Tensor<1, dim>, atomicity>());
+          external_I =
+            ComputeTools::energy_and_gradient<dim, atomicity, ComputeGradient>(
+              external_potential_fields,
+              cell_I->material_id(),
+              molecule_I,
+              *cell_molecule_data.charges);
+        }
+      else
+        molecular_IJ = ComputeTools::
+          energy_and_gradient<PotentialType, dim, atomicity, ComputeGradient>(
+            *potential_ptr, molecule_I, molecule_J);
 
       // Now we scale the energy according to cluster weights of the molecules.
       energy_per_process +=
         molecular_IJ.first * scale_energy +
-        (intra_I.first + external_I.first) * molecule_I.cluster_weight +
-        (intra_J.first + external_J.first) * molecule_J.cluster_weight;
+        molecule_I.cluster_weight * (external_I.first + intra_I.first);
 
       if (ComputeGradient)
         {
@@ -930,24 +922,22 @@ QC<dim, PotentialType, atomicity>::compute_local(vector_t &gradient) const
             {
               molecular_IJ_i = 0.;
               molecular_IJ_j = 0.;
-              for (int i = 0; i < atomicity; ++i)
-                {
-                  // Yields summation over the rows of the Table.
-                  molecular_IJ_i += molecular_IJ.second(atom_stamp, i);
+              if (!molecular_IJ.second.empty())
+                for (int i = 0; i < atomicity; ++i)
+                  {
+                    // Yields summation over the rows of the Table.
+                    molecular_IJ_i += molecular_IJ.second(atom_stamp, i);
 
-                  // Yields summation over the columns of the Table.
-                  molecular_IJ_j += molecular_IJ.second(i, atom_stamp);
-                }
+                    // Yields summation over the columns of the Table.
+                    molecular_IJ_j += molecular_IJ.second(i, atom_stamp);
+                  }
 
               gradient_I[atom_stamp] =
                 molecular_IJ_i * scale_energy +
                 (intra_I.second[atom_stamp] + external_I.second[atom_stamp]) *
                   molecule_I.cluster_weight;
 
-              gradient_J[atom_stamp] =
-                -molecular_IJ_j * scale_energy +
-                (intra_J.second[atom_stamp] + external_J.second[atom_stamp]) *
-                  molecule_J.cluster_weight;
+              gradient_J[atom_stamp] = -molecular_IJ_j * scale_energy;
             }
 
           // Finally, we evaluated local contribution to the gradient of
@@ -964,9 +954,9 @@ QC<dim, PotentialType, atomicity>::compute_local(vector_t &gradient) const
               const unsigned int component_index =
                 fe.system_to_component_index(k).first;
 
-              const unsigned int atom_stamp =
-                std::div(component_index, dim).quot;
-              const unsigned int nonzero_comp = component_index % dim;
+              const auto         quot_rem     = std::div(component_index, dim);
+              const unsigned int atom_stamp   = quot_rem.quot;
+              const unsigned int nonzero_comp = quot_rem.rem;
 
               local_gradient_I[k] +=
                 gradient_I[atom_stamp][nonzero_comp] *
