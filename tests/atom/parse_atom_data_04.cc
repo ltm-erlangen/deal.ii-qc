@@ -12,18 +12,12 @@
 using namespace dealii;
 using namespace dealiiqc;
 
-// A class to test ParseAtomData::parse_atoms function's atom type sorting
+// Test ParseAtomData::parse_bonds function
 
 template <int dim, int atomicity>
 void
-test_parse(const MPI_Comm &mpi_communicator, std::istream &is)
+test_parse(const MPI_Comm &, std::istream &is)
 {
-  unsigned int n_mpi_processes(
-    dealii::Utilities::MPI::n_mpi_processes(mpi_communicator)),
-    this_mpi_process(
-      dealii::Utilities::MPI::this_mpi_process(mpi_communicator));
-
-  // In this test, molecules are mono-atomic.
   std::vector<Molecule<dim, atomicity>> molecules;
   std::vector<dealiiqc::types::charge>  charges;
   std::vector<double>                   masses;
@@ -33,35 +27,13 @@ test_parse(const MPI_Comm &mpi_communicator, std::istream &is)
 
   parsing_object.parse(is, molecules, charges, masses, bonds);
 
-  for (unsigned int p = 0; p < n_mpi_processes; ++p)
-    {
-      MPI_Barrier(mpi_communicator);
-
-      if (p == this_mpi_process)
-        {
-          // Check that the number of atoms, charges and masses parsed and added
-          // are same each time we run this test.
-          std::cout << "This is process: " << p << std::endl
-
-                    << "The number of different charged atom types parsed: "
-                    << charges.size() << std::endl
-
-                    << "The number of different atom types parsed: "
-                    << masses.size() << std::endl;
-
-          for (const auto &molecule : molecules)
-            for (const auto &atom : molecule.atoms)
-              std::cout << "Molecule location: "
-                        << molecule_initial_location(molecule)
-                        << " Atom: " << atom.global_index << " Atom position "
-                        << atom.position << std::endl;
-
-          // For this particular test case all different atom types are charged.
-          AssertThrow(charges.size() == masses.size(), ExcInternalError());
-        }
-
-      MPI_Barrier(mpi_communicator);
-    }
+  for (auto i = 0; i < atomicity; ++i)
+    for (auto j = 0; j < atomicity; ++j)
+      if (bonds[i][j] != dealiiqc::numbers::invalid_bond_value)
+        std::cout << "Atom " << i << " "
+                  << "Atom " << j << " "
+                  << "Bond " << +bonds[i][j] << std::endl;
+  // + sign promotes the unsigned char to give the actual number representation
 }
 
 int
@@ -73,10 +45,10 @@ main(int argc, char **argv)
         argc, argv, dealii::numbers::invalid_unsigned_int);
 
       const std::string atom_data_file =
-        SOURCE_DIR "/../data/01_disordered_atom.data";
+        SOURCE_DIR "/../data/NaCl_coreshell_1x1x1_atom.data";
       std::fstream fin(atom_data_file, std::fstream::in);
 
-      test_parse<3, 5>(MPI_COMM_WORLD, fin);
+      test_parse<3, 16>(MPI_COMM_WORLD, fin);
     }
   catch (std::exception &exc)
     {

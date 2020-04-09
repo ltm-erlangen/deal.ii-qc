@@ -22,14 +22,14 @@ ParseAtomData<spacedim, atomicity>::parse(
   std::istream &                              is,
   std::vector<Molecule<spacedim, atomicity>> &molecules,
   std::vector<types::charge> &                charges,
-  std::vector<double> &                       masses)
+  std::vector<double> &                       masses,
+  types::bond_type (&bonds)[atomicity][atomicity])
 {
   AssertThrow(is, ExcIO());
 
   std::string line;
 
   // Some temporary variables
-  unsigned int nbonds     = 0;
   unsigned int nangles    = 0;
   unsigned int ndihedrals = 0;
   unsigned int nimpropers = 0;
@@ -57,7 +57,7 @@ ParseAtomData<spacedim, atomicity>::parse(
       if (line.size() == 0)
         continue;
 
-      // Read and store n_atoms, nbonds, ...
+      // Read and store n_atoms, n_bonds, ...
       if (line.find("atoms") != std::string::npos)
         {
           unsigned long long int n_atoms_tmp;
@@ -78,9 +78,11 @@ ParseAtomData<spacedim, atomicity>::parse(
         }
       else if (line.find("bonds") != std::string::npos)
         {
-          if (sscanf(line.c_str(), "%u", &nbonds) != 1)
+          if (sscanf(line.c_str(), "%u", &n_bonds) != 1)
             Assert(false, ExcInvalidValue(line_no, "bonds"));
-          Assert(nbonds == 0, ExcIrrelevant(line_no));
+          // Stringent checks performed above for n_atoms are not performed.
+          Assert(n_bonds >= 0,
+                 ExcMessage("Invalid number of bonds in the atom data!"))
         }
       else if (line.find("angles") != std::string::npos)
         {
@@ -104,6 +106,23 @@ ParseAtomData<spacedim, atomicity>::parse(
         {
           if (sscanf(line.c_str(), "%zu", &n_atom_types) != 1)
             Assert(false, ExcInvalidValue(line_no, "number of atom types"));
+        }
+      else if (line.find("bond types") != std::string::npos)
+        {
+          if (sscanf(line.c_str(), "%zu", &n_bond_types) != 1)
+            Assert(false, ExcInvalidValue(line_no, "number of bond types"));
+        }
+      else if (line.find("angle types") != std::string::npos)
+        {
+          size_t n_angle_types;
+          if (sscanf(line.c_str(), "%zu", &n_angle_types) != 1)
+            Assert(false, ExcInvalidValue(line_no, "number of bond types"));
+        }
+      else if (line.find("dihedral types") != std::string::npos)
+        {
+          size_t n_dihedral_types;
+          if (sscanf(line.c_str(), "%zu", &n_dihedral_types) != 1)
+            Assert(false, ExcInvalidValue(line_no, "number of bond types"));
         }
       else if (line.find("xlo xhi") != std::string::npos)
         {
@@ -134,11 +153,12 @@ ParseAtomData<spacedim, atomicity>::parse(
     }
 
   Assert(xhi >= xlo || yhi >= ylo || zhi >= zlo,
-         ExcMessage("Invalid simulation box size"))
-    // TODO: Extra Asserts with dim and simulation box dimensions
-    // TODO: copy simulation box dimensions, check for inconsistent mesh?
+         ExcMessage("Invalid simulation box size"));
 
-    molecules.resize(n_atoms / atomicity);
+  // TODO: Extra Asserts with dim and simulation box dimensions
+  // TODO: copy simulation box dimensions, check for inconsistent mesh?
+
+  molecules.resize(n_atoms / atomicity);
   charges.resize(n_atom_types);
   masses.resize(n_atom_types, 0.);
 
@@ -158,6 +178,11 @@ ParseAtomData<spacedim, atomicity>::parse(
         {
           // parse_atoms is allowed to be executed multiple times.
           parse_atoms(is, molecules, charges);
+        }
+      else if (dealii::Utilities::match_at_string_start(line, "Bonds"))
+        {
+          // parse_bonds is allowed to be executed multiple times.
+          parse_bonds(is, bonds);
         }
       ++line_no;
     }
@@ -376,6 +401,90 @@ ParseAtomData<spacedim, atomicity>::parse_masses(std::istream &       is,
 }
 
 
+
+template <int spacedim, int atomicity>
+void
+ParseAtomData<spacedim, atomicity>::parse_bonds(
+  std::istream &is,
+  types::bond_type (&bonds)[atomicity][atomicity])
+{
+  // Store bond information in this container.
+  std::vector<std::tuple<types::global_atom_index,
+                         types::global_atom_index,
+                         types::bond_type>>
+    bonds_vec(n_bonds);
+
+  std::string line;
+
+  // Atom counting starts from 1 in the atom data and
+  // we count from 0.
+  unsigned long long int i_atom_index, j_atom_index;
+
+  // Store bond attributes in the following variables.
+  unsigned long long int ij_bond;
+  types::bond_type       ij_bond_type;
+
+  types::global_bond_index i = 0;
+  while (std::getline(is, line) && i < n_bonds)
+    {
+      ++line_no;
+      line = strip(line);
+      if (line.size() == 0)
+        continue;
+
+      if (sscanf(line.c_str(),
+                 "%llu  " UC_SCANF_STR " %llu %llu",
+                 &ij_bond,
+                 &ij_bond_type,
+                 &i_atom_index,
+                 &j_atom_index) != 4)
+        AssertThrow(false,
+                    ExcInvalidValue(
+                      line_no, "bond attributes under Bonds keyword section"));
+
+      bonds_vec[i++] =
+        std::make_tuple(i_atom_index, j_atom_index, ij_bond_type);
+    }
+
+  line_no++;
+  Assert(i == bonds_vec.size(),
+         ExcMessage("The number of different atom types "
+                    "do not match the number of entries "
+                    "under Masses keyword section"));
+
+  // Initialize all the bonds to invalid entries.
+  for (auto i = 0; i < atomicity; ++i)
+    for (auto j = 0; j < atomicity; ++j)
+      bonds[i][j] = numbers::invalid_bond_value;
+
+  // In most of the applications, we typically use a single Molecule type.
+  // This results in bond information duplication.
+  // In the following, an assumption is made that the entire information
+  // regarding bonds can be condensed by looking at the bonds inside
+  // a single Molecule.
+  // Note: The notion of Molecule here is different from that of LAMMPS
+  // For example, in LAMMPS, a core and a shell particle of Sodium in NaCl
+  // constitutes a molecule as is given molecule ID accordinly.
+  // However, here the complete unit cell of NaCl would be considered as
+  // a Molecule.
+
+  // We just need to parse only the first atomicity/2 number of bonds.
+  for (auto i = 0; i < atomicity / 2; ++i)
+    {
+      types::global_atom_index i_atom, j_atom;
+      types::bond_type         ij_bond;
+
+      std::tie(i_atom, j_atom, ij_bond) = bonds_vec[i];
+      auto &ij_entry                    = bonds[i_atom][j_atom];
+      auto &ji_entry                    = bonds[j_atom][i_atom];
+
+      ij_entry = (ij_entry == numbers::invalid_bond_value) ? ij_bond : ij_entry;
+
+      ji_entry = (ji_entry == numbers::invalid_bond_value) ? ij_bond : ji_entry;
+    }
+
+  return;
+}
 
 template <int spacedim, int atomicity>
 std::string

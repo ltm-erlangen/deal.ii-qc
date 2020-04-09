@@ -3,6 +3,8 @@
 
 #include <deal.II-qc/atom/parse_atom_data.h>
 
+#include <deal.II-qc/utilities.h>
+
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -10,7 +12,7 @@
 using namespace dealii;
 using namespace dealiiqc;
 
-// A class to test ParseAtomData::parse_atoms function's atom type sorting
+// Test ParseAtomData::parse_atoms function's atom type sorting
 
 template <int dim, int atomicity>
 void
@@ -25,10 +27,11 @@ test_parse(const MPI_Comm &mpi_communicator, std::istream &is)
   std::vector<Molecule<dim, atomicity>> molecules;
   std::vector<dealiiqc::types::charge>  charges;
   std::vector<double>                   masses;
+  dealiiqc::types::bond_type            bonds[atomicity][atomicity];
 
   ParseAtomData<dim, atomicity> parsing_object;
 
-  parsing_object.parse(is, molecules, charges, masses);
+  parsing_object.parse(is, molecules, charges, masses, bonds);
 
   for (unsigned int p = 0; p < n_mpi_processes; ++p)
     {

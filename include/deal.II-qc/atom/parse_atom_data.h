@@ -59,12 +59,14 @@ public:
    * @param[out] molecules container to store atom and molecule attributes
    * @param[out] charges container to charges of different atom species
    * @param[out] masses container to store masses of different atom species
+   * @param[out] bonds container to store bonds
    */
   void
   parse(std::istream &                              is,
         std::vector<Molecule<spacedim, atomicity>> &molecules,
         std::vector<types::charge> &                charges,
-        std::vector<double> &                       masses);
+        std::vector<double> &                       masses,
+        types::bond_type (&bonds)[atomicity][atomicity]);
 
 private:
   /**
@@ -90,12 +92,22 @@ private:
 
   /**
    * Parse @p is input stream for mass entries under Masses keyword section
-   * to obtain @p masses, a vector of masses of different atom types and
-   * write the result into @p masses. The input stream should be at the line
-   * after the keyword Masses
+   * to obtain a vector of masses of different atom types and
+   * write the result into @p masses.
+   * The input stream should be at the line after the keyword Masses.
    */
   void
   parse_masses(std::istream &is, std::vector<double> &masses);
+
+  /**
+   * Parse @p is input stream for bond entries under Bond keyword section
+   * to obtain @p bonds, a multidimensional array storing bond information
+   * between different atoms.
+   * The input stream should be at the line after the keyword Bonds.
+   */
+  void
+  parse_bonds(std::istream &is,
+              types::bond_type (&bonds)[atomicity][atomicity]);
 
   /**
    * Number of atoms read from the input stream.
@@ -103,9 +115,19 @@ private:
   types::global_atom_index n_atoms;
 
   /**
+   * Number of bonds read from the input stream.
+   */
+  types::global_atom_index n_bonds;
+
+  /**
    * Number of atom types read from the input stream.
    */
   size_t n_atom_types;
+
+  /**
+   * Number of bond types read from the input stream.
+   */
+  size_t n_bond_types;
 
   /**
    * Line number of the input stream as it is read.

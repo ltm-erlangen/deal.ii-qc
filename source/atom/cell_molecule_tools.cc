@@ -118,10 +118,11 @@ namespace CellMoleculeTools
     cell_molecule_data.charges = NULL;
     std::vector<types::charge> charges;
     auto &                     masses = cell_molecule_data.masses;
+    auto &                     bonds  = cell_molecule_data.bonds;
     auto &cell_molecules              = cell_molecule_data.cell_molecules;
 
     if (!is.eof())
-      atom_parser.parse(is, vector_molecules, charges, masses);
+      atom_parser.parse(is, vector_molecules, charges, masses, bonds);
     else
       AssertThrow(false, ExcMessage("The provided input stream is empty."));
 
