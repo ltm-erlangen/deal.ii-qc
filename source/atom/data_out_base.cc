@@ -24,18 +24,13 @@ namespace dealiiqc
     // domain
     namespace base64
     {
-      typedef enum
-      {
-        step_A,
-        step_B,
-        step_C
-      } base64_encodestep;
+      using base64_encodestep = enum { step_A, step_B, step_C };
 
-      typedef struct
+      using base64_encodestate = struct
       {
         base64_encodestep step;
         char              result;
-      } base64_encodestate;
+      };
 
       void
       base64_init_encodestate(base64_encodestate *state_in)

@@ -67,11 +67,11 @@ ParseAtomData<spacedim, atomicity>::parse(
             n_atoms = static_cast<types::global_atom_index>(n_atoms_tmp);
           else
             AssertThrow(false,
-                        ExcMessage("The number of atoms specified "
-                                   "is more than what "
-                                   "`typedefs::global_atom_index` can work"
-                                   " with try building deal.II with 64bit"
-                                   " index space"));
+                        ExcMessage("The number of atoms specified is "
+                                   "greater than the maximum finite value of "
+                                   "`types::global_atom_type`!"
+                                   "Try building deal.II with 64bit"
+                                   "index space."));
           Assert(n_atoms % atomicity == 0,
                  ExcMessage("The total number of atoms provided in the "
                             "atom data do not form integer molecules. "));

@@ -115,7 +115,7 @@ public:
 int
 main(int argc, char **argv)
 {
-  typedef double RealT;
+  using real_t = double;
 
   try
     {
@@ -124,7 +124,7 @@ main(int argc, char **argv)
       // Initial guess of the Point b.
       dealii::Point<3> b(2.2, 0.8, 1.4);
 
-      Objective_LJ<RealT> lj(1., 1., dealii::Point<3>(1., 1., 1.));
+      Objective_LJ<real_t> lj(1., 1., dealii::Point<3>(1., 1., 1.));
 
       // Teuchos::GlobalMPISession mpiSession(&argc, &argv);
       Teuchos::RCP<std::ostream> outStream = Teuchos::rcp(&std::cout, false);
@@ -142,7 +142,7 @@ main(int argc, char **argv)
       // Set parameters.
       parlist.sublist("Secant").set("Use as Preconditioner", false);
       // Define algorithm.
-      ROL::Algorithm<RealT> algo("Line Search", parlist);
+      ROL::Algorithm<real_t> algo("Line Search", parlist);
 
       // Run Algorithm
       algo.run(x, lj, true, *outStream);
