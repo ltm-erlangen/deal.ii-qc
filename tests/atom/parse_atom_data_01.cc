@@ -1,6 +1,8 @@
 
 #include <deal.II-qc/atom/parse_atom_data.h>
 
+#include <deal.II-qc/utilities.h>
+
 #include "../tests.h"
 
 using namespace dealii;
@@ -15,10 +17,11 @@ test_parse(const MPI_Comm &mpi_communicator, std::istream &is)
   std::vector<Molecule<dim, 1>>        atoms;
   std::vector<dealiiqc::types::charge> charges;
   std::vector<double>                  masses;
+  dealiiqc::types::bond_type           bonds[1][1];
 
   ParseAtomData<dim> parsing_object;
 
-  parsing_object.parse(is, atoms, charges, masses);
+  parsing_object.parse(is, atoms, charges, masses, bonds);
 
   Testing::SequentialFileStream write_sequentially(mpi_communicator);
 

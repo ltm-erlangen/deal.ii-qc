@@ -27,7 +27,8 @@
 // Preprocessor definitions for instantiations.
 #define _DIM_ BOOST_PP_TUPLE_TO_LIST(3, (1, 2, 3))
 #define _SPACE_DIM_ BOOST_PP_TUPLE_TO_LIST(3, (1, 2, 3))
-#define _ATOMICITY_ BOOST_PP_TUPLE_TO_LIST(10, (1, 2, 3, 4, 5, 6, 7, 8, 9, 10))
+#define _ATOMICITY_ \
+  BOOST_PP_TUPLE_TO_LIST(10, (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 16))
 
 
 
@@ -117,6 +118,11 @@ namespace types
    */
   typedef global_atom_index global_molecule_index;
 
+  /**
+   * The type used for global indices of bonds.
+   */
+  typedef global_atom_index global_bond_index;
+
   // TODO: Use of correct charge units; Use charge_t for book keeping.
   /**
    * The type used for storing charge of the atom.
@@ -129,6 +135,12 @@ namespace types
    * from 0.
    */
   typedef unsigned char atom_type;
+
+  /**
+   * The type used for identifying bond types.
+   * The enumeration starts from 0 (unlike LAMMPS).
+   */
+  typedef unsigned char bond_type;
 
   /**
    * A typedef for Triangulation's active_cell_iterator for ease of use.
@@ -164,6 +176,12 @@ namespace numbers
    */
   static const double invalid_cluster_weight =
     std::numeric_limits<double>::signaling_NaN();
+
+  /**
+   * A number representing invalid bond type.
+   */
+  static const unsigned char invalid_bond_value =
+    static_cast<unsigned char>(-1);
 
 } // namespace numbers
 

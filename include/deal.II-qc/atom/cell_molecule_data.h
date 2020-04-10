@@ -96,6 +96,11 @@ struct CellMoleculeData
   std::vector<double> masses;
 
   /**
+   * A multidimensional array to store bonds between different atom stamps.
+   */
+  types::bond_type bonds[atomicity][atomicity];
+
+  /**
    * The cell based data member that contains cells and molecules
    * association in the Lagrangian (undeformed) configuration of the system.
    * More specifically, #cell_molecules contains association between locally
