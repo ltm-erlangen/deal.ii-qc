@@ -111,36 +111,36 @@ namespace types
    * build deal.II with support for 64-bit integers.
    * The data type always indicates an unsigned integer type.
    */
-  typedef dealii::types::global_dof_index global_atom_index;
+  using global_atom_index = dealii::types::global_dof_index;
 
   /**
    * The type used for global indices of molecules.
    */
-  typedef global_atom_index global_molecule_index;
+  using global_molecule_index = global_atom_index;
 
   /**
    * The type used for global indices of bonds.
    */
-  typedef global_atom_index global_bond_index;
+  using global_bond_index = global_atom_index;
 
   // TODO: Use of correct charge units; Use charge_t for book keeping.
   /**
    * The type used for storing charge of the atom.
    * Computations with charge of atoms don't need high precision.
    */
-  typedef float charge;
+  using charge = float;
 
   /**
    * The type used for identifying atom types. The enumeration starts
    * from 0.
    */
-  typedef unsigned char atom_type;
+  using atom_type = unsigned char;
 
   /**
    * The type used for identifying bond types.
    * The enumeration starts from 0 (unlike LAMMPS).
    */
-  typedef unsigned char bond_type;
+  using bond_type = unsigned char;
 
   /**
    * A typedef for Triangulation's active_cell_iterator for ease of use.

@@ -145,7 +145,7 @@ class QC
   static const unsigned int spacedim = dim;
 
 public:
-  typedef LA::MPI::BlockVector vector_t;
+  using vector_t = LA::MPI::BlockVector;
 
   /**
    * Constructor.
