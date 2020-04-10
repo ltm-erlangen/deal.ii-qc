@@ -18,6 +18,10 @@ using namespace dealiiqc;
 
 
 
+// WeightsByOptimalSummationRules is still not developed or
+// implemented satisfactorily.
+// It needs some additional inputs from Prof. Kochmann or other workers.
+
 // Test WeightsByOptimalSummationRules::update_cluster_weights().
 //
 //
