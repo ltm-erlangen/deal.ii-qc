@@ -168,12 +168,12 @@ main(int argc, char *argv[])
           << std::endl
           << "2 atoms" << std::endl
           << std::endl
-          << "2  atom types" << std::endl
+          << "1  atom types" << std::endl
           << std::endl
           << "Atoms #" << std::endl
           << std::endl
-          << "1 1 1  1.0 0. 0. 0." << std::endl
-          << "2 2 2 -1.0 1. 1. 1." << std::endl;
+          << "1 1 1 -1.0 0. 0. 0." << std::endl
+          << "2 2 1 -1.0 1. 1. 1." << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());
@@ -182,7 +182,7 @@ main(int argc, char *argv[])
 
       // Define Problem
       Problem<dim, Potential::PairCoulWolfManager> problem(config);
-      problem.partial_run(-1.763371185484229 /*blessed energy from Maxima*/);
+      problem.partial_run(1.763371185484229 /*blessed energy from Maxima*/);
     }
   catch (std::exception &exc)
     {
@@ -237,6 +237,6 @@ main(int argc, char *argv[])
 
  print("Energy : ");
 
- at(shifted_energy(p,q,r,rc,alpha), [p=1.,q=-1.,r=sqrt(3),rc=2.25,alpha=0.25]);
+ at(shifted_energy(p,q,r,rc,alpha), [p=-1.,q=-1.,r=sqrt(3),rc=2.25,alpha=0.25]);
  >
 */

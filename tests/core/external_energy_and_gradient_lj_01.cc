@@ -52,22 +52,23 @@ Problem<dim, PotentialType>::partial_run(const double &blessed_energy,
   const auto &cell_energy_molecules =
     QC<dim, PotentialType>::cell_molecule_data.cell_energy_molecules;
 
-  QC<dim, PotentialType>::pcout << "The number of energy atoms in the system: "
-                                << cell_energy_molecules.size() << std::endl;
+  QC<dim, PotentialType>::pcout
+    << "The number of energy molecules in the system: "
+    << cell_energy_molecules.size() << std::endl;
 
   QC<dim, PotentialType>::pcout << "Neighbor lists: " << std::endl;
 
   for (auto entry : QC<dim, PotentialType>::neighbor_lists)
-    std::cout << "Atom I: " << entry.second.first->second.atoms[0].global_index
+    std::cout << "Molecule I: " << entry.second.first->second.global_index
               << " "
-              << "Atom J: " << entry.second.second->second.atoms[0].global_index
+              << "Molecule J: " << entry.second.second->second.global_index
               << std::endl;
 
   const double energy = QC<dim, PotentialType>::template compute<true>(
     QC<dim, PotentialType>::locally_relevant_gradient);
 
   QC<dim, PotentialType>::pcout
-    << "The energy computed using PairLJCutManager of 2 atom system is: "
+    << "The energy computed using PairLJCutManager of 2 molecule system is: "
     << energy << " eV" << std::endl;
 
 

@@ -1,24 +1,31 @@
+Atom I: 0 Atom J: 0
 Atom I: 1 Atom J: 0
+Atom I: 1 Atom J: 1
 Atom I: 2 Atom J: 0
 Atom I: 2 Atom J: 1
+Atom I: 2 Atom J: 2
 Atom I: 4 Atom J: 0
 Atom I: 4 Atom J: 1
 Atom I: 4 Atom J: 2
+Atom I: 4 Atom J: 4
 Atom I: 4 Atom J: 3
 Atom I: 3 Atom J: 0
 Atom I: 3 Atom J: 1
 Atom I: 3 Atom J: 2
+Atom I: 3 Atom J: 3
 Atom I: 5 Atom J: 0
 Atom I: 5 Atom J: 1
 Atom I: 5 Atom J: 2
 Atom I: 5 Atom J: 4
 Atom I: 5 Atom J: 3
+Atom I: 5 Atom J: 5
 Atom I: 6 Atom J: 0
 Atom I: 6 Atom J: 1
 Atom I: 6 Atom J: 2
 Atom I: 6 Atom J: 4
 Atom I: 6 Atom J: 3
 Atom I: 6 Atom J: 5
+Atom I: 6 Atom J: 6
 Atom I: 7 Atom J: 0
 Atom I: 7 Atom J: 1
 Atom I: 7 Atom J: 2
@@ -26,4 +33,5 @@ Atom I: 7 Atom J: 4
 Atom I: 7 Atom J: 3
 Atom I: 7 Atom J: 5
 Atom I: 7 Atom J: 6
+Atom I: 7 Atom J: 7
 
