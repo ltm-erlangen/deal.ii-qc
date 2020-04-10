@@ -853,7 +853,7 @@ QC<dim, PotentialType, atomicity>::compute_local(vector_t &gradient) const
       // If molecule_I and molecule_J are same, then compute
       // both the intra-molecular and external potential interactions.
       // If a molecule has a positive cluster weight, then it will have
-      // an entry in neighbor lists with with I and J being same exactly once.
+      // an entry in neighbor lists with I and J being same exactly once.
       if (molecule_I.global_index == molecule_J.global_index)
         {
           intra_I = ComputeTools::

@@ -114,8 +114,7 @@ MoleculeHandler<dim, atomicity, spacedim>::get_neighbor_lists(
             continue;
 
           // If the molecule is not already added to neighbor_lists to
-          // account for self interaction,
-          // then add add it.
+          // account for self interaction, then add it.
           if (intra_molecules.find(molecule_I.global_index) ==
               intra_molecules.end())
             {
