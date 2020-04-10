@@ -83,7 +83,7 @@ molecule_initial_location(const Molecule<spacedim, atomicity> &molecule)
 
 #ifdef DEBUG
   for (int a = 0, b = 1; b < atomicity; a++, b++)
-    Assert(molecule.atoms[a].type <= molecule.atoms[b].type,
+    Assert(molecule.atoms[a].global_index <= molecule.atoms[b].global_index,
            ExcMessage("Atoms in the molecule are not sorted according "
                       "to their atom types."));
 #endif
