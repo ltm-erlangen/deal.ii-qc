@@ -145,7 +145,7 @@ namespace Potential
     const double qqrd2e   = 14.399645;
     const double distance = std::sqrt(squared_distance);
 
-    Assert(i_atom_type < charges->size() && i_atom_type < charges->size(),
+    Assert(i_atom_type < charges->size() && j_atom_type < charges->size(),
            dealii::ExcMessage("The function is called with a value of "
                               "atom type larger than the size of "
                               "PairCoulWolf::charges."
