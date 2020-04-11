@@ -115,11 +115,13 @@ namespace CellMoleculeTools
     // Prepare cell molecule data in this container.
     CellMoleculeData<dim, atomicity, spacedim> cell_molecule_data;
 
+
+    auto &masses         = cell_molecule_data.masses;
+    auto &bonds          = cell_molecule_data.bonds;
+    auto &cell_molecules = cell_molecule_data.cell_molecules;
+
     cell_molecule_data.charges = NULL;
     std::vector<types::charge> charges;
-    auto &                     masses = cell_molecule_data.masses;
-    auto &                     bonds  = cell_molecule_data.bonds;
-    auto &cell_molecules              = cell_molecule_data.cell_molecules;
 
     if (!is.eof())
       atom_parser.parse(is, vector_molecules, charges, masses, bonds);
