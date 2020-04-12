@@ -8,7 +8,7 @@ using namespace dealiiqc;
 
 
 
-// Compute the energy of the system of NaCl nano-crystal of 512 charged atoms
+// Compute the energy of the system of NaCl nano-crystal of 8 charged atoms
 // interacting exclusively through Coulomb interactions using QC approach with
 // full atomistic resolution.
 // The blessed output is created through the LAMMPS input script included at
@@ -16,8 +16,8 @@ using namespace dealiiqc;
 
 
 
-template <int dim, typename PotentialType>
-class Problem : public QC<dim, PotentialType>
+template <int dim, typename PotentialType, int atomicity>
+class Problem : public QC<dim, PotentialType, atomicity>
 {
 public:
   Problem(const ConfigureQC &);
@@ -27,45 +27,49 @@ public:
 
 
 
-template <int dim, typename PotentialType>
-Problem<dim, PotentialType>::Problem(const ConfigureQC &config)
-  : QC<dim, PotentialType>(config)
+template <int dim, typename PotentialType, int atomicity>
+Problem<dim, PotentialType, atomicity>::Problem(const ConfigureQC &config)
+  : QC<dim, PotentialType, atomicity>(config)
 {}
 
 
 
-template <int dim, typename PotentialType>
+template <int dim, typename PotentialType, int atomicity>
 void
-Problem<dim, PotentialType>::partial_run(const double &blessed_energy)
+Problem<dim, PotentialType, atomicity>::partial_run(
+  const double &blessed_energy)
 {
-  QC<dim, PotentialType>::setup_cell_energy_molecules();
-  QC<dim, PotentialType>::setup_system();
-  QC<dim, PotentialType>::setup_fe_values_objects();
-  QC<dim, PotentialType>::update_neighbor_lists();
+  this->setup_cell_energy_molecules();
+  this->setup_system();
+  this->setup_fe_values_objects();
+  this->update_neighbor_lists();
 
-  MPI_Barrier(QC<dim, PotentialType>::mpi_communicator);
+  MPI_Barrier(this->mpi_communicator);
 
-  Testing::SequentialFileStream write_sequentially(
-    QC<dim, PotentialType>::mpi_communicator);
+  Testing::SequentialFileStream write_sequentially(this->mpi_communicator);
 
-  deallog
-    << "picked up: "
-    << QC<dim, PotentialType>::cell_molecule_data.cell_energy_molecules.size()
-    << " number of energy atoms." << std::endl;
+  deallog << "picked up: "
+          << this->cell_molecule_data.cell_energy_molecules.size()
+          << " energy molecule(s)." << std::endl;
 
-  const double energy = QC<dim, PotentialType>::template compute<false>(
-    QC<dim, PotentialType>::locally_relevant_gradient);
+  const double energy =
+    this->template compute<false>(this->locally_relevant_gradient);
 
-  QC<dim, PotentialType>::pcout
-    << "The energy computed using PairCoulWolfManager "
-    << "of charged atomistic system is: " << energy << " eV." << std::endl;
+  this->pcout << "The energy computed using PairCoulWolfManager "
+              << "of charged atomistic system is: " << energy << " eV."
+              << std::endl;
 
   const unsigned int total_n_neighbors =
-    dealii::Utilities::MPI::sum(QC<dim, PotentialType>::neighbor_lists.size(),
-                                QC<dim, PotentialType>::mpi_communicator);
+    dealii::Utilities::MPI::sum(this->neighbor_lists.size(),
+                                this->mpi_communicator);
 
-  QC<dim, PotentialType>::pcout << "Total number of neighbors "
-                                << total_n_neighbors << std::endl;
+  this->pcout << "Total number of neighbors " << total_n_neighbors << std::endl;
+
+  for (auto entry : this->neighbor_lists)
+    std::cout << "Molecule I: " << entry.second.first->second.global_index
+              << '\t'
+              << "Molecule J: " << entry.second.second->second.global_index
+              << std::endl;
 
   // Accurate to 1e-9 // TODO Check unit and conversions
   AssertThrow(std::fabs(energy - blessed_energy) <
@@ -91,25 +95,25 @@ main(int argc, char *argv[])
           << "subsection Geometry" << std::endl
           << "  set Type = Box" << std::endl
           << "  subsection Box" << std::endl
-          << "    set X center = 4." << std::endl
-          << "    set Y center = 4." << std::endl
-          << "    set Z center = 4." << std::endl
-          << "    set X extent = 8." << std::endl
-          << "    set Y extent = 8." << std::endl
-          << "    set Z extent = 8." << std::endl
+          << "    set X center = 1." << std::endl
+          << "    set Y center = 1." << std::endl
+          << "    set Z center = 1." << std::endl
+          << "    set X extent = 2." << std::endl
+          << "    set Y extent = 2." << std::endl
+          << "    set Z extent = 2." << std::endl
           << "    set X repetitions = 1" << std::endl
           << "    set Y repetitions = 1" << std::endl
           << "    set Z repetitions = 1" << std::endl
           << "  end" << std::endl
-          << "  set Number of initial global refinements = 2" << std::endl
+          << "  set Number of initial global refinements = 0" << std::endl
           << "end" << std::endl
 
           << "subsection Configure atoms" << std::endl
           << "  set Maximum cutoff radius = 100" << std::endl
           << "  set Pair potential type = Coulomb Wolf" << std::endl
           << "  set Pair global coefficients = 0.4, 1.5" << std::endl
-          << "  set Atom data file = " << SOURCE_DIR "/../data/8_NaCl_atom.data"
-          << std::endl
+          << "  set Atom data file = "
+          << SOURCE_DIR "/../data/NaCl_1x1x1_molecule.data" << std::endl
           << "end" << std::endl
 
           << "subsection Configure QC" << std::endl
@@ -124,8 +128,8 @@ main(int argc, char *argv[])
       ConfigureQC config(prm_stream);
 
       // Define Problem
-      Problem<dim, Potential::PairCoulWolfManager> problem(config);
-      problem.partial_run(-4748.564251019102 /*blessed energy from LAMMPS*/);
+      Problem<dim, Potential::PairCoulWolfManager, 8> problem(config);
+      problem.partial_run(-47.000245504972554 /*blessed energy from LAMMPS*/);
     }
   catch (std::exception &exc)
     {
@@ -159,35 +163,32 @@ main(int argc, char *argv[])
 
 
 /*
- LAMMPS input script
+LAMMPS input script
 
- Vishal Boddu 08.05.2017
+Vishal Boddu 08.05.2017
 
- // actual code below
- <
-  # LAMMPS input script for energy_coul_wolf_03 test
+// actual code below
+#! /usr/bin/python3
+"""
+LAMMPS input script for energy_coul_wolf_03 test
+"""
+from lammps import lammps
+lmp = lammps()
+lmp.command("units           metal")
+lmp.command("dimension       3")
+lmp.command("boundary        s s s")
+lmp.command("atom_style      charge")
+lmp.command("read_data NaCl_1x1x1_atom.data")
+lmp.command("thermo_style custom step epair evdwl ecoul elong fnorm fmax")
+lmp.command("thermo_modify format 3 %20.16g")
+lmp.command("thermo_modify format 7 %20.16g")
+lmp.command("pair_style coul/wolf 0.4 1.5")
+lmp.command("pair_coeff * *")
+lmp.command("run 0")
+lmp.command("variable energy equal epair")
+lmp.command("variable energy_1 equal ${energy}")
+lmp.command("print       \"Energy: ${energy_1}\"")
 
-  units           metal
-  dimension       3
-  boundary        s s s
-
-  atom_style      full
-
-  read_data 8_NaCl_atom.data
-
-  thermo_style custom step epair evdwl ecoul elong fnorm fmax
-  thermo_modify format 3 %20.16g
-  thermo_modify format 7 %20.16g
-
-  velocity all create 0.0000000000001 146981634 dist gaussian mom yes rot no
-
-  # first call
-  pair_style coul/wolf 0.4 1.5
-  pair_coeff * *
-  run 0
-  variable energy equal epair
-  variable energy_1 equal ${energy}
-
-  print       "Energy: ${energy_1}"
- >
+# self_energy = 0.3577238031364605*14.399645*8 = 41.20876618571934
+# lammps_result = -88.2090116906919
 */

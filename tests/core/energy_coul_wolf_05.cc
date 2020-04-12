@@ -9,7 +9,7 @@ using namespace dealiiqc;
 
 
 
-// Compute the energy of the system of NaCl nano-crystal of 512 charged atoms
+// Compute the energy of the NaCl unit cell consisint of 64 charged atoms
 // interacting exclusively through Coulomb interactions using QC approach with
 // full atomistic resolution.
 // The blessed output is created through the LAMMPS input script included at
@@ -40,35 +40,31 @@ void
 Problem<dim, PotentialType, atomicity>::partial_run(
   const double &blessed_energy)
 {
-  QC<dim, PotentialType, atomicity>::setup_cell_energy_molecules();
-  QC<dim, PotentialType, atomicity>::setup_system();
-  QC<dim, PotentialType, atomicity>::setup_fe_values_objects();
-  QC<dim, PotentialType, atomicity>::update_neighbor_lists();
+  this->setup_cell_energy_molecules();
+  this->setup_system();
+  this->setup_fe_values_objects();
+  this->update_neighbor_lists();
 
-  MPI_Barrier(QC<dim, PotentialType, atomicity>::mpi_communicator);
+  MPI_Barrier(this->mpi_communicator);
 
-  Testing::SequentialFileStream write_sequentially(
-    QC<dim, PotentialType, atomicity>::mpi_communicator);
+  Testing::SequentialFileStream write_sequentially(this->mpi_communicator);
 
   deallog << "picked up: "
-          << QC<dim, PotentialType, atomicity>::cell_molecule_data
-               .cell_energy_molecules.size()
-          << " number of energy molecules." << std::endl;
+          << this->cell_molecule_data.cell_energy_molecules.size()
+          << " energy molecule(s)." << std::endl;
 
   const double energy =
-    QC<dim, PotentialType, atomicity>::template compute<false>(
-      QC<dim, PotentialType, atomicity>::locally_relevant_gradient);
+    this->template compute<false>(this->locally_relevant_gradient);
 
-  QC<dim, PotentialType, atomicity>::pcout
-    << "The energy computed using PairCoulWolfManager "
-    << "of charged atomistic system is: " << energy << " eV." << std::endl;
+  this->pcout << "The energy computed using PairCoulWolfManager "
+              << "of charged atomistic system is: " << energy << " eV."
+              << std::endl;
 
-  const unsigned int total_n_neighbors = dealii::Utilities::MPI::sum(
-    QC<dim, PotentialType, atomicity>::neighbor_lists.size(),
-    QC<dim, PotentialType, atomicity>::mpi_communicator);
+  const unsigned int total_n_neighbors =
+    dealii::Utilities::MPI::sum(this->neighbor_lists.size(),
+                                this->mpi_communicator);
 
-  QC<dim, PotentialType, atomicity>::pcout << "Total number of neighbors "
-                                           << total_n_neighbors << std::endl;
+  this->pcout << "Total number of neighbors " << total_n_neighbors << std::endl;
 
   // Accurate to 1e-9 // TODO Check unit and conversions
   AssertThrow(std::fabs(energy - blessed_energy) <
@@ -108,7 +104,6 @@ main(int argc, char *argv[])
           << "end" << std::endl
 
           << "subsection Configure atoms" << std::endl
-          << "  set Number of atom stamps = 8" << std::endl
           << "  set Maximum cutoff radius = 100" << std::endl
           << "  set Pair potential type = Coulomb Wolf" << std::endl
           << "  set Pair global coefficients = 0.4, 1.5" << std::endl
