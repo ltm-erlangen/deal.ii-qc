@@ -6,6 +6,8 @@
 #include <random>
 #include <sstream>
 
+#include "../tests.h"
+
 using namespace dealii;
 using namespace dealiiqc;
 
@@ -23,8 +25,8 @@ using namespace dealiiqc;
 
 
 
-template <int dim, typename PotentialType>
-class Problem : public QC<dim, PotentialType>
+template <int dim, typename PotentialType, int atomicity = 1>
+class Problem : public QC<dim, PotentialType, atomicity>
 {
 public:
   Problem(const ConfigureQC &);
@@ -32,19 +34,25 @@ public:
 
 
 
-template <int dim, typename PotentialType>
-Problem<dim, PotentialType>::Problem(const ConfigureQC &config)
-  : QC<dim, PotentialType>(config)
+template <int dim, typename PotentialType, int atomicity>
+Problem<dim, PotentialType, atomicity>::Problem(const ConfigureQC &config)
+  : QC<dim, PotentialType, atomicity>(config)
 {
-  QC<dim, PotentialType>::setup_cell_energy_molecules();
-  QC<dim, PotentialType>::setup_system();
-  QC<dim, PotentialType>::setup_fe_values_objects();
-  QC<dim, PotentialType>::update_neighbor_lists();
-  QC<dim, PotentialType>::update_positions();
-  const double energy = QC<dim, PotentialType>::template compute(
-    QC<dim, PotentialType>::locally_relevant_gradient);
+  this->setup_cell_energy_molecules();
+  this->setup_system();
+  this->setup_fe_values_objects();
+  this->update_neighbor_lists();
+  this->update_positions();
+  const double energy = this->template compute(this->locally_relevant_gradient);
 
-  QC<dim, PotentialType>::pcout << "Energy: " << energy << std::endl;
+  Testing::SequentialFileStream write_sequentially(this->mpi_communicator);
+
+  this->pcout << "Energy: " << energy << std::endl;
+
+  for (auto entry : this->neighbor_lists)
+    deallog << "Molecule I: " << entry.second.first->second.global_index << '\t'
+            << "Molecule J: " << entry.second.second->second.global_index
+            << std::endl;
 }
 
 
