@@ -1066,6 +1066,9 @@ QC<dim, PotentialType, atomicity>::minimize_energy(const double time)
                           BOOST_PP_TUPLE_ELEM(2, 1, X))        \
   SINGLE_QC_INSTANTIATION(BOOST_PP_TUPLE_ELEM(2, 0, X),        \
                           Potential::PairLJCutCoulWolfManager, \
+                          BOOST_PP_TUPLE_ELEM(2, 1, X))        \
+  SINGLE_QC_INSTANTIATION(BOOST_PP_TUPLE_ELEM(2, 0, X),        \
+                          Potential::PairBornCutManager,       \
                           BOOST_PP_TUPLE_ELEM(2, 1, X))
 
 BOOST_PP_LIST_FOR_EACH_PRODUCT(QC_INSTANTIATIONS, 2, (_DIM_, _ATOMICITY_))
