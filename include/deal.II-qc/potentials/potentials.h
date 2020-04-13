@@ -29,23 +29,29 @@ namespace Potential
     Born = 0,
 
     /**
+     * The COMPASS class2 pair potential.
+     * (see PairClass2Manager)
+     */
+    Class2 = 1,
+
+    /**
      * Coulomb pair potential computed using Wolf summation method.
      * (see PairCoulWolfManager class).
      */
-    Coul_Wolf = 1,
+    Coul_Wolf = 2,
 
     /**
      * Truncated Lenard-Jones contribution to the potential
      * (see, for example, PairLJCutManager class).
      */
-    LJ = 2,
+    LJ = 3,
 
     /**
      * Truncated Lennard-Jones along with Coulomb pair potential computed
      * using the Wolf summation method.
      * (see PairLJCutCoulWolfManager)
      */
-    LJ_Coul_Wolf = 3
+    LJ_Coul_Wolf = 4
   };
 
 

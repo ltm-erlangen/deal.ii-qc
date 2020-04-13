@@ -33,6 +33,12 @@ namespace Potential
 
 
 
+  bool
+  PairBaseManager::is_or_has_bond_style() const
+  {
+    return false;
+  }
+
 } // namespace Potential
 
 
