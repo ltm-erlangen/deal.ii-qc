@@ -52,7 +52,7 @@ namespace ComputeTools
             potential_field->second->gradient(atom.position, q);
       }
 
-    return std::make_pair(external_energy, external_gradient);
+    return {external_energy, external_gradient};
   }
 
 
@@ -90,7 +90,7 @@ namespace ComputeTools
           external_gradients[atom_stamp] = energy_and_gradient_tensor.second;
       }
 
-    return std::make_pair(external_energy, external_gradients);
+    return {external_energy, external_gradients};
   }
 
 
@@ -185,7 +185,7 @@ namespace ComputeTools
     }
 
     if (atomicity == 1)
-      return std::make_pair(energy, gradients);
+      return {energy, gradients};
 
     for (unsigned int k = 0; k < atomicity; ++k)
       for (unsigned int i = k + 1; i < atomicity; ++i)
@@ -203,7 +203,7 @@ namespace ComputeTools
             }
         }
 
-    return std::make_pair(energy, gradients);
+    return {energy, gradients};
   }
 
 
@@ -284,7 +284,7 @@ namespace ComputeTools
             gradients(i, j) = energy_and_gradient_tensor.second;
         }
 
-    return std::make_pair(energy, gradients);
+    return {energy, gradients};
   }
 
 

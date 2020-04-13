@@ -229,7 +229,7 @@ namespace Utilities
             vertex_number    = v;
           }
       }
-    return std::make_pair(vertex_number, squared_distance);
+    return {vertex_number, squared_distance};
   }
 
 
@@ -261,7 +261,7 @@ namespace Utilities
           }
       }
 
-    return std::make_pair(point_index, squared_distance);
+    return {point_index, squared_distance};
   }
 
 
