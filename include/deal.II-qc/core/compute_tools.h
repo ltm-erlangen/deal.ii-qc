@@ -188,20 +188,22 @@ namespace ComputeTools
       return std::make_pair(energy, gradients);
 
     for (unsigned int k = 0; k < atomicity; ++k)
-      for (unsigned int i = 0; i < atomicity; ++i)
-        if (i != k)
-          {
-            const std::pair<double, Tensor<1, spacedim>>
-              energy_and_gradient_tensor =
-                energy_and_gradient<PotentialType, spacedim, ComputeGradient>(
-                  potential, molecule.atoms[k], molecule.atoms[i]);
-            energy += energy_and_gradient_tensor.first;
+      for (unsigned int i = k + 1; i < atomicity; ++i)
+        {
+          const std::pair<double, Tensor<1, spacedim>>
+            energy_and_gradient_tensor =
+              energy_and_gradient<PotentialType, spacedim, ComputeGradient>(
+                potential, molecule.atoms[k], molecule.atoms[i]);
+          energy += energy_and_gradient_tensor.first;
 
-            if (ComputeGradient)
+          if (ComputeGradient)
+            {
               gradients[k] += energy_and_gradient_tensor.second;
-          }
+              gradients[i] -= energy_and_gradient_tensor.second;
+            }
+        }
 
-    return std::make_pair(0.5 * energy, gradients);
+    return std::make_pair(energy, gradients);
   }
 
 

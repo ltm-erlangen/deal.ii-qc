@@ -269,7 +269,8 @@ ConfigureQC::declare_parameters(ParameterHandler &prm)
                       "of atoms");
     prm.declare_entry("Pair potential type",
                       "LJ",
-                      Patterns::Selection("Coulomb Wolf|LJ|LJ Coulomb Wolf"),
+                      Patterns::Selection(
+                        "Coulomb Wolf|LJ|LJ Coulomb Wolf|Born"),
                       "Pairwise interactions type of the "
                       "pair potential energy function");
     prm.declare_entry("Pair global coefficients",
@@ -279,7 +280,8 @@ ConfigureQC::declare_parameters(ParameterHandler &prm)
                       "provided pair potential type."
                       "Coulomb Wolf: alpha and cutoff radius."
                       "LJ: cutoff radius"
-                      "LJ Coulomb Wolf: alpha, coulomb and lj cutoff radii");
+                      "LJ Coulomb Wolf: alpha, coulomb and lj cutoff radii"
+                      "Born: cutoff radius");
     prm.declare_entry("Pair potential with tail",
                       "false",
                       Patterns::Bool(),
@@ -298,9 +300,9 @@ ConfigureQC::declare_parameters(ParameterHandler &prm)
                      0,
                      std::numeric_limits<unsigned int>::max(),
                      ";"),
-      "Additional coefficients for a pair of atoms of "
-      "certain types. The wildcard asterisk can be used to "
-      "indicate more than one atom type, for instance "
+      "Additional coefficients for a pair of atoms of certain types."
+      "The wildcard asterisk can be used to indicate more than one atom type, "
+      "for instance: "
       "a) interacting pair 1*2, 1*4 indicate that atom types "
       "   1 and 2 interact with atom types 1, 2, 3 and 4;"
       "b) interacting pair *, * indicate that all atom types "
@@ -314,10 +316,16 @@ ConfigureQC::declare_parameters(ParameterHandler &prm)
       "For the pair potential type: Coulomb Wolf, the pair "
       "specific coefficients are not necessary."
       "---"
-      "For the pair potential type: LJ and LJ Coulomb Wolf,"
-      "the first two entries are the atom types and"
+      "For the pair potential type: LJ and LJ Coulomb Wolf, "
+      "the first two entries are the atom types and "
       "the remaining two are epsilon and rm LJ parameters,"
       "respectively."
+      "---"
+      "For the pair potential Born, "
+      "the first two entries are the atom types and "
+      "the remaining five are the born potential parameters, "
+      "namely, A, rho, sigma, C and D."
+      "---"
       "Note that the atom data counts the atom types from 1 "
       "but deal.II-qc from 0. Therefore atom type 2 in the "
       "atom data is atom type 1 in deal.II-qc.");
@@ -643,6 +651,47 @@ ConfigureQC::parse_parameters(ParameterHandler &prm)
               for (types::atom_type j = range_j.first; j <= range_j.second; ++j)
                 pair_potential->declare_interactions(
                   i, j, Potential::InteractionTypes::LJ_Coul_Wolf, coeffs);
+          }
+      }
+    else if (pair_potential_type == "Born")
+      {
+        AssertThrow(global_coeffs.size() == 1,
+                    ExcMessage("Invalid Pair global coefficients provided "
+                               "for the Pair potential type: Born."));
+        AssertThrow(global_coeffs[0] < maximum_cutoff_radius,
+                    ExcMessage("Maximum cutoff radius should be more than or "
+                               "equal to the provided cutoff radius."));
+        pair_potential =
+          std::make_shared<Potential::PairBornCutManager>(global_coeffs[0]);
+
+        for (const auto &specific_coeffs : list_of_coeffs_per_type)
+          {
+            // Pair specific coefficients = 0, 1, 2.5, 1.0
+            // atom type 0 and 1 interact with epsilon = 2.5 and r_m = 1.
+            AssertThrow(specific_coeffs.size() == 7,
+                        ExcMessage("Only two specific coefficients should be "
+                                   "provided the first element being "
+                                   "epsilon and second being r_m."));
+
+            const std::pair<types::atom_type, types::atom_type> range_i =
+              dealiiqc::Utilities::atom_type_range(specific_coeffs[0],
+                                                   n_atom_types);
+
+            const std::pair<types::atom_type, types::atom_type> range_j =
+              dealiiqc::Utilities::atom_type_range(specific_coeffs[1],
+                                                   n_atom_types);
+
+            const std::vector<double> coeffs = {
+              dealii::Utilities::string_to_double(specific_coeffs[2]),
+              dealii::Utilities::string_to_double(specific_coeffs[3]),
+              dealii::Utilities::string_to_double(specific_coeffs[4]),
+              dealii::Utilities::string_to_double(specific_coeffs[5]),
+              dealii::Utilities::string_to_double(specific_coeffs[6])};
+
+            for (types::atom_type i = range_i.first; i <= range_i.second; ++i)
+              for (types::atom_type j = range_j.first; j <= range_j.second; ++j)
+                pair_potential->declare_interactions(
+                  i, j, Potential::InteractionTypes::Born, coeffs);
           }
       }
     else

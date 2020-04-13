@@ -23,10 +23,10 @@ namespace Potential
   enum InteractionTypes
   {
     /**
-     * Truncated Lenard-Jones contribution to the potential
-     * (see, for example, PairLJCutManager class).
+     * Born-Mayer-Huggins or Tosi/Fumi pair potential.
+     * (see PairBornCutManager)
      */
-    LJ = 0,
+    Born = 0,
 
     /**
      * Coulomb pair potential computed using Wolf summation method.
@@ -35,17 +35,17 @@ namespace Potential
     Coul_Wolf = 1,
 
     /**
-     * Truncated Lennard-Jones along with Coulomb pair potential computed
-     * using Wolf summation method.
-     * (see PairLJCutCoulWolfManager)
+     * Truncated Lenard-Jones contribution to the potential
+     * (see, for example, PairLJCutManager class).
      */
-    LJ_Coul_Wolf = 2,
+    LJ = 2,
 
     /**
-     * Born-Mayer-Huggins or Tosi/Fumi pair potential.
-     * (see PairBornCutManager)
+     * Truncated Lennard-Jones along with Coulomb pair potential computed
+     * using the Wolf summation method.
+     * (see PairLJCutCoulWolfManager)
      */
-    Born = 3
+    LJ_Coul_Wolf = 3
   };
 
 
