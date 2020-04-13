@@ -46,6 +46,13 @@ namespace Potential
     set_charges(std::shared_ptr<std::vector<types::charge>> &charges_);
 
     /**
+     * Return whether the potential is a bond potential or
+     * has an augmented bond potential.
+     */
+    virtual bool
+    is_or_has_bond_style() const;
+
+    /**
      * Declare the type of interaction between the atom types @p i_atom_type
      * and @p j_atom_type to be @p interaction through @p parameters.
      */
