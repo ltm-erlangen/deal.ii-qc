@@ -31,11 +31,11 @@ namespace Utilities
     if (!found_asterisk)
       {
         minimum = dealii::Utilities::string_to_int(numeric_string_trimmed);
-        return std::make_pair(minimum, minimum);
+        return {minimum, minimum};
       }
     else if (found_asterisk && string_size == 1)
       // If the input string is single asterisk return the full range.
-      return std::make_pair(minimum, maximum);
+      return {minimum, maximum};
 
     const std::vector<std::string> s =
       dealii::Utilities::split_string_list(numeric_string_trimmed, '*');
@@ -57,7 +57,7 @@ namespace Utilities
     Assert(minimum < n_atom_types && maximum < n_atom_types,
            ExcMessage("Invalid atom type range specified: " + numeric_string));
 
-    return std::make_pair(minimum, maximum);
+    return {minimum, maximum};
   }
 
 } // namespace Utilities

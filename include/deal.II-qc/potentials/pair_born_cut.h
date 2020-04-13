@@ -134,7 +134,7 @@ namespace Potential
         -A * rhoinv * rexp + (6 * C * r8inv - 8 * D * r8inv * r2inv) * r :
         std::numeric_limits<double>::signaling_NaN();
 
-    return std::make_pair(energy, gradient);
+    return {energy, gradient};
   }
 
 #endif /* DOXYGEN */

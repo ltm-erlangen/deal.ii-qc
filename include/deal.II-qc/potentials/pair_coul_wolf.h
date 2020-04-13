@@ -170,7 +170,7 @@ namespace Potential
              (energy_shift + alpha * M_2_SQRTPI * compound_exp_value)) :
         std::numeric_limits<double>::signaling_NaN();
 
-    return std::make_pair(energy, gradient);
+    return {energy, gradient};
   }
 
 #endif /* DOXYGEN */

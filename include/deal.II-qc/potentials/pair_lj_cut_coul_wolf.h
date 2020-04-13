@@ -113,7 +113,7 @@ namespace Potential
       coul_wolf_potential.energy_and_gradient<ComputeGradient>(
         i_atom_type, j_atom_type, squared_distance);
 
-    return std::make_pair(lj.first + coul.first, lj.second + coul.second);
+    return {lj.first + coul.first, lj.second + coul.second};
   }
 
 #endif /* DOXYGEN */

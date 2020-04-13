@@ -34,9 +34,7 @@ namespace CellMoleculeTools
     if (cell_molecule_range_begin == cell_molecule_range_end)
       // Quickly return the following if cell is not
       // found in the CellMoleculeContainerType object
-      return std::make_pair(std::make_pair(cell_molecule_range_begin,
-                                           cell_molecule_range_end),
-                            0);
+      return {{cell_molecule_range_begin, cell_molecule_range_end}, 0};
 
     // Faster to get the number of molecules in the active cell by
     // computing the distance between first and second iterators
@@ -53,9 +51,8 @@ namespace CellMoleculeTools
                       "cell_molecules.count(cell) or"
                       "cell_energy_molecules.count(cell)."));
 
-    return std::make_pair(std::make_pair(cell_molecule_range_begin,
-                                         cell_molecule_range_end),
-                          n_molecules_in_cell);
+    return {{cell_molecule_range_begin, cell_molecule_range_end},
+            n_molecules_in_cell};
   }
 
 
