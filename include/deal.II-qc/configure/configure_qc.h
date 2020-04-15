@@ -18,6 +18,7 @@
 #include <deal.II-qc/configure/geometry/geometry_gmsh.h>
 
 #include <deal.II-qc/potentials/pair_born_cut.h>
+#include <deal.II-qc/potentials/pair_born_cut_class2_coul_wolf.h>
 #include <deal.II-qc/potentials/pair_class2.h>
 #include <deal.II-qc/potentials/pair_coul_wolf.h>
 #include <deal.II-qc/potentials/pair_lj_cut.h>

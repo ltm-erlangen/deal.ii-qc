@@ -37,6 +37,7 @@ SET(TARGET_SRC
   source/grid/shared_tria.cc
   source/potentials/pair_base.cc
   source/potentials/pair_born_cut.cc
+  source/potentials/pair_born_cut_class2_coul_wolf.cc
   source/potentials/pair_class2.cc
   source/potentials/pair_coul_wolf.cc
   source/potentials/pair_lj_cut.cc
