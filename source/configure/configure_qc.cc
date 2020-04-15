@@ -269,8 +269,8 @@ ConfigureQC::declare_parameters(ParameterHandler &prm)
                       "of atoms");
     prm.declare_entry("Pair potential type",
                       "LJ",
-                      Patterns::Selection(
-                        "Coulomb Wolf|LJ|LJ Coulomb Wolf|Born|Class2"),
+                      Patterns::Selection("Coulomb Wolf|LJ|LJ Coulomb Wolf|Born"
+                                          "|Class2|Born Class2 Coul Wolf"),
                       "Pairwise interactions type of the "
                       "pair potential energy function");
     prm.declare_entry("Pair global coefficients",
@@ -281,7 +281,9 @@ ConfigureQC::declare_parameters(ParameterHandler &prm)
                       "Coulomb Wolf: alpha and cutoff radius."
                       "LJ: cutoff radius"
                       "LJ Coulomb Wolf: alpha, coulomb and lj cutoff radii"
-                      "Born: cutoff radius");
+                      "Born: cutoff radius"
+                      "Born Class2 Coulomb Wolf:"
+                      "alpha, coulomb and born cutoff radii");
     prm.declare_entry("Pair potential with tail",
                       "false",
                       Patterns::Bool(),
@@ -329,6 +331,12 @@ ConfigureQC::declare_parameters(ParameterHandler &prm)
       "For the pair potential Class2, "
       "the potential parameters should be listed under "
       "Bond specific coefficients."
+      "---"
+      "For the pair potential Born Class2 Coulomb Wolf, "
+      "the first two entries are the atom types and "
+      "the remaining five are the born potential parameters."
+      "The class2 parameters should be specified "
+      "under the bond coefficients."
       "---"
       "Note that the atom data counts the atom types from 1 "
       "but deal.II-qc from 0. Therefore atom type 2 in the "
@@ -586,6 +594,10 @@ ConfigureQC::parse_parameters(ParameterHandler &prm)
       Utilities::split_list_of_string_lists(
         prm.get("Pair specific coefficients"), ';', ',');
 
+    const std::vector<std::vector<std::string>> bond_coeffs_per_type =
+      Utilities::split_list_of_string_lists(
+        prm.get("Bond specific coefficients"), ';', ',');
+
     if (pair_potential_type == "Coulomb Wolf")
       {
         AssertThrow(global_coeffs.size() == 2,
@@ -722,9 +734,49 @@ ConfigureQC::parse_parameters(ParameterHandler &prm)
                     ExcMessage("Pair potential type has different bond type."));
         pair_potential = std::make_shared<Potential::PairClass2Manager>();
 
-        const std::vector<std::vector<std::string>> bond_coeffs_per_type =
-          Utilities::split_list_of_string_lists(
-            prm.get("Bond specific coefficients"), ';', ',');
+        for (const auto &specific_coeffs : bond_coeffs_per_type)
+          {
+            AssertThrow(specific_coeffs.size() == 6,
+                        ExcMessage("Only four specific coefficients should be "
+                                   "provided, namely, rm, k2, k3 and k4."));
+
+            const std::pair<types::atom_type, types::atom_type> range_i =
+              dealiiqc::Utilities::atom_type_range(specific_coeffs[0],
+                                                   n_atom_types);
+
+            const std::pair<types::atom_type, types::atom_type> range_j =
+              dealiiqc::Utilities::atom_type_range(specific_coeffs[1],
+                                                   n_atom_types);
+
+            const std::vector<double> coeffs = {
+              dealii::Utilities::string_to_double(specific_coeffs[2]),
+              dealii::Utilities::string_to_double(specific_coeffs[3]),
+              dealii::Utilities::string_to_double(specific_coeffs[4]),
+              dealii::Utilities::string_to_double(specific_coeffs[5])};
+
+            for (types::atom_type i = range_i.first; i <= range_i.second; ++i)
+              for (types::atom_type j = range_j.first; j <= range_j.second; ++j)
+                pair_potential->declare_interactions(
+                  i, j, Potential::InteractionTypes::Class2, coeffs);
+          }
+      }
+    else if (pair_potential_type == "Born Class2 Coul Wolf")
+      {
+        AssertThrow(prm.get("Bond type") == "Class2",
+                    ExcMessage("Pair potential type has different bond type."));
+
+        AssertThrow(global_coeffs.size() <= 3,
+                    ExcMessage("Invalid Pair global coefficients provided "
+                               "for the Pair potential type: Born."));
+
+        AssertThrow(global_coeffs[1] < maximum_cutoff_radius &&
+                      global_coeffs[2] < maximum_cutoff_radius,
+                    ExcMessage("Maximum cutoff radius should be more than or "
+                               "equal to the provided cutoff radius."));
+
+        pair_potential =
+          std::make_shared<Potential::PairBornCutClass2CoulWolfManager>(
+            global_coeffs[0], global_coeffs[1], global_coeffs[2]);
 
         for (const auto &specific_coeffs : bond_coeffs_per_type)
           {
@@ -750,6 +802,33 @@ ConfigureQC::parse_parameters(ParameterHandler &prm)
               for (types::atom_type j = range_j.first; j <= range_j.second; ++j)
                 pair_potential->declare_interactions(
                   i, j, Potential::InteractionTypes::Class2, coeffs);
+          }
+
+        for (const auto &specific_coeffs : list_of_coeffs_per_type)
+          {
+            AssertThrow(specific_coeffs.size() == 7,
+                        ExcMessage("Five pair specific coefficients "
+                                   "should be provided."));
+
+            const std::pair<types::atom_type, types::atom_type> range_i =
+              dealiiqc::Utilities::atom_type_range(specific_coeffs[0],
+                                                   n_atom_types);
+
+            const std::pair<types::atom_type, types::atom_type> range_j =
+              dealiiqc::Utilities::atom_type_range(specific_coeffs[1],
+                                                   n_atom_types);
+
+            const std::vector<double> coeffs = {
+              dealii::Utilities::string_to_double(specific_coeffs[2]),
+              dealii::Utilities::string_to_double(specific_coeffs[3]),
+              dealii::Utilities::string_to_double(specific_coeffs[4]),
+              dealii::Utilities::string_to_double(specific_coeffs[5]),
+              dealii::Utilities::string_to_double(specific_coeffs[6])};
+
+            for (types::atom_type i = range_i.first; i <= range_i.second; ++i)
+              for (types::atom_type j = range_j.first; j <= range_j.second; ++j)
+                pair_potential->declare_interactions(
+                  i, j, Potential::InteractionTypes::Born, coeffs);
           }
       }
     else
