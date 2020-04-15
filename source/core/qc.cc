@@ -858,7 +858,7 @@ QC<dim, PotentialType, atomicity>::compute_local(vector_t &gradient) const
         {
           intra_I = ComputeTools::
             energy_and_gradient<PotentialType, dim, atomicity, ComputeGradient>(
-              *potential_ptr, molecule_I);
+              *potential_ptr, molecule_I, cell_molecule_data.bonds);
 
           external_I =
             ComputeTools::energy_and_gradient<dim, atomicity, ComputeGradient>(
@@ -1057,21 +1057,24 @@ QC<dim, PotentialType, atomicity>::minimize_energy(const double time)
   template double QC<_DIM, _POTENTIAL, _ATOMICITY>::compute_local<false>( \
     dealii::TrilinosWrappers::MPI::BlockVector &) const;
 
-#define QC_INSTANTIATIONS(R, X)                                \
-  SINGLE_QC_INSTANTIATION(BOOST_PP_TUPLE_ELEM(2, 0, X),        \
-                          Potential::PairLJCutManager,         \
-                          BOOST_PP_TUPLE_ELEM(2, 1, X))        \
-  SINGLE_QC_INSTANTIATION(BOOST_PP_TUPLE_ELEM(2, 0, X),        \
-                          Potential::PairCoulWolfManager,      \
-                          BOOST_PP_TUPLE_ELEM(2, 1, X))        \
-  SINGLE_QC_INSTANTIATION(BOOST_PP_TUPLE_ELEM(2, 0, X),        \
-                          Potential::PairLJCutCoulWolfManager, \
-                          BOOST_PP_TUPLE_ELEM(2, 1, X))        \
-  SINGLE_QC_INSTANTIATION(BOOST_PP_TUPLE_ELEM(2, 0, X),        \
-                          Potential::PairBornCutManager,       \
-                          BOOST_PP_TUPLE_ELEM(2, 1, X))        \
-  SINGLE_QC_INSTANTIATION(BOOST_PP_TUPLE_ELEM(2, 0, X),        \
-                          Potential::PairClass2Manager,        \
+#define QC_INSTANTIATIONS(R, X)                                        \
+  SINGLE_QC_INSTANTIATION(BOOST_PP_TUPLE_ELEM(2, 0, X),                \
+                          Potential::PairLJCutManager,                 \
+                          BOOST_PP_TUPLE_ELEM(2, 1, X))                \
+  SINGLE_QC_INSTANTIATION(BOOST_PP_TUPLE_ELEM(2, 0, X),                \
+                          Potential::PairCoulWolfManager,              \
+                          BOOST_PP_TUPLE_ELEM(2, 1, X))                \
+  SINGLE_QC_INSTANTIATION(BOOST_PP_TUPLE_ELEM(2, 0, X),                \
+                          Potential::PairLJCutCoulWolfManager,         \
+                          BOOST_PP_TUPLE_ELEM(2, 1, X))                \
+  SINGLE_QC_INSTANTIATION(BOOST_PP_TUPLE_ELEM(2, 0, X),                \
+                          Potential::PairBornCutManager,               \
+                          BOOST_PP_TUPLE_ELEM(2, 1, X))                \
+  SINGLE_QC_INSTANTIATION(BOOST_PP_TUPLE_ELEM(2, 0, X),                \
+                          Potential::PairClass2Manager,                \
+                          BOOST_PP_TUPLE_ELEM(2, 1, X))                \
+  SINGLE_QC_INSTANTIATION(BOOST_PP_TUPLE_ELEM(2, 0, X),                \
+                          Potential::PairBornCutClass2CoulWolfManager, \
                           BOOST_PP_TUPLE_ELEM(2, 1, X))
 
 BOOST_PP_LIST_FOR_EACH_PRODUCT(QC_INSTANTIATIONS, 2, (_DIM_, _ATOMICITY_))

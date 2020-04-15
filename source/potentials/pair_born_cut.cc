@@ -17,6 +17,8 @@ namespace Potential
     : cutoff_radius_squared(cutoff_radius * cutoff_radius)
   {}
 
+
+
   void
   PairBornCutManager::declare_interactions(
     const types::atom_type     i_atom_type,

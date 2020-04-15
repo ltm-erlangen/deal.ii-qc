@@ -20,21 +20,21 @@ test(const double &r)
                               class2_params);
 
   const std::pair<double, double> energy_gradient_0 =
-    class2.energy_and_gradient(0, 1, r * r);
+    class2.energy_and_gradient(0, 1, r * r, true);
 
   std::cout << "Energy: " << energy_gradient_0.first << " "
             << "Gradient scalar value: " << energy_gradient_0.second
             << std::endl;
 
   const std::pair<double, double> energy_gradient_1 =
-    class2.energy_and_gradient(1, 0, r * r);
+    class2.energy_and_gradient(1, 0, r * r, true);
 
   std::cout << "Energy: " << energy_gradient_1.first << " "
             << "Gradient scalar value: " << energy_gradient_1.second
             << std::endl;
 
   const std::pair<double, double> energy_gradient_2 =
-    class2.energy_and_gradient<false>(0, 1, r * r);
+    class2.energy_and_gradient<false>(0, 1, r * r, true);
 
   std::cout << "Energy: " << energy_gradient_2.first << " "
             << "Gradient scalar value: " << energy_gradient_2.second

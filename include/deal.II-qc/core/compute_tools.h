@@ -97,8 +97,9 @@ namespace ComputeTools
 
   /**
    * Compute and return the interaction energy and gradient values between two
-   * atoms \f$i\f$ and \f$j\f$ located at \f$ \textbf x^i \f$ and
-   * \f$ \textbf x^j \f$, respectively, interacting via a given @p potential.
+   * potentially @p bonded atoms \f$i\f$ and \f$j\f$ located at
+   * \f$ \textbf x^i \f$ and \f$ \textbf x^j \f$, respectively,
+   * interacting via a given @p potential.
    *
    * The potential energy can be computed using the empirical formula of
    * the given potential \f$ \phi^{}_{ij}(r^{ij}) \f$ where
@@ -116,7 +117,8 @@ namespace ComputeTools
   inline std::pair<double, Tensor<1, spacedim>>
   energy_and_gradient(const PotentialType & potential,
                       const Atom<spacedim> &atom_i,
-                      const Atom<spacedim> &atom_j)
+                      const Atom<spacedim> &atom_j,
+                      const bool            bonded = false)
   {
     const Tensor<1, spacedim> rij = atom_i.position - atom_j.position;
 
@@ -125,7 +127,8 @@ namespace ComputeTools
     const std::pair<double, double> energy_and_gradient =
       potential.template energy_and_gradient<ComputeGradient>(atom_i.type,
                                                               atom_j.type,
-                                                              r_square);
+                                                              r_square,
+                                                              bonded);
     return ComputeGradient ?
              std::make_pair(energy_and_gradient.first,
                             rij * (energy_and_gradient.second /
@@ -139,7 +142,8 @@ namespace ComputeTools
   /**
    * Compute and return the intra-molecular interaction energy and
    * the list of gradient values within a given @p molecule consisting of
-   * <tt>atomicity</tt>-number of atoms interacting via a given @p potential.
+   * <tt>atomicity</tt>-number of atoms, among which @p bonds may be present,
+   * interacting via a given @p potential.
    *
    * The intra-molecular interaction energy of a given molecule \f$I\f$ is
    * \f[
@@ -168,7 +172,8 @@ namespace ComputeTools
             bool ComputeGradient = true>
   inline std::pair<double, std::array<Tensor<1, spacedim>, atomicity>>
   energy_and_gradient(const PotentialType &                potential,
-                      const Molecule<spacedim, atomicity> &molecule)
+                      const Molecule<spacedim, atomicity> &molecule,
+                      const types::bond_type (&bonds)[atomicity][atomicity])
   {
     double                                     energy = 0.;
     std::array<Tensor<1, spacedim>, atomicity> gradients;
@@ -190,10 +195,11 @@ namespace ComputeTools
     for (unsigned int k = 0; k < atomicity; ++k)
       for (unsigned int i = k + 1; i < atomicity; ++i)
         {
+          const bool bonded = (bonds[k][i] != numbers::invalid_bond_value);
           const std::pair<double, Tensor<1, spacedim>>
             energy_and_gradient_tensor =
               energy_and_gradient<PotentialType, spacedim, ComputeGradient>(
-                potential, molecule.atoms[k], molecule.atoms[i]);
+                potential, molecule.atoms[k], molecule.atoms[i], bonded);
           energy += energy_and_gradient_tensor.first;
 
           if (ComputeGradient)
@@ -277,7 +283,7 @@ namespace ComputeTools
           const std::pair<double, Tensor<1, spacedim>>
             energy_and_gradient_tensor =
               energy_and_gradient<PotentialType, spacedim, ComputeGradient>(
-                potential, atoms_I[i], atoms_J[j]);
+                potential, atoms_I[i], atoms_J[j], false);
           energy += energy_and_gradient_tensor.first;
 
           if (ComputeGradient)

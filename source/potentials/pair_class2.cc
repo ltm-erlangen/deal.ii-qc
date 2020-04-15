@@ -18,14 +18,6 @@ namespace Potential
 
 
 
-  bool
-  PairClass2Manager::is_or_has_bond_style() const
-  {
-    return true;
-  }
-
-
-
   void
   PairClass2Manager::declare_interactions(const types::atom_type i_atom_type,
                                           const types::atom_type j_atom_type,

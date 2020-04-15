@@ -60,7 +60,9 @@ Problem<dim, PotentialType, atomicity>::partial_run(
 
   const double intra_molecular_energy =
     ComputeTools::energy_and_gradient<PotentialType, dim, atomicity, false>(
-      *potential_ptr, cell_molecules.begin()->second)
+      *potential_ptr,
+      cell_molecules.begin()->second,
+      this->cell_molecule_data.bonds)
       .first;
 
   const double energy =
@@ -141,13 +143,18 @@ main(int argc, char *argv[])
           << "LAMMPS Description" << std::endl
           << std::endl
           << "2 atoms" << std::endl
+          << "1 bonds" << std::endl
           << std::endl
           << "2  atom types" << std::endl
+          << "1  bond types" << std::endl
           << std::endl
           << "Atoms #" << std::endl
           << std::endl
           << "1 1 1  0.0 0.00 0. 0." << std::endl
-          << "2 1 2  0.0 0.25 0. 0." << std::endl;
+          << "2 1 2  0.0 0.25 0. 0." << std::endl
+          << std::endl
+          << "Bonds #" << std::endl
+          << "1 1 1 2" << std::endl;
 
       std::shared_ptr<std::istream> prm_stream =
         std::make_shared<std::istringstream>(oss.str().c_str());

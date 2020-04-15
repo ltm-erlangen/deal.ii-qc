@@ -57,27 +57,14 @@ namespace Potential
                          const std::vector<double> &parameters);
 
     /**
-     * Returns a pair of computed values of energy and its gradient between
-     * two atoms of type @p i_atom_type and type @p j_atom_type
-     * that are a distance of square root of @p squared_distance apart.
-     * The first value in the returned pair is energy whereas the second
-     * is its partial derivative given as \f$
-     * \frac{\partial \phi_{ij}}{\partial r_{ij}} \f$.
-     *
-     * The template parameter indicates whether to skip the additional
-     * computation of gradient; this is in the case when only the
-     * value of the energy is intended to be queried.
-     *
-     * @note A typical energy minimization process might need the value of
-     * energy much more often than the value of force. Therefore,
-     * this function can be called by passing @p false as template
-     * parameter to query only the computation of the energy.
+     * @copydoc PairCoulWolfManager::energy_and_gradient()
      */
     template <bool ComputeGradient = true>
     inline std::pair<double, double>
     energy_and_gradient(const types::atom_type i_atom_type,
                         const types::atom_type j_atom_type,
-                        const double &         squared_distance) const;
+                        const double &         squared_distance,
+                        const bool             bonded = false) const;
 
   private:
     /**
@@ -103,15 +90,22 @@ namespace Potential
   PairLJCutCoulWolfManager::energy_and_gradient(
     const types::atom_type i_atom_type,
     const types::atom_type j_atom_type,
-    const double &         squared_distance) const
+    const double &         squared_distance,
+    const bool             bonded) const
   {
+    if (bonded)
+      return {0., 0.};
+
     const std::pair<double, double> lj =
       lj_potential.energy_and_gradient<ComputeGradient>(i_atom_type,
                                                         j_atom_type,
-                                                        squared_distance);
+                                                        squared_distance,
+                                                        false);
     const std::pair<double, double> coul =
-      coul_wolf_potential.energy_and_gradient<ComputeGradient>(
-        i_atom_type, j_atom_type, squared_distance);
+      coul_wolf_potential.energy_and_gradient<ComputeGradient>(i_atom_type,
+                                                               j_atom_type,
+                                                               squared_distance,
+                                                               false);
 
     return {lj.first + coul.first, lj.second + coul.second};
   }

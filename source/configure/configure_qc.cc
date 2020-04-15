@@ -333,18 +333,13 @@ ConfigureQC::declare_parameters(ParameterHandler &prm)
       "Note that the atom data counts the atom types from 1 "
       "but deal.II-qc from 0. Therefore atom type 2 in the "
       "atom data is atom type 1 in deal.II-qc.");
-    prm.declare_entry("Pair potential with bonds",
-                      "false",
-                      Patterns::Bool(),
-                      "Whether the potential is or has "
-                      "bonded interactions.");
     prm.declare_entry("Bond type",
                       "None",
                       Patterns::Selection("None|Class2"),
                       "The type of bond interactions in the atomistic system");
     prm.declare_entry(
       "Bond specific coefficients",
-      "0, 0, 0, 0, 0;",
+      " , , , , ;",
       Patterns::List(Patterns::List(Patterns::Anything(),
                                     0,
                                     std::numeric_limits<unsigned int>::max(),
@@ -358,7 +353,9 @@ ConfigureQC::declare_parameters(ParameterHandler &prm)
       "---"
       "For the bond type Class2,"
       "the first two entries are atom types and the remaining "
-      "three are r_0, k_2, k_3 and k_4, respecitively.");
+      "three are r_0, k_2, k_3 and k_4, respecitively."
+      "---"
+      "Note that the use of wildcard asterisk is allowed.");
   }
   prm.leave_subsection();
   prm.enter_subsection("Configure QC");
@@ -420,8 +417,7 @@ ConfigureQC::declare_parameters(ParameterHandler &prm)
           "constrained. This is then equivalent to having the "
           "corresponding entry in the component mask set to "
           "false. In this way only certain components of the "
-          "vector-valued solution at the boundary can be "
-          "constrained."
+          "vector-valued solution at the boundary can be constrained."
           "For example:"
           "If the solution of the problem being solved is "
           "vector valued displacements in two dimensions, "
@@ -430,8 +426,7 @@ ConfigureQC::declare_parameters(ParameterHandler &prm)
           "being constrained to the given function "
           "describing the boundary condition."
           "Non empty function expressions would be passed in "
-          "to initialize valid Function objects using "
-          "FunctionParser."
+          "to initialize valid Function objects using FunctionParser."
           "For example:"
           "The expression 0 implies that the current "
           "component of the current boundary id is subjected "
@@ -696,12 +691,9 @@ ConfigureQC::parse_parameters(ParameterHandler &prm)
 
         for (const auto &specific_coeffs : list_of_coeffs_per_type)
           {
-            // Pair specific coefficients = 0, 1, 2.5, 1.0
-            // atom type 0 and 1 interact with epsilon = 2.5 and r_m = 1.
             AssertThrow(specific_coeffs.size() == 7,
-                        ExcMessage("Only two specific coefficients should be "
-                                   "provided the first element being "
-                                   "epsilon and second being r_m."));
+                        ExcMessage("Five pair specific coefficients "
+                                   "should be provided."));
 
             const std::pair<types::atom_type, types::atom_type> range_i =
               dealiiqc::Utilities::atom_type_range(specific_coeffs[0],

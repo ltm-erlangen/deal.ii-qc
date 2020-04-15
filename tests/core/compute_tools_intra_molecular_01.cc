@@ -67,8 +67,13 @@ test(const double &r, const double &cutoff_radius)
   molecule.atoms[0] = atom_1;
   molecule.atoms[1] = atom_2;
 
+  dealiiqc::types::bond_type bonds[2][2];
+  for (auto i = 0; i < 2; ++i)
+    for (auto j = 0; j < 2; ++j)
+      bonds[i][j] = dealiiqc::numbers::invalid_bond_value;
+
   std::pair<double, std::array<Tensor<1, spacedim>, 2>> intra_molecular =
-    ComputeTools::energy_and_gradient(lj, molecule);
+    ComputeTools::energy_and_gradient(lj, molecule, bonds);
 
   AssertThrow(Testing::almost_equal(lj_energy_gradient_0.first,
                                     intra_molecular.first,
