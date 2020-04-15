@@ -40,13 +40,6 @@ namespace Potential
     PairClass2Manager();
 
     /**
-     * Return whether the potential is a bond potential or
-     * has an augmented bond potential.
-     */
-    virtual bool
-    is_or_has_bond_style() const override;
-
-    /**
      * Declare the type of @p interaction between the atom types @p i_atom_type
      * and @p j_atom_type through @p parameters.
      *
@@ -68,7 +61,8 @@ namespace Potential
     inline std::pair<double, double>
     energy_and_gradient(const types::atom_type i_atom_type,
                         const types::atom_type j_atom_type,
-                        const double &         squared_distance) const;
+                        const double &         squared_distance,
+                        const bool             bonded) const;
 
   private:
     /**
@@ -88,14 +82,15 @@ namespace Potential
   inline std::pair<double, double>
   PairClass2Manager::energy_and_gradient(const types::atom_type i_atom_type,
                                          const types::atom_type j_atom_type,
-                                         const double &squared_distance) const
+                                         const double &squared_distance,
+                                         const bool    bonded) const
   {
     const std::pair<types::atom_type, types::atom_type> interacting_atom_types =
       get_pair(i_atom_type, j_atom_type);
 
     const auto &param = class2_parameters.find(interacting_atom_types);
 
-    if (param == class2_parameters.end())
+    if (param == class2_parameters.end() || !bonded)
       return ComputeGradient ?
                std::make_pair(0., 0.) :
                std::make_pair(0., std::numeric_limits<double>::signaling_NaN());

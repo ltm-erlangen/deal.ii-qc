@@ -38,9 +38,14 @@ test(const double eps, const double rm, const double cutoff_radius)
       atom.type = 0;
     }
 
+  dealiiqc::types::bond_type bonds[atomicity][atomicity];
+  for (auto i = 0; i < atomicity; ++i)
+    for (auto j = 0; j < atomicity; ++j)
+      bonds[i][j] = dealiiqc::numbers::invalid_bond_value;
+
   // Compute intra-molecular energy and gradients.
   std::pair<double, std::array<Tensor<1, spacedim>, atomicity>>
-    intra_molecular = ComputeTools::energy_and_gradient(lj, molecule);
+    intra_molecular = ComputeTools::energy_and_gradient(lj, molecule, bonds);
 
   std::cout << "Dim: " << spacedim << " Atomicity: " << atomicity << std::endl;
 

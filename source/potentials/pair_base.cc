@@ -31,14 +31,6 @@ namespace Potential
       std::const_pointer_cast<const std::vector<types::charge>>(charges_);
   }
 
-
-
-  bool
-  PairBaseManager::is_or_has_bond_style() const
-  {
-    return false;
-  }
-
 } // namespace Potential
 
 

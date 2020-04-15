@@ -93,7 +93,8 @@ namespace Potential
     inline std::pair<double, double>
     energy_and_gradient(const types::atom_type i_atom_type,
                         const types::atom_type j_atom_type,
-                        const double &         squared_distance) const;
+                        const double &         squared_distance,
+                        const bool             bonded = false) const;
 
   private:
     /**
@@ -126,9 +127,10 @@ namespace Potential
   inline std::pair<double, double>
   PairLJCutManager::energy_and_gradient(const types::atom_type i_atom_type,
                                         const types::atom_type j_atom_type,
-                                        const double &squared_distance) const
+                                        const double &         squared_distance,
+                                        const bool             bonded) const
   {
-    if (squared_distance > cutoff_radius_squared)
+    if (squared_distance > cutoff_radius_squared || bonded)
       return ComputeGradient ?
                std::make_pair(0., 0.) :
                std::make_pair(0., std::numeric_limits<double>::signaling_NaN());

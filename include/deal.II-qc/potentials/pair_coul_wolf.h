@@ -66,7 +66,7 @@ namespace Potential
 
     /**
      * Returns a pair of computed values of energy and its gradient between
-     * two atoms of type @p i_atom_type and type @p j_atom_type
+     * two potentially @p bonded atoms of types @p i_atom_type and @p j_atom_type
      * that are a distance of square root of @p squared_distance apart.
      * The first value in the returned pair is energy whereas the second
      * is its partial derivative given as \f$
@@ -75,6 +75,11 @@ namespace Potential
      * The template parameter indicates whether to skip the additional
      * computation of gradient; this is in the case when only the
      * value of the energy is intended to be queried.
+     *
+     * If the atoms are @p bonded,
+     * then only the bond energy and gradient are computed,
+     * in the case where the potential does not contain bond potentials
+     * a pair of zeros is returned.
      *
      * @note A typical energy minimization process might need the value of
      * energy much more often than the value of force. Therefore,
@@ -85,7 +90,8 @@ namespace Potential
     inline std::pair<double, double>
     energy_and_gradient(const types::atom_type i_atom_type,
                         const types::atom_type j_atom_type,
-                        const double &         squared_distance) const;
+                        const double &         squared_distance,
+                        const bool             bonded = false) const;
 
   private:
     /**
@@ -130,9 +136,10 @@ namespace Potential
   inline std::pair<double, double>
   PairCoulWolfManager::energy_and_gradient(const types::atom_type i_atom_type,
                                            const types::atom_type j_atom_type,
-                                           const double &squared_distance) const
+                                           const double &squared_distance,
+                                           const bool    bonded) const
   {
-    if (squared_distance > cutoff_radius_squared)
+    if (squared_distance > cutoff_radius_squared || bonded)
       return ComputeGradient ?
                std::make_pair(0., 0.) :
                std::make_pair(0., std::numeric_limits<double>::signaling_NaN());

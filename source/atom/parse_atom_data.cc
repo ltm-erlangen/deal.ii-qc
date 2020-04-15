@@ -12,6 +12,7 @@ using namespace dealii;
 template <int spacedim, int atomicity>
 ParseAtomData<spacedim, atomicity>::ParseAtomData()
   : n_atoms(0)
+  , n_bonds(0)
   , n_atom_types(0)
   , line_no(0)
 {}
@@ -161,6 +162,11 @@ ParseAtomData<spacedim, atomicity>::parse(
   molecules.resize(n_atoms / atomicity);
   charges.resize(n_atom_types);
   masses.resize(n_atom_types, 0.);
+
+  // Initialize all the bonds to invalid entries.
+  for (auto i = 0; i < atomicity; ++i)
+    for (auto j = 0; j < atomicity; ++j)
+      bonds[i][j] = numbers::invalid_bond_value;
 
   // line has been read by previous while loop but wasn't parsed for keyword
   // sections
@@ -432,7 +438,7 @@ ParseAtomData<spacedim, atomicity>::parse_bonds(
                       line_no, "bond attributes under Bonds keyword section"));
 
       bonds_vec[i++] =
-        std::make_tuple(i_atom_index, j_atom_index, ij_bond_type);
+        std::make_tuple(i_atom_index - 1, j_atom_index - 1, ij_bond_type);
     }
 
   line_no++;
@@ -440,11 +446,6 @@ ParseAtomData<spacedim, atomicity>::parse_bonds(
          ExcMessage("The number of different atom types "
                     "do not match the number of entries "
                     "under Masses keyword section"));
-
-  // Initialize all the bonds to invalid entries.
-  for (auto i = 0; i < atomicity; ++i)
-    for (auto j = 0; j < atomicity; ++j)
-      bonds[i][j] = numbers::invalid_bond_value;
 
   // In most of the applications, we typically use a single Molecule type.
   // This results in bond information duplication.
