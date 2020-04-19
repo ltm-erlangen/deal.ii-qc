@@ -15,9 +15,10 @@ namespace Potential
     const double &alpha,
     const double &coul_cutoff_radius,
     const double &lj_cutoff_radius,
-    const bool    with_tail)
+    const bool    with_tail,
+    const double &factor_coul)
     : lj_potential(lj_cutoff_radius, with_tail)
-    , coul_wolf_potential(alpha, coul_cutoff_radius)
+    , coul_wolf_potential(alpha, coul_cutoff_radius, factor_coul)
   {}
 
 

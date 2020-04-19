@@ -16,10 +16,11 @@ namespace Potential
   PairBornCutClass2CoulWolfManager::PairBornCutClass2CoulWolfManager(
     const double &alpha,
     const double &coul_cutoff_radius,
-    const double &born_cutoff_radius)
+    const double &born_cutoff_radius,
+    const double &factor_coul)
     : born_potential(born_cutoff_radius)
     , class2_potential()
-    , coul_wolf_potential(alpha, coul_cutoff_radius)
+    , coul_wolf_potential(alpha, coul_cutoff_radius, factor_coul)
   {}
 
 

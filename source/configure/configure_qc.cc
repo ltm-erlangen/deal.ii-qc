@@ -293,6 +293,16 @@ ConfigureQC::declare_parameters(ParameterHandler &prm)
                       "Only few pair potentials support this feature. "
                       "The rest silently ignore this setting.");
     prm.declare_entry(
+      "Factor coul",
+      "1.0",
+      Patterns::Double(0),
+      "If bonds are defined in the system, then this value "
+      "can used as a weighting coefficient for "
+      "pairwaise energy and force contributions."
+      "It can take any value in [0, 1], where the value of 1 "
+      "indicates that the energy and gradient contributions are "
+      "accounted fully.");
+    prm.declare_entry(
       "Pair specific coefficients",
       "0, 0, .8, 1.1;",
       Patterns::List(Patterns::List(Patterns::Anything(),
@@ -588,8 +598,11 @@ ConfigureQC::parse_parameters(ParameterHandler &prm)
         global_coeffs.push_back(dealii::Utilities::string_to_double(c));
     }
 
-    const bool with_tail = prm.get_bool("Pair potential with tail");
-
+    const bool   with_tail   = prm.get_bool("Pair potential with tail");
+    const double factor_coul = prm.get_double("Factor coul");
+    AssertThrow(0 <= factor_coul && factor_coul <= 1,
+                ExcMessage("Invalid factor_coul initialization."
+                           "It's value should be in [0, 1]"));
     const std::vector<std::vector<std::string>> list_of_coeffs_per_type =
       Utilities::split_list_of_string_lists(
         prm.get("Pair specific coefficients"), ';', ',');
@@ -609,7 +622,8 @@ ConfigureQC::parse_parameters(ParameterHandler &prm)
                                "equal to the provided cutoff radius."));
         pair_potential =
           std::make_shared<Potential::PairCoulWolfManager>(global_coeffs[0],
-                                                           global_coeffs[1]);
+                                                           global_coeffs[1],
+                                                           factor_coul);
       }
     else if (pair_potential_type == "LJ")
       {
@@ -661,7 +675,11 @@ ConfigureQC::parse_parameters(ParameterHandler &prm)
                     ExcMessage("Maximum cutoff radius should be more than or "
                                "equal to the provided cutoff radius."));
         pair_potential = std::make_shared<Potential::PairLJCutCoulWolfManager>(
-          global_coeffs[0], global_coeffs[1], global_coeffs[2], with_tail);
+          global_coeffs[0],
+          global_coeffs[1],
+          global_coeffs[2],
+          with_tail,
+          factor_coul);
 
         for (const auto &specific_coeffs : list_of_coeffs_per_type)
           {
@@ -776,7 +794,7 @@ ConfigureQC::parse_parameters(ParameterHandler &prm)
 
         pair_potential =
           std::make_shared<Potential::PairBornCutClass2CoulWolfManager>(
-            global_coeffs[0], global_coeffs[1], global_coeffs[2]);
+            global_coeffs[0], global_coeffs[1], global_coeffs[2], factor_coul);
 
         for (const auto &specific_coeffs : bond_coeffs_per_type)
           {

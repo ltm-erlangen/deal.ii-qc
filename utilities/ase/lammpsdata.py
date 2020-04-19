@@ -4,19 +4,21 @@
 Helper functions to write out LAMMPS atom data.
 """
 
-import numpy as np
 import os
-import re
+import numpy as np
 
-from ase.atoms import Atoms
-from molecules import Molecules
 from ase.parallel import paropen
 from ase.calculators.lammps import Prism, convert
 
+from data import atomic_numbers
+from data import chemical_symbols
+
+from molecules import Molecules
+
 
 def write_atom_data(fileobj, atoms, specorder=None, force_skew=False,
-                      prismobj=None, velocities=False, units="metal",
-                      atom_style='atomic'):
+                    prismobj=None, velocities=False, units="metal",
+                    atom_style='atomic'):
     """ Write atomic structure data to a LAMMPS data file.
 
     This function is shamelessly taken from ase.io.lammpsdata.write_lammps_data
@@ -45,8 +47,11 @@ def write_atom_data(fileobj, atoms, specorder=None, force_skew=False,
     f.write("{0} (written by ASE) \n\n".format(os.path.basename(f.name)))
 
     symbols = atoms.get_chemical_symbols()
+    bonds = atoms.bonds
     n_atoms = len(symbols)
+    n_bonds = len(bonds)
     f.write("{0} \t atoms \n".format(n_atoms))
+    f.write("{0} \t bonds \n".format(n_bonds))
 
     if specorder is None:
         # This way it is assured that LAMMPS atom types are always
@@ -57,7 +62,10 @@ def write_atom_data(fileobj, atoms, specorder=None, force_skew=False,
         # (indices must correspond to order in the potential file)
         species = specorder
     n_atom_types = len(species)
+    n_bond_types = len(np.unique(bonds[:,1])) if len(bonds) else 0
     f.write("{0}  atom types\n".format(n_atom_types))
+    f.write("{0}  bond types\n".format(n_bond_types))
+    f.write("\n\n")
 
     if prismobj is None:
         p = Prism(atoms.get_cell())
@@ -85,9 +93,7 @@ def write_atom_data(fileobj, atoms, specorder=None, force_skew=False,
     unique_types = []
     for i, mass in enumerate(masses):
         atom_type = species.index(symbols[i]) + 1
-        if atom_type in unique_types:
-            continue
-        else:
+        if atom_type not in unique_types:
             unique_types.append(atom_type)
             f.write("{0:>6} {1:23.17g}\n".format(atom_type, mass))
     f.write("\n\n")
@@ -122,8 +128,15 @@ def write_atom_data(fileobj, atoms, specorder=None, force_skew=False,
             r = convert(r, "distance", "ASE", units)
             q = convert(q, "charge", "ASE", units)
             s = species.index(symbols[i]) + 1
-            f.write("{0:>6} {1:>3} {2:>3} {3:>5} {4:23.17g} {5:23.17g} "
+            f.write("{0:>6} {1:>3} {2:>3} {3:>6} {4:23.17g} {5:23.17g} "
                     "{6:23.17g}\n".format(*(i + 1, m, s, q) + tuple(r)))
+        if len(bonds):
+            f.write('\n')
+            f.write("Bonds \n\n")
+            for bond in bonds:
+                f.write('\t'.join(map(str,bond)))
+                f.write('\n')
+
     else:
         raise NotImplementedError
 

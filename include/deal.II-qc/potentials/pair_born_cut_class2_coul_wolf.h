@@ -27,10 +27,13 @@ namespace Potential
      * the cutoff radius @p coul_cutoff_radius to be used for computing Coulomb
      * energy contribution using Wolf summation and the cutoff radius
      * @p born_cutoff_radius for computing born potential contribution.
+     * The use of @p factor_coul is explained in
+     * PairCoulWolfManager::PairCoulWolfManager().
      */
     PairBornCutClass2CoulWolfManager(const double &alpha,
                                      const double &coul_cutoff_radius,
-                                     const double &born_cutoff_radius);
+                                     const double &born_cutoff_radius,
+                                     const double &factor_coul = 1.);
 
     /**
      * @copydoc PairBaseManager::set_charges().
@@ -93,23 +96,24 @@ namespace Potential
     const double &         squared_distance,
     const bool             bonded) const
   {
-    if (bonded)
-      return class2_potential.energy_and_gradient<ComputeGradient>(
-        i_atom_type, j_atom_type, squared_distance, true);
-
     const std::pair<double, double> born =
       born_potential.energy_and_gradient<ComputeGradient>(i_atom_type,
                                                           j_atom_type,
                                                           squared_distance,
-                                                          false);
-
+                                                          bonded);
+    const std::pair<double, double> class2 =
+      class2_potential.energy_and_gradient<ComputeGradient>(i_atom_type,
+                                                            j_atom_type,
+                                                            squared_distance,
+                                                            bonded);
     const std::pair<double, double> coul =
       coul_wolf_potential.energy_and_gradient<ComputeGradient>(i_atom_type,
                                                                j_atom_type,
                                                                squared_distance,
-                                                               false);
+                                                               bonded);
 
-    return {born.first + coul.first, born.second + coul.second};
+    return {born.first + class2.first + coul.first,
+            born.second + class2.second + coul.second};
   }
 
 #endif /* DOXYGEN */

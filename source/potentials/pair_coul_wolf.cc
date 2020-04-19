@@ -12,15 +12,21 @@ using namespace dealii;
 namespace Potential
 {
   PairCoulWolfManager::PairCoulWolfManager(const double &alpha,
-                                           const double &cutoff_radius)
+                                           const double &cutoff_radius,
+                                           const double &factor_coul)
     : alpha(alpha)
     , cutoff_radius(cutoff_radius)
+    , factor_coul(factor_coul)
     , cutoff_radius_squared(cutoff_radius * cutoff_radius)
     , energy_shift(std::erfc(alpha * cutoff_radius) / cutoff_radius)
     , cutoff_radius_inverse(1. / cutoff_radius)
     , compound_exp_value(
         std::exp(-alpha * alpha * cutoff_radius * cutoff_radius))
-  {}
+  {
+    Assert(0 <= factor_coul && factor_coul <= 1,
+           ExcMessage("Invalid factor_coul initialization."
+                      "It's value should be in [0, 1]"));
+  }
 
 
 
