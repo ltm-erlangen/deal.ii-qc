@@ -9,12 +9,13 @@ using namespace dealiiqc;
 
 
 
-// Compute the energy of a single BaTiO3 molecule,
+// Compute the energy of two BaTiO3 molecules,
 // whose atoms interact through BornCutClass2CoulWolfManager,
 // using QC approach with full atomistic resolution.
-// Because the distance between cores and shells of respective atoms
-// is zero, the bond energy is zero. The blessed output is created using LAMMPS
-// python script. The script is included at the end.
+// Because the distance between cores and shells of respective atoms is zero,
+// the bond energy is zero.
+// The blessed output is created using LAMMPS python script.
+// The script is included at the end.
 
 
 
@@ -76,7 +77,7 @@ Problem<dim, PotentialType, atomicity>::partial_run(
 
   // Accurate to only 1e-3, probably due to erf() and overlapping cores & shells
   AssertThrow(std::fabs(energy - blessed_energy) <
-                1e12 * std::numeric_limits<double>::epsilon(),
+                1e13 * std::numeric_limits<double>::epsilon(),
               ExcInternalError());
 }
 
@@ -98,13 +99,13 @@ main(int argc, char *argv[])
           << "subsection Geometry" << std::endl
           << "  set Type = Box" << std::endl
           << "  subsection Box" << std::endl
-          << "    set X center = 2." << std::endl
+          << "    set X center = 4." << std::endl
           << "    set Y center = 2." << std::endl
           << "    set Z center = 2." << std::endl
-          << "    set X extent = 4." << std::endl
+          << "    set X extent = 8." << std::endl
           << "    set Y extent = 4." << std::endl
           << "    set Z extent = 4." << std::endl
-          << "    set X repetitions = 1" << std::endl
+          << "    set X repetitions = 2" << std::endl
           << "    set Y repetitions = 1" << std::endl
           << "    set Z repetitions = 1" << std::endl
           << "  end" << std::endl
@@ -119,9 +120,9 @@ main(int argc, char *argv[])
           << "  set Factor coul = 0." << std::endl
           << "  set Pair specific coefficients = "
              "*,	*,    0.00,	1.0000,	0.000,	0.0000,	0.000;"
-          //"1, 5, 7149.81,	0.3019,	0.000,	0.0000,	0.000;"
-          //"3, 5, 7200.27,	0.2303,	0.000,	0.0000,	0.000;"
-          //"5, 5, 3719.60,	0.3408,	0.000,	597.17,	0.000;"
+             "1, 5, 7149.81,	0.3019,	0.000,	0.0000,	0.000;"
+             "3, 5, 7200.27,	0.2303,	0.000,	0.0000,	0.000;"
+             "5, 5, 3719.60,	0.3408,	0.000,	597.17,	0.000;"
           << std::endl
           << "  set Bond type = Class2" << std::endl
           << "  set Bond specific coefficients = "
@@ -130,7 +131,7 @@ main(int argc, char *argv[])
              "4,  5,  0.000,  18.465, 0.0, 208.33333333;"
           << std::endl
           << "  set Atom data file = "
-          << SOURCE_DIR "/../data/BaTiO3_cs_1x1x1_qcatom.data" << std::endl
+          << SOURCE_DIR "/../data/BaTiO3_cs_2x1x1_qcatom.data" << std::endl
           << "end" << std::endl
 
           << "subsection Configure QC" << std::endl
@@ -147,7 +148,7 @@ main(int argc, char *argv[])
       // Define Problem
       Problem<dim, Potential::PairBornCutClass2CoulWolfManager, 10> problem(
         config);
-      problem.partial_run(66.77271747115822 /*blessed energy from LAMMPS*/);
+      problem.partial_run(134.48765665088442 /*blessed energy from LAMMPS*/);
     }
   catch (std::exception &exc)
     {
@@ -188,9 +189,8 @@ Vishal Boddu 08.05.2017
 // actual code below
 #! /usr/bin/python3
 """
-LAMMPS input script for energy_born_class2_coul_wolf_02 test
+LAMMPS input script for energy_born_class2_coul_wolf_05 test
 """
-
 import math
 import numpy
 
@@ -204,19 +204,24 @@ cmds = [
     "read_data  /../data/BaTiO3_cs_1x1x1_atom.data",
     "pair_style born/coul/wolf/cs 0.25 16.0 14.5",
     "pair_coeff	*	*	 0.0000	1.0000	0.000	0.0000	0.000",
+    "pair_coeff	2	6	7149.81	0.3019	0.000	0.0000	0.000",
+    "pair_coeff	4	6	7200.27	0.2303	0.000	0.0000	0.000",
+    "pair_coeff	6	6	3719.60	0.3408	0.000	597.17	0.000",
     "pair_modify tail no",
     "bond_style class2",
     "bond_coeff	1	0.0	149.255	0.0		   0.0000000",
     "bond_coeff	2	0.0	153.070	0.0		 20.83333333",
     "bond_coeff	3	0.0	 18.465	0.0		208.33333333",
-    "thermo_style custom step etotal pe ke fnorm ecoul elong ebond",
+    "thermo_style custom step etotal pe evdwl ecoul elong ebond",
     "neigh_modify one 4000",
     "run 0",
     "variable ebond equal ebond",
     "variable ecoul equal ecoul",
+    "variable evdwl equal evdwl",
     "variable pe equal pe",
     "print \"Bond Energy: ${ebond}\"",
     "print \"Coul Energy: ${ecoul}\"",
+    "print \"Vdwl Energy: ${evdwl}\"",
     "print \"Pot  Energy: ${pe}\""
 ]
 
@@ -236,7 +241,8 @@ print("Self Energy", selfce)
 
 # Bond Energy: 0
 # Coul Energy: -100.453015810919
-# Pot  Energy: -100.453015810919
-# Self Energy: 167.22573328207721
+# Vdwl Energy: 4.7617776370308
+# Pot  Energy: -95.691238173888
+# Self Energy 167.22573328207721
 
 */

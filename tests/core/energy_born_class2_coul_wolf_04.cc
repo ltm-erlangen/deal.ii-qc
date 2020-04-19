@@ -12,9 +12,10 @@ using namespace dealiiqc;
 // Compute the energy of a single BaTiO3 molecule,
 // whose atoms interact through BornCutClass2CoulWolfManager,
 // using QC approach with full atomistic resolution.
-// Because the distance between cores and shells of respective atoms
-// is zero, the bond energy is zero. The blessed output is created using LAMMPS
-// python script. The script is included at the end.
+// Because the distance between cores and shells of respective atoms is
+// non-zero, the bond energy is non-zero.
+// The blessed output is created using LAMMPS python script.
+// The script is included at the end.
 
 
 
@@ -25,6 +26,8 @@ public:
   Problem(const ConfigureQC &);
   void
   partial_run(const double &blessed_energy);
+  void
+  displace_shells(const dealii::Point<dim> &displacement);
 };
 
 
@@ -38,12 +41,26 @@ Problem<dim, PotentialType, atomicity>::Problem(const ConfigureQC &config)
 
 template <int dim, typename PotentialType, int atomicity>
 void
+Problem<dim, PotentialType, atomicity>::displace_shells(
+  const dealii::Point<dim> &displacement)
+{
+  for (auto &entry : this->cell_molecule_data.cell_energy_molecules)
+    for (auto &atom : entry.second.atoms)
+      if (atom.type % 2) // if the atom type is odd (i.e., shells)
+        atom.position += displacement;
+}
+
+
+
+template <int dim, typename PotentialType, int atomicity>
+void
 Problem<dim, PotentialType, atomicity>::partial_run(
   const double &blessed_energy)
 {
   this->setup_cell_energy_molecules();
   this->setup_system();
   this->setup_fe_values_objects();
+  this->displace_shells(dealii::Point<dim>(.1, .1, .1));
   this->update_neighbor_lists();
 
   MPI_Barrier(this->mpi_communicator);
@@ -76,7 +93,7 @@ Problem<dim, PotentialType, atomicity>::partial_run(
 
   // Accurate to only 1e-3, probably due to erf() and overlapping cores & shells
   AssertThrow(std::fabs(energy - blessed_energy) <
-                1e12 * std::numeric_limits<double>::epsilon(),
+                1e11 * std::numeric_limits<double>::epsilon(),
               ExcInternalError());
 }
 
@@ -119,9 +136,9 @@ main(int argc, char *argv[])
           << "  set Factor coul = 0." << std::endl
           << "  set Pair specific coefficients = "
              "*,	*,    0.00,	1.0000,	0.000,	0.0000,	0.000;"
-          //"1, 5, 7149.81,	0.3019,	0.000,	0.0000,	0.000;"
-          //"3, 5, 7200.27,	0.2303,	0.000,	0.0000,	0.000;"
-          //"5, 5, 3719.60,	0.3408,	0.000,	597.17,	0.000;"
+             "1, 5, 7149.81,	0.3019,	0.000,	0.0000,	0.000;"
+             "3, 5, 7200.27,	0.2303,	0.000,	0.0000,	0.000;"
+             "5, 5, 3719.60,	0.3408,	0.000,	597.17,	0.000;"
           << std::endl
           << "  set Bond type = Class2" << std::endl
           << "  set Bond specific coefficients = "
@@ -147,7 +164,7 @@ main(int argc, char *argv[])
       // Define Problem
       Problem<dim, Potential::PairBornCutClass2CoulWolfManager, 10> problem(
         config);
-      problem.partial_run(66.77271747115822 /*blessed energy from LAMMPS*/);
+      problem.partial_run(77.06623890330121 /*blessed energy from LAMMPS*/);
     }
   catch (std::exception &exc)
     {
@@ -188,22 +205,68 @@ Vishal Boddu 08.05.2017
 // actual code below
 #! /usr/bin/python3
 """
-LAMMPS input script for energy_born_class2_coul_wolf_02 test
+LAMMPS input script for energy_born_class2_coul_wolf_04 test
 """
-
 import math
 import numpy
 
 from lammps import lammps
 from data   import barium_titanate_cs_charges
 
+with open("test.data", 'w') as f:
+    f.write(
+"""BaTiO3_cs_1x1x1_atom.data (written by ASE) modified to displace cells
+
+10 	 atoms
+5 	 bonds
+6  atom types
+3  bond types
+
+0.0                       4  xlo xhi
+0.0                       4  ylo yhi
+0.0                       4  zlo zhi
+
+Masses
+
+     1                 135.327
+     2                       2
+     3      45.866999999999997
+     4                       2
+     5      13.999000000000001
+     6                       2
+
+Atoms
+
+1   1   1  5.042    0       0       0
+2   1   2  -2.87    0.1     0.1     0.1
+3   2   3  4.616    2       2       2
+4   2   4 -1.544    2.1     2.1     2.1
+5   3   5   0.97    0       2       2
+6   3   6 -2.718    0.1     2.1     2.1
+7   4   5   0.97    2       0       2
+8   4   6 -2.718    2.1     0.1     2.1
+9   5   5   0.97    2       2       0
+10  5   6 -2.718    2.1     2.1     0.1
+
+Bonds
+
+1	1	1	2
+2	2	3	4
+3	3	5	6
+4	3	7	8
+5	3	9	10
+""")
+
 cmds = [
     "units metal",
     "atom_style full",
     "boundary   f f f",
-    "read_data  /../data/BaTiO3_cs_1x1x1_atom.data",
+    "read_data  test.data",
     "pair_style born/coul/wolf/cs 0.25 16.0 14.5",
     "pair_coeff	*	*	 0.0000	1.0000	0.000	0.0000	0.000",
+    "pair_coeff	2	6	7149.81	0.3019	0.000	0.0000	0.000",
+    "pair_coeff	4	6	7200.27	0.2303	0.000	0.0000	0.000",
+    "pair_coeff	6	6	3719.60	0.3408	0.000	597.17	0.000",
     "pair_modify tail no",
     "bond_style class2",
     "bond_coeff	1	0.0	149.255	0.0		   0.0000000",
@@ -234,9 +297,9 @@ sum_q2 = numpy.inner(barium_titanate_cs_charges, barium_titanate_cs_charges)
 selfce = self_energy_factor(0.25, 14.5) * 14.399645 * sum_q2
 print("Self Energy", selfce)
 
-# Bond Energy: 0
-# Coul Energy: -100.453015810919
-# Pot  Energy: -100.453015810919
-# Self Energy: 167.22573328207721
+# Bond Energy: 11.312849999988
+# Coul Energy: -106.234122015795
+# Pot  Energy: -90.159494378776
+# Self Energy 167.2257332820772
 
 */

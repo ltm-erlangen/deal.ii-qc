@@ -39,6 +39,8 @@ BaTiO3_cs_1x1x1 = Molecules(molecule_ids=molecule_ids,
                             positions=positions)
 
 BaTiO3_cs_1x1x1_qc = BaTiO3_cs_1x1x1.repeat((1, 1, 1), qc_mode=True)
+BaTiO3_cs_2x1x1 = BaTiO3_cs_1x1x1.repeat((2, 1, 1), qc_mode=False)
+BaTiO3_cs_2x1x1_qc = BaTiO3_cs_1x1x1.repeat((2, 1, 1), qc_mode=True)
 
 write_atom_data('../../tests/data/BaTiO3_cs_1x1x1_atom.data',
                 BaTiO3_cs_1x1x1,
@@ -46,6 +48,14 @@ write_atom_data('../../tests/data/BaTiO3_cs_1x1x1_atom.data',
                 atom_style='full')
 write_atom_data('../../tests/data/BaTiO3_cs_1x1x1_qcatom.data',
                 BaTiO3_cs_1x1x1_qc,
+                specorder=['Ba', 'Bs', 'Ti', 'Ts', 'O', 'Os'],
+                atom_style='full')
+write_atom_data('../../tests/data/BaTiO3_cs_2x1x1_atom.data',
+                BaTiO3_cs_2x1x1,
+                specorder=['Ba', 'Bs', 'Ti', 'Ts', 'O', 'Os'],
+                atom_style='full')
+write_atom_data('../../tests/data/BaTiO3_cs_2x1x1_qcatom.data',
+                BaTiO3_cs_2x1x1_qc,
                 specorder=['Ba', 'Bs', 'Ti', 'Ts', 'O', 'Os'],
                 atom_style='full')
 
