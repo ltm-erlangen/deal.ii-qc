@@ -35,8 +35,9 @@ namespace Potential
 
     const std::array<double, 2> params = {
       {parameters[0], dealii::Utilities::fixed_power<6>(parameters[1])}};
-    lj_parameters.insert(
-      std::make_pair(get_pair(i_atom_type, j_atom_type), params));
+
+    // Replace if alraedy existing, insert if not existing.
+    lj_parameters[get_pair(i_atom_type, j_atom_type)] = params;
 
     DEAL_II_QC_UNUSED_VARIABLE(interaction);
   }

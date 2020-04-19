@@ -33,7 +33,8 @@ namespace Potential
                                           parameters[2],
                                           parameters[3]};
 
-    class2_parameters.insert({get_pair(i_atom_type, j_atom_type), params});
+    // Replace if alraedy existing, insert if not existing.
+    class2_parameters[get_pair(i_atom_type, j_atom_type)] = params;
 
     DEAL_II_QC_UNUSED_VARIABLE(interaction);
   }
