@@ -48,8 +48,14 @@ namespace Potential
      * The atoms which are farther than @p cutoff_radius do not
      * interact with each other, consequently do not contribute to either
      * energy or its derivative.
+     * If bonds are defined in the system, then @p factor_coul can used as
+     * a weighting coefficient for pairwaise energy and force contributions.
+     * It can take any value in [0, 1], where the value of 1 indicates that
+     * the energy and gradient contributions are accounted fully.
      */
-    PairCoulWolfManager(const double &alpha, const double &cutoff_radius);
+    PairCoulWolfManager(const double &alpha,
+                        const double &cutoff_radius,
+                        const double &factor_coul = 1.);
 
     /**
      * Declare the type of interaction between the atom types @p i_atom_type
@@ -105,6 +111,11 @@ namespace Potential
     const double cutoff_radius;
 
     /**
+     * Weighting coefficient for bonds
+     */
+    const double factor_coul;
+
+    /**
      * Cutoff radius squared.
      */
     const double cutoff_radius_squared;
@@ -139,18 +150,24 @@ namespace Potential
                                            const double &squared_distance,
                                            const bool    bonded) const
   {
-    if (squared_distance > cutoff_radius_squared || bonded)
+    if (squared_distance > cutoff_radius_squared)
       return ComputeGradient ?
                std::make_pair(0., 0.) :
                std::make_pair(0., std::numeric_limits<double>::signaling_NaN());
 
     Assert(charges, dealii::ExcInternalError());
 
+    // If the interaction is between bonded atoms,
+    // a minimal distance 1e-20 is considered in order to
+    // avoid distance between them being zero.
+    const double EPSILON = 1e-20;
+    const double r2 = squared_distance < EPSILON ? EPSILON : squared_distance;
+
     // TODO: Need to setup units
     // The multiplying factor qqrd2e = 14.399645 yields energy in eV
     // and force in eV/Angstrom units
     const double qqrd2e   = 14.399645;
-    const double distance = std::sqrt(squared_distance);
+    const double distance = std::sqrt(r2);
 
     Assert(i_atom_type < charges->size() && j_atom_type < charges->size(),
            dealii::ExcMessage("The function is called with a value of "
@@ -165,17 +182,24 @@ namespace Potential
     const double erfc_a_distance =
       std::erfc(alpha * distance) * distance_inverse;
 
-    const double energy = qiqj * (erfc_a_distance - energy_shift) * qqrd2e;
+    double energy = qiqj * (erfc_a_distance - energy_shift) * qqrd2e;
 
-    const double gradient =
+    double gradient =
       ComputeGradient ?
         qqrd2e * qiqj *
           (distance_inverse *
-             (erfc_a_distance + alpha * M_2_SQRTPI *
-                                  std::exp(-alpha * alpha * squared_distance)) -
+             (erfc_a_distance +
+              alpha * M_2_SQRTPI * std::exp(-alpha * alpha * r2)) -
            cutoff_radius_inverse *
              (energy_shift + alpha * M_2_SQRTPI * compound_exp_value)) :
         std::numeric_limits<double>::signaling_NaN();
+
+    if (factor_coul < 1 && bonded)
+      {
+        const double prefactor = qiqj * qqrd2e * distance_inverse;
+        energy -= (1 - factor_coul) * prefactor;
+        gradient -= (1 - factor_coul) * prefactor;
+      }
 
     return {energy, gradient};
   }

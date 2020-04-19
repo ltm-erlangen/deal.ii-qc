@@ -29,11 +29,14 @@ namespace Potential
      * If @p with_tail is `true`, the Lennard-Jones potential has a tail that
      * makes interaction energy converge smoothly to zero as opposed to being
      * abruptly jumping to zero at a separation distance of @p lj_cutoff_radius.
+     * The use of @p factor_coul is explained in
+     * PairCoulWolfManager::PairCoulWolfManager().
      */
     PairLJCutCoulWolfManager(const double &alpha,
                              const double &coul_cutoff_radius,
                              const double &lj_cutoff_radius,
-                             const bool    with_tail = false);
+                             const bool    with_tail   = false,
+                             const double &factor_coul = 1.);
 
     /**
      * See PairBaseManager::set_charges().
