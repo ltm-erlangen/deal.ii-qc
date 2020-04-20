@@ -44,9 +44,7 @@ namespace Potential
      * and @p j_atom_type through @p parameters.
      *
      * This function updates or initializes the interaction to use
-     * @p parameters, which should be of size two with the first element
-     * being \f$\epsilon\f$ and second being \f$r_m\f$ as defined in
-     * PairLJCutManager.
+     * @p parameters, which should be of size four.
      */
     void
     declare_interactions(const types::atom_type     i_atom_type,
