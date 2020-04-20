@@ -36,7 +36,7 @@ namespace Potential
                                      const double &factor_coul = 1.);
 
     /**
-     * @copydoc PairBaseManager::set_charges().
+     * @copydoc PairBaseManager::set_charges()
      */
     void
     set_charges(std::shared_ptr<std::vector<types::charge>> &charges_) override;
@@ -46,8 +46,9 @@ namespace Potential
      * and @p j_atom_type to be @p interaction through @p parameters.
      *
      * This function updates or initializes the interaction to use
-     * @p parameters, which should be of size ... as defined in
-     * .
+     * @p parameters, which should be of size five if @p interaction is
+     * InteractionTypes::Born and four if @p interaction is
+     * InteractionTypes::Class2.
      */
     void
     declare_interactions(const types::atom_type     i_atom_type,

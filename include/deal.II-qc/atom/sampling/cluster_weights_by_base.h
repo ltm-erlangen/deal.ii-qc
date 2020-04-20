@@ -52,7 +52,7 @@ namespace Cluster
     virtual ~WeightsByBase();
 
     /**
-     * Initialize #sampling_points, #locally_relevant_sampling_points and
+     * Initialize #sampling_points, #locally_relevant_sampling_indices and
      * #cells_to_sampling_indices data members using @p triangulation and
      * @p quadrature.
      */
