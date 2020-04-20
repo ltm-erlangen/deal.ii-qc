@@ -86,6 +86,8 @@ SET(DEAL_II_QC_INCLUDE_RELDIR        "include"   )
 SET(DEAL_II_QC_LIBRARY_RELDIR        "lib"       )
 SET(DEAL_II_QC_PROJECT_CONFIG_RELDIR "${DEAL_II_QC_LIBRARY_RELDIR}/cmake/${DEAL_II_QC_PACKAGE_NAME}")
 
+ADD_SUBDIRECTORY(utilities)
+
 #
 # Load in version info and export it
 #
