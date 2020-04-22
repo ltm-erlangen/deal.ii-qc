@@ -304,7 +304,7 @@ ConfigureQC::declare_parameters(ParameterHandler &prm)
       "accounted fully.");
     prm.declare_entry(
       "Pair specific coefficients",
-      "0, 0, .8, 1.1;",
+      "1, 1, .8, 1.1;",
       Patterns::List(Patterns::List(Patterns::Anything(),
                                     0,
                                     std::numeric_limits<unsigned int>::max(),
@@ -320,7 +320,7 @@ ConfigureQC::declare_parameters(ParameterHandler &prm)
       "b) interacting pair *, * indicate that all atom types "
       "   interact with every other atom type."
       "c) interacting pair *3, 2 indicate that atom types"
-      "   0, 1, 2, and 3 interact with atom type 2. "
+      "   1, 2, and 3 interact with atom type 2."
       "---"
       "Depending on the specific pair potential type this "
       "input may not be necessary. "
@@ -348,9 +348,10 @@ ConfigureQC::declare_parameters(ParameterHandler &prm)
       "The class2 parameters should be specified "
       "under the bond coefficients."
       "---"
-      "Note that the atom data counts the atom types from 1 "
-      "but deal.II-qc from 0. Therefore atom type 2 in the "
-      "atom data is atom type 1 in deal.II-qc.");
+      "Note that the atom types are counted from 1 "
+      "so that the input is consistent with LAMMPS input script."
+      "In deal.II-qc the atom types are adjusted internally "
+      "to count from 0.");
     prm.declare_entry("Bond type",
                       "None",
                       Patterns::Selection("None|Class2"),
@@ -639,7 +640,7 @@ ConfigureQC::parse_parameters(ParameterHandler &prm)
 
         for (const auto &specific_coeffs : list_of_coeffs_per_type)
           {
-            // Pair specific coefficients = 0, 1, 2.5, 1.0
+            // Pair specific coefficients = 1 , 2, 2.5, 1.0
             // atom type 0 and 1 interact with epsilon = 2.5 and r_m = 1.
             AssertThrow(specific_coeffs.size() == 4,
                         ExcMessage("Only two specific coefficients should be "

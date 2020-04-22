@@ -102,9 +102,9 @@ main(int argc, char *argv[])
           << "  set Pair potential type = LJ" << std::endl
           << "  set Pair global coefficients = 1.99 " << std::endl
           << "  set Pair specific coefficients = "
-          << "                       0, 0, 0.877, 1.01;"
-          << "                       0, 1, 0.000, 1.01;"
-          << "                       1, 1, 0.000, 1.01;" << std::endl
+          << "                       1, 1, 0.877, 1.01;"
+          << "                       1, 2, 0.000, 1.01;"
+          << "                       2, 2, 0.000, 1.01;" << std::endl
           << "end" << std::endl
 
           << "subsection Configure QC" << std::endl
