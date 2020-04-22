@@ -57,7 +57,7 @@ main(int argc, char **argv)
           << "subsection Configure atoms" << std::endl
           << "  set Pair potential type = LJ Coulomb Wolf" << std::endl
           << "  set Pair global coefficients = 0.25, 0.95, 0.95" << std::endl
-          << "  set Pair specific coefficients = 0, 1, 0.877, 1.55" << std::endl
+          << "  set Pair specific coefficients = 1, 2, 0.877, 1.55" << std::endl
           << "end" << std::endl
           << "#end-of-parameter-section" << std::endl;
 

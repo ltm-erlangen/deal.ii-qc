@@ -116,7 +116,7 @@ main(int argc, char *argv[])
           << "  set Maximum cutoff radius = 2.0" << std::endl
           << "  set Pair potential type = LJ" << std::endl
           << "  set Pair global coefficients = 1.99 " << std::endl
-          << "  set Pair specific coefficients = 0, 0, 0.877, 1.55;"
+          << "  set Pair specific coefficients = 1, 1, 0.877, 1.55;"
           << std::endl
           << "end" << std::endl
 
