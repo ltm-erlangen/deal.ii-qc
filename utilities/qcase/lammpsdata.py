@@ -18,7 +18,8 @@ from .molecules import Molecules
 
 def write_atom_data(fileobj, atoms, specorder=None, force_skew=False,
                     prismobj=None, velocities=False, units="metal",
-                    atom_style='atomic'):
+                    atom_style='atomic',
+                    coreshell=False):
     """ Write atomic structure data to a LAMMPS data file.
 
     This function is shamelessly taken from ase.io.lammpsdata.write_lammps_data
@@ -136,6 +137,11 @@ def write_atom_data(fileobj, atoms, specorder=None, force_skew=False,
             for bond in bonds:
                 f.write('\t'.join(map(str,bond)))
                 f.write('\n')
+        if coreshell:
+            f.write('\n\n')
+            f.write("CS-Info \n\n")
+            for index, value in np.ndenumerate(atoms.arrays['molecule_ids']):
+                f.write("{} {}\n".format(index[0]+1, value))
 
     else:
         raise NotImplementedError
