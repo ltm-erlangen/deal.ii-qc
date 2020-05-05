@@ -185,7 +185,7 @@ namespace Potential
 
     double gradient =
       ComputeGradient ?
-        qqrd2e * qiqj *
+        -qqrd2e * qiqj *
           (distance_inverse *
              (erfc_a_distance +
               alpha * M_2_SQRTPI * std::exp(-alpha * alpha * r2)) -
