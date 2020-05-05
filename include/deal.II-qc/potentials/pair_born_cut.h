@@ -88,8 +88,7 @@ namespace Potential
       born_parameters;
   };
 
-  /*----------------------- Inline functions
-   * ----------------------------------*/
+  /*------------------------- Inline functions -------------------------*/
 
 #ifndef DOXYGEN
 

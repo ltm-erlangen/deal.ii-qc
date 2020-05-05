@@ -85,7 +85,7 @@ namespace Potential
 
 
 
-  /*------------------------- Inline functions --------------------------*/
+  /*------------------------- Inline functions -------------------------*/
 
 #ifndef DOXYGEN
 
