@@ -179,7 +179,7 @@ namespace ComputeTools
     std::array<Tensor<1, spacedim>, atomicity> gradients;
 
     {
-      // Prepare temporary tensor to initilize gradients.
+      // Prepare temporary tensor to initialize gradients.
       Tensor<1, spacedim> temp;
 
       for (int i = 0; i < spacedim; ++i)
