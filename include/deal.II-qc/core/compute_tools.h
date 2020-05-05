@@ -122,7 +122,9 @@ namespace ComputeTools
   {
     const Tensor<1, spacedim> rij = atom_i.position - atom_j.position;
 
-    const double r_square = rij.norm_square();
+    const double squared_distance = rij.norm_square();
+    const double r_square =
+      squared_distance < EPSILON ? EPSILON : squared_distance;
 
     const std::pair<double, double> energy_and_gradient =
       potential.template energy_and_gradient<ComputeGradient>(atom_i.type,

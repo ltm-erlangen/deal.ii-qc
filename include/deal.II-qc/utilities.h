@@ -183,6 +183,11 @@ namespace numbers
   static const unsigned char invalid_bond_value =
     static_cast<unsigned char>(-1);
 
+  /**
+   * A small number to used instead of zero to avoid division with zero.
+   */
+  static const double EPSILON = 1e-20;
+
 } // namespace numbers
 
 
