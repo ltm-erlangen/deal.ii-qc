@@ -1,4 +1,4 @@
-#! /usr/bin/pythons3
+#!/usr/bin/env python
 
 """
 Script to generate barium titanate coreshell atom data
@@ -8,13 +8,13 @@ The file names ending with qcatom.data are for QC simultions.
 
 import numpy as np
 
-from .data import barium_titanate_cs_bonds
-from .data import barium_titanate_cs_charges
-from .data import barium_titanate_cs_masses
-from .data import barium_titanate_cs_positions
+from data import barium_titanate_cs_bonds
+from data import barium_titanate_cs_charges
+from data import barium_titanate_cs_masses
+from data import barium_titanate_cs_positions
 
-from .molecules  import Molecules
-from .lammpsdata import write_atom_data
+from molecules  import Molecules
+from lammpsdata import write_atom_data
 
 born_class2_coul_wolf_02_lc = 4.00
 
@@ -45,7 +45,8 @@ BaTiO3_cs_2x1x1_qc = BaTiO3_cs_1x1x1.repeat((2, 1, 1), qc_mode=True)
 write_atom_data('../../tests/data/BaTiO3_cs_1x1x1_atom.data',
                 BaTiO3_cs_1x1x1,
                 specorder=['Ba', 'Bs', 'Ti', 'Ts', 'O', 'Os'],
-                atom_style='full')
+                atom_style='full',
+                coreshell=True)
 write_atom_data('../../tests/data/BaTiO3_cs_1x1x1_qcatom.data',
                 BaTiO3_cs_1x1x1_qc,
                 specorder=['Ba', 'Bs', 'Ti', 'Ts', 'O', 'Os'],
@@ -53,7 +54,8 @@ write_atom_data('../../tests/data/BaTiO3_cs_1x1x1_qcatom.data',
 write_atom_data('../../tests/data/BaTiO3_cs_2x1x1_atom.data',
                 BaTiO3_cs_2x1x1,
                 specorder=['Ba', 'Bs', 'Ti', 'Ts', 'O', 'Os'],
-                atom_style='full')
+                atom_style='full',
+                coreshell=True)
 write_atom_data('../../tests/data/BaTiO3_cs_2x1x1_qcatom.data',
                 BaTiO3_cs_2x1x1_qc,
                 specorder=['Ba', 'Bs', 'Ti', 'Ts', 'O', 'Os'],

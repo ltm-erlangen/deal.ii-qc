@@ -159,8 +159,7 @@ namespace Potential
     // If the interaction is between bonded atoms,
     // a minimal distance 1e-20 is considered in order to
     // avoid distance between them being zero.
-    const double EPSILON = 1e-20;
-    const double r2 = squared_distance < EPSILON ? EPSILON : squared_distance;
+    const double r2 = std::max(dealiiqc::numbers::EPSILON, squared_distance);
 
     // TODO: Need to setup units
     // The multiplying factor qqrd2e = 14.399645 yields energy in eV
@@ -197,7 +196,7 @@ namespace Potential
       {
         const double prefactor = qiqj * qqrd2e * distance_inverse;
         energy -= (1 - factor_coul) * prefactor;
-        gradient -= (1 - factor_coul) * prefactor;
+        gradient += (1 - factor_coul) * prefactor * distance_inverse;
       }
 
     return {energy, gradient};

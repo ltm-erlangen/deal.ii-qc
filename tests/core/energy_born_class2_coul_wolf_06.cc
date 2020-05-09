@@ -13,13 +13,11 @@ using namespace dealiiqc;
 
 
 
-// Compute the energy of eight BaTiO3 molecules,
+// Compute the energy and polarization of eight BaTiO3 molecules,
 // whose atoms interact through BornCutClass2CoulWolfManager,
 // using QC approach with full atomistic resolution.
-// Because the distance between cores and shells of respective atoms is zero,
-// the bond energy is zero.
-// The blessed output is created using LAMMPS python script.
-// The script is included at the end.
+// In this test only the shells are displaced a small amount,
+// before computing the polarization.
 
 
 

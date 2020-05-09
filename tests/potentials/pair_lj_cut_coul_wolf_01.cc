@@ -24,11 +24,10 @@ test(const double &                                       r,
   AssertThrow(
     Testing::almost_equal(energy_gradient_0.first, blessed_energy, 200) &&
       Testing::almost_equal(energy_gradient_0.second, blessed_gradient, 200),
-    ExcInternalError())
+    ExcInternalError());
 
-    const std::pair<double, double>
-      energy_gradient_1 =
-        lj_cut_coul_wolf_ptr->energy_and_gradient(1, 0, r * r);
+  const std::pair<double, double> energy_gradient_1 =
+    lj_cut_coul_wolf_ptr->energy_and_gradient(1, 0, r * r);
 
   AssertThrow(Testing::almost_equal(energy_gradient_0.first,
                                     energy_gradient_1.first,
@@ -36,12 +35,11 @@ test(const double &                                       r,
                 Testing::almost_equal(energy_gradient_0.second,
                                       energy_gradient_1.second,
                                       200),
-              ExcInternalError())
+              ExcInternalError());
 
-      std::cout
-    << std::fixed << std::setprecision(8)
-    << "Energy: " << energy_gradient_0.first
-    << " Gradient scalar: " << energy_gradient_0.second << std::endl;
+  std::cout << std::fixed << std::setprecision(8)
+            << "Energy: " << energy_gradient_0.first
+            << " Gradient scalar: " << energy_gradient_0.second << std::endl;
 }
 
 int
@@ -79,7 +77,7 @@ main(int argc, char **argv)
 
       test(0.90,
            -0.8345031730789789 + 551.3630363329171,
-           -1.829727499044526 - 7656.629108919712,
+           1.829727499044526 - 7656.629108919712,
            lj_cut_coul_wolf_ptr);
 
       test(1.50, 0., 0., lj_cut_coul_wolf_ptr);

@@ -120,6 +120,15 @@ namespace Potential
     const double &C      = param->second[3];
     const double &D      = param->second[4];
 
+    // TODO: Need to add a prepare() function to cull entries in
+    //      born_parameters to handle the following case.
+    // TODO: Rework the above Assert such that the program returns
+    //      as soon as the two atom types are not interacting.
+    if (A == 0. && C == 0. && D == 0.)
+      return ComputeGradient ?
+               std::make_pair(0., 0.) :
+               std::make_pair(0., std::numeric_limits<double>::signaling_NaN());
+
     const double r = std::sqrt(squared_distance);
 
     const double r2inv = 1.0 / squared_distance;
