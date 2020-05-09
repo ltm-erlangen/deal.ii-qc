@@ -124,7 +124,7 @@ namespace ComputeTools
 
     const double squared_distance = rij.norm_square();
     const double r_square =
-      squared_distance < EPSILON ? EPSILON : squared_distance;
+      std::max(dealiiqc::numbers::EPSILON, squared_distance);
 
     const std::pair<double, double> energy_and_gradient =
       potential.template energy_and_gradient<ComputeGradient>(atom_i.type,

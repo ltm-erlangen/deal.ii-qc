@@ -1,4 +1,4 @@
-#! /usr/bin/python3
+#!/usr/bin/env python
 
 """
 Helper functions to write out LAMMPS atom data.
@@ -10,10 +10,10 @@ import numpy as np
 from ase.parallel import paropen
 from ase.calculators.lammps import Prism, convert
 
-from .data import atomic_numbers
-from .data import chemical_symbols
+from data import atomic_numbers
+from data import chemical_symbols
 
-from .molecules import Molecules
+from molecules import Molecules
 
 
 def write_atom_data(fileobj, atoms, specorder=None, force_skew=False,
