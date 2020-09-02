@@ -71,6 +71,8 @@ DEAL_II_QUERY_GIT_INFORMATION()
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/source/version.cc.in
                ${CMAKE_CURRENT_BINARY_DIR}/version.cc)
 
+SET(DEAL_II_WITH_CXX17 ON)
+
 #
 # PROJECT has to be called after DEAL_II_INITIALIZE_CACHED_VARIABLES
 # otherwise CMake will have already set the compiler and compiler

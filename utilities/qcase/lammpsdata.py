@@ -10,10 +10,10 @@ import numpy as np
 from ase.parallel import paropen
 from ase.calculators.lammps import Prism, convert
 
-from data import atomic_numbers
-from data import chemical_symbols
+from qcase.data import atomic_numbers
+from qcase.data import chemical_symbols
 
-from molecules import Molecules
+from qcase.molecules import Molecules
 
 
 def write_atom_data(fileobj, atoms, specorder=None, force_skew=False,
