@@ -284,7 +284,7 @@ namespace CellMoleculeTools
 
 
 
-  template <int dim, int atomicity = 1, int spacedim = dim>
+  template <int dim, int atomicity, int spacedim>
   double
   compute_molecule_density(
     const Triangulation<dim, spacedim> &triangulation,
