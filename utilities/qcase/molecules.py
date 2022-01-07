@@ -74,7 +74,7 @@ class Molecules(Atoms):
         mol_idx  = 0
         for x in range(m[0]):
             for y in range(m[1]):
-                for z in range(m[1]):
+                for z in range(m[2]):
 
                     curr_mol_idx = mol_idx + n
                     mol_counter = mol_idx // n if qc_mode else bond_idx
