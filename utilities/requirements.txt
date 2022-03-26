@@ -26,7 +26,7 @@ matplotlib==3.2.1
 mccabe==0.6.1
 mendeleev==0.5.2
 numexpr==2.7.1
-numpy==1.18.2
+numpy==1.21.0
 pandas==1.0.3
 paramiko==2.7.1
 pathlib2==2.3.5
