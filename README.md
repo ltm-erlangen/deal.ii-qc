@@ -4,6 +4,8 @@ What is deal.II-qc?
 deal.II-qc is a C++ program library to conduct coarse-grained atomistic simulations
 using the fully nonlocal quasicontinuum method.
 
+[![DOI](https://zenodo.org/badge/67124678.svg)](https://zenodo.org/badge/latestdoi/67124678)
+
 Requirements
 ------------
 
